@@ -1,0 +1,798 @@
+{
+  "apiVersion" : "1",
+  "swaggerVersion" : "1.2",
+  "basePath" : "https://square.github.io/keywhiz/apidocs",
+  "resourcePath" : "/groups-automation",
+  "apis" : [ {
+    "path" : "/automation/groups",
+    "operations" : [ {
+      "method" : "GET",
+      "nickname" : "getGroupByName",
+      "type" : "GroupDetailResponse",
+      "parameters" : [ {
+        "type" : "string",
+        "description" : "the name of the Group to retrieve, if provided",
+        "paramType" : "query",
+        "name" : "name"
+      } ],
+      "summary" : "Retrieve Group by a specified name, or all Groups if no name given",
+      "notes" : "Returns a single Group or a set of all Groups",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Found and retrieved Group(s)"
+      }, {
+        "code" : 404,
+        "message" : "Group with given name not found (if name provided)"
+      } ],
+      "produces" : [ "application/json" ]
+    }, {
+      "method" : "POST",
+      "nickname" : "createGroup",
+      "type" : "Response",
+      "parameters" : [ {
+        "type" : "AutomationClient",
+        "paramType" : "body",
+        "name" : "automationClient",
+        "required" : true
+      }, {
+        "type" : "CreateGroupRequest",
+        "description" : "the JSON group request used to formulate the Group",
+        "paramType" : "body",
+        "name" : "groupRequest",
+        "required" : true
+      } ],
+      "summary" : "Create Group",
+      "notes" : "Creates a Group with the name from a valid group request",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Successfully created Group"
+      }, {
+        "code" : 409,
+        "message" : "Group with given name already exists"
+      } ],
+      "consumes" : [ "application/json" ],
+      "produces" : [ "application/json" ]
+    } ]
+  }, {
+    "path" : "/automation/groups/{groupId}",
+    "operations" : [ {
+      "method" : "GET",
+      "nickname" : "getGroupById",
+      "type" : "GroupDetailResponse",
+      "parameters" : [ {
+        "type" : "LongParam",
+        "description" : "the ID of the group to retrieve",
+        "paramType" : "path",
+        "name" : "groupId",
+        "required" : true
+      } ],
+      "summary" : "Retrieve Group by ID",
+      "notes" : "Returns a single Group if found",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Found and retrieved Group with given ID"
+      }, {
+        "code" : 404,
+        "message" : "Group with given ID not Found"
+      } ],
+      "produces" : [ "application/json" ]
+    } ]
+  } ],
+  "models" : {
+    "LocalDateTime" : {
+      "id" : "LocalDateTime",
+      "properties" : {
+        "date" : {
+          "type" : "LocalDate"
+        },
+        "year" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "dayOfYear" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "before" : {
+          "type" : "boolean"
+        },
+        "nano" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "minute" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "second" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "equal" : {
+          "type" : "boolean"
+        },
+        "dayOfWeek" : {
+          "type" : "string",
+          "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+        },
+        "month" : {
+          "type" : "string",
+          "enum" : [ "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER" ]
+        },
+        "hour" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "dayOfMonth" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "monthValue" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "time" : {
+          "type" : "LocalTime"
+        },
+        "after" : {
+          "type" : "boolean"
+        },
+        "supported" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "ZoneOffsetTransitionRule" : {
+      "id" : "ZoneOffsetTransitionRule",
+      "properties" : {
+        "dom" : {
+          "type" : "string",
+          "format" : "byte"
+        },
+        "dayOfMonthIndicator" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "timeEndOfDay" : {
+          "type" : "boolean"
+        },
+        "offsetAfter" : {
+          "type" : "ZoneOffset"
+        },
+        "dow" : {
+          "type" : "string",
+          "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+        },
+        "localTime" : {
+          "type" : "LocalTime"
+        },
+        "dayOfWeek" : {
+          "type" : "string",
+          "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+        },
+        "month" : {
+          "type" : "string",
+          "enum" : [ "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER" ]
+        },
+        "standardOffset" : {
+          "type" : "ZoneOffset"
+        },
+        "midnightEndOfDay" : {
+          "type" : "boolean"
+        },
+        "timeDefinition" : {
+          "type" : "string",
+          "enum" : [ "UTC", "WALL", "STANDARD" ]
+        },
+        "time" : {
+          "type" : "LocalTime"
+        },
+        "offsetBefore" : {
+          "type" : "ZoneOffset"
+        }
+      }
+    },
+    "LocalTime" : {
+      "id" : "LocalTime",
+      "properties" : {
+        "hour" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "before" : {
+          "type" : "boolean"
+        },
+        "nano" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "after" : {
+          "type" : "boolean"
+        },
+        "minute" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "second" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "supported" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "TemporalUnit" : {
+      "id" : "TemporalUnit",
+      "properties" : {
+        "duration" : {
+          "type" : "Duration"
+        },
+        "durationEstimated" : {
+          "type" : "boolean"
+        },
+        "timeBased" : {
+          "type" : "boolean"
+        },
+        "supportedBy" : {
+          "type" : "boolean"
+        },
+        "dateBased" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "ZoneOffsetTransitionRule[]" : {
+      "id" : "ZoneOffsetTransitionRule[]",
+      "properties" : {
+        "dom" : {
+          "type" : "string",
+          "format" : "byte"
+        },
+        "dayOfMonthIndicator" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "timeEndOfDay" : {
+          "type" : "boolean"
+        },
+        "offsetAfter" : {
+          "type" : "ZoneOffset"
+        },
+        "dow" : {
+          "type" : "string",
+          "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+        },
+        "localTime" : {
+          "type" : "LocalTime"
+        },
+        "dayOfWeek" : {
+          "type" : "string",
+          "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+        },
+        "month" : {
+          "type" : "string",
+          "enum" : [ "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER" ]
+        },
+        "standardOffset" : {
+          "type" : "ZoneOffset"
+        },
+        "midnightEndOfDay" : {
+          "type" : "boolean"
+        },
+        "timeDefinition" : {
+          "type" : "string",
+          "enum" : [ "UTC", "WALL", "STANDARD" ]
+        },
+        "time" : {
+          "type" : "LocalTime"
+        },
+        "offsetBefore" : {
+          "type" : "ZoneOffset"
+        }
+      }
+    },
+    "Instant" : {
+      "id" : "Instant",
+      "properties" : {
+        "seconds" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "nanos" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "before" : {
+          "type" : "boolean"
+        },
+        "nano" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "epochSecond" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "after" : {
+          "type" : "boolean"
+        },
+        "supported" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "LongParam" : {
+      "id" : "LongParam",
+      "properties" : {
+        "errorStatus" : {
+          "type" : "string",
+          "enum" : [ "OK", "CREATED", "ACCEPTED", "NO_CONTENT", "RESET_CONTENT", "PARTIAL_CONTENT", "MOVED_PERMANENTLY", "FOUND", "SEE_OTHER", "NOT_MODIFIED", "USE_PROXY", "TEMPORARY_REDIRECT", "BAD_REQUEST", "UNAUTHORIZED", "PAYMENT_REQUIRED", "FORBIDDEN", "NOT_FOUND", "METHOD_NOT_ALLOWED", "NOT_ACCEPTABLE", "PROXY_AUTHENTICATION_REQUIRED", "REQUEST_TIMEOUT", "CONFLICT", "GONE", "LENGTH_REQUIRED", "PRECONDITION_FAILED", "REQUEST_ENTITY_TOO_LARGE", "REQUEST_URI_TOO_LONG", "UNSUPPORTED_MEDIA_TYPE", "REQUESTED_RANGE_NOT_SATISFIABLE", "EXPECTATION_FAILED", "INTERNAL_SERVER_ERROR", "NOT_IMPLEMENTED", "BAD_GATEWAY", "SERVICE_UNAVAILABLE", "GATEWAY_TIMEOUT", "HTTP_VERSION_NOT_SUPPORTED" ]
+        },
+        "value" : {
+          "type" : "T"
+        }
+      }
+    },
+    "GroupDetailResponse" : {
+      "id" : "GroupDetailResponse",
+      "properties" : {
+        "updateDate" : {
+          "type" : "OffsetDateTime"
+        },
+        "updatedBy" : {
+          "type" : "string"
+        },
+        "clients" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "Client"
+          }
+        },
+        "createdBy" : {
+          "type" : "string"
+        },
+        "name" : {
+          "type" : "string"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "id" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "creationDate" : {
+          "type" : "OffsetDateTime"
+        },
+        "secrets" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "SanitizedSecret"
+          }
+        }
+      }
+    },
+    "AutomationClient" : {
+      "id" : "AutomationClient",
+      "properties" : {
+        "createdAt" : {
+          "type" : "OffsetDateTime"
+        },
+        "updatedBy" : {
+          "type" : "string"
+        },
+        "createdBy" : {
+          "type" : "string"
+        },
+        "name" : {
+          "type" : "string"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "automationAllowed" : {
+          "type" : "boolean"
+        },
+        "id" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "enabled" : {
+          "type" : "boolean"
+        },
+        "updatedAt" : {
+          "type" : "OffsetDateTime"
+        }
+      }
+    },
+    "IsoChronology" : {
+      "id" : "IsoChronology",
+      "properties" : {
+        "calendarType" : {
+          "type" : "string"
+        },
+        "id" : {
+          "type" : "string"
+        },
+        "leapYear" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "Duration" : {
+      "id" : "Duration",
+      "properties" : {
+        "zero" : {
+          "type" : "boolean"
+        },
+        "seconds" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "negative" : {
+          "type" : "boolean"
+        },
+        "nanos" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "nano" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "units" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "TemporalUnit"
+          }
+        }
+      }
+    },
+    "LocalDateTime[]" : {
+      "id" : "LocalDateTime[]",
+      "properties" : {
+        "date" : {
+          "type" : "LocalDate"
+        },
+        "year" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "dayOfYear" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "before" : {
+          "type" : "boolean"
+        },
+        "nano" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "minute" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "second" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "equal" : {
+          "type" : "boolean"
+        },
+        "dayOfWeek" : {
+          "type" : "string",
+          "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+        },
+        "month" : {
+          "type" : "string",
+          "enum" : [ "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER" ]
+        },
+        "hour" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "dayOfMonth" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "monthValue" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "time" : {
+          "type" : "LocalTime"
+        },
+        "after" : {
+          "type" : "boolean"
+        },
+        "supported" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "LocalDate" : {
+      "id" : "LocalDate",
+      "properties" : {
+        "year" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "dayOfYear" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "before" : {
+          "type" : "boolean"
+        },
+        "chronology" : {
+          "type" : "IsoChronology"
+        },
+        "leapYear" : {
+          "type" : "boolean"
+        },
+        "equal" : {
+          "type" : "boolean"
+        },
+        "dayOfWeek" : {
+          "type" : "string",
+          "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+        },
+        "month" : {
+          "type" : "string",
+          "enum" : [ "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER" ]
+        },
+        "era" : {
+          "type" : "Era"
+        },
+        "dayOfMonth" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "monthValue" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "after" : {
+          "type" : "boolean"
+        },
+        "day" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "supported" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "ZoneOffset" : {
+      "id" : "ZoneOffset",
+      "properties" : {
+        "totalSeconds" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "rules" : {
+          "type" : "ZoneRules"
+        },
+        "supported" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "OffsetDateTime" : {
+      "id" : "OffsetDateTime",
+      "properties" : {
+        "dateTime" : {
+          "type" : "LocalDateTime"
+        },
+        "offset" : {
+          "type" : "ZoneOffset"
+        },
+        "year" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "dayOfYear" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "before" : {
+          "type" : "boolean"
+        },
+        "nano" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "minute" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "second" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "equal" : {
+          "type" : "boolean"
+        },
+        "dayOfWeek" : {
+          "type" : "string",
+          "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+        },
+        "month" : {
+          "type" : "string",
+          "enum" : [ "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER" ]
+        },
+        "hour" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "dayOfMonth" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "monthValue" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "after" : {
+          "type" : "boolean"
+        },
+        "supported" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "Era" : {
+      "id" : "Era",
+      "properties" : {
+        "value" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "supported" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "ZoneOffset[]" : {
+      "id" : "ZoneOffset[]",
+      "properties" : {
+        "totalSeconds" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "rules" : {
+          "type" : "ZoneRules"
+        },
+        "supported" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "CreateGroupRequest" : {
+      "id" : "CreateGroupRequest",
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        },
+        "description" : {
+          "type" : "string"
+        }
+      }
+    },
+    "ZoneRules" : {
+      "id" : "ZoneRules",
+      "properties" : {
+        "standardOffsets" : {
+          "type" : "ZoneOffset[]"
+        },
+        "fixedOffset" : {
+          "type" : "boolean"
+        },
+        "transitionRules" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "ZoneOffsetTransitionRule"
+          }
+        },
+        "standardTransitions" : {
+          "type" : "long[]"
+        },
+        "daylightSavings" : {
+          "type" : "boolean"
+        },
+        "wallOffsets" : {
+          "type" : "ZoneOffset[]"
+        },
+        "lastRules" : {
+          "type" : "ZoneOffsetTransitionRule[]"
+        },
+        "savingsLocalTransitions" : {
+          "type" : "LocalDateTime[]"
+        },
+        "validOffset" : {
+          "type" : "boolean"
+        },
+        "transitions" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "ZoneOffsetTransition"
+          }
+        },
+        "savingsInstantTransitions" : {
+          "type" : "long[]"
+        }
+      }
+    },
+    "ZoneOffsetTransition" : {
+      "id" : "ZoneOffsetTransition",
+      "properties" : {
+        "duration" : {
+          "type" : "Duration"
+        },
+        "overlap" : {
+          "type" : "boolean"
+        },
+        "gap" : {
+          "type" : "boolean"
+        },
+        "offsetAfter" : {
+          "type" : "ZoneOffset"
+        },
+        "dateTimeBefore" : {
+          "type" : "LocalDateTime"
+        },
+        "dateTimeAfter" : {
+          "type" : "LocalDateTime"
+        },
+        "validOffset" : {
+          "type" : "boolean"
+        },
+        "offsetBefore" : {
+          "type" : "ZoneOffset"
+        },
+        "transition" : {
+          "type" : "LocalDateTime"
+        },
+        "instant" : {
+          "type" : "Instant"
+        }
+      }
+    },
+    "Client" : {
+      "id" : "Client",
+      "properties" : {
+        "createdAt" : {
+          "type" : "OffsetDateTime"
+        },
+        "updatedBy" : {
+          "type" : "string"
+        },
+        "createdBy" : {
+          "type" : "string"
+        },
+        "name" : {
+          "type" : "string"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "automationAllowed" : {
+          "type" : "boolean"
+        },
+        "id" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "enabled" : {
+          "type" : "boolean"
+        },
+        "updatedAt" : {
+          "type" : "OffsetDateTime"
+        }
+      }
+    }
+  }
+}
