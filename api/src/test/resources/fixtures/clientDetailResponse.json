@@ -1,0 +1,11 @@
+{
+  "id" : 9875,
+  "name" : "Client Name",
+  "description" : "Client Description",
+  "creationDate" : "2012-08-01T13:15:30.001Z",
+  "updateDate" : "2012-09-10T03:15:30.001Z",
+  "createdBy" : "creator-user",
+  "updatedBy" : "updater-user",
+  "groups" : [],
+  "secrets" : []
+}

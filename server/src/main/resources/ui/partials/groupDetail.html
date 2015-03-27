@@ -1,0 +1,55 @@
+<ng-include src="'partials/undo.html'"></ng-include>
+
+<div class="row">
+  <div class="col-md-10">
+    <h3>Detail for group: {{group.name}}</h3>
+  </div>
+</div>
+
+<div class="row row-padding">
+  <div class="col-md-6">
+    <p><strong>Clients</strong></p>
+
+    <form class="form-inline" ng-submit="assignClient()">
+      <input type="text" class="form-control" placeholder="Assign Client" ng-model="selectedClient" typeahead="client.name for client in clients | filter:$viewValue">
+      <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button>
+    </form>
+  </div>
+  <div class="col-md-6">
+    <p><strong>Secrets</strong></p>
+
+    <form class="form-inline" ng-submit="allowSecret()">
+      <input type="text" class="form-control" placeholder="Allow Secret" ng-model="selectedSecret" typeahead="secret.name for secret in secrets | filter:$viewValue">
+      <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button>
+    </form>
+  </div>
+</div>
+
+<div class="row row-padding">
+  <div class="col-md-6">
+    <ul class="list-unstyled">
+      <li ng-repeat="client in group.clients">
+        <button ng-click="unassignClient(client)" class="btn btn-default btn-sm">
+          <span class="glyphicon glyphicon-remove"></span>
+        </button>
+        <a ng-href="#/clients/{{client.id}}">{{client.name}}</a>
+      </li>
+    </ul>
+  </div>
+  <div class="col-md-6">
+    <ul class="list-unstyled">
+      <li ng-repeat="secret in group.secrets">
+        <button ng-click="disallowSecret(secret)" class="btn btn-default btn-sm">
+          <span class="glyphicon glyphicon-remove"></span>
+        </button>
+        <a ng-href="#/secrets/{{secret.id}}">{{secret.name}}</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="row row-padding">
+  <div class="col-md-2">
+    <a ng-click="openDeleteDialog()" role="button" class="btn btn-danger">Delete Group</a>
+  </div>
+</div>

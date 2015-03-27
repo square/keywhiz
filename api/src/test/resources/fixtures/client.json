@@ -1,0 +1,11 @@
+{
+  "id" : 200,
+  "name" : "someClient",
+  "description" : "clientDesc",
+  "createdAt" : "2013-03-28T21:29:27.465Z",
+  "createdBy" : "keywhizAdmin",
+  "updatedAt" : "2013-03-28T21:29:27.465Z",
+  "updatedBy" : "keywhizAdmin",
+  "enabled" : true,
+  "automationAllowed" : false
+}

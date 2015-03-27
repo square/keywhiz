@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<!-- TODO: add this to square.github.io/repos.json, invoke generator.py -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Keywhiz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A file-based secret management and distribution system">
+    <link href="static/bootstrap-combined.min.css" rel="stylesheet">
+    <link href="static/app.css" rel="stylesheet">
+    <link href="static/app-theme.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,300italic,100,100italic,300" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="static/html5shiv.min.js"></script><![endif]-->
+  </head>
+  <body data-target=".content-nav">
+    <header>
+      <div class="container">
+        <div class="row">
+          <div class="span5">
+            <h1>Keywhiz</h1>
+          </div>
+          <div class="span7">
+            <menu>
+              <ul>
+                <li><a href="#download" class="menu download">Download <span class="version-tag">Latest</span></a></li>
+                <li><a href="https://github.com/square/keywhiz" data-title="View GitHub Project" class="menu github"><img src="static/icon-github.png" alt="GitHub"/></a></li>
+                <li><a href="https://square.github.io/" data-title="Square Open Source Portal" class="menu square"><img src="static/icon-square.png" alt="Square"/></a></li>
+              </ul>
+            </menu>
+          </div>
+      </div>
+    </header>
+    <section id="subtitle">
+      <div class="container">
+        <div class="row">
+          <div class="span12">
+            <h2>A web service and file-based <strong>secret management and distribution system</strong></h2>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="body">
+      <div class="container">
+        <div class="row">
+          <div class="span9">
+            <h3 id="overview">Keywhiz (Alpha)</h3>
+            <p>Keywhiz is a web service and distributed filesystem for secure secret storage. No more storing secrets in source control!</p>
+            <p>At Square, Keywhiz is primarily used to distribute database credentials, SSL certificates, keystores, truststores, and configuration files.</p>
+
+            <h3 id="concepts">Concepts</h3>
+
+            <p>Keywhiz allows for interactions between Secrets, Clients, and Groups:</p>
+            <h4>Secrets</h4>
+
+            <p>Each secret is one or more versions of a file stored in a database on
+            the Keywhiz server. For instance, you may store database credentials in a
+            <code>database.yaml</code> file, then create a secret for that file to be read by any
+            application code needing those credentials.</p>
+
+            <h4>Clients</h4>
+
+            <p>Each time a client tries to access a secret from the Keywhiz server, it's
+            identified by a client SSL certificate unique to that client. The secrets that a
+            client is granted access to are dictated by the client's memberships in groups.</p>
+
+            <h4>Groups</h4>
+
+            <p>Groups are collections of clients. Clients may be members of more than one
+            group. Secrets are granted on a per-group basis, not a per-client basis, so a
+            client cannot get access to a secret without being a member of a group. Each
+            secret can be granted to more than one group.</p>
+
+
+            <h3 id="components">Components</h3>
+
+            <h4>Keywhiz Server</h4>
+            <p>The Keywhiz Server provides a JSON API to access and manage secrets.</p>
+            <p>It's written on top of <a href="http://dropwizard.codahale.com/">Dropwizard</a> and uses <a href="http://www.postgresql.org/">PostgreSQL</a> as its datastore to store secrets, clients, groups, and the relationships between them.</p>
+            <p>Users can access its <a href="/apidocs/index.html">API</a> by sending requests to automation endpoints directly, or interfacing with one of the other components listed below.</p>
+
+            <h4>Keywhiz FS</h4>
+
+            <p><a href="https://github.com/square/keywhiz-fs">Keywhiz FS</a> is a <a href="http://fuse.sourceforge.net/">FUSE</a>-based file system that provides file-based access to secrets stored on the Keywhiz Server.<p>
+            <p>This allows all of your service code to access the secrets via simple file system access and not worry about how to communicate with the Keywhiz Server.</p>
+            <p>All files are stored in memory and never on disk on client machines, so if Keywhiz FS is unmounted, all secrets will be safely removed from that machine.</p>
+            <p>In the event of a Keywhiz Server outage, Keywhiz FS maintains a local cache of
+            any secrets previously returned. This means that unless your server reboots or
+            someone manually unmounts Keywhiz FS, your applications can happily continue to
+            access any secrets they've used before while the Keywhiz Server is completely
+            unresponsive.</p>
+
+            <h4>Keywhiz CLI</h4>
+
+            <p>Keywhiz CLI provides command line management of secrets, clients, and groups.</p>
+            <p>It facilitates the creation and deletion of secrets and clients, as well as the ability to grant or revoke secrets to groups, and add or remove clients from groups.</p>
+
+            <h4>Keywhiz UI</h4>
+
+            <p>Keywhiz UI is an in-browser management system for Keywhiz, authenticated by
+            LDAP. It provides much of the functionality of Keywhiz CLI through a static web
+            application written in <a href="http://angularjs.org/">AngularJS</a></p>
+
+            <h3 id="setup">Setup</h3>
+            <!-- TODO: set up LDAP or equivalent auth, point to certstrap, instructions for starting keywhiz server -->
+            <p>To get started, you'll need the source. The source comes in two repositories -
+            one containing the Java code for the server, the CLI, and the UI, and a second
+            containing the Go code for the FS.</p>
+
+            <h4>Starting the Keywhiz Server</h4>
+
+            <p>The server uses postgres from the default config, so first ensure you have that installed (or change the config).</p>
+
+            <p>With the default server configuration, you'll need a database called
+            <code>keywhiz_development</code>. You can create that using:</p>
+            <pre class="prettyprint">$ createdb keywhiz_development</pre>
+
+            <p>You'll also need to create a keywhiz postgres user. On your development machine,
+            we'll add the user as a postgres super user.</p>
+
+            <pre class="prettyprint">$ psql keywhiz_development
+psql (9.2.2, server 9.2.4)
+Type "help" for help.
+
+keywhiz_development=# CREATE ROLE keywhiz WITH LOGIN;
+CREATE ROLE</pre>
+
+            <p>You should now be able to start <code>psql</code> as the <code>keywhiz</code> user:
+
+            <pre class="prettyprint">$ psql keywhiz_development keywhiz
+psql (9.2.2, server 9.2.4)
+Type "help" for help.
+
+keywhiz_development=#</pre>
+
+          <p>Next, in the Java repository root, build the server with:</p>
+
+          <pre class="prettyprint">$ mvn package -am -pl server</pre>
+
+          <p>Once built, run the migrations using:</p>
+
+          <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar migrate server/src/main/resources/keywhiz-development.yaml</pre>
+
+          <p>If that completes successfully, your database should now be fully set up, so you can boot the server using:</p>
+
+          <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar server server/src/main/resources/keywhiz-development.yaml</pre>
+
+          <p>The server should now be running. Try to access to the UI by pointing your browser to <a href="https://localhost:4444/ui/">https://localhost:4444/ui/</a>.
+
+          <h4>Building the Keywhiz CLI</h4>
+          <p>Build the CLI in the Java repository root:</p>
+          <pre class="prettyprint">$ mvn package -am -pl cli</pre>
+          <p>To run the CLI and view its options, use the command below:</p>
+          <pre class="prettyprint">$ java -jar cli/target/keywhiz-cli-*-SNAPSHOT-shaded.jar</pre>
+          <p>It'll be convenient to alias the above command as <code>keywhiz.cli</code>, as so:</p>
+          <pre class="prettyprint">$ alias keywhiz.cli="java -jar cli/target/keywhiz-cli-*-SNAPSHOT-shaded.jar"</pre>
+          <h4>Mounting the Keywhiz FS</h4> <!-- TODO: more specific instructions on website or just refer to README? -->
+          Detailed instructions for mounting Keywhiz FS can be found on its <a href="https://github.com/square/keywhiz-fs">Github repository</a>.
+
+          <h3 id="examples">Examples</h3>
+            <p>More examples are discussed at length in the <a href="https://github.com/square/keywhiz/wiki">Wiki</a>, but here are a few examples showing how to use Keywhiz:</p>
+            <h4>Adding a Secret</h4>
+            <h5>Using Keywhiz CLI</h5>
+            <pre class="prettyprint">$ keywhiz.cli add secret --name mySecretName < mySecretFile</pre>
+            <p>(Note that the Keywhiz CLI requires login prior to running commands, using <code>keywhiz.cli login</code>)</p><br>
+
+            <h5>Using Keywhiz automation API</h5>
+            <pre class="prettyprint">$ SECRET_NAME=keytab-example
+$ RAW=`cat $KEYTAB | base64 -w 0`
+$ DATA1="\"name\":\"$SECRET_NAME\",\"description\":\"$SECRET_NAME\""
+$ DATA2="\"content\":\"$RAW\", \"withVersion\":false"
+$ METADATA='"metadata":{"owner":"root","group":"root","mode":"0400"}'
+$ DATA="{$DATA1,$DATA2,$METADATA}"
+$ URL="https://localhost:4444/automation/secrets/"
+$ HDR="Content-Type:application/json"
+$ curl -sk --cert $CERT --key $KEY -d "$DATA" -X POST -H "$HEADER" "$URL"</pre>
+            <p>(Note that the Keywhiz automation API requires certificate authentication -- this can be setup in the server configuration yaml and we recommend trying <a href="https://github.com/square/certstrap">certstrap</a> to initialize a CA if you do not have one already)</p><br>
+
+            <h4>Assigning a Secret to a Group</h4>
+            <h5>Using Keywhiz CLI</h5>
+            <pre class="prettyprint">$ keywhiz.cli assign secret --name mySecretName --group myGroupName</pre>
+
+            <h5>Using Keywhiz automation API</h5>
+            <pre class="prettyprint">$ URL="https://localhost:4444/automation/secrets/$SECRETID/groups/$GROUPID"
+$ curl -sk --cert $CERT --key $KEY -X PUT "$URL"</pre>
+
+            <h3 id="download">Download</h3>
+            <p><a href="https://search.maven.org/remote_content?g=com.squareup.keywhiz&a=keywhiz&v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
+            <p>The source code to Keywhiz and this website is <a href="http://github.com/square/keywhiz">available on GitHub</a>.</p>
+
+
+            <h3 id="roadmap">Roadmap</h3>
+            <h4>Beta release:</h4>
+            <p>We anticipate on releasing the following features in the near future, for a beta release:</p>
+            <ul>
+              <li>Introduce functionality for versioning secrets</li>
+              <li>Migrate to MySQL</li>
+            </ul>
+
+            <h3 id="contributing">Contributing</h3>
+
+            <p>If you would like to contribute code to Keywhiz you can do so through GitHub by
+            forking the repository and sending a pull request.</p>
+
+            <p>When submitting code, please make every effort to follow existing conventions
+            and style in order to keep the code as readable as possible. Please also make
+            sure your code compiles and passes tests by running <code>mvn clean verify</code>.
+
+            <p>Before your code can be accepted into the project you must also sign the
+            <a href="https://spreadsheets.google.com/spreadsheet/viewform?formkey=dDViT2xzUHAwRkI3X3k5Z0lQM091OGc6MQ&ndplr=1">Individual Contributor License Agreement (CLA)</a>.
+
+            <h3 id="license">License</h3>
+            <pre>Copyright 2015 Square, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</pre>
+          </div>
+          <div class="span3">
+            <div class="content-nav" data-spy="affix" data-offset-top="80">
+              <ul class="nav nav-tabs nav-stacked primary">
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#concepts">Concepts</a></li>
+                <li><a href="#components">Components</a></li>
+                <li><a href="#setup">Setup</a></li>
+                <li><a href="#examples">Examples</a></li>
+                <li><a href="#download">Download</a></li>
+                <li><a href="#roadmap">Roadmap</a></li>
+                <li><a href="#contributing">Contributing</a></li>
+                <li><a href="#license">License</a></li>
+              </ul>
+              <ul class="nav nav-pills nav-stacked secondary">
+                <li><a href="https://github.com/square/keywhiz/wiki">Wiki</a></li><!-- TODO: create wiki? -->
+                <li><a href="apidocs/index.html">API</a></li>
+                <li><a href="http://stackoverflow.com/questions/tagged/keywhiz?sort=active">StackOverflow</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="span12 logo">
+            <a href="https://squareup.com"><img src="static/logo-square.png" alt="Square, Inc."/></a>
+          </div>
+        </div>
+      </div>
+    </section>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="static/bootstrap.min.js"></script>
+    <script src="static/jquery.smooth-scroll.min.js"></script>
+    <script src="static/jquery-maven-artifact.min.js"></script>
+    <script src="static/prettify.js"></script>
+    <script type="text/javascript">
+      $(function() {
+        // Syntax highlight code blocks.
+        prettyPrint();
+
+        // Spy on scroll position for real-time updating of current section.
+        $('body').scrollspy();
+
+        // Use smooth-scroll for internal links.
+        $('a').smoothScroll();
+
+        // Enable tooltips on the header nav image items.
+        $('.menu').tooltip({
+          placement: 'bottom',
+          trigger: 'hover',
+          container: 'body',
+          delay: {
+            show: 500,
+            hide: 0
+          }
+        });
+
+        // Look up the latest version of the library.
+        $.fn.artifactVersion({
+          'groupId': 'com.squareup.keywhiz',
+          'artifactId': 'keywhiz'
+        }, function(version, url) {
+          $('.version').text(version);
+          $('.version-tag').text('v' + version);
+          $('.version-href').attr('href', url);
+        });
+      });
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-40704740-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>

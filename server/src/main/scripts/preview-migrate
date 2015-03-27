@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# TODO(justin): Keywhiz does not yet have a migration preview feature.
+# Hoist deploy assumes that a preview-migrate script exists and throws an error otherwise. So this
+# is a placeholder until there is a migration preview.

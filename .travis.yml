@@ -1,0 +1,14 @@
+language: java
+
+jdk:
+  - oraclejdk8
+
+env:
+  - UI_DIR=ui
+
+before_script:
+  - cd $UI_DIR && npm install -g grunt-cli bower && npm install && bower install && grunt build
+
+script:
+  - mvn test
+  - cd $UI_DIR && grunt test

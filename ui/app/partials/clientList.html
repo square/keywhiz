@@ -1,0 +1,32 @@
+<div class="row row-padding">
+  <div class="col-md-3">
+    <form class="navbar-search">
+      <input ng-model="query" type="text" class="form-control" placeholder="Filter by name">
+    </form>
+  </div>
+</div>
+
+<div class="row row-padding">
+  <div class="col-md-12">
+    <table class="table table-hover">
+      <thead>
+      <tr>
+        <th><a ng-click="sort = 'name'; reverse = !reverse">Name</a></th>
+        <th><a ng-click="sort = 'createdBy'; reverse = !reverse">Created By</a></th>
+        <th><a ng-click="sort = 'createdAt'; reverse = !reverse">Creation Date</a></th>
+        <th><a ng-click="sort = 'updatedBy'; reverse = !reverse">Updated By</a></th>
+        <th><a ng-click="sort = 'updatedAt'; reverse = !reverse">Update Date</a></th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr ng-repeat="client in clients | filter:query | orderBy:sort:reverse">
+        <td><a ng-href="#/clients/{{client.id}}">{{client.name}}</a></td>
+        <td>{{client.createdBy || 'Unknown'}}</td>
+        <td>{{client.createdAt | date:'short'}}</td>
+        <td>{{client.updatedBy || 'Unknown'}}</td>
+        <td>{{client.updatedAt | date:'short'}}</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

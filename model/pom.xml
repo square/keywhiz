@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.squareup.keywhiz</groupId>
+    <artifactId>keywhiz-parent</artifactId>
+    <version>0.7.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>keywhiz-model</artifactId>
+  <name>Keywhiz Model</name>
+
+  <properties>
+    <db.url>jdbc:postgresql:keywhizdb_test</db.url>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jooq</groupId>
+      <artifactId>jooq</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jooq</groupId>
+      <artifactId>jooq-meta</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jooq</groupId>
+      <artifactId>jooq-codegen</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Creates a keywhizdb_test postgres database if it doesn't exist. -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+          </execution>
+        </executions>
+
+        <configuration>
+          <executable>createdb</executable>
+          <arguments>
+            <argument>keywhizdb_test</argument>
+          </arguments>
+          <!-- Exits 1 if db exists. That's OK. -->
+          <successCodes>
+            <successCode>0</successCode>
+            <successCode>1</successCode>
+          </successCodes>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-maven-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>migrate</goal>
+            </goals>
+          </execution>
+        </executions>
+
+        <configuration>
+          <url>${db.url}</url>
+          <user>${user.name}</user>
+          <locations>
+            <location>filesystem:../server/src/main/resources/db/migration</location>
+          </locations>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.jooq</groupId>
+        <artifactId>jooq-codegen-maven</artifactId>
+
+        <!-- The plugin should hook into the generate goal -->
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+
+        <configuration>
+          <jdbc>
+            <driver>org.postgresql.Driver</driver>
+            <url>${db.url}</url>
+            <user>${user.name}</user>
+          </jdbc>
+
+          <!-- Generator parameters -->
+          <generator>
+            <name>org.jooq.util.JavaGenerator</name>
+            <database>
+              <name>org.jooq.util.postgres.PostgresDatabase</name>
+              <includes>.*</includes>
+              <excludes>pg.*</excludes>
+              <inputSchema>public</inputSchema>
+
+              <!-- Registers custom types -->
+              <customTypes>
+                <customType>
+                  <name>OffsetDateTime</name>
+                  <type>java.time.OffsetDateTime</type>
+                  <converter>keywhiz.model.OffsetDateTimeConverter</converter>
+                </customType>
+              </customTypes>
+
+              <!-- Forces JOOQ to use custom types in generated code -->
+              <forcedTypes>
+                <forcedType>
+                  <name>OffsetDateTime</name>
+                  <expression>.*\.createdat|.*\.updatedat|.*\.created_at|.*\.updated_at</expression>
+                  <types>timestamp.*</types>
+                </forcedType>
+              </forcedTypes>
+            </database>
+            <target>
+              <packageName>keywhiz.jooq</packageName>
+            </target>
+          </generator>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

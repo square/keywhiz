@@ -1,0 +1,9 @@
+# Copyright 2015 Square, Inc.
+
+# Dropwizard configuration for keywhiz-server's ldap lookup configuration.
+---
+
+userBaseDN: ou=people,dc=test,dc=com
+userAttribute: uid
+requiredRoles: [keywhizAdmins]
+roleBaseDN: ou=ApplicationAccess,dc=test,dc=com

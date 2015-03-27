@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+  <!-- Not interested in serializing a servlet. -->
+  <Match>
+    <Class name="keywhiz.FileAssetServlet"/>
+    <Bug code="SnVI"/>
+  </Match>
+</FindBugsFilter>

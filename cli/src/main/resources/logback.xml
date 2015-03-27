@@ -1,0 +1,23 @@
+<configuration>
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>${user.home}/.keywhiz_cli_log</file>
+
+    <encoder>
+      <pattern>%date - %-5level - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%date - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="info">
+    <appender-ref ref="FILE" />
+  </root>
+
+  <root level="error">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>

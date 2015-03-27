@@ -1,0 +1,39 @@
+/* app css stylesheet */
+
+body {
+    position: relative;
+    padding-top: 94px;
+}
+
+.loggedin-only, .loggedout-only {
+  display: none;
+}
+
+.loggedin-name {
+  margin-right: 5px;
+}
+
+.row-padding {
+  padding: 5px 0;
+}
+
+.nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
+
+.modal .nav.nav-tabs > li > a {
+  border-top: 0 !important;
+  border-radius: 0 !important;
+  margin-right: 0;
+  padding: 8px 12px !important;
+}
+
+.modal .nav.nav-tabs > li:first-child > a {
+  border-left: 0 !important;
+}
+
+ul.list-unstyled li {
+  padding: 2px 0;
+}
+
+.alert .alert-link {
+  cursor: pointer;
+}

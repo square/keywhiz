@@ -1,0 +1,5 @@
+#!/bin/bash
+set -ex
+
+this_dir=$(dirname $0)
+java -jar $this_dir/../keywhiz.jar migrate
