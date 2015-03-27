@@ -1,6 +1,6 @@
 # Keywhiz
 
-Keywhiz is a file-based secret management and distribution system.
+Keywhiz is a system for distributing and managing secrets.
 For more information, see the [the website][1].
 
 ## Contributing

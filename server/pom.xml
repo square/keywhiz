@@ -197,21 +197,16 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+
         <executions>
           <execution>
             <id>generate-service-docs</id>
             <phase>generate-resources</phase>
             <configuration>
               <doclet>com.carma.swagger.doclet.ServiceDoclet</doclet>
-              <docletArtifact>
-                <groupId>com.carma</groupId>
-                <artifactId>swagger-doclet</artifactId>
-                <version>1.0.4.2</version>
-              </docletArtifact>
-              <reportOutputDirectory>${project.parent.relativePath}/../website/</reportOutputDirectory>
+              <reportOutputDirectory>${project.parent.basedir}/website/</reportOutputDirectory>
               <useStandardDocletOptions>false</useStandardDocletOptions>
-              <additionalparam>-apiVersion 1 -docBasePath http://square.github.io/keywhiz/apidocs -apiBasePath http://square.github.io/keywhiz/apidocs -resourceTags -fieldDescriptionTags
-              </additionalparam>
+              <additionalparam>-apiVersion 1 -docBasePath https://square.github.io/keywhiz/apidocs -apiBasePath https://square.github.io/keywhiz/apidocs -resourceTags -fieldDescriptionTags</additionalparam>
             </configuration>
             <goals>
               <goal>javadoc</goal>
