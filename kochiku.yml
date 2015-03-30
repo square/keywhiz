@@ -1,3 +1,0 @@
-partitioner: maven
-
-test_command: JAVA_HOME=/usr/java/jdk1.8.0 mvn test -am -pl $TARGETS
