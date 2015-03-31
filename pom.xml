@@ -499,6 +499,9 @@
               <artifactId>swagger-doclet</artifactId>
               <version>1.0.4.2</version>
             </docletArtifact>
+            <links>
+              <link>https://square.github.io/keywhiz/javadoc/</link>
+            </links>
           </configuration>
         </plugin>
       </plugins>
