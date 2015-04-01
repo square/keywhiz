@@ -60,6 +60,7 @@ public class SecretContentDAOTest {
         .set(SECRETS_CONTENT.CREATEDBY, secretContent1.createdBy())
         .set(SECRETS_CONTENT.UPDATEDAT, secretContent1.updatedAt())
         .set(SECRETS_CONTENT.UPDATEDBY, secretContent1.updatedBy())
+        .set(SECRETS_CONTENT.METADATA, "{}")
         .execute();
   }
 
