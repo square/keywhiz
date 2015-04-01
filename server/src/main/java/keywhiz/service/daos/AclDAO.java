@@ -214,7 +214,7 @@ public abstract class AclDAO {
   @SqlUpdate("DELETE FROM memberships WHERE clientId = :clientId AND groupId = :groupId")
   protected abstract void evictClient(@Bind("clientId") long clientId, @Bind("groupId") long groupId);
 
-  @SqlQuery("SELECT secrets.id, secrets.name, secrets.description, secrets.metadata, " +
+  @SqlQuery("SELECT secrets.id, secrets.name, secrets.description, " +
       "secrets.createdAt, secrets.createdBy, secrets.updatedAt, secrets.updatedBy, secrets.type, " +
       "secrets.options " +
       "FROM secrets " +
@@ -223,7 +223,7 @@ public abstract class AclDAO {
       "WHERE groups.name = :name")
   protected abstract ImmutableSet<SecretSeries> getSecretSeriesFor(@BindBean Group group);
 
-  @SqlQuery("SELECT secrets.id, secrets.name, secrets.description, secrets.metadata, " +
+  @SqlQuery("SELECT secrets.id, secrets.name, secrets.description, " +
       "secrets.createdAt, secrets.createdBy, secrets.updatedAt, secrets.updatedBy, secrets.type, " +
       "secrets.options " +
       "FROM secrets " +
@@ -241,7 +241,7 @@ public abstract class AclDAO {
    * table should be used to determine the exception.
    */
   @SingleValueResult(SecretSeries.class)
-  @SqlQuery("SELECT secrets.id, secrets.name, secrets.description, secrets.metadata, " +
+  @SqlQuery("SELECT secrets.id, secrets.name, secrets.description, " +
             "secrets.createdAt, secrets.createdBy, secrets.updatedAt, secrets.updatedBy, " +
             "secrets.type, secrets.options " +
             "FROM secrets JOIN secrets_content on secrets.id = secrets_content.secretId " +

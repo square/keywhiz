@@ -48,8 +48,8 @@ public class SecretContentDAOTest {
     secretContentDAO = testDBRule.getDbi().onDemand(SecretContentDAO.class);
 
     testDBRule.jooqContext().delete(SECRETS).execute();
-    testDBRule.jooqContext().insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.METADATA)
-        .values((int) secretContent1.secretSeriesId(), "secretName", "{}")
+    testDBRule.jooqContext().insertInto(SECRETS, SECRETS.ID, SECRETS.NAME)
+        .values((int) secretContent1.secretSeriesId(), "secretName")
         .execute();
     testDBRule.jooqContext().insertInto(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.ID, (int) secretContent1.id())
