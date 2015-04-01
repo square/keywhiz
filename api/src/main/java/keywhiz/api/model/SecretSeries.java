@@ -39,7 +39,6 @@ public class SecretSeries {
   private final String createdBy;
   private final OffsetDateTime updatedAt;
   private final String updatedBy;
-  private final ImmutableMap<String, String> metadata;
   private final String type;
   private final ImmutableMap<String, String> generationOptions;
 
@@ -50,7 +49,6 @@ public class SecretSeries {
       String createdBy,
       OffsetDateTime updatedAt,
       String updatedBy,
-      @Nullable Map<String, String> metadata,
       @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
     this.id = id;
@@ -60,8 +58,6 @@ public class SecretSeries {
     this.createdBy = createdBy;
     this.updatedAt = updatedAt;
     this.updatedBy = updatedBy;
-    this.metadata = (metadata == null) ?
-        ImmutableMap.of() : ImmutableMap.copyOf(metadata);
     this.type = type;
     this.generationOptions = (generationOptions == null) ?
         ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
@@ -95,10 +91,6 @@ public class SecretSeries {
     return updatedBy;
   }
 
-  public ImmutableMap<String, String> getMetadata() {
-    return metadata;
-  }
-
   public Optional<String> getType() {
     return Optional.ofNullable(type);
   }
@@ -109,7 +101,7 @@ public class SecretSeries {
 
   @Override public int hashCode() {
     return Objects.hashCode(id, name, description, createdAt, createdBy, updatedAt, updatedBy,
-        metadata, type, generationOptions);
+        type, generationOptions);
   }
 
   @Override public boolean equals(Object o) {
@@ -123,7 +115,6 @@ public class SecretSeries {
           Objects.equal(this.createdBy, that.createdBy) &&
           Objects.equal(this.updatedAt, that.updatedAt) &&
           Objects.equal(this.updatedBy, that.updatedBy) &&
-          Objects.equal(this.metadata, that.metadata) &&
           Objects.equal(this.type, that.type) &&
           Objects.equal(this.generationOptions, that.generationOptions)) {
         return true;
@@ -141,7 +132,6 @@ public class SecretSeries {
         .add("createdBy", createdBy)
         .add("updatedAt", updatedAt)
         .add("updatedBy", updatedBy)
-        .add("metadata", metadata)
         .add("type", type)
         .add("generationOptions", generationOptions)
         .omitNullValues()

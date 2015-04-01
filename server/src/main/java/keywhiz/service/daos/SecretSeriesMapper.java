@@ -45,7 +45,6 @@ public class SecretSeriesMapper implements ResultSetMapper<SecretSeries> {
                             r.getString("createdBy"),
                             r.getTimestamp("updatedAt").toLocalDateTime().atOffset(ZoneOffset.UTC),
                             r.getString("updatedBy"),
-                            tryToReadMapValue(r, "metadata"),
                             r.getString("type"),
                             tryToReadMapValue(r, "options"));
   }

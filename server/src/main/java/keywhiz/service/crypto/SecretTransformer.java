@@ -56,7 +56,7 @@ public class SecretTransformer {
         content.createdBy(),
         content.updatedAt(),
         content.updatedBy(),
-        series.getMetadata(),
+        content.metadata(),
         series.getType().orElse(null),
         series.getGenerationOptions());
   }

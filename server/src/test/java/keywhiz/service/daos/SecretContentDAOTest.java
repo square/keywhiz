@@ -17,6 +17,7 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -35,8 +36,10 @@ public class SecretContentDAOTest {
   @Rule public final TestDBRule testDBRule = new TestDBRule();
 
   final static OffsetDateTime date = OffsetDateTime.now(ZoneId.of("UTC"));
+  ImmutableMap<String, String> emptyMetadata = ImmutableMap.of();
+
   SecretContent secretContent1 = SecretContent.of(11, 22, "[crypted]", "", date, "creator", date,
-      "creator");
+      "creator", emptyMetadata);
 
   SecretContentDAO secretContentDAO;
 
@@ -62,9 +65,9 @@ public class SecretContentDAOTest {
 
   @Test public void createSecretContent() {
     int before = tableSize();
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator");
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator");
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator");
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator", emptyMetadata);
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator", emptyMetadata);
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator", emptyMetadata);
     assertThat(tableSize()).isEqualTo(before + 3);
   }
 
@@ -75,9 +78,9 @@ public class SecretContentDAOTest {
   }
 
   @Test public void getSecretContentsBySecretId() {
-    long id1 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator");
-    long id2 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator");
-    long id3 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator");
+    long id1 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator", emptyMetadata);
+    long id2 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator", emptyMetadata);
+    long id3 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator", emptyMetadata);
 
     List<Long> actualIds = secretContentDAO.getSecretContentsBySecretId(secretContent1.secretSeriesId())
         .stream()
@@ -88,9 +91,9 @@ public class SecretContentDAOTest {
   }
 
   @Test public void getVersionsBySecretId() {
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator");
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator");
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator");
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator", emptyMetadata);
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator", emptyMetadata);
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator", emptyMetadata);
 
     // We have the empty string as a version from the setUp() call
     assertThat(secretContentDAO.getVersionFromSecretId(secretContent1.secretSeriesId()))
