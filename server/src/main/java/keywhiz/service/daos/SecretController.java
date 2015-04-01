@@ -115,7 +115,7 @@ public class SecretController {
     checkArgument(!secret.isEmpty());
     checkArgument(!creator.isEmpty());
     String encryptedSecret = cryptographer.encryptionKeyDerivedFrom(name).encrypt(secret);
-    return new SecretBuilder(transformer, secretDAO, name, secret, encryptedSecret, creator);
+    return new SecretBuilder(transformer, secretDAO, name, encryptedSecret, creator);
   }
 
   /** Builder to generate new secret series or versions with. */
@@ -123,7 +123,6 @@ public class SecretController {
     private final SecretTransformer transformer;
     private final SecretDAO secretDAO;
     private final String name;
-    private final String secret;
     private final String encryptedSecret;
     private final String creator;
     private String description = "";
@@ -136,16 +135,14 @@ public class SecretController {
      * @param transformer
      * @param secretDAO
      * @param name of secret series.
-     * @param secret content of secret version.
      * @param encryptedSecret encrypted content of secret version
      * @param creator username responsible for creating this secret version.
      */
-    private SecretBuilder(SecretTransformer transformer, SecretDAO secretDAO, String name, String secret, String encryptedSecret,
+    private SecretBuilder(SecretTransformer transformer, SecretDAO secretDAO, String name, String encryptedSecret,
         String creator) {
       this.transformer = transformer;
       this.secretDAO = secretDAO;
       this.name = name;
-      this.secret = secret;
       this.encryptedSecret = encryptedSecret;
       this.creator = creator;
     }

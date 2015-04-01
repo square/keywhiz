@@ -17,6 +17,7 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableList;
+import java.util.Map;
 import java.util.Optional;
 import keywhiz.api.model.SecretContent;
 import org.skife.jdbi.v2.sqlobject.Bind;
@@ -30,24 +31,24 @@ import org.skife.jdbi.v2.sqlobject.customizers.SingleValueResult;
 @RegisterMapper(SecretContentMapper.class)
 public interface SecretContentDAO {
   @GetGeneratedKeys
-  @SqlUpdate("INSERT INTO secrets_content (secretId, encrypted_content, version, createdBy, updatedBy) " +
-             "VALUES (:secretId, :encryptedContent, :version, :creator, :creator)")
+  @SqlUpdate("INSERT INTO secrets_content (secretId, encrypted_content, version, createdBy, updatedBy, metadata) " +
+             "VALUES (:secretId, :encryptedContent, :version, :creator, :creator, :metadata)")
   long createSecretContent(@Bind("secretId") long secretId,
       @Bind("encryptedContent") String encryptedContent, @Bind("version") String version,
-      @Bind("creator") String creator);
+      @Bind("creator") String creator, @Bind("metadata") Map<String, String> metadata);
 
   @SingleValueResult(SecretContent.class)
-  @SqlQuery("SELECT id, secretId, encrypted_content, version, createdAt, createdBy, updatedAt, updatedBy " +
+  @SqlQuery("SELECT id, secretId, encrypted_content, version, createdAt, createdBy, updatedAt, updatedBy, metadata " +
             "FROM secrets_content WHERE id = :id")
   Optional<SecretContent> getSecretContentById(@Bind("id") long id);
 
   @SingleValueResult(SecretContent.class)
-  @SqlQuery("SELECT id, secretId, encrypted_content, version, createdAt, createdBy, updatedAt, updatedBy " +
+  @SqlQuery("SELECT id, secretId, encrypted_content, version, createdAt, createdBy, updatedAt, updatedBy, metadata " +
             "FROM secrets_content WHERE secretId = :secretId AND version = :version")
   Optional<SecretContent> getSecretContentBySecretIdAndVersion(
       @Bind("secretId") long secretId, @Bind("version") String version);
 
-  @SqlQuery("SELECT id, secretId, encrypted_content, version, createdAt, createdBy, updatedAt, updatedBy " +
+  @SqlQuery("SELECT id, secretId, encrypted_content, version, createdAt, createdBy, updatedAt, updatedBy, metadata " +
             "FROM secrets_content WHERE secretId = :secretId")
   ImmutableList<SecretContent> getSecretContentsBySecretId(@Bind("secretId") long secretId);
 

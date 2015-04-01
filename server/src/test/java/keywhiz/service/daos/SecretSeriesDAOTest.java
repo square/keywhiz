@@ -43,28 +43,26 @@ public class SecretSeriesDAOTest {
     int before = tableSize();
     OffsetDateTime now = OffsetDateTime.now();
 
-    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator",
-        ImmutableMap.of("key1", "value1"), "desc", null, null);
+    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null, null);
     SecretSeries expected = new SecretSeries(id, "newSecretSeries", "desc", now, "creator", now,
-        "creator", ImmutableMap.of("key1", "value1"), null, null);
+        "creator", null, null);
 
     assertThat(tableSize()).isEqualTo(before + 1);
 
     SecretSeries actual = secretSeriesDAO.getSecretSeriesByName("newSecretSeries")
         .orElseThrow(RuntimeException::new);
     assertThat(actual).isEqualToComparingOnlyGivenFields(expected,
-        "name", "description", "metadata", "type", "generationOptions");
+        "name", "description", "type", "generationOptions");
 
     actual = secretSeriesDAO.getSecretSeriesById(id)
         .orElseThrow(RuntimeException::new);
     assertThat(actual).isEqualToComparingOnlyGivenFields(expected,
-        "name", "description", "metadata", "type", "generationOptions");
+        "name", "description", "type", "generationOptions");
   }
 
   @Test
   public void deleteSecretSeriesByName() {
-    secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", "creator",
-        ImmutableMap.of(), "", null, null);
+    secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", "creator", "", null, null);
 
     int secretsBefore = tableSize();
 
@@ -79,8 +77,7 @@ public class SecretSeriesDAOTest {
 
   @Test
   public void deleteSecretSeriesById() {
-    long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesById", "creator",
-        ImmutableMap.of(), "", null, null);
+    long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesById", "creator", "", null, null);
 
     int secretsBefore = tableSize();
 

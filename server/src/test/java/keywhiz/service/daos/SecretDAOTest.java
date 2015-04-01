@@ -44,15 +44,16 @@ public class SecretDAOTest {
   final static ContentCryptographer cryptographer = CryptoFixtures.contentCryptographer();
   final static OffsetDateTime date = OffsetDateTime.now();
   final static String version = VersionGenerator.now().toHex();
+  ImmutableMap<String, String> emptyMetadata = ImmutableMap.of();
 
-  SecretSeries series1 = new SecretSeries(1, "secret1", "desc1", date, "creator", date, "updater", null, null, null);
+  SecretSeries series1 = new SecretSeries(1, "secret1", "desc1", date, "creator", date, "updater", null, null);
   String content = "c2VjcmV0MQ==";
   String encryptedContent = cryptographer.encryptionKeyDerivedFrom(series1.getName()).encrypt(content);
-  SecretContent content1 = SecretContent.of(101, 1, encryptedContent, version, date, "creator", date, "updater");
+  SecretContent content1 = SecretContent.of(101, 1, encryptedContent, version, date, "creator", date, "updater", emptyMetadata);
   SecretSeriesAndContent secret1 = SecretSeriesAndContent.of(series1, content1);
 
-  SecretSeries series2 = new SecretSeries(2, "secret2", "desc2", date, "creator", date, "updater", null, null, null);
-  SecretContent content2 = SecretContent.of(102, 2, encryptedContent, "", date, "creator", date, "updater");
+  SecretSeries series2 = new SecretSeries(2, "secret2", "desc2", date, "creator", date, "updater", null, null);
+  SecretContent content2 = SecretContent.of(102, 2, encryptedContent, "", date, "creator", date, "updater", emptyMetadata);
   SecretSeriesAndContent secret2 = SecretSeriesAndContent.of(series2, content2);
 
   SecretDAO secretDAO;
@@ -71,7 +72,6 @@ public class SecretDAOTest {
         .set(SECRETS.CREATEDAT, secret1.series().getCreatedAt())
         .set(SECRETS.CREATEDBY, secret1.series().getCreatedBy())
         .set(SECRETS.UPDATEDBY, secret1.series().getUpdatedBy())
-        .set(SECRETS.METADATA, objectMapper.writeValueAsString(secret1.series().getMetadata()))
         .execute();
 
     testDBRule.jooqContext().insertInto(SECRETS_CONTENT)
@@ -81,6 +81,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.CREATEDAT, secret1.content().createdAt())
         .set(SECRETS_CONTENT.CREATEDBY, secret1.content().createdBy())
         .set(SECRETS_CONTENT.UPDATEDBY, secret1.content().updatedBy())
+        .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret1.content().metadata()))
         .execute();
 
     testDBRule.jooqContext().insertInto(SECRETS)
@@ -90,7 +91,6 @@ public class SecretDAOTest {
         .set(SECRETS.CREATEDAT, secret2.series().getCreatedAt())
         .set(SECRETS.CREATEDBY, secret2.series().getCreatedBy())
         .set(SECRETS.UPDATEDBY, secret2.series().getUpdatedBy())
-        .set(SECRETS.METADATA, objectMapper.writeValueAsString(secret2.series().getMetadata()))
         .execute();
 
     testDBRule.jooqContext().insertInto(SECRETS_CONTENT)
@@ -100,6 +100,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.CREATEDAT, secret2.content().createdAt())
         .set(SECRETS_CONTENT.CREATEDBY, secret2.content().createdBy())
         .set(SECRETS_CONTENT.UPDATEDBY, secret2.content().updatedBy())
+        .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret2.content().metadata()))
         .execute();
 
     secretDAO = testDBRule.getDbi().onDemand(SecretDAO.class);

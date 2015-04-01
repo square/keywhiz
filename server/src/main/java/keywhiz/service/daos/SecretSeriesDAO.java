@@ -32,24 +32,24 @@ import org.skife.jdbi.v2.sqlobject.customizers.SingleValueResult;
 @RegisterMapper(SecretSeriesMapper.class)
 public interface SecretSeriesDAO {
   @GetGeneratedKeys
-  @SqlUpdate("INSERT INTO secrets (name, description, createdBy, updatedBy, metadata, type, options) " +
-      "VALUES (:name, :description, :creator, :creator, :metadata, :type, COALESCE(:options,'{}'))")
+  @SqlUpdate("INSERT INTO secrets (name, description, createdBy, updatedBy, type, options) " +
+      "VALUES (:name, :description, :creator, :creator, :type, COALESCE(:options,'{}'))")
   long createSecretSeries(@Bind("name") String name, @Bind("creator") String creator,
-      @Bind("metadata") Map<String, String> metadata, @Bind("description") String description,
+      @Bind("description") String description,
       @Nullable @Bind("type") String type,
       @Nullable @Bind("options") Map<String, String> generationOptions);
 
   @SingleValueResult(SecretSeries.class)
-  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy, metadata, " +
+  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy, " +
       "type, options FROM secrets WHERE id = :id")
   Optional<SecretSeries> getSecretSeriesById(@Bind("id") long id);
 
   @SingleValueResult(SecretSeries.class)
-  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy, metadata, " +
+  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy, " +
       "type, options FROM secrets WHERE name = :name")
   Optional<SecretSeries> getSecretSeriesByName(@Bind("name") String name);
 
-  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy, metadata, " +
+  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy, " +
       "type, options FROM secrets")
   ImmutableList<SecretSeries> getSecretSeries();
 

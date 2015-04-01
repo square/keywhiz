@@ -16,8 +16,10 @@
 
 package keywhiz.api.model;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.MoreObjects;
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -30,9 +32,9 @@ import javax.annotation.Nullable;
 public abstract class SecretContent {
   public static SecretContent of(long id, long secretSeriesId, String encryptedContent,
       @Nullable String version, OffsetDateTime createdAt, @Nullable String createdBy,
-      OffsetDateTime updatedAt, @Nullable String updatedBy) {
+      OffsetDateTime updatedAt, @Nullable String updatedBy, ImmutableMap<String, String> metadata) {
     return new AutoValue_SecretContent(id, secretSeriesId, encryptedContent,
-        Optional.ofNullable(version), createdAt, createdBy, updatedAt, updatedBy);
+        Optional.ofNullable(version), createdAt, createdBy, updatedAt, updatedBy, metadata);
   }
 
   public abstract long id();
@@ -43,6 +45,7 @@ public abstract class SecretContent {
   @Nullable public abstract String createdBy();
   public abstract OffsetDateTime updatedAt();
   @Nullable public abstract String updatedBy();
+  @JsonAnyGetter public abstract  ImmutableMap<String, String> metadata();
 
   @Override public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -54,6 +57,7 @@ public abstract class SecretContent {
         .add("createdBy", createdBy())
         .add("updatedAt", updatedAt())
         .add("updatedBy", updatedBy())
+        .add("metadata", metadata())
         .omitNullValues().toString();
   }
 }

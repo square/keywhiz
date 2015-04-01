@@ -66,7 +66,7 @@ public abstract class SanitizedSecret {
         content.createdBy(),
         content.updatedAt(),
         content.updatedBy(),
-        series.getMetadata(),
+        content.metadata(),
         series.getType().orElse(null),
         series.getGenerationOptions());
   }

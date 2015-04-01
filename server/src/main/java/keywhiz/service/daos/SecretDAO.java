@@ -47,17 +47,17 @@ public abstract class SecretDAO implements Transactional<SecretDAO> {
   public long createSecret(String name, String encryptedSecret, String version,
       String creator, Map<String, String> metadata, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
-    // TODO(jlfwong): Should the metadata and description be updated...?
+    // TODO(jlfwong): Should the description be updated...?
     long secretId;
     Optional<SecretSeries> secretSeries = createSecretSeriesDAO().getSecretSeriesByName(name);
     if (secretSeries.isPresent()) {
       secretId = secretSeries.get().getId();
     } else {
       secretId = createSecretSeriesDAO()
-          .createSecretSeries(name, creator, metadata, description, type, generationOptions);
+          .createSecretSeries(name, creator, description, type, generationOptions);
     }
 
-    createSecretContentDAO().createSecretContent(secretId, encryptedSecret, version, creator);
+    createSecretContentDAO().createSecretContent(secretId, encryptedSecret, version, creator, metadata);
     return secretId;
   }
 
