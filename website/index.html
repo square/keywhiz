@@ -71,7 +71,7 @@
 
             <h3 id="components">System components</h3>
             <h4>Keywhiz Server</h4>
-            <p>Keywhiz Server provides <a href="/apidocs/index.html">JSON APIs</a> for accessing and
+            <p>Keywhiz Server provides <a href="apidocs/index.html">JSON APIs</a> for accessing and
                 managing secrets. It is written in Java and based on
                 <a href="http://dropwizard.io/">Dropwizard</a>.</p>
 
@@ -142,19 +142,19 @@
                 config).</p>
 
             <p>Assuming the default configuration, create a database
-                <code>keywhiz_development</code>. For PostgreSQL, use:</p>
-            <pre class="prettyprint">$ createdb keywhiz_development</pre>
+                <code>keywhizdb_development</code>. For PostgreSQL, use:</p>
+            <pre class="prettyprint">$ createdb keywhizdb_development</pre>
 
             <p>Create a <code>keywhiz</code> database user. For a development system,
                 a PostgreSQL user can be added using:</p>
             <pre class="prettyprint">$ createuser keywhiz</pre>
 
             <p>Test that it works:</p>
-            <pre class="prettyprint">$ psql keywhiz_development keywhiz
+            <pre class="prettyprint">$ psql keywhizdb_development keywhiz
 psql (9.2.2, server 9.2.4)
 Type "help" for help.
 
-keywhiz_development=#</pre>
+keywhizdb_development=#</pre>
 
             <p>From the base of the keywhiz repository, build the server:</p>
             <pre class="prettyprint">$ mvn package -am -pl server</pre>
@@ -164,7 +164,7 @@ keywhiz_development=#</pre>
 $ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar migrate server/src/main/resources/keywhiz-development.yaml</pre>
 
             <p>(Optional) Import some development data:</p>
-            <pre class="prettyprint">$ psql keywhiz_development keywhiz server/src/test/resources/server_test_data.sql</pre>
+            <pre class="prettyprint">$ psql keywhizdb_development keywhiz server/src/test/resources/server_test_data.sql</pre>
 
             <p>Start the server:</p>
             <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar server server/src/main/resources/keywhiz-development.yaml</pre>
@@ -216,7 +216,7 @@ $ curl --cert client.pem -H "Content-Type:application/json" -d @request.json htt
             <pre class="prettyprint">$ curl --cert client.pem -X PUT "https://localhost:4444/automation/secrets/$SECRET_ID/groups/$GROUP_ID"</pre>
 
             <h3 id="download">Download</h3>
-            <p><a href="https://search.maven.org/remote_content?g=com.squareup.keywhiz&a=keywhiz&v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
+            <p><a href="http://search.maven.org/#search|ga|1|g:com.squareup.keywhiz" class="dl version-href">&darr; <span class="version-tag">Latest</span> JARs</a></p>
 
             <p>Source code for Keywhiz and this website is
                 <a href="https://github.com/square/keywhiz">available on GitHub</a>.</p>
