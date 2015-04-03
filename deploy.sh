@@ -10,6 +10,9 @@ DIR=temp-clone
 # Delete any existing temporary website clone
 rm -rf $DIR
 
+# Build keywhiz-server for API docs
+mvn package -am -DskipTests -pl server
+
 # Clone the current repo into temp folder
 git clone $REPO $DIR
 
@@ -26,7 +29,7 @@ rm -rf *
 cp -R ../website/* .
 
 # Download the latest javadoc to directories like 'javadoc-server' or 'javadoc-client'.
-for DOCUMENTED_ARTIFACT in keywhiz-server keywhiz-client keywhiz-api
+for DOCUMENTED_ARTIFACT in keywhiz-server keywhiz-client keywhiz-api keywhiz-model keywhiz-hkdf keywhiz-testing
 do
   curl -L "https://search.maven.org/remote_content?g=$GROUP_ID&a=$DOCUMENTED_ARTIFACT&v=LATEST&c=javadoc" > javadoc.zip
   JAVADOC_DIR="javadoc${DOCUMENTED_ARTIFACT//keywhiz/}"
