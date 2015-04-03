@@ -3,6 +3,7 @@
 set -ex
 
 REPO="git@github.com:square/keywhiz.git"
+GROUP_ID="com.squareup.keywhiz"
 
 DIR=temp-clone
 
@@ -24,7 +25,15 @@ rm -rf *
 # Copy website files from real repo
 cp -R ../website/* .
 
-# TODO: add in javadocs
+# Download the latest javadoc to directories like 'javadoc-server' or 'javadoc-client'.
+for DOCUMENTED_ARTIFACT in keywhiz-server keywhiz-client keywhiz-api
+do
+  curl -L "https://search.maven.org/remote_content?g=$GROUP_ID&a=$DOCUMENTED_ARTIFACT&v=LATEST&c=javadoc" > javadoc.zip
+  JAVADOC_DIR="javadoc${DOCUMENTED_ARTIFACT//keywhiz/}"
+  mkdir $JAVADOC_DIR
+  unzip javadoc.zip -d $JAVADOC_DIR
+  rm javadoc.zip
+done
 
 # Stage all files in git and create a commit
 git add .
