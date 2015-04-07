@@ -452,6 +452,38 @@
           </executions>
         </plugin>
 
+        <!-- Checks and fails fast if Java's JCE crypto is crippled. -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>1.4</version>
+          <executions>
+            <execution>
+              <id>enforce-unlimited-crypto-policy</id>
+              <configuration>
+                <rules>
+                  <evaluateBeanshell>
+                    <condition>javax.crypto.Cipher.getMaxAllowedKeyLength("AES") > 128</condition>
+                    <message>
+Please install the unlimited strength JCE crypt policy files for your Java JDK.
+Without these, crypto operations are crippled consistently.
+
+For Java8:
+Download the jars at:
+http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html
+Place the jars in this directory: `/usr/libexec/java_home -v
+1.8`/jre/lib/security/
+                    </message>
+                  </evaluateBeanshell>
+                </rules>
+              </configuration>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
