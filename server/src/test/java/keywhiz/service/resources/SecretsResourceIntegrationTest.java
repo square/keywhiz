@@ -172,9 +172,9 @@ public class SecretsResourceIntegrationTest {
   @Test public void listSecretVersions() throws IOException {
     keywhizClient.login("keywhizAdmin", "adminPass");
 
-    List<String> versions = keywhizClient.getVersionsForSecretName("Multiple_Versioned_Password");
+    List<String> versions = keywhizClient.getVersionsForSecretName("Versioned_Password");
     assertThat(versions).containsOnlyElementsOf(
-        ImmutableList.of("0aae825a73e161e8", "0aae825a73e161f8", "0aae825a73e161g8"));
+        ImmutableList.of("0aae825a73e161d8", "0aae825a73e161e8", "0aae825a73e161f8", "0aae825a73e161g8"));
   }
 
   @Test(expected = KeywhizClient.MalformedRequestException.class)

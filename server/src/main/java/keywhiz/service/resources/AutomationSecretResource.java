@@ -21,7 +21,6 @@ import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -74,12 +73,12 @@ public class AutomationSecretResource {
   }
 
   /**
-   * Create Secret
+   * Create secret
    *
-   * @param request the JSON secret request used to formulate the Secret
+   * @param request the JSON secret request used to formulate the secret
    *
-   * @description Creates a Secret with the name, content, and metadata from a valid secret request
-   * @responseMessage 200 Successfully created Secret
+   * @description Creates a secret with the name, content, and metadata from a valid secret request
+   * @responseMessage 200 Successfully created secret
    * @responseMessage 409 Secret with given name already exists
    */
   @POST
@@ -117,13 +116,14 @@ public class AutomationSecretResource {
   }
 
 /**
-   * Retrieve Secret by a specified name, or all Secret if no name given
+   * Retrieve secret by a specified name, or all secrets if no name given
+   * Note that retrieving all secrets could be an expensive query
    *
    * @optionalParams name
-   * @param name the name of the Secret to retrieve, if provided
+   * @param name the name of the secret to retrieve, if provided
    *
-   * @description Returns a single Secret or a set of all Secrets
-   * @responseMessage 200 Found and retrieved Secret(s)
+   * @description Returns a single secret or a set of all secrets
+   * @responseMessage 200 Found and retrieved secret(s)
    * @responseMessage 404 Secret with given name not found (if name provided)
    */
   @GET
@@ -143,7 +143,7 @@ public class AutomationSecretResource {
           ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
       responseBuilder.add(AutomationSecretResponse.fromSecret(secret, groups));
     } else {
-      Set<SanitizedSecret> secrets = aclDAO.getSanitizedSecretsFor(automationClient);
+      List<SanitizedSecret> secrets = secretController.getSanitizedSecrets();
 
       for (SanitizedSecret sanitizedSecret : secrets) {
         Secret secret = secretController.getSecretByIdAndVersion(
@@ -160,13 +160,13 @@ public class AutomationSecretResource {
   }
 
   /**
-   * Retrieve Secret by ID
+   * Retrieve secret by ID
    *
-   * @param secretId the ID of the Secret to retrieve
+   * @param secretId the ID of the secret to retrieve
    *
-   * @description Returns a single Secret if found
-   * @responseMessage 200 Found and retrieved Secret with given ID
-   * @responseMessage 404 Secret with given ID not Found
+   * @description Returns a single secret if found
+   * @responseMessage 200 Found and retrieved secret with given ID
+   * @responseMessage 404 Secret with given ID not found
    */
   @Path("{secretId}")
   @GET
@@ -186,12 +186,12 @@ public class AutomationSecretResource {
   }
 
   /**
-   * Deletes all versions of a Secret series
+   * Deletes all versions of a secret series
    *
    * @param secretSeries the series to delete
    *
-   * @description Deletes all versions of a Secret series.  This will delete a single Secret ID.
-   * @responseMessage 200 Deleted Secret series
+   * @description Deletes all versions of a secret series.  This will delete a single secret ID.
+   * @responseMessage 200 Deleted secret series
    * @responseMessage 404 Secret series not Found
    */
   @Path("{secretSeries}")
