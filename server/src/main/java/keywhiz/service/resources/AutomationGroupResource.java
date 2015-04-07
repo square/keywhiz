@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
+import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -41,9 +42,10 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.exceptions.ConflictException;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * @parentEndpointName groups-automation
@@ -99,14 +101,25 @@ public class AutomationGroupResource {
    * @responseMessage 404 Group with given name not found (if name provided)
    */
   @GET
-  public GroupDetailResponse getGroupByName(@NotEmpty @QueryParam("name") String name) {
-    Group group = groupDAO.getGroup(name)
-        .orElseThrow(NotFoundException::new);
+  public Response getGroupByName(@QueryParam("name") Optional<String> name) {
+    if (name.isPresent()) {
+      Group group = groupDAO.getGroup(name.get()).orElseThrow(NotFoundException::new);
 
-    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(group));
-    ImmutableList<SanitizedSecret> sanitizedSecrets =
-        ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(group));
-    return GroupDetailResponse.fromGroup(group, sanitizedSecrets, clients);
+      ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(group));
+      ImmutableList<SanitizedSecret> sanitizedSecrets = ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(group));
+      return Response.ok()
+          .entity(GroupDetailResponse.fromGroup(group, sanitizedSecrets, clients))
+          .build();
+    }
+
+    ImmutableList<SanitizedSecret> emptySecrets = ImmutableList.of();
+    ImmutableList<Client> emptyClients = ImmutableList.of();
+    List<GroupDetailResponse> groups = groupDAO.getGroups().stream()
+        .map((g) -> GroupDetailResponse.fromGroup(g, emptySecrets, emptyClients))
+        .collect(toList());
+    return Response.ok()
+        .entity(groups)
+        .build();
   }
 
   /**
@@ -120,7 +133,7 @@ public class AutomationGroupResource {
    */
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
-  public Response createGroup(
+  public Group createGroup(
       @Auth AutomationClient automationClient,
       @Valid CreateGroupRequest groupRequest) {
 
@@ -132,8 +145,6 @@ public class AutomationGroupResource {
 
     long id = groupDAO.createGroup(groupRequest.name, automationClient.getName(),
         Optional.ofNullable(groupRequest.description));
-    group = groupDAO.getGroupById(id);
-
-    return Response.ok().entity(group.get()).build();
+    return groupDAO.getGroupById(id).get();
   }
 }

@@ -32,16 +32,18 @@ import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.GroupDAO;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
 public class AutomationGroupResourceTest {
+  @Rule public TestRule mockito = new MockitoJUnitRule(this);
+
   @Mock GroupDAO groupDAO;
   @Mock AclDAO aclDAO;
   User user = User.named("user");
@@ -51,13 +53,11 @@ public class AutomationGroupResourceTest {
 
   AutomationGroupResource resource;
 
-  @Before
-  public void setUp() {
+  @Before public void setUp() {
     resource = new AutomationGroupResource(groupDAO, aclDAO);
   }
 
-  @Test
-  public void findGroupById() {
+  @Test public void findGroupById() {
     Group group = new Group(50, "testGroup", "testing group", now, "automation client", now, "automation client");
     when(groupDAO.getGroupById(50)).thenReturn(Optional.of(group));
     when(aclDAO.getClientsFor(group)).thenReturn(ImmutableSet.of());
@@ -69,8 +69,7 @@ public class AutomationGroupResourceTest {
     assertThat(response).isEqualTo(expectedResponse);
   }
 
-  @Test
-  public void findGroupByName() {
+  @Test public void findGroupByName() {
     Group group = new Group(50, "testGroup", "testing group", now, "automation client", now, "automation client");
     when(groupDAO.getGroup("testGroup")).thenReturn(Optional.of(group));
     when(aclDAO.getClientsFor(group)).thenReturn(ImmutableSet.of());
@@ -78,12 +77,11 @@ public class AutomationGroupResourceTest {
 
     GroupDetailResponse expectedResponse = GroupDetailResponse.fromGroup(group,
         ImmutableList.of(), ImmutableList.of());
-    GroupDetailResponse response = resource.getGroupByName("testGroup");
-    assertThat(response).isEqualTo(expectedResponse);
+    Response response = resource.getGroupByName(Optional.of("testGroup"));
+    assertThat(response.getEntity()).isEqualTo(expectedResponse);
   }
 
-  @Test
-  public void groupIncludesClientsAndSecrets() {
+  @Test public void groupIncludesClientsAndSecrets() {
     Group group = new Group(50, "testGroup", "testing group", now, "automation client", now, "automation client");
     Client groupClient =
         new Client(1, "firstClient", "Group client", now, "test", now, "test", true, true);
@@ -97,15 +95,13 @@ public class AutomationGroupResourceTest {
     when(aclDAO.getSanitizedSecretsFor(group))
         .thenReturn(ImmutableSet.of(firstGroupSecret, secondGroupSecret));
 
-
     GroupDetailResponse expectedResponse = GroupDetailResponse.fromGroup(group,
         ImmutableList.of(firstGroupSecret, secondGroupSecret), ImmutableList.of(groupClient));
-    GroupDetailResponse response = resource.getGroupByName("testGroup");
-    assertThat(response).isEqualTo(expectedResponse);
+    Response response = resource.getGroupByName(Optional.of("testGroup"));
+    assertThat(response.getEntity()).isEqualTo(expectedResponse);
   }
 
-  @Test
-  public void createNewGroup() {
+  @Test public void createNewGroup() {
     Group group = new Group(50, "testGroup", "testing group", now, "automation client", now, "automation client");
 
     CreateGroupRequest request = new CreateGroupRequest("testGroup", null);
@@ -113,8 +109,8 @@ public class AutomationGroupResourceTest {
     when(groupDAO.getGroup("testGroup")).thenReturn(Optional.empty());
     when(groupDAO.createGroup(group.getName(), automation.getName(), Optional.empty())).thenReturn(500L);
     when(groupDAO.getGroupById(500L)).thenReturn(Optional.of(group));
-    Response response = resource.createGroup(automation, request);
+    Group responseGroup = resource.createGroup(automation, request);
 
-    assertThat(response.getEntity()).isEqualTo(group);
+    assertThat(responseGroup).isEqualTo(group);
   }
 }
