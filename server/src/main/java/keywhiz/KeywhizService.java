@@ -29,9 +29,11 @@ import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import javax.servlet.DispatcherType;
 import keywhiz.auth.mutualssl.ClientCertificateFilter;
 import keywhiz.auth.xsrf.XsrfServletFilter;
 import keywhiz.commands.MigrateCommand;
@@ -156,11 +158,14 @@ public class KeywhizService extends Application<KeywhizConfig> {
     logger.debug("Registering resource filters");
     jersey.register(injector.getInstance(ClientCertificateFilter.class));
 
-    logger.debug("Registering response filters");
-    jersey.register(injector.getInstance(SecurityHeadersFilter.class));
+    logger.debug("Registering servlet filters");
+    environment.servlets().addFilter("security-headers-filter", injector.getInstance(SecurityHeadersFilter.class))
+        .addMappingForUrlPatterns(
+            null, /* Default is for requests */
+            false /* Can be after other filters */,
+            "/*" /* Every request */);
     jersey.register(injector.getInstance(CookieRenewingFilter.class));
 
-    logger.debug("Registering servlet filters");
     environment.servlets().addFilter("xsrf-filter", injector.getInstance(XsrfServletFilter.class))
         .addMappingForUrlPatterns(
             null /* Default is for requests */,

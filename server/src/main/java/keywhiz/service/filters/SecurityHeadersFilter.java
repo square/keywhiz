@@ -18,10 +18,13 @@ package keywhiz.service.filters;
 import com.google.common.net.HttpHeaders;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.core.MultivaluedMap;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
 
 import static java.lang.String.format;
 
@@ -36,24 +39,35 @@ import static java.lang.String.format;
  *   IE X-Content-Type-Options: http://msdn.microsoft.com/en-us/library/ie/gg622941(v=vs.85).aspx
  *   IE X-XSS-Protection: http://blogs.msdn.com/b/ie/archive/2008/07/02/ie8-security-part-iv-the-xss-filter.aspx
  */
-public class SecurityHeadersFilter implements ContainerResponseFilter {
-  private static final long YEAR_OF_SECONDS = TimeUnit.DAYS.convert(365, TimeUnit.SECONDS);
+public class SecurityHeadersFilter implements Filter {
+  private static final long YEAR_OF_SECONDS = TimeUnit.SECONDS.convert(365, TimeUnit.DAYS);
 
-  @Override public void filter(ContainerRequestContext request, ContainerResponseContext response)
-      throws IOException {
-    MultivaluedMap<String, Object> headers = response.getHeaders();
+  @Override public void init(FilterConfig filterConfig) throws ServletException {
+  }
 
-    // The X-* CSP headers are transitional and used by some versions of Firefox and Chrome.
-    headers.add(HttpHeaders.CONTENT_SECURITY_POLICY, "default-src 'self'");
-    headers.add("X-Content-Security-Policy", "default-src 'self'");
-    headers.add("X-WebKit-CSP", "default-src 'self'");
+  @Override public void doFilter(ServletRequest request, ServletResponse response,
+      FilterChain chain) throws IOException, ServletException {
+    if (response instanceof HttpServletResponse) {
+      HttpServletResponse r = (HttpServletResponse) response;
 
-    headers.add("Frame-Options", "DENY");
-    headers.add(HttpHeaders.X_FRAME_OPTIONS, "DENY");
+      // Defense against XSS. We don't care about IE's Content-Security-Policy because it's useless
+      r.addHeader("X-Content-Security-Policy", "default-src 'self'");
+      r.addHeader(HttpHeaders.X_XSS_PROTECTION, "0"); // With CSP, we don't need crazy magic
 
-    headers.add(HttpHeaders.X_CONTENT_TYPE_OPTIONS, "nosniff");
-    headers.add(HttpHeaders.X_XSS_PROTECTION, "1; mode=block");
-    headers.add(HttpHeaders.STRICT_TRANSPORT_SECURITY,
-        format("max-age=%d; includeSubDomains", YEAR_OF_SECONDS));
+      // Tell IE not to do silly things
+      r.addHeader(HttpHeaders.X_CONTENT_TYPE_OPTIONS, "nosniff");
+
+      // Protection against click jacking
+      r.addHeader("Frame-Options", "DENY"); // Who uses this?
+      r.addHeader(HttpHeaders.X_FRAME_OPTIONS, "DENY");
+
+      // https-all-the-time
+      r.addHeader(HttpHeaders.STRICT_TRANSPORT_SECURITY,
+          format("max-age=%d; includeSubDomains", YEAR_OF_SECONDS));
+    }
+    chain.doFilter(request, response);
+  }
+
+  @Override public void destroy() {
   }
 }
