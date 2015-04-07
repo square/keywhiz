@@ -31,6 +31,7 @@ import keywhiz.KeywhizService;
 import keywhiz.TestClients;
 import keywhiz.api.CreateGroupRequest;
 import keywhiz.api.GroupDetailResponse;
+import keywhiz.api.model.Group;
 import keywhiz.client.KeywhizClient;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -94,7 +95,7 @@ public class AutomationGroupResourceIntegrationTest {
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
         .url("/automation/groups")
-        .addHeader("Content-Type", MediaType.APPLICATION_JSON)
+        .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
         .build();
 
@@ -108,11 +109,40 @@ public class AutomationGroupResourceIntegrationTest {
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
         .url("/automation/groups")
-        .addHeader("Content-Type", MediaType.APPLICATION_JSON)
+        .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
         .build();
 
     Response response = mutualSslClient.newCall(post).execute();
     assertThat(response.code()).isEqualTo(409);
+  }
+
+  @Test public void deleteGroup() throws Exception {
+    String body = mapper.writeValueAsString(
+        new CreateGroupRequest("short-lived", "group-description"));
+    Request post = new Request.Builder()
+        .post(RequestBody.create(KeywhizClient.JSON, body))
+        .url("/automation/groups")
+        .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+        .build();
+    Response response = mutualSslClient.newCall(post).execute();
+    assertThat(response.code()).isEqualTo(200);
+    long groupId = mapper.readValue(response.body().string(), Group.class).getId();
+
+    Request delete = new Request.Builder()
+        .delete()
+        .url("/automation/groups/" + groupId)
+        .build();
+    response = mutualSslClient.newCall(delete).execute();
+    assertThat(response.code()).isEqualTo(200);
+
+    Request lookup = new Request.Builder()
+        .get()
+        .url("/automation/groups/" + groupId)
+        .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+        .build();
+    response = mutualSslClient.newCall(lookup).execute();
+    assertThat(response.code()).isEqualTo(404);
   }
 }
