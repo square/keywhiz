@@ -9,6 +9,7 @@ target/
 .project
 .settings
 eclipsebin
+website/apidocs/
 *.iml
 *.ipr
 *.iws
