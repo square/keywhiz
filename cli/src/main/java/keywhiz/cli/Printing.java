@@ -39,7 +39,7 @@ public class Printing {
     this.keywhizClient = keywhizClient;
   }
 
-  public void printClient(Client client, List<String> options) {
+  public void printClientWithDetails(Client client, List<String> options) {
     System.out.println(client.getName());
     ClientDetailResponse clientDetails;
     try {
@@ -63,7 +63,7 @@ public class Printing {
     }
   }
 
-  public void printGroup(Group group, List<String> options) {
+  public void printGroupWithDetails(Group group, List<String> options) {
     System.out.println(group.getName());
     GroupDetailResponse groupDetails;
     try {
@@ -87,7 +87,7 @@ public class Printing {
     }
   }
 
-  public void printSanitizedSecret(SanitizedSecret secret, List<String> options) {
+  public void printSanitizedSecretWithDetails(SanitizedSecret secret, List<String> options) {
     System.out.println(SanitizedSecret.displayName(secret));
     SecretDetailResponse secretDetails;
     try {
@@ -118,21 +118,21 @@ public class Printing {
     }
   }
 
-  public void printAllClients(List<Client> clients, List<String> options) {
+  public void printAllClients(List<Client> clients) {
     clients.stream()
         .sorted(Comparator.comparing(Client::getName))
-        .forEach(c -> printClient(c, options));
+        .forEach(c -> System.out.println(c.getName()));
   }
 
-  public void printAllGroups(List<Group> groups, List<String> options) {
+  public void printAllGroups(List<Group> groups) {
     groups.stream()
         .sorted(Comparator.comparing(Group::getName))
-        .forEach(g -> printGroup(g, options));
+        .forEach(g -> System.out.println(g.getName()));
   }
 
-  public void printAllSanitizedSecrets(List<SanitizedSecret> secrets, List<String> options) {
+  public void printAllSanitizedSecrets(List<SanitizedSecret> secrets) {
     secrets.stream()
         .sorted(Comparator.comparing(SanitizedSecret::name))
-        .forEach(s -> printSanitizedSecret(s, options));
+        .forEach(s -> System.out.println(SanitizedSecret.displayName(s)));
   }
 }

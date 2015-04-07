@@ -40,8 +40,7 @@ public class ListAction implements Runnable {
     List<String> listOptions = listActionConfig.listOptions;
     if (listOptions == null) {
       try {
-        printing.printAllSanitizedSecrets(keywhizClient.allSecrets(),
-            Arrays.asList("groups", "clients", "metadata"));
+        printing.printAllSanitizedSecrets(keywhizClient.allSecrets());
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
@@ -54,15 +53,15 @@ public class ListAction implements Runnable {
     try {
       switch (firstOption) {
         case "groups":
-          printing.printAllGroups(keywhizClient.allGroups(), options);
+          printing.printAllGroups(keywhizClient.allGroups());
           break;
 
         case "clients":
-          printing.printAllClients(keywhizClient.allClients(), options);
+          printing.printAllClients(keywhizClient.allClients());
           break;
 
         case "secrets":
-          printing.printAllSanitizedSecrets(keywhizClient.allSecrets(), options);
+          printing.printAllSanitizedSecrets(keywhizClient.allSecrets());
           break;
 
         default:
