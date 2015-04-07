@@ -47,7 +47,7 @@ public class ListActionTest {
   public void listCallsPrintForListAll() throws Exception {
     listActionConfig.listOptions = null;
     listAction.run();
-    verify(printing).printAllSanitizedSecrets(keywhizClient.allSecrets(), Arrays.asList("groups", "clients", "metadata"));
+    verify(printing).printAllSanitizedSecrets(keywhizClient.allSecrets());
   }
 
   @Test
@@ -55,7 +55,7 @@ public class ListActionTest {
     listActionConfig.listOptions = Arrays.asList("groups");
     listAction.run();
 
-    verify(printing).printAllGroups(keywhizClient.allGroups(), listActionConfig.listOptions);
+    verify(printing).printAllGroups(keywhizClient.allGroups());
   }
 
   @Test
@@ -63,7 +63,7 @@ public class ListActionTest {
     listActionConfig.listOptions = Arrays.asList("clients");
     listAction.run();
 
-    verify(printing).printAllClients(keywhizClient.allClients(), listActionConfig.listOptions);
+    verify(printing).printAllClients(keywhizClient.allClients());
   }
 
   @Test
@@ -71,7 +71,7 @@ public class ListActionTest {
     listActionConfig.listOptions = Arrays.asList("secrets");
     listAction.run();
 
-    verify(printing).printAllSanitizedSecrets(keywhizClient.allSecrets(), listActionConfig.listOptions);
+    verify(printing).printAllSanitizedSecrets(keywhizClient.allSecrets());
   }
 
   @Test(expected = AssertionError.class)
