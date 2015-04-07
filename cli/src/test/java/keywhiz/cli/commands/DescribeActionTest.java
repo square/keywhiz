@@ -66,7 +66,7 @@ public class DescribeActionTest {
     when(keywhizClient.getGroupByName(anyString())).thenReturn(group);
 
     describeAction.run();
-    verify(printing).printGroup(group, Arrays.asList("clients", "secrets"));
+    verify(printing).printGroupWithDetails(group, Arrays.asList("clients", "secrets"));
   }
 
   @Test
@@ -78,7 +78,7 @@ public class DescribeActionTest {
     when(keywhizClient.getClientByName(describeActionConfig.name)).thenReturn(client);
 
     describeAction.run();
-    verify(printing).printClient(client, Arrays.asList("groups", "secrets"));
+    verify(printing).printClientWithDetails(client, Arrays.asList("groups", "secrets"));
   }
 
   @Test
@@ -90,7 +90,7 @@ public class DescribeActionTest {
         .thenReturn(sanitizedSecret);
 
     describeAction.run();
-    verify(printing).printSanitizedSecret(sanitizedSecret,
+    verify(printing).printSanitizedSecretWithDetails(sanitizedSecret,
         Arrays.asList("groups", "clients", "metadata"));
   }
 

@@ -20,10 +20,9 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import java.util.List;
 
-@Parameters(commandDescription = "List information about groups, clients, or secrets." +
-    "Use multiple comma-separated values to see nested details.")
+@Parameters(commandDescription = "List groups, clients, or secrets.")
 public class ListActionConfig {
 
-  @Parameter(description = "[<groups|clients|secrets>,...]")
+  @Parameter(description = "[<groups|clients|secrets>]")
   public List<String> listOptions;
 }
