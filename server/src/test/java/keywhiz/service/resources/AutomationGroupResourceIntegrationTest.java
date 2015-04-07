@@ -16,12 +16,14 @@
 
 package keywhiz.service.resources;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import io.dropwizard.jackson.Jackson;
+import java.util.List;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import keywhiz.IntegrationTestRule;
@@ -47,8 +49,7 @@ public class AutomationGroupResourceIntegrationTest {
     mutualSslClient = TestClients.mutualSslClient();
   }
 
-  @Test
-  public void findGroup() throws Exception {
+  @Test public void findGroup() throws Exception {
     Request get = new Request.Builder()
         .get()
         .url("/automation/groups?name=Web")
@@ -58,12 +59,26 @@ public class AutomationGroupResourceIntegrationTest {
     Response response = mutualSslClient.newCall(get).execute();
     assertThat(response.code()).isEqualTo(200);
 
-    GroupDetailResponse groupedResponse = mapper.readValue(response.body().string(), GroupDetailResponse.class);
-    assertThat(groupedResponse.getId()).isEqualTo(918);
+    GroupDetailResponse groupResponse = mapper.readValue(response.body().string(), GroupDetailResponse.class);
+    assertThat(groupResponse.getId()).isEqualTo(918);
   }
 
-  @Test
-  public void findGroupNotFound() throws Exception {
+  @Test public void findAllGroups() throws Exception {
+    Request get = new Request.Builder()
+        .get()
+        .url("/automation/groups")
+        .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+        .build();
+
+    Response response = mutualSslClient.newCall(get).execute();
+    assertThat(response.code()).isEqualTo(200);
+
+    List<GroupDetailResponse> groups = mapper.readValue(response.body().string(),
+        new TypeReference<List<GroupDetailResponse>>() {});
+    assertThat(groups).extracting("name").contains("Blackops", "Security", "Web", "iOS");
+  }
+
+  @Test public void findGroupNotFound() throws Exception {
     Request get = new Request.Builder()
         .get()
         .url("/automation/groups?name=non-existent-group")
@@ -73,9 +88,8 @@ public class AutomationGroupResourceIntegrationTest {
     assertThat(response.code()).isEqualTo(404);
   }
 
-  @Test
-  public void createGroup() throws Exception {
-    CreateGroupRequest request = new CreateGroupRequest("newgroup","group-description");
+  @Test public void createGroup() throws Exception {
+    CreateGroupRequest request = new CreateGroupRequest("newgroup", "group-description");
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
@@ -88,9 +102,8 @@ public class AutomationGroupResourceIntegrationTest {
     assertThat(response.code()).isEqualTo(200);
   }
 
-  @Test
-  public void createGroupRedundant() throws Exception {
-    CreateGroupRequest request = new CreateGroupRequest("Web","group-description");
+  @Test public void createGroupRedundant() throws Exception {
+    CreateGroupRequest request = new CreateGroupRequest("Web", "group-description");
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
