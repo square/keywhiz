@@ -30,16 +30,18 @@ import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
 public class AutomationClientResourceTest {
+  @Rule public TestRule mockito = new MockitoJUnitRule(this);
+
   @Mock ClientDAO clientDAO;
   @Mock AclDAO aclDAO;
   User user = User.named("user");
@@ -49,13 +51,11 @@ public class AutomationClientResourceTest {
 
   AutomationClientResource resource;
 
-  @Before
-  public void setUp() {
+  @Before public void setUp() {
     resource = new AutomationClientResource(clientDAO, aclDAO);
   }
 
-  @Test
-  public void findClientByName() {
+  @Test public void findClientByName() {
     Client client = new Client(2, "client", "2nd client", now, "test", now, "test", true, false);
     Group firstGroup = new Group(1, "first Group", "testing group", now, "client", now, "client");
     Group secondGroup = new Group(2, "second Group", "testing group", now, "client", now, "client");
@@ -65,7 +65,7 @@ public class AutomationClientResourceTest {
     when(clientDAO.getClient("client")).thenReturn(Optional.of(client));
     when(aclDAO.getGroupsFor(client)).thenReturn(ImmutableSet.of(firstGroup, secondGroup));
 
-    Response response = resource.findClient(automation, "client");
+    Response response = resource.findClient(automation, Optional.of("client"));
     assertThat(response.getEntity()).hasSameClassAs(expectedClient);
     ClientDetailResponse actualResponse = (ClientDetailResponse) response.getEntity();
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedClient);
@@ -74,11 +74,10 @@ public class AutomationClientResourceTest {
   @Test(expected = NotFoundException.class)
   public void findClientByNameNotFound() {
     when(clientDAO.getClient("client")).thenReturn(Optional.empty());
-    resource.findClient(automation, "client");
+    resource.findClient(automation, Optional.of("client"));
   }
 
-  @Test
-  public void createNewClient() {
+  @Test public void createNewClient() {
     Client client = new Client(543L, "client", "2nd client", now, "test", now, "test", true, false);
 
     CreateClientRequest request = new CreateClientRequest("client");
@@ -95,8 +94,7 @@ public class AutomationClientResourceTest {
     assertThat(response.name).isEqualTo(response1.name);
   }
 
-  @Test
-  public void createNewClientAlreadyExists() {
+  @Test public void createNewClientAlreadyExists() {
     Client client = new Client(543L, "client", "2nd client", now, "test", now, "test", true, false);
 
     CreateClientRequest request = new CreateClientRequest("client");
