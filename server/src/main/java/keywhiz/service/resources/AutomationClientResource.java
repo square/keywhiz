@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -48,7 +49,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @parentEndpointName clients-automation
- *
  * @resourcePath /automation/clients
  * @resourceDescription Create and retrieve clients
  */
@@ -58,7 +58,6 @@ public class AutomationClientResource {
   private static final Logger logger = LoggerFactory.getLogger(ClientsResource.class);
   private final ClientDAO clientDAO;
   private final AclDAO aclDAO;
-
 
   @Inject
   public AutomationClientResource(ClientDAO clientDAO, AclDAO aclDAO) {
@@ -70,7 +69,6 @@ public class AutomationClientResource {
    * Retrieve Client by ID
    *
    * @param clientId the ID of the Client to retrieve
-   *
    * @description Returns a single Client if found
    * @responseMessage 200 Found and retrieved Client with given ID
    * @responseMessage 404 Client with given ID not Found
@@ -94,9 +92,8 @@ public class AutomationClientResource {
   /**
    * Retrieve Client by a specified name, or all Clients if no name given
    *
-   * @optionalParams name
    * @param name the name of the Client to retrieve, if provided
-   *
+   * @optionalParams name
    * @description Returns a single Client or a set of all Clients
    * @responseMessage 200 Found and retrieved Client(s)
    * @responseMessage 404 Client with given name not found (if name provided)
@@ -111,7 +108,8 @@ public class AutomationClientResource {
     if (name == null) {
       Set<Client> clients = clientDAO.getClients();
       clients.stream()
-          .map(c -> ClientDetailResponse.fromClient(c, ImmutableList.copyOf(aclDAO.getGroupsFor(c)), ImmutableList.of()))
+          .map(c -> ClientDetailResponse.fromClient(c, ImmutableList.copyOf(aclDAO.getGroupsFor(c)),
+              ImmutableList.of()))
           .collect(Collectors.toSet());
       response = Response.ok().entity(clients).build();
     } else {
@@ -131,7 +129,6 @@ public class AutomationClientResource {
    * Create Client
    *
    * @param clientRequest the JSON client request used to formulate the Client
-   *
    * @description Creates a Client with the name from a valid client request
    * @responseMessage 200 Successfully created Client
    * @responseMessage 409 Client with given name already exists
@@ -144,13 +141,32 @@ public class AutomationClientResource {
 
     Optional<Client> client = clientDAO.getClient(clientRequest.name);
     if (client.isPresent()) {
-      logger.info("Automation ({}) - Client {} already exists", automationClient.getName(), clientRequest.name);
+      logger.info("Automation ({}) - Client {} already exists", automationClient.getName(),
+          clientRequest.name);
       throw new ConflictException("Client name already exists.");
     }
 
-    long id = clientDAO.createClient(clientRequest.name, automationClient.getName(), Optional.empty());
+    long id =
+        clientDAO.createClient(clientRequest.name, automationClient.getName(), Optional.empty());
     client = clientDAO.getClientById(id);
 
     return ClientDetailResponse.fromClient(client.get(), ImmutableList.of(), ImmutableList.of());
+  }
+
+  /**
+   * Deletes a client
+   *
+   * @param clientId the ID of the client to delete
+   * @description Deletes a single client by id
+   * @responseMessage 200 Deleted client
+   * @responseMessage 404 Client not found by id
+   */
+  @DELETE
+  @Path("{clientId}")
+  public Response deleteGroup(@Auth AutomationClient automationClient,
+      @PathParam("clientId") LongParam clientId) {
+    Client client = clientDAO.getClientById(clientId.get()).orElseThrow(NotFoundException::new);
+    clientDAO.deleteClient(client);
+    return Response.ok().build();
   }
 }
