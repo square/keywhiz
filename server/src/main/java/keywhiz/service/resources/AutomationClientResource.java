@@ -20,12 +20,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -45,6 +44,8 @@ import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.exceptions.ConflictException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * @parentEndpointName clients-automation
@@ -104,27 +105,22 @@ public class AutomationClientResource {
   @GET
   public Response findClient(
       @Auth AutomationClient automationClient,
-      @Nullable @QueryParam("name") String name) {
+      @QueryParam("name") Optional<String> name) {
     logger.info("Automation ({}) - Looking up a name {}", automationClient.getName(), name);
 
-    Response response;
-    if (name == null) {
-      Set<Client> clients = clientDAO.getClients();
-      clients.stream()
-          .map(c -> ClientDetailResponse.fromClient(c, ImmutableList.copyOf(aclDAO.getGroupsFor(c)), ImmutableList.of()))
-          .collect(Collectors.toSet());
-      response = Response.ok().entity(clients).build();
-    } else {
-      Client client = clientDAO.getClient(name)
-          .orElseThrow(NotFoundException::new);
+    if (name.isPresent()) {
+      Client client = clientDAO.getClient(name.get()).orElseThrow(NotFoundException::new);
       ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(client));
-
-      response = Response.ok()
+      return Response.ok()
           .entity(ClientDetailResponse.fromClient(client, groups, ImmutableList.of()))
           .build();
     }
 
-    return response;
+    List<ClientDetailResponse> clients = clientDAO.getClients().stream()
+        .map(c -> ClientDetailResponse.fromClient(c, ImmutableList.copyOf(aclDAO.getGroupsFor(c)),
+            ImmutableList.of()))
+        .collect(toList());
+    return Response.ok().entity(clients).build();
   }
 
   /**
@@ -148,9 +144,28 @@ public class AutomationClientResource {
       throw new ConflictException("Client name already exists.");
     }
 
-    long id = clientDAO.createClient(clientRequest.name, automationClient.getName(), Optional.empty());
+    long id = clientDAO.createClient(clientRequest.name, automationClient.getName(),
+        Optional.empty());
     client = clientDAO.getClientById(id);
 
     return ClientDetailResponse.fromClient(client.get(), ImmutableList.of(), ImmutableList.of());
+  }
+
+  /**
+   * Deletes a client
+   *
+   * @param clientId the ID of the client to delete
+   *
+   * @description Deletes a single client by id
+   * @responseMessage 200 Deleted client
+   * @responseMessage 404 Client not found by id
+   */
+  @DELETE
+  @Path("{clientId}")
+  public Response deleteClient(@Auth AutomationClient automationClient,
+      @PathParam("clientId") LongParam clientId) {
+    Client client = clientDAO.getClientById(clientId.get()).orElseThrow(NotFoundException::new);
+    clientDAO.deleteClient(client);
+    return Response.ok().build();
   }
 }
