@@ -127,8 +127,8 @@ public class AutomationSecretResource {
    * @responseMessage 404 Secret with given name not found (if name provided)
    */
   @GET
-  public ImmutableList<AutomationSecretResponse> readSecretById(@Auth AutomationClient automationClient,
-      @QueryParam("name") String name) {
+  public ImmutableList<AutomationSecretResponse> readSecrets(
+      @Auth AutomationClient automationClient, @QueryParam("name") String name) {
 
     ImmutableList.Builder<AutomationSecretResponse> responseBuilder = ImmutableList.builder();
 
@@ -170,7 +170,7 @@ public class AutomationSecretResource {
    */
   @Path("{secretId}")
   @GET
-  public AutomationSecretResponse readSecrets(@Auth AutomationClient automationClient,
+  public AutomationSecretResponse readSecretById(@Auth AutomationClient automationClient,
       @PathParam("secretId") LongParam secretId) {
 
     List<Secret> secrets = secretController.getSecretsById(secretId.get());
