@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -81,8 +82,7 @@ public class AutomationGroupResource {
   public GroupDetailResponse getGroupById(
       @Auth AutomationClient automationClient,
       @PathParam("groupId") LongParam groupId) {
-    Group group = groupDAO.getGroupById(groupId.get())
-        .orElseThrow(NotFoundException::new);
+    Group group = groupDAO.getGroupById(groupId.get()).orElseThrow(NotFoundException::new);
 
     ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(group));
     ImmutableList<SanitizedSecret> sanitizedSecrets =
@@ -146,5 +146,23 @@ public class AutomationGroupResource {
     long id = groupDAO.createGroup(groupRequest.name, automationClient.getName(),
         Optional.ofNullable(groupRequest.description));
     return groupDAO.getGroupById(id).get();
+  }
+
+  /**
+   * Deletes a group
+   *
+   * @param groupId the ID of the group to delete
+   *
+   * @description Deletes a single group by id
+   * @responseMessage 200 Deleted group
+   * @responseMessage 404 Group not found by id
+   */
+  @DELETE
+  @Path("{groupId}")
+  public Response deleteGroup(@Auth AutomationClient automationClient,
+      @PathParam("groupId") LongParam groupId) {
+    Group group = groupDAO.getGroupById(groupId.get()).orElseThrow(NotFoundException::new);
+    groupDAO.deleteGroup(group);
+    return Response.ok().build();
   }
 }
