@@ -38,9 +38,7 @@ server:
       port: 8085
 
 logging:
-  appenders:
-    - type: console
-      threshold: ALL
+  level: ALL
 
 environment: development
 
