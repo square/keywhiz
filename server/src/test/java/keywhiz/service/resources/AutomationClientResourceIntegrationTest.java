@@ -27,6 +27,7 @@ import javax.ws.rs.core.MediaType;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
+import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.CreateClientRequest;
 import keywhiz.client.KeywhizClient;
 import org.junit.Before;
@@ -65,7 +66,7 @@ public class AutomationClientResourceIntegrationTest {
         .post(body)
         .url("/automation/clients")
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
-        .addHeader("Content-Type", MediaType.APPLICATION_JSON)
+        .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .build();
 
     Response httpResponse = mutualSslClient.newCall(post).execute();
@@ -74,16 +75,43 @@ public class AutomationClientResourceIntegrationTest {
 
   @Test public void addClientRedundant() throws Exception {
     CreateClientRequest request = new CreateClientRequest("CN=User1");
-    String requestJSON = mapper.writeValueAsString(request);
-    RequestBody body = RequestBody.create(KeywhizClient.JSON, requestJSON);
+    String json = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
-        .post(body)
+        .post(RequestBody.create(KeywhizClient.JSON, json))
         .url("/automation/clients")
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
-        .addHeader("Content-Type", MediaType.APPLICATION_JSON)
+        .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .build();
 
     Response httpResponse = mutualSslClient.newCall(post).execute();
     assertThat(httpResponse.code()).isEqualTo(409);
+  }
+
+  @Test public void deleteClient() throws Exception {
+    String json = mapper.writeValueAsString(new CreateClientRequest("ShortLived"));
+    Request post = new Request.Builder()
+        .post(RequestBody.create(KeywhizClient.JSON, json))
+        .url("/automation/clients")
+        .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+        .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+    Response response = mutualSslClient.newCall(post).execute();
+    assertThat(response.code()).isEqualTo(200);
+
+    long clientId = mapper.readValue(response.body().string(), ClientDetailResponse.class).id;
+    Request delete = new Request.Builder()
+        .delete()
+        .url("/automation/clients/" + clientId)
+        .build();
+    response = mutualSslClient.newCall(delete).execute();
+    assertThat(response.code()).isEqualTo(200);
+
+    Request lookup = new Request.Builder()
+        .get()
+        .url("/automation/clients/" + clientId)
+        .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+        .build();
+    response = mutualSslClient.newCall(lookup).execute();
+    assertThat(response.code()).isEqualTo(404);
   }
 }

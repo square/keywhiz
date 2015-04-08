@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -143,9 +144,28 @@ public class AutomationClientResource {
       throw new ConflictException("Client name already exists.");
     }
 
-    long id = clientDAO.createClient(clientRequest.name, automationClient.getName(), Optional.empty());
+    long id = clientDAO.createClient(clientRequest.name, automationClient.getName(),
+        Optional.empty());
     client = clientDAO.getClientById(id);
 
     return ClientDetailResponse.fromClient(client.get(), ImmutableList.of(), ImmutableList.of());
+  }
+
+  /**
+   * Deletes a client
+   *
+   * @param clientId the ID of the client to delete
+   *
+   * @description Deletes a single client by id
+   * @responseMessage 200 Deleted client
+   * @responseMessage 404 Client not found by id
+   */
+  @DELETE
+  @Path("{clientId}")
+  public Response deleteClient(@Auth AutomationClient automationClient,
+      @PathParam("clientId") LongParam clientId) {
+    Client client = clientDAO.getClientById(clientId.get()).orElseThrow(NotFoundException::new);
+    clientDAO.deleteClient(client);
+    return Response.ok().build();
   }
 }
