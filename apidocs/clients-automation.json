@@ -10,7 +10,7 @@
       "nickname" : "findClient",
       "type" : "Response",
       "parameters" : [ {
-        "type" : "string",
+        "type" : "Optional",
         "description" : "the name of the Client to retrieve, if provided",
         "paramType" : "query",
         "name" : "name"
@@ -74,6 +74,27 @@
       }, {
         "code" : 404,
         "message" : "Client with given ID not Found"
+      } ],
+      "produces" : [ "application/json" ]
+    }, {
+      "method" : "DELETE",
+      "nickname" : "deleteClient",
+      "type" : "Response",
+      "parameters" : [ {
+        "type" : "LongParam",
+        "description" : "the ID of the client to delete",
+        "paramType" : "path",
+        "name" : "clientId",
+        "required" : true
+      } ],
+      "summary" : "Deletes a client",
+      "notes" : "Deletes a single client by id",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Deleted client"
+      }, {
+        "code" : 404,
+        "message" : "Client not found by id"
       } ],
       "produces" : [ "application/json" ]
     } ]
@@ -216,6 +237,17 @@
         },
         "updatedAt" : {
           "type" : "OffsetDateTime"
+        }
+      }
+    },
+    "Optional" : {
+      "id" : "Optional",
+      "properties" : {
+        "present" : {
+          "type" : "boolean"
+        },
+        "value" : {
+          "type" : "string"
         }
       }
     },

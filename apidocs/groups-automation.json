@@ -8,9 +8,9 @@
     "operations" : [ {
       "method" : "GET",
       "nickname" : "getGroupByName",
-      "type" : "GroupDetailResponse",
+      "type" : "Response",
       "parameters" : [ {
-        "type" : "string",
+        "type" : "Optional",
         "description" : "the name of the Group to retrieve, if provided",
         "paramType" : "query",
         "name" : "name"
@@ -28,7 +28,7 @@
     }, {
       "method" : "POST",
       "nickname" : "createGroup",
-      "type" : "Response",
+      "type" : "Group",
       "parameters" : [ {
         "type" : "AutomationClient",
         "paramType" : "body",
@@ -74,6 +74,27 @@
       }, {
         "code" : 404,
         "message" : "Group with given ID not Found"
+      } ],
+      "produces" : [ "application/json" ]
+    }, {
+      "method" : "DELETE",
+      "nickname" : "deleteGroup",
+      "type" : "Response",
+      "parameters" : [ {
+        "type" : "LongParam",
+        "description" : "the ID of the group to delete",
+        "paramType" : "path",
+        "name" : "groupId",
+        "required" : true
+      } ],
+      "summary" : "Deletes a group",
+      "notes" : "Deletes a single group by id",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Deleted group"
+      }, {
+        "code" : 404,
+        "message" : "Group not found by id"
       } ],
       "produces" : [ "application/json" ]
     } ]
@@ -192,6 +213,33 @@
         }
       }
     },
+    "Group" : {
+      "id" : "Group",
+      "properties" : {
+        "createdAt" : {
+          "type" : "OffsetDateTime"
+        },
+        "updatedBy" : {
+          "type" : "string"
+        },
+        "createdBy" : {
+          "type" : "string"
+        },
+        "name" : {
+          "type" : "string"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "id" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "updatedAt" : {
+          "type" : "OffsetDateTime"
+        }
+      }
+    },
     "LocalTime" : {
       "id" : "LocalTime",
       "properties" : {
@@ -219,6 +267,17 @@
         },
         "supported" : {
           "type" : "boolean"
+        }
+      }
+    },
+    "Optional" : {
+      "id" : "Optional",
+      "properties" : {
+        "present" : {
+          "type" : "boolean"
+        },
+        "value" : {
+          "type" : "string"
         }
       }
     },
