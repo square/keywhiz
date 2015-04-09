@@ -188,20 +188,20 @@ public class AutomationSecretResource {
   /**
    * Deletes all versions of a secret series
    *
-   * @param secretSeries the series to delete
+   * @param secretName the name of the secret series to delete
    *
    * @description Deletes all versions of a secret series.  This will delete a single secret ID.
    * @responseMessage 200 Deleted secret series
    * @responseMessage 404 Secret series not Found
    */
-  @Path("{secretSeries}")
+  @Path("{secretName}")
   @DELETE
   public Response deleteSecretSeries(@Auth AutomationClient automationClient,
-      @PathParam("secretSeries") String secretSeries) {
+      @PathParam("secretName") String secretName) {
 
-    secretSeriesDAO.getSecretSeriesByName(secretSeries)
+    secretSeriesDAO.getSecretSeriesByName(secretName)
         .orElseThrow(() -> new NotFoundException("Secret series not found."));
-    secretSeriesDAO.deleteSecretSeriesByName(secretSeries);
+    secretSeriesDAO.deleteSecretSeriesByName(secretName);
 
     return Response.ok().build();
   }
