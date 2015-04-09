@@ -1,7 +1,7 @@
 {
   "apiVersion" : "1",
   "swaggerVersion" : "1.2",
-  "basePath" : "https://square.github.io/keywhiz/apidocs",
+  "basePath" : "https://square.github.io/keywhiz/apidocs/",
   "resourcePath" : "/clients-automation",
   "apis" : [ {
     "path" : "/automation/clients",
