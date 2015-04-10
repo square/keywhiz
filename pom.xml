@@ -149,6 +149,7 @@
             <artifactId>javax.inject</artifactId>
           </exclusion>
           <exclusion>
+            <!-- Already included in com.google.inject -->
             <groupId>org.glassfish.hk2.external</groupId>
             <artifactId>aopalliance-repackaged</artifactId>
           </exclusion>
