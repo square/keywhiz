@@ -14,7 +14,7 @@ import keywhiz.auth.User;
 import keywhiz.auth.UserAuthenticatorFactory;
 import keywhiz.service.config.Templates;
 import org.hibernate.validator.constraints.NotEmpty;
-import org.skife.jdbi.v2.DBI;
+import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +71,10 @@ public class LdapAuthenticatorFactory implements UserAuthenticatorFactory {
     return lookup;
   }
 
-  @Override public Authenticator<BasicCredentials, User> build(DBI dbi) {
+  // TODO: Ldap takes a DSLContext but doesn't use it. We could remove this dependency. Not sure
+  // it really matters since we need a DSLContext for all the other data.
+  // https://github.com/square/keywhiz/issues/39
+  @Override public Authenticator<BasicCredentials, User> build(DSLContext dslContext) {
     logger.debug("Creating LDAP authenticator");
     LdapConnectionFactory connectionFactory =
         new LdapConnectionFactory(getServer(), getPort(), getUserDN(), getPassword());

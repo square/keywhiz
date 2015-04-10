@@ -17,14 +17,25 @@
 package keywhiz.service.daos;
 
 import java.util.Optional;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.customizers.SingleValueResult;
+import javax.inject.Inject;
+import org.jooq.DSLContext;
 
-public interface UserDAO {
+import static keywhiz.jooq.tables.Users.USERS;
 
-  @SingleValueResult(String.class)
-  @SqlQuery("SELECT password_hash " +
-      "FROM users WHERE username = :username")
-  public Optional<String> getHashedPassword(@Bind("username") String name);
+public class UserDAO {
+  private final DSLContext dslContext;
+
+  @Inject
+  public UserDAO(DSLContext dslContext) {
+    this.dslContext = dslContext;
+  }
+
+  public Optional<String> getHashedPassword(String name) {
+    String r = dslContext
+        .select(USERS.PASSWORD_HASH)
+        .from(USERS)
+        .where(USERS.USERNAME.eq(name))
+        .fetchOne(USERS.PASSWORD_HASH);
+    return Optional.ofNullable(r);
+  }
 }

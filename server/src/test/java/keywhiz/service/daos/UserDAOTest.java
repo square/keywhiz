@@ -33,7 +33,7 @@ public class UserDAOTest {
   String hashedPassword;
 
   @Before public void setUp() {
-    userDAO = testDBRule.getDbi().onDemand(UserDAO.class);
+    userDAO = new UserDAO(testDBRule.jooqContext());
 
     hashedPassword = BCrypt.hashpw("password", BCrypt.gensalt());
 
