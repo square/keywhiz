@@ -29,15 +29,13 @@ import keywhiz.auth.User;
 import keywhiz.generators.TemplatedSecretGenerator;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
-import keywhiz.service.daos.SecretDAO;
+import keywhiz.service.daos.SecretJooqDao;
+import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.exceptions.StatementException;
-import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyMapOf;
@@ -49,7 +47,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class TemplatedSecretGeneratorTest {
   @Mock AclDAO aclDAO;
-  @Mock SecretDAO secretDAO;
+  @Mock SecretJooqDao secretJooqDao;
   @Mock SecretController secretController;
   @Mock SecretController.SecretBuilder secretBuilder;
 
@@ -89,7 +87,7 @@ public class TemplatedSecretGeneratorTest {
 
   @Test(expected = BadRequestException.class)
   public void triesToCreateDuplicateSecret() throws Exception {
-    StatementException exception = new UnableToExecuteStatementException("", (StatementContext) null);
+    DataAccessException exception = new DataAccessException("");
     TemplatedSecretsGeneratorRequest req = new TemplatedSecretsGeneratorRequest(
         "{{#numeric}}10{{/numeric}}", "test-database.yaml", "desc", true, emptyMap);
 

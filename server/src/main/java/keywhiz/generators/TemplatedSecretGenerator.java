@@ -28,7 +28,7 @@ import keywhiz.api.model.Secret;
 import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.daos.SecretController;
 import keywhiz.utility.SecretTemplateCompiler;
-import org.skife.jdbi.v2.exceptions.StatementException;
+import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,7 +81,7 @@ public class TemplatedSecretGenerator extends SecretGenerator<TemplatedSecretsGe
     Secret secret;
     try {
       secret = builder.build();
-    } catch (StatementException e) {
+    } catch (DataAccessException e) {
       logger.warn("Cannot create secret {}: {}", secretName, e);
       throw new BadRequestException(String.format("Cannot create secret '%s'.", secretName));
     }

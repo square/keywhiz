@@ -28,17 +28,15 @@ import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
-import keywhiz.service.daos.SecretDAO;
+import keywhiz.service.daos.SecretJooqDao;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.exceptions.ConflictException;
+import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.exceptions.StatementException;
-import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,7 +55,7 @@ public class AutomationSecretResourceTest {
   @Mock SecretController secretController;
   @Mock SecretController.SecretBuilder secretBuilder;
   @Mock AclDAO aclDAO;
-  @Mock SecretDAO secretDAO;
+  @Mock SecretJooqDao secretJooqDao;
   @Mock SecretSeriesDAO secretSeriesDAO;
 
   AutomationClient automation = AutomationClient.of(
@@ -124,7 +122,7 @@ public class AutomationSecretResourceTest {
 
   @Test(expected = ConflictException.class)
   public void triesToCreateDuplicateSecret() throws Exception {
-    StatementException exception = new UnableToExecuteStatementException("", (StatementContext) null);
+    DataAccessException exception = new DataAccessException("");
     ImmutableMap<String,String> emptyMap = ImmutableMap.of();
 
     doThrow(exception).when(secretBuilder).build();

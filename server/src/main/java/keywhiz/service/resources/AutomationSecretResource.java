@@ -44,7 +44,7 @@ import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.exceptions.ConflictException;
-import org.skife.jdbi.v2.exceptions.StatementException;
+import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +105,7 @@ public class AutomationSecretResource {
     Secret secret;
     try {
       secret = builder.build();
-    } catch (StatementException e) {
+    } catch (DataAccessException e) {
       logger.warn("Cannot create secret {}: {}", request.name, e);
       throw new ConflictException(format("Cannot create secret %s.", request.name));
     }

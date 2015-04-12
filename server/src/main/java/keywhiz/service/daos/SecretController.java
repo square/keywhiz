@@ -16,7 +16,6 @@
 
 package keywhiz.service.daos;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
@@ -25,11 +24,6 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.SecretTransformer;
-import org.skife.jdbi.v2.exceptions.NoResultsException;
-import org.skife.jdbi.v2.exceptions.ResultSetException;
-import org.skife.jdbi.v2.exceptions.StatementException;
-import org.skife.jdbi.v2.exceptions.UnableToCreateStatementException;
-import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -38,13 +32,13 @@ import static java.util.stream.Collectors.toList;
 public class SecretController {
   private final SecretTransformer transformer;
   private final ContentCryptographer cryptographer;
-  private final SecretDAO secretDAO;
+  private final SecretJooqDao secretJooqDao;
 
   public SecretController(SecretTransformer transformer, ContentCryptographer cryptographer,
-      SecretDAO secretDAO) {
+      SecretJooqDao secretJooqDao) {
     this.transformer = transformer;
     this.cryptographer = cryptographer;
-    this.secretDAO = secretDAO;
+    this.secretJooqDao = secretJooqDao;
   }
 
   /**
@@ -52,7 +46,7 @@ public class SecretController {
    * @return all Secrets with given id. May be empty or include multiple versions.
    */
   public List<Secret> getSecretsById(long secretId) {
-    return transformer.transform(secretDAO.getSecretsById(secretId));
+    return transformer.transform(secretJooqDao.getSecretsById(secretId));
   }
 
   /**
@@ -61,7 +55,7 @@ public class SecretController {
    * @return Secret matching input parameters or Optional.absent().
    */
   public Optional<Secret> getSecretByIdAndVersion(long secretId, String version) {
-    return secretDAO.getSecretByIdAndVersion(secretId, version).map(transformer::transform);
+    return secretJooqDao.getSecretByIdAndVersion(secretId, version).map(transformer::transform);
   }
 
   /**
@@ -70,12 +64,17 @@ public class SecretController {
    * @return Secret matching input parameters or Optional.absent().
    */
   public Optional<Secret> getSecretByNameAndVersion(String name, String version) {
-    return secretDAO.getSecretByNameAndVersion(name, version).map(transformer::transform);
+    return secretJooqDao.getSecretByNameAndVersion(name, version).map(transformer::transform);
+  }
+
+  /** @return all existing secrets. */
+  public List<Secret> getSecrets() {
+    return transformer.transform(secretJooqDao.getSecrets());
   }
 
   /** @return all existing sanitized secrets. */
   public List<SanitizedSecret> getSanitizedSecrets() {
-    return secretDAO.getSecrets().stream()
+    return secretJooqDao.getSecrets().stream()
         .map(SanitizedSecret::fromSecretSeriesAndContent)
         .collect(toList());
   }
@@ -83,7 +82,26 @@ public class SecretController {
   /** @return all versions for this secret name. */
   public List<String> getVersionsForName(String name) {
     checkArgument(!name.isEmpty());
-    return secretDAO.getVersionsForSecretName(name);
+    return secretJooqDao.getVersionsForSecretName(name);
+  }
+
+  /**
+   * Deletes the series and all associated version of the given secret series name.
+   *
+   * @param name of secret series to delete.
+   */
+  public void deleteSecretsByName(String name) {
+    secretJooqDao.deleteSecretsByName(name);
+  }
+
+  /**
+   * Deletes a specific version in a secret series.
+   *
+   * @param name of secret series to delete from.
+   * @param version of secret to specifically delete.
+   */
+  public void deleteSecretByNameAndVersion(String name, String version) {
+    secretJooqDao.deleteSecretByNameAndVersion(name, version);
   }
 
   public SecretBuilder builder(String name, String secret, String creator) {
@@ -91,13 +109,13 @@ public class SecretController {
     checkArgument(!secret.isEmpty());
     checkArgument(!creator.isEmpty());
     String encryptedSecret = cryptographer.encryptionKeyDerivedFrom(name).encrypt(secret);
-    return new SecretBuilder(transformer, secretDAO, name, encryptedSecret, creator);
+    return new SecretBuilder(transformer, secretJooqDao, name, encryptedSecret, creator);
   }
 
   /** Builder to generate new secret series or versions with. */
   public static class SecretBuilder {
     private final SecretTransformer transformer;
-    private final SecretDAO secretDAO;
+    private final SecretJooqDao secretJooqDao;
     private final String name;
     private final String encryptedSecret;
     private final String creator;
@@ -109,15 +127,15 @@ public class SecretController {
 
     /**
      * @param transformer
-     * @param secretDAO
+     * @param secretJooqDao
      * @param name of secret series.
      * @param encryptedSecret encrypted content of secret version
      * @param creator username responsible for creating this secret version.
      */
-    private SecretBuilder(SecretTransformer transformer, SecretDAO secretDAO, String name, String encryptedSecret,
+    private SecretBuilder(SecretTransformer transformer, SecretJooqDao secretJooqDao, String name, String encryptedSecret,
         String creator) {
       this.transformer = transformer;
-      this.secretDAO = secretDAO;
+      this.secretJooqDao = secretJooqDao;
       this.name = name;
       this.encryptedSecret = encryptedSecret;
       this.creator = creator;
@@ -179,9 +197,11 @@ public class SecretController {
      * @return an instance of the newly created secret.
      */
     public Secret build() {
-      try {
-        secretDAO.createSecret(name, encryptedSecret, version, creator, metadata, description, type, generationOptions);
-        return transformer.transform(secretDAO.getSecretByNameAndVersion(name, version).get());
+        secretJooqDao.createSecret(name, encryptedSecret, version, creator, metadata, description, type, generationOptions);
+        return transformer.transform(secretJooqDao.getSecretByNameAndVersion(name, version).get());
+/*
+        // TODO: I don't know if propagating the DataAccessException is the right thing to do.
+
         // The StatementExceptions thrown by JDBI include a StatementContext with the SQL parameters
         // in them. This re-throws each exception type without a context so the underlying SQL error
         // is preserved but sensitive data from the raw SQL will not be logged.
@@ -197,6 +217,7 @@ public class SecretController {
         // All implementations of StatementException should have been caught. Catch-all for safety.
         throw Throwables.propagate(e.getCause());
       }
+*/
     }
   }
 }
