@@ -93,10 +93,6 @@
       <groupId>io.dropwizard.modules</groupId>
       <artifactId>dropwizard-java8-auth</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.dropwizard.modules</groupId>
-      <artifactId>dropwizard-java8-jdbi</artifactId>
-    </dependency>
 
     <!-- Necessary for object type detection. -->
     <dependency>
