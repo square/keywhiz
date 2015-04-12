@@ -24,7 +24,7 @@ import javax.ws.rs.core.SecurityContext;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.SimplePrincipal;
-import keywhiz.service.daos.ClientDAO;
+import keywhiz.service.daos.ClientJooqDao;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.Before;
 import org.junit.Rule;
@@ -46,15 +46,15 @@ public class AutomationClientAuthFactoryTest {
 
   @Mock ContainerRequest request;
   @Mock SecurityContext securityContext;
-  @Mock ClientDAO clientDAO;
+  @Mock ClientJooqDao clientJooqDao;
 
   AutomationClientAuthFactory factory;
 
   @Before public void setUp() {
-    factory = new AutomationClientAuthFactory(clientDAO);
+    factory = new AutomationClientAuthFactory(clientJooqDao);
 
     when(request.getSecurityContext()).thenReturn(securityContext);
-    when(clientDAO.getClient("principal")).thenReturn(Optional.of(client));
+    when(clientJooqDao.getClient("principal")).thenReturn(Optional.of(client));
   }
 
   @Test public void automationClientWhenClientPresent() {
@@ -69,7 +69,7 @@ public class AutomationClientAuthFactoryTest {
         new Client(3423, "clientWithoutAutomation", null, null, null, null, null, false, false);
 
     when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=clientWithoutAutomation"));
-    when(clientDAO.getClient("clientWithoutAutomation"))
+    when(clientJooqDao.getClient("clientWithoutAutomation"))
         .thenReturn(Optional.of(clientWithoutAutomation));
 
     factory.provide(request);
@@ -78,7 +78,7 @@ public class AutomationClientAuthFactoryTest {
   @Test(expected = ForbiddenException.class)
   public void automationClientRejectsClientsWithoutDBEntries() {
     when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=clientWithoutDBEntry"));
-    when(clientDAO.getClient("clientWithoutDBEntry")).thenReturn(Optional.empty());
+    when(clientJooqDao.getClient("clientWithoutDBEntry")).thenReturn(Optional.empty());
 
     factory.provide(request);
   }

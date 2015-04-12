@@ -23,7 +23,7 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.core.SecurityContext;
 import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.SimplePrincipal;
-import keywhiz.service.daos.ClientDAO;
+import keywhiz.service.daos.ClientJooqDao;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.Before;
 import org.junit.Rule;
@@ -46,15 +46,15 @@ public class ClientAuthFactoryTest {
 
   @Mock ContainerRequest request;
   @Mock SecurityContext securityContext;
-  @Mock ClientDAO clientDAO;
+  @Mock ClientJooqDao clientJooqDao;
 
   ClientAuthFactory factory;
 
   @Before public void setUp() {
-    factory = new ClientAuthFactory(clientDAO);
+    factory = new ClientAuthFactory(clientJooqDao);
 
     when(request.getSecurityContext()).thenReturn(securityContext);
-    when(clientDAO.getClient("principal")).thenReturn(Optional.of(client));
+    when(clientJooqDao.getClient("principal")).thenReturn(Optional.of(client));
   }
 
   @Test public void clientWhenClientPresent() {
@@ -76,7 +76,7 @@ public class ClientAuthFactoryTest {
         false /* disabled */, false);
 
     when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=disabled"));
-    when(clientDAO.getClient("disabled")).thenReturn(Optional.of(disabledClient));
+    when(clientJooqDao.getClient("disabled")).thenReturn(Optional.of(disabledClient));
 
     factory.provide(request);
   }
@@ -88,11 +88,11 @@ public class ClientAuthFactoryTest {
 
     // lookup doesn't find client
     when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=new-client"));
-    when(clientDAO.getClient("new-client")).thenReturn(Optional.empty());
+    when(clientJooqDao.getClient("new-client")).thenReturn(Optional.empty());
 
     // a new DB record is created
-    when(clientDAO.createClient(eq("new-client"), eq("automatic"), any())).thenReturn(2345L);
-    when(clientDAO.getClientById(2345L)).thenReturn(Optional.of(newClient));
+    when(clientJooqDao.createClient(eq("new-client"), eq("automatic"), any())).thenReturn(2345L);
+    when(clientJooqDao.getClientById(2345L)).thenReturn(Optional.of(newClient));
 
     assertThat(factory.provide(request)).isEqualTo(newClient);
   }

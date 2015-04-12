@@ -40,7 +40,7 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.service.daos.AclDAO;
-import keywhiz.service.daos.ClientDAO;
+import keywhiz.service.daos.ClientJooqDao;
 import keywhiz.service.exceptions.ConflictException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,13 +57,13 @@ import static java.util.stream.Collectors.toList;
 @Produces(MediaType.APPLICATION_JSON)
 public class AutomationClientResource {
   private static final Logger logger = LoggerFactory.getLogger(ClientsResource.class);
-  private final ClientDAO clientDAO;
+  private final ClientJooqDao clientJooqDao;
   private final AclDAO aclDAO;
 
 
   @Inject
-  public AutomationClientResource(ClientDAO clientDAO, AclDAO aclDAO) {
-    this.clientDAO = clientDAO;
+  public AutomationClientResource(ClientJooqDao clientJooqDao, AclDAO aclDAO) {
+    this.clientJooqDao = clientJooqDao;
     this.aclDAO = aclDAO;
   }
 
@@ -83,7 +83,7 @@ public class AutomationClientResource {
       @PathParam("clientId") LongParam clientId) {
     logger.info("Automation ({}) - Looking up an ID {}", automationClient.getName(), clientId);
 
-    Client client = clientDAO.getClientById(clientId.get())
+    Client client = clientJooqDao.getClientById(clientId.get())
         .orElseThrow(NotFoundException::new);
     ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(client));
 
@@ -109,14 +109,14 @@ public class AutomationClientResource {
     logger.info("Automation ({}) - Looking up a name {}", automationClient.getName(), name);
 
     if (name.isPresent()) {
-      Client client = clientDAO.getClient(name.get()).orElseThrow(NotFoundException::new);
+      Client client = clientJooqDao.getClient(name.get()).orElseThrow(NotFoundException::new);
       ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(client));
       return Response.ok()
           .entity(ClientDetailResponse.fromClient(client, groups, ImmutableList.of()))
           .build();
     }
 
-    List<ClientDetailResponse> clients = clientDAO.getClients().stream()
+    List<ClientDetailResponse> clients = clientJooqDao.getClients().stream()
         .map(c -> ClientDetailResponse.fromClient(c, ImmutableList.copyOf(aclDAO.getGroupsFor(c)),
             ImmutableList.of()))
         .collect(toList());
@@ -138,15 +138,15 @@ public class AutomationClientResource {
       @Auth AutomationClient automationClient,
       @Valid CreateClientRequest clientRequest) {
 
-    Optional<Client> client = clientDAO.getClient(clientRequest.name);
+    Optional<Client> client = clientJooqDao.getClient(clientRequest.name);
     if (client.isPresent()) {
       logger.info("Automation ({}) - Client {} already exists", automationClient.getName(), clientRequest.name);
       throw new ConflictException("Client name already exists.");
     }
 
-    long id = clientDAO.createClient(clientRequest.name, automationClient.getName(),
+    long id = clientJooqDao.createClient(clientRequest.name, automationClient.getName(),
         Optional.empty());
-    client = clientDAO.getClientById(id);
+    client = clientJooqDao.getClientById(id);
 
     return ClientDetailResponse.fromClient(client.get(), ImmutableList.of(), ImmutableList.of());
   }
@@ -164,8 +164,8 @@ public class AutomationClientResource {
   @Path("{clientId}")
   public Response deleteClient(@Auth AutomationClient automationClient,
       @PathParam("clientId") LongParam clientId) {
-    Client client = clientDAO.getClientById(clientId.get()).orElseThrow(NotFoundException::new);
-    clientDAO.deleteClient(client);
+    Client client = clientJooqDao.getClientById(clientId.get()).orElseThrow(NotFoundException::new);
+    clientJooqDao.deleteClient(client);
     return Response.ok().build();
   }
 }

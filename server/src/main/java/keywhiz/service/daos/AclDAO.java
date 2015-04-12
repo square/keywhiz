@@ -48,15 +48,15 @@ public class AclDAO {
   private static final Logger logger = LoggerFactory.getLogger(AclDAO.class);
 
   private final DSLContext dslContext;
-  private ClientDAO clientDAO;
+  private ClientJooqDao clientDAO;
   private GroupDAO groupDAO;
   private SecretContentDAO secretContentDAO;
   private SecretSeriesDAO secretSeriesDAO;
 
   @Inject
-  public AclDAO(DSLContext dslContext, AclDeps aclDeps) {
+  public AclDAO(DSLContext dslContext, ClientJooqDao clientJooqDao, AclDeps aclDeps) {
     this.dslContext = dslContext;
-    this.clientDAO = aclDeps.createClientDAO();
+    this.clientDAO = clientJooqDao;
     this.groupDAO = aclDeps.createGroupDAO();
     this.secretContentDAO = aclDeps.createSecretContentDAO();
     this.secretSeriesDAO = aclDeps.createSecretSeriesDAO();

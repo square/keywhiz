@@ -24,7 +24,7 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import keywhiz.api.model.Client;
-import keywhiz.service.daos.ClientDAO;
+import keywhiz.service.daos.ClientJooqDao;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -47,8 +47,8 @@ public class ClientAuthFactory {
 
   private final Authenticator<String, Client> authenticator;
 
-  @Inject public ClientAuthFactory(ClientDAO clientDAO) {
-    this.authenticator = new MyAuthenticator(clientDAO);
+  @Inject public ClientAuthFactory(ClientJooqDao clientJooqDao) {
+    this.authenticator = new MyAuthenticator(clientJooqDao);
   }
 
   public Client provide(ContainerRequest request) {
@@ -83,15 +83,15 @@ public class ClientAuthFactory {
   }
 
   private static class MyAuthenticator implements Authenticator<String, Client> {
-    private final ClientDAO clientDAO;
+    private final ClientJooqDao clientJooqDao;
 
-    private MyAuthenticator(ClientDAO clientDAO) {
-      this.clientDAO = clientDAO;
+    private MyAuthenticator(ClientJooqDao clientJooqDao) {
+      this.clientJooqDao = clientJooqDao;
     }
 
     @Override public Optional<Client> authenticate(String name)
         throws AuthenticationException {
-      Optional<Client> optionalClient = clientDAO.getClient(name);
+      Optional<Client> optionalClient = clientJooqDao.getClient(name);
       if (optionalClient.isPresent()) {
         Client client = optionalClient.get();
         if (client.isEnabled()) {
@@ -108,9 +108,9 @@ public class ClientAuthFactory {
        * 'enabled' field.
        */
       // TODO(justin): Consider making this behavior configurable.
-      long clientId = clientDAO.createClient(name, "automatic",
+      long clientId = clientJooqDao.createClient(name, "automatic",
           Optional.of("Client created automatically from valid certificate authentication"));
-      return Optional.of(clientDAO.getClientById(clientId).get());
+      return Optional.of(clientJooqDao.getClientById(clientId).get());
     }
   }
 }
