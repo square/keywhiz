@@ -97,25 +97,6 @@ public class SecretController {
     return version.get();
   }
 
-  /**
-   * Deletes the series and all associated version of the given secret series name.
-   *
-   * @param name of secret series to delete.
-   */
-  public void deleteSecretsByName(String name) {
-    secretDAO.deleteSecretsByName(name);
-  }
-
-  /**
-   * Deletes a specific version in a secret series.
-   *
-   * @param name of secret series to delete from.
-   * @param version of secret to specifically delete.
-   */
-  public void deleteSecretByNameAndVersion(String name, String version) {
-    secretDAO.deleteSecretByNameAndVersion(name, version);
-  }
-
   public SecretBuilder builder(String name, String secret, String creator) {
     checkArgument(!name.isEmpty());
     checkArgument(!secret.isEmpty());
