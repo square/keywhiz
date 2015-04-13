@@ -56,6 +56,6 @@ public interface SecretContentDAO {
   void deleteSecretContentBySecretIdAndVersion(
       @Bind("secretId") long secretId, @Bind("version") String version);
 
-  @SqlQuery("SELECT version FROM secrets_content WHERE secretId = :secretId")
+  @SqlQuery("SELECT version FROM secrets_content WHERE secretId = :secretId ORDER BY createdAt DESC")
   ImmutableList<String> getVersionFromSecretId(@Bind("secretId") long secretId);
 }

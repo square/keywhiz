@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.ws.rs.NotFoundException;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.service.crypto.ContentCryptographer;
@@ -84,6 +85,35 @@ public class SecretController {
   public List<String> getVersionsForName(String name) {
     checkArgument(!name.isEmpty());
     return secretDAO.getVersionsForSecretName(name);
+  }
+
+  /** @return the latest version for this secret name. */
+  public String getLatestVersion(String name) {
+    checkArgument(!name.isEmpty());
+    Optional<String> version = secretDAO.getLatestVersion(name);
+    if (!version.isPresent()) {
+      throw new NotFoundException("No versions found for secret.");
+    }
+    return version.get();
+  }
+
+  /**
+   * Deletes the series and all associated version of the given secret series name.
+   *
+   * @param name of secret series to delete.
+   */
+  public void deleteSecretsByName(String name) {
+    secretDAO.deleteSecretsByName(name);
+  }
+
+  /**
+   * Deletes a specific version in a secret series.
+   *
+   * @param name of secret series to delete from.
+   * @param version of secret to specifically delete.
+   */
+  public void deleteSecretByNameAndVersion(String name, String version) {
+    secretDAO.deleteSecretByNameAndVersion(name, version);
   }
 
   public SecretBuilder builder(String name, String secret, String creator) {
