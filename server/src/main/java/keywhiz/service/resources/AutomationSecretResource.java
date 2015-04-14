@@ -16,7 +16,7 @@
 package keywhiz.service.resources;
 
 import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
 import java.util.List;

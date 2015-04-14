@@ -17,7 +17,7 @@
 package keywhiz.generators;
 
 import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import java.util.List;
 import javax.ws.rs.BadRequestException;
 import keywhiz.api.model.Secret;

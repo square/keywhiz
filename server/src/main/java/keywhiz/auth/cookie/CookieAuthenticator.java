@@ -16,7 +16,7 @@
 package keywhiz.auth.cookie;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import io.dropwizard.java8.auth.Authenticator;
 import java.time.ZonedDateTime;
 import java.util.Base64;

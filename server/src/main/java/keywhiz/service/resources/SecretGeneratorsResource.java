@@ -17,7 +17,7 @@
 package keywhiz.service.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.io.IOException;
 import java.util.List;

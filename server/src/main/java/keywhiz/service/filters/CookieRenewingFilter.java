@@ -16,7 +16,7 @@
 package keywhiz.service.filters;
 
 import com.google.common.net.HttpHeaders;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Optional;
 import javax.ws.rs.container.ContainerRequestContext;

@@ -16,7 +16,7 @@
 
 package keywhiz.service.resources;
 
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import java.net.URI;
 import java.util.Optional;
 import javax.annotation.Nullable;

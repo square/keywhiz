@@ -16,7 +16,7 @@
 
 package keywhiz.service.resources;
 
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.text.ParseException;
 import java.util.Optional;

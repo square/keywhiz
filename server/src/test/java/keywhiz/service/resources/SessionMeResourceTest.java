@@ -17,7 +17,7 @@
 package keywhiz.service.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import java.time.Clock;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.auth.User;

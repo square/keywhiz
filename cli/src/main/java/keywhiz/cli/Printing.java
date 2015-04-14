@@ -17,7 +17,7 @@ package keywhiz.cli;
 
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;

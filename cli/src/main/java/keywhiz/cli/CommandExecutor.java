@@ -19,7 +19,7 @@ import com.beust.jcommander.JCommander;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.StandardSystemProperty;
 import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.name.Named;
 import com.squareup.okhttp.OkHttpClient;
 import java.io.IOException;

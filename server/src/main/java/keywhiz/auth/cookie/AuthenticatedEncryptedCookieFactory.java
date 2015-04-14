@@ -18,7 +18,7 @@ package keywhiz.auth.cookie;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.ZonedDateTime;
