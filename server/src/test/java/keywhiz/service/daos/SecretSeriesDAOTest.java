@@ -16,7 +16,9 @@
 
 package keywhiz.service.daos;
 
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.Optional;
 import keywhiz.TestDBRule;
 import keywhiz.api.model.SecretSeries;
@@ -42,9 +44,10 @@ public class SecretSeriesDAOTest {
     int before = tableSize();
     OffsetDateTime now = OffsetDateTime.now();
 
-    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null, null);
+    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
+        ImmutableMap.of("foo", "bar"));
     SecretSeries expected = new SecretSeries(id, "newSecretSeries", "desc", now, "creator", now,
-        "creator", null, null);
+        "creator", null, ImmutableMap.of("foo", "bar"));
 
     assertThat(tableSize()).isEqualTo(before + 1);
 
