@@ -143,6 +143,17 @@
         <groupId>io.dropwizard</groupId>
         <artifactId>dropwizard-client</artifactId>
         <version>${dropwizard.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.glassfish.hk2.external</groupId>
+            <artifactId>javax.inject</artifactId>
+          </exclusion>
+          <exclusion>
+            <!-- Already included in com.google.inject -->
+            <groupId>org.glassfish.hk2.external</groupId>
+            <artifactId>aopalliance-repackaged</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.dropwizard</groupId>
@@ -153,6 +164,12 @@
         <groupId>io.dropwizard</groupId>
         <artifactId>dropwizard-testing</artifactId>
         <version>${dropwizard.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.glassfish.hk2.external</groupId>
+            <artifactId>javax.inject</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.dropwizard</groupId>
