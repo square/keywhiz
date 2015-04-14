@@ -17,11 +17,11 @@
 package keywhiz.service.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import javax.inject.Inject;
 import io.dropwizard.auth.basic.BasicCredentials;
 import java.time.Clock;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;

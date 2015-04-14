@@ -17,8 +17,8 @@
 package keywhiz.service.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import javax.inject.Inject;
 import java.time.Clock;
+import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.auth.User;
 import keywhiz.auth.cookie.AuthenticatedEncryptedCookieFactory;

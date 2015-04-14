@@ -18,10 +18,10 @@ package keywhiz.generators;
 
 import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
-import javax.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.multibindings.MapBinder;
 import java.util.Map;
+import javax.inject.Inject;
 import keywhiz.service.daos.SecretController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

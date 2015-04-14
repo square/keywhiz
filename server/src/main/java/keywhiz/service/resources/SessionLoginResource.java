@@ -17,13 +17,13 @@
 package keywhiz.service.resources;
 
 import com.google.common.collect.ImmutableList;
-import javax.inject.Inject;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.basic.BasicCredentials;
 import io.dropwizard.java8.auth.Authenticator;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.NotAuthorizedException;

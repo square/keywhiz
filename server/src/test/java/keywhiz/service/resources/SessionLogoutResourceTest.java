@@ -17,11 +17,11 @@
 package keywhiz.service.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import javax.inject.Inject;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import javax.inject.Inject;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import keywhiz.KeywhizTestRunner;

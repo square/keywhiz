@@ -17,8 +17,8 @@
 package keywhiz.generators;
 
 import com.google.common.collect.ImmutableList;
-import javax.inject.Inject;
 import java.util.List;
+import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import keywhiz.api.model.Secret;
 import keywhiz.service.daos.SecretController;

@@ -18,10 +18,10 @@ package keywhiz.generators;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import javax.inject.Inject;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
+import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import keywhiz.api.TemplatedSecretsGeneratorRequest;
 import keywhiz.api.model.Secret;

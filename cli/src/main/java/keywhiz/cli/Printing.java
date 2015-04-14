@@ -17,10 +17,10 @@ package keywhiz.cli;
 
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
+import javax.inject.Inject;
 import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.GroupDetailResponse;
 import keywhiz.api.SecretDetailResponse;

@@ -16,12 +16,12 @@
 package keywhiz.auth.cookie;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import javax.inject.Inject;
 import io.dropwizard.java8.auth.Authenticator;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Optional;
 import javax.crypto.AEADBadTagException;
+import javax.inject.Inject;
 import javax.ws.rs.core.Cookie;
 import keywhiz.auth.User;
 import org.slf4j.Logger;
