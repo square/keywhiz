@@ -16,10 +16,10 @@
 
 package keywhiz.service.resources;
 
-import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.text.ParseException;
 import java.util.Optional;
+import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;

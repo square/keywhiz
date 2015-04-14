@@ -16,9 +16,9 @@
 
 package keywhiz.service.resources;
 
-import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.List;
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;

@@ -17,7 +17,7 @@ package keywhiz.auth.xsrf;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import javax.ws.rs.core.NewCookie;
 import keywhiz.auth.Subtles;
 import keywhiz.auth.cookie.CookieConfig;

@@ -17,13 +17,13 @@
 package keywhiz.service.resources;
 
 import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;

@@ -16,10 +16,10 @@
 
 package keywhiz.service.resources;
 
-import com.google.inject.Inject;
 import java.net.URI;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.ws.rs.CookieParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
