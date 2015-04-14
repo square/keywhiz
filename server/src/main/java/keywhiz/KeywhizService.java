@@ -15,6 +15,7 @@
  */
 package keywhiz;
 
+import com.codahale.metrics.health.HealthCheck;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -169,6 +170,22 @@ public class KeywhizService extends Application<KeywhizConfig> {
             null /* Default is for requests */,
             false /* Can be after other filters */,
             "/admin/*" /* Path to filter on */);
+
+    environment.healthChecks().register("simple-environment-health", new HealthCheck() {
+      @Override protected Result check() throws Exception {
+        if (environment.getApplicationContext().isSecurityEnabled()
+            && environment.getApplicationContext().isSessionsEnabled()
+            && environment.getApplicationContext().isAvailable()
+            && environment.getAdminContext().isSessionsEnabled()
+            && environment.getAdminContext().isSecurityEnabled()
+            && environment.getAdminContext().isAvailable()
+            && !environment.lifecycle().getManagedObjects().isEmpty()) {
+          return Result.healthy();
+        } else {
+          return Result.unhealthy("Environment context not configured correctly.");
+        }
+      }
+    });
 
     logger.debug("Registering providers");
     jersey.register(new AuthResolver.Binder(injector.getInstance(ClientAuthFactory.class),
