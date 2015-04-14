@@ -1,7 +1,7 @@
 # Keywhiz
 
 Keywhiz is a system for distributing and managing secrets.
-For more information, see the [the website][1].
+For more information, see the [website][1].
 
 ## Contributing
 
