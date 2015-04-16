@@ -49,6 +49,10 @@ import static keywhiz.jooq.tables.Users.USERS;
  * java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar db-seed server/src/main/resources/keywhiz-development.yaml
  */
 public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
+  // Didn't we say not to keep passwords in code? ;)
+  public static String defaultUser = "keywhizAdmin";
+  public static String defaultPassword = "adminPass";
+
   public DbSeedCommand() {
     super("db-seed", "Populates database with development data.");
   }
@@ -108,8 +112,7 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
         .execute();
 
     dslContext
-        .insertInto(CLIENTS, CLIENTS.ID, CLIENTS.NAME, CLIENTS.CREATEDAT, CLIENTS.UPDATEDAT,
-            CLIENTS.ENABLED, CLIENTS.AUTOMATIONALLOWED)
+        .insertInto(CLIENTS, CLIENTS.ID, CLIENTS.NAME, CLIENTS.CREATEDAT, CLIENTS.UPDATEDAT, CLIENTS.ENABLED, CLIENTS.AUTOMATIONALLOWED)
         .values(768, "client", OffsetDateTime.parse("2012-06-21T14:38:09.867533Z"), OffsetDateTime.parse("2012-06-21T14:38:09.867533Z"), true, true)
         .values(769, "CN=User1", OffsetDateTime.parse("2012-06-21T14:38:09.872075Z"), OffsetDateTime.parse("2012-06-21T14:38:09.872075Z"), true, false)
         .values(770, "CN=User2", OffsetDateTime.parse("2012-06-21T14:38:09.87328Z"),  OffsetDateTime.parse("2012-06-21T14:38:09.87328Z"), true, false)
@@ -119,14 +122,12 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
 
     dslContext
         .insertInto(ACCESSGRANTS, ACCESSGRANTS.ID, ACCESSGRANTS.GROUPID, ACCESSGRANTS.SECRETID, ACCESSGRANTS.CREATEDAT, ACCESSGRANTS.UPDATEDAT)
-        .values(617, 918, 737, OffsetDateTime.parse("2012-06-21T14:38:09.984113Z"),
-            OffsetDateTime.parse("2012-06-21T14:38:09.984113Z"))
+        .values(617, 918, 737, OffsetDateTime.parse("2012-06-21T14:38:09.984113Z"), OffsetDateTime.parse("2012-06-21T14:38:09.984113Z"))
         .values(618, 917, 737, OffsetDateTime.parse("2012-06-21T14:38:09.990935Z"), OffsetDateTime.parse("2012-06-21T14:38:09.990935Z"))
         .values(619, 916, 738, OffsetDateTime.parse("2012-06-21T14:38:09.992612Z"), OffsetDateTime.parse("2012-06-21T14:38:09.992612Z"))
         .values(620, 918, 739, OffsetDateTime.parse("2012-06-21T14:38:09.995025Z"), OffsetDateTime.parse("2012-06-21T14:38:09.995025Z"))
         .values(621, 917, 739, OffsetDateTime.parse("2012-06-21T14:38:09.996522Z"), OffsetDateTime.parse("2012-06-21T14:38:09.996522Z"))
-        .values(622, 918, 740, OffsetDateTime.parse("2012-06-21T14:38:09.998356Z"),
-            OffsetDateTime.parse("2012-06-21T14:38:09.998356Z"))
+        .values(622, 918, 740, OffsetDateTime.parse("2012-06-21T14:38:09.998356Z"), OffsetDateTime.parse("2012-06-21T14:38:09.998356Z"))
         .values(623, 919, 740, OffsetDateTime.parse("2012-06-21T14:38:10.000046Z"), OffsetDateTime.parse("2012-06-21T14:38:10.000046Z"))
         .values(624, 916, 740, OffsetDateTime.parse("2012-06-21T14:38:10.00146Z"),  OffsetDateTime.parse("2012-06-21T14:38:10.00146Z"))
         .values(625, 917, 740, OffsetDateTime.parse("2012-06-21T14:38:10.002938Z"), OffsetDateTime.parse("2012-06-21T14:38:10.002938Z"))
@@ -135,8 +136,7 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
         .execute();
 
     dslContext
-        .insertInto(MEMBERSHIPS, MEMBERSHIPS.ID, MEMBERSHIPS.GROUPID, MEMBERSHIPS.CLIENTID,
-            MEMBERSHIPS.CREATEDAT, MEMBERSHIPS.UPDATEDAT)
+        .insertInto(MEMBERSHIPS, MEMBERSHIPS.ID, MEMBERSHIPS.GROUPID, MEMBERSHIPS.CLIENTID, MEMBERSHIPS.CREATEDAT, MEMBERSHIPS.UPDATEDAT)
         .values(659, 917, 768, OffsetDateTime.parse("2012-06-21T14:38:09.957063Z"), OffsetDateTime.parse("2012-06-21T14:38:09.957063Z"))
         .values(660, 918, 769, OffsetDateTime.parse("2012-06-21T14:38:09.970642Z"), OffsetDateTime.parse("2012-06-21T14:38:09.970642Z"))
         .values(661, 916, 769, OffsetDateTime.parse("2012-06-21T14:38:09.972122Z"), OffsetDateTime.parse("2012-06-21T14:38:09.972122Z"))
@@ -146,13 +146,13 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
         .values(665, 918, 771, OffsetDateTime.parse("2012-06-21T14:38:09.978106Z"), OffsetDateTime.parse("2012-06-21T14:38:09.978106Z"))
         .values(666, 919, 771, OffsetDateTime.parse("2012-06-21T14:38:09.979935Z"), OffsetDateTime.parse("2012-06-21T14:38:09.979935Z"))
         .values(667, 918, 772, OffsetDateTime.parse("2012-06-21T14:38:09.981239Z"), OffsetDateTime.parse("2012-06-21T14:38:09.981239Z"))
-        .values(668, 917, 772, OffsetDateTime.parse("2012-06-21T14:38:09.982586Z"),
-            OffsetDateTime.parse("2012-06-21T14:38:09.982586Z"))
+        .values(668, 917, 772, OffsetDateTime.parse("2012-06-21T14:38:09.982586Z"), OffsetDateTime.parse("2012-06-21T14:38:09.982586Z"))
         .execute();
 
-    dslContext.insertInto(USERS)
-        .set(USERS.USERNAME, "keywhizAdmin")
-        .set(USERS.PASSWORD_HASH, BCrypt.hashpw("adminPass", BCrypt.gensalt()))
+    dslContext
+        .insertInto(USERS)
+        .set(USERS.USERNAME, defaultUser)
+        .set(USERS.PASSWORD_HASH, BCrypt.hashpw(defaultPassword, BCrypt.gensalt()))
         .set(USERS.CREATED_AT, OffsetDateTime.parse("2012-06-22T14:38:09.982586Z"))
         .set(USERS.UPDATED_AT, OffsetDateTime.parse("2012-06-22T14:38:09.982586Z"))
         .execute();

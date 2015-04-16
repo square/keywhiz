@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 import javax.ws.rs.core.HttpHeaders;
 import keywhiz.IntegrationTestRule;
 import keywhiz.TestClients;
+import keywhiz.commands.DbSeedCommand;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -55,7 +56,7 @@ public class SessionLoginResourceIntegrationTest {
 
   @Test
   public void setsValidCookieForValidCredentials() throws Exception {
-    Request post = buildLoginPost("keywhizAdmin", "adminPass");
+    Request post = buildLoginPost(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
 
     Response response = client.newCall(post).execute();
     assertThat(response.code()).isEqualTo(303);
