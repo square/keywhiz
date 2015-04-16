@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import keywhiz.auth.mutualssl.ClientCertificateFilter;
 import keywhiz.auth.xsrf.XsrfServletFilter;
+import keywhiz.commands.DbSeedCommand;
 import keywhiz.commands.MigrateCommand;
 import keywhiz.commands.PreviewMigrateCommand;
 import keywhiz.generators.SecretGenerator;
@@ -134,6 +135,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     logger.debug("Registering commands");
     bootstrap.addCommand(new PreviewMigrateCommand());
     bootstrap.addCommand(new MigrateCommand());
+    bootstrap.addCommand(new DbSeedCommand());
 
     logger.debug("Registering bundles");
     bootstrap.addBundle(new Java8Bundle());

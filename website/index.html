@@ -164,7 +164,7 @@ keywhizdb_development=#</pre>
 $ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar migrate server/src/main/resources/keywhiz-development.yaml</pre>
 
             <p>(Optional) Import some development data:</p>
-            <pre class="prettyprint">$ psql keywhizdb_development keywhiz server/src/test/resources/server_test_data.sql</pre>
+            <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar db-seed server/src/main/resources/keywhiz-development.yaml</pre>
 
             <p>Start the server:</p>
             <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar server server/src/main/resources/keywhiz-development.yaml</pre>
