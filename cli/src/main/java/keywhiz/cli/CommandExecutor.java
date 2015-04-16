@@ -54,8 +54,6 @@ import static com.google.common.base.StandardSystemProperty.USER_NAME;
 public class CommandExecutor {
   public static final String APP_VERSION = "2.0";
 
-  public enum Type { GROUP, CLIENT, SECRET }
-
   public enum Command { LOGIN, LIST, DESCRIBE, ADD, DELETE, ASSIGN, UNASSIGN }
 
   private final String command;

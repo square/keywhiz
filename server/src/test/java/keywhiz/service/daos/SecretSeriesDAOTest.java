@@ -18,7 +18,6 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
 import java.util.Optional;
 import keywhiz.TestDBRule;
 import keywhiz.api.model.SecretSeries;
