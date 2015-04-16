@@ -88,6 +88,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
   private final Map<String, SecretGenerator<?>> secretGenerators = Maps.newHashMap();
   private Injector injector;
 
+  @SuppressWarnings("unused")
   public Injector getInjector() {
     return injector;
   }
@@ -102,6 +103,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
    * @param name associated with generators from factory.
    * @param secretGeneratorFactory factory to register.
    */
+  @SuppressWarnings("unused")
   public void addSecretGeneratorFactory(String name, SecretGeneratorFactory<?> secretGeneratorFactory) {
     checkArgument(validName(name)
         && !secretGenerators.containsKey(name));
@@ -116,6 +118,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
    * @param name associated with generator.
    * @param secretGenerator generator to register.
    */
+  @SuppressWarnings("unused")
   public void addSecretGenerator(String name, SecretGenerator<?> secretGenerator) {
     checkArgument(validName(name)
         && !secretGeneratorFactories.containsKey(name));

@@ -28,7 +28,6 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
-import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.GroupDAO;
 import org.junit.Before;
@@ -46,7 +45,6 @@ public class AutomationGroupResourceTest {
 
   @Mock GroupDAO groupDAO;
   @Mock AclDAO aclDAO;
-  User user = User.named("user");
   OffsetDateTime now = OffsetDateTime.now();
   AutomationClient automation = AutomationClient.of(
       new Client(1, "automation", "Automation client", now, "test", now, "test", true, true));
