@@ -62,7 +62,7 @@ public class AclDAOTest {
 
     DBI dbi = testDBRule.getDbi();
 
-    clientDAO = dbi.onDemand(ClientDAO.class);
+    clientDAO = new ClientDAO(jooqContext);
     long id = clientDAO.createClient("client1", "creator", Optional.empty());
     client1 = clientDAO.getClientById(id).get();
 
@@ -87,7 +87,7 @@ public class AclDAOTest {
     secretSeriesDAO = dbi.onDemand(SecretSeriesDAO.class);
 
     AclDeps aclDeps = dbi.onDemand(AclDeps.class);
-    aclDAO = new AclDAO(jooqContext, aclDeps);
+    aclDAO = new AclDAO(jooqContext, clientDAO, aclDeps);
   }
 
   @Test

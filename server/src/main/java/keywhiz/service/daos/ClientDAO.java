@@ -16,41 +16,59 @@
 
 package keywhiz.service.daos;
 
+import com.google.common.collect.ImmutableSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Inject;
 import keywhiz.api.model.Client;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.BindBean;
-import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.customizers.SingleValueResult;
+import keywhiz.jooq.tables.records.ClientsRecord;
+import org.jooq.DSLContext;
 
-@RegisterMapper(ClientMapper.class)
-public interface ClientDAO {
-  @GetGeneratedKeys
-  @SqlUpdate("INSERT INTO clients (name, createdBy, updatedBy, description, enabled, automationAllowed) " +
-      "VALUES (:name, :user, :user, :desc, true, false)")
-  public long createClient(@Bind("name") String name, @Bind("user") String user,
-      @Bind("desc") Optional<String> description);
+import static keywhiz.jooq.tables.Clients.CLIENTS;
 
-  @SqlUpdate("DELETE FROM clients WHERE id = :id")
-  public void deleteClient(@BindBean Client client);
+public class ClientDAO {
+  private final DSLContext dslContext;
 
-  @SingleValueResult(Client.class)
-  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy, enabled, automationAllowed " +
-            "FROM clients WHERE name = :name")
-  public Optional<Client> getClient(@Bind("name") String name);
+  @Inject
+  public ClientDAO(DSLContext dslContext) {
+    this.dslContext = dslContext;
+  }
 
-  @SingleValueResult(Client.class)
-  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy, enabled, automationAllowed " +
-      "FROM clients WHERE id = :id")
-  public Optional<Client> getClientById(@Bind("id") long id);
+  public long createClient(String name, String user, Optional<String> description) {
+    ClientsRecord r = dslContext.newRecord(CLIENTS);
 
-  // Write update methods as needed.
+    r.setName(name);
+    r.setCreatedby(user);
+    r.setUpdatedby(user);
+    r.setDescription(description.orElse(null));
+    r.setEnabled(true);
+    r.setAutomationallowed(false);
+    r.store();
 
-  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy, enabled, automationAllowed " +
-            "FROM clients")
-  public Set<Client> getClients();
+    return r.getId();
+  }
+
+  public void deleteClient(Client client) {
+    dslContext.delete(CLIENTS).where(CLIENTS.ID.eq(Math.toIntExact(client.getId()))).execute();
+  }
+
+  public Optional<Client> getClient(String name) {
+    ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.NAME.eq(name));
+    return Optional.ofNullable(r).map(
+        (rec) -> rec.map(new ClientMapper()));
+  }
+
+  public Optional<Client> getClientById(long id) {
+    ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.ID.eq(Math.toIntExact(id)));
+    if (r != null) {
+      return Optional.of(r.map(new ClientMapper()));
+    }
+    return Optional.empty();
+  }
+
+  public ImmutableSet<Client> getClients() {
+    List<Client> r = dslContext.select().from(CLIENTS).fetch().map(new ClientMapper());
+    return ImmutableSet.copyOf(r);
+  }
 }

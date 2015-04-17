@@ -54,9 +54,9 @@ public class AclDAO {
   private SecretSeriesDAO secretSeriesDAO;
 
   @Inject
-  public AclDAO(DSLContext dslContext, AclDeps aclDeps) {
+  public AclDAO(DSLContext dslContext, ClientDAO clientDAO, AclDeps aclDeps) {
     this.dslContext = dslContext;
-    this.clientDAO = aclDeps.createClientDAO();
+    this.clientDAO = clientDAO;
     this.groupDAO = aclDeps.createGroupDAO();
     this.secretContentDAO = aclDeps.createSecretContentDAO();
     this.secretSeriesDAO = aclDeps.createSecretSeriesDAO();
@@ -192,7 +192,7 @@ public class AclDAO {
         .join(GROUPS).on(GROUPS.ID.eq(MEMBERSHIPS.GROUPID))
         .where(GROUPS.NAME.eq(group.getName()))
         .fetch()
-        .map(new ClientJooqMapper());
+        .map(new ClientMapper());
     return new HashSet<>(r);
   }
 
@@ -221,7 +221,7 @@ public class AclDAO {
         .join(SECRETS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .where(SECRETS.NAME.eq(secret.getName()))
         .fetch()
-        .map(new ClientJooqMapper());
+        .map(new ClientMapper());
     return new HashSet<>(r);
   }
 
@@ -328,7 +328,6 @@ public class AclDAO {
         .where(SECRETS.NAME.eq(name).and(CLIENTS.NAME.eq(client.getName())))
         .fetchOne();
 
-    return Optional.ofNullable(r).map(
-        (rec) -> rec.map(new SecretSeriesJooqMapper()));
+    return Optional.ofNullable(r).map((rec) -> rec.map(new SecretSeriesJooqMapper()));
   }
 }

@@ -204,14 +204,6 @@ public class ServiceModule extends AbstractModule {
     return new SecretController(transformer, cryptographer, secretDAO);
   }
 
-  @Provides @Singleton @Readonly ClientDAO readonlyClientDAO(@Readonly DBI dbi) {
-    return dbi.onDemand(ClientDAO.class);
-  }
-
-  @Provides @Singleton ClientDAO clientDAO(DBI dbi) {
-    return dbi.onDemand(ClientDAO.class);
-  }
-
   @Provides @Singleton @Readonly GroupDAO readonlyGroupDAO(@Readonly DBI dbi) {
     return dbi.onDemand(GroupDAO.class);
   }
@@ -238,13 +230,21 @@ public class ServiceModule extends AbstractModule {
 
   // DAOs using jOOQ
 
-  @Provides @Singleton AclDAO aclDAO(DSLContext jooqContext, DBI dbi) {
-    return new AclDAO(jooqContext, dbi.onDemand(AclDeps.class));
+  @Provides @Singleton AclDAO aclDAO(DSLContext jooqContext, ClientDAO clientDAO, DBI dbi) {
+    return new AclDAO(jooqContext, clientDAO, dbi.onDemand(AclDeps.class));
   }
 
   @Provides @Singleton
-  @Readonly AclDAO readonlyAclDAO(@Readonly DSLContext jooqContext, DBI dbi) {
-    return new AclDAO(jooqContext, dbi.onDemand(AclDeps.class));
+  @Readonly AclDAO readonlyAclDAO(@Readonly DSLContext jooqContext, @Readonly ClientDAO clientDAO, @Readonly DBI dbi) {
+    return new AclDAO(jooqContext, clientDAO, dbi.onDemand(AclDeps.class));
+  }
+
+  @Provides @Singleton ClientDAO clientDAO(DSLContext jooqContext) {
+    return new ClientDAO(jooqContext);
+  }
+
+  @Provides @Singleton @Readonly ClientDAO readonlyClientDAO(@Readonly DSLContext jooqContext) {
+    return new ClientDAO(jooqContext);
   }
 
   @Provides @Singleton
