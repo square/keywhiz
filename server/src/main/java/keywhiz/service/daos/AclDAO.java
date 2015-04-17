@@ -325,9 +325,7 @@ public class AclDAO {
         .where(SECRETS.NAME.eq(name).and(CLIENTS.NAME.eq(client.getName())))
         .fetchOne();
 
-    if (r != null) {
-      return Optional.of(r.map(new SecretSeriesJooqMapper()));
-    }
-    return Optional.empty();
+    return Optional.ofNullable(r).map(
+        (rec) -> rec.map(new SecretSeriesJooqMapper()));
   }
 }
