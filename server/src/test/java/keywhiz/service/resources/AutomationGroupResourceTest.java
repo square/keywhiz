@@ -28,7 +28,7 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
-import keywhiz.service.daos.AclJooqDao;
+import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.GroupDAO;
 import org.junit.Before;
 import org.junit.Rule;
@@ -44,7 +44,7 @@ public class AutomationGroupResourceTest {
   @Rule public TestRule mockito = new MockitoJUnitRule(this);
 
   @Mock GroupDAO groupDAO;
-  @Mock AclJooqDao aclJooqDao;
+  @Mock AclDAO aclDAO;
   OffsetDateTime now = OffsetDateTime.now();
   AutomationClient automation = AutomationClient.of(
       new Client(1, "automation", "Automation client", now, "test", now, "test", true, true));
@@ -52,14 +52,14 @@ public class AutomationGroupResourceTest {
   AutomationGroupResource resource;
 
   @Before public void setUp() {
-    resource = new AutomationGroupResource(groupDAO, aclJooqDao);
+    resource = new AutomationGroupResource(groupDAO, aclDAO);
   }
 
   @Test public void findGroupById() {
     Group group = new Group(50, "testGroup", "testing group", now, "automation client", now, "automation client");
     when(groupDAO.getGroupById(50)).thenReturn(Optional.of(group));
-    when(aclJooqDao.getClientsFor(group)).thenReturn(ImmutableSet.of());
-    when(aclJooqDao.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of());
+    when(aclDAO.getClientsFor(group)).thenReturn(ImmutableSet.of());
+    when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of());
 
     GroupDetailResponse expectedResponse = GroupDetailResponse.fromGroup(group,
         ImmutableList.of(), ImmutableList.of());
@@ -70,8 +70,8 @@ public class AutomationGroupResourceTest {
   @Test public void findGroupByName() {
     Group group = new Group(50, "testGroup", "testing group", now, "automation client", now, "automation client");
     when(groupDAO.getGroup("testGroup")).thenReturn(Optional.of(group));
-    when(aclJooqDao.getClientsFor(group)).thenReturn(ImmutableSet.of());
-    when(aclJooqDao.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of());
+    when(aclDAO.getClientsFor(group)).thenReturn(ImmutableSet.of());
+    when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of());
 
     GroupDetailResponse expectedResponse = GroupDetailResponse.fromGroup(group,
         ImmutableList.of(), ImmutableList.of());
@@ -89,8 +89,8 @@ public class AutomationGroupResourceTest {
         SanitizedSecret.of(2, "name2", "v1", "desc", now, "test", now, "test", null, "", null);
 
     when(groupDAO.getGroup("testGroup")).thenReturn(Optional.of(group));
-    when(aclJooqDao.getClientsFor(group)).thenReturn(ImmutableSet.of(groupClient));
-    when(aclJooqDao.getSanitizedSecretsFor(group))
+    when(aclDAO.getClientsFor(group)).thenReturn(ImmutableSet.of(groupClient));
+    when(aclDAO.getSanitizedSecretsFor(group))
         .thenReturn(ImmutableSet.of(firstGroupSecret, secondGroupSecret));
 
     GroupDetailResponse expectedResponse = GroupDetailResponse.fromGroup(group,

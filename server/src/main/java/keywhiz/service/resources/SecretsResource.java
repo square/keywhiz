@@ -46,7 +46,7 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.VersionGenerator;
 import keywhiz.auth.User;
-import keywhiz.service.daos.AclJooqDao;
+import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.exceptions.ConflictException;
@@ -68,14 +68,14 @@ public class SecretsResource {
   private static final Logger logger = LoggerFactory.getLogger(SecretsResource.class);
 
   private final SecretController secretController;
-  private final AclJooqDao aclJooqDao;
+  private final AclDAO aclDAO;
   private final SecretSeriesDAO secretSeriesDAO;
 
   @Inject
-  public SecretsResource(SecretController secretController, AclJooqDao aclJooqDao,
+  public SecretsResource(SecretController secretController, AclDAO aclDAO,
       SecretSeriesDAO secretSeriesDAO) {
     this.secretController = secretController;
-    this.aclJooqDao = aclJooqDao;
+    this.aclDAO = aclDAO;
     this.secretSeriesDAO = secretSeriesDAO;
   }
 
@@ -237,8 +237,8 @@ public class SecretsResource {
 
     // TODO(justin): API change needed to return all versions.
     Secret secret = secrets.get(0);
-    ImmutableList<Group> groups = ImmutableList.copyOf(aclJooqDao.getGroupsFor(secret));
-    ImmutableList<Client> clients = ImmutableList.copyOf(aclJooqDao.getClientsFor(secret));
+    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
+    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(secret));
     return SecretDetailResponse.fromSecret(secret, groups, clients);
   }
 

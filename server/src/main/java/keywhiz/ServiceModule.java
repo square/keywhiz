@@ -55,7 +55,7 @@ import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoModule;
 import keywhiz.service.crypto.SecretTransformer;
 import keywhiz.service.daos.AclDeps;
-import keywhiz.service.daos.AclJooqDao;
+import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.daos.MapArgumentFactory;
@@ -238,13 +238,13 @@ public class ServiceModule extends AbstractModule {
 
   // DAOs using jOOQ
 
-  @Provides @Singleton AclJooqDao aclJooqDao(DSLContext jooqContext, DBI dbi) {
-    return new AclJooqDao(jooqContext, dbi.onDemand(AclDeps.class));
+  @Provides @Singleton AclDAO aclDAO(DSLContext jooqContext, DBI dbi) {
+    return new AclDAO(jooqContext, dbi.onDemand(AclDeps.class));
   }
 
   @Provides @Singleton
-  @Readonly AclJooqDao readonlyAclJooqDao(@Readonly DSLContext jooqContext, DBI dbi) {
-    return new AclJooqDao(jooqContext, dbi.onDemand(AclDeps.class));
+  @Readonly AclDAO readonlyAclDAO(@Readonly DSLContext jooqContext, DBI dbi) {
+    return new AclDAO(jooqContext, dbi.onDemand(AclDeps.class));
   }
 
   @Provides @Singleton

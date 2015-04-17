@@ -32,7 +32,7 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.auth.User;
-import keywhiz.service.daos.AclJooqDao;
+import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,7 +46,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClientsResourceTest {
-  @Mock AclJooqDao aclJooqDao;
+  @Mock AclDAO aclDAO;
   @Mock ClientDAO clientDAO;
 
   User user = User.named("user");
@@ -56,7 +56,7 @@ public class ClientsResourceTest {
   ClientsResource resource;
 
   @Before public void setUp() {
-    resource = new ClientsResource(aclJooqDao, clientDAO);
+    resource = new ClientsResource(aclDAO, clientDAO);
   }
 
   @Test public void listClients() {
@@ -73,7 +73,7 @@ public class ClientsResourceTest {
     CreateClientRequest request = new CreateClientRequest("new-client-name");
     when(clientDAO.createClient("new-client-name", "user", Optional.empty())).thenReturn(42L);
     when(clientDAO.getClientById(42L)).thenReturn(Optional.of(client));
-    when(aclJooqDao.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of());
+    when(aclDAO.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of());
 
     Response response = resource.createClient(user, request);
     assertThat(response.getStatus()).isEqualTo(201);
@@ -81,8 +81,8 @@ public class ClientsResourceTest {
 
   @Test public void includesTheClient() {
     when(clientDAO.getClientById(1)).thenReturn(Optional.of(client));
-    when(aclJooqDao.getGroupsFor(client)).thenReturn(Collections.emptySet());
-    when(aclJooqDao.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of());
+    when(aclDAO.getGroupsFor(client)).thenReturn(Collections.emptySet());
+    when(aclDAO.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of());
 
     ClientDetailResponse response = resource.getClient(user, new LongParam("1"));
 
@@ -97,8 +97,8 @@ public class ClientsResourceTest {
 
   @Test public void handlesNoAssociations() {
     when(clientDAO.getClientById(1)).thenReturn(Optional.of(client));
-    when(aclJooqDao.getGroupsFor(client)).thenReturn(Collections.emptySet());
-    when(aclJooqDao.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of());
+    when(aclDAO.getGroupsFor(client)).thenReturn(Collections.emptySet());
+    when(aclDAO.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of());
 
     ClientDetailResponse response = resource.getClient(user, new LongParam("1"));
     assertThat(response.groups).isEmpty();
@@ -112,8 +112,8 @@ public class ClientsResourceTest {
         "updater", null, null, null);
 
     when(clientDAO.getClientById(1)).thenReturn(Optional.of(client));
-    when(aclJooqDao.getGroupsFor(client)).thenReturn(Sets.newHashSet(group1, group2));
-    when(aclJooqDao.getSanitizedSecretsFor(client))
+    when(aclDAO.getGroupsFor(client)).thenReturn(Sets.newHashSet(group1, group2));
+    when(aclDAO.getSanitizedSecretsFor(client))
         .thenReturn(ImmutableSet.of(SanitizedSecret.fromSecret(secret)));
 
     ClientDetailResponse response = resource.getClient(user, new LongParam("1"));

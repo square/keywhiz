@@ -26,7 +26,7 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.VersionGenerator;
-import keywhiz.service.daos.AclJooqDao;
+import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretSeriesDAO;
@@ -56,7 +56,7 @@ public class AutomationSecretResourceTest {
 
   @Mock SecretController secretController;
   @Mock SecretController.SecretBuilder secretBuilder;
-  @Mock AclJooqDao aclJooqDao;
+  @Mock AclDAO aclDAO;
   @Mock SecretDAO secretDAO;
   @Mock SecretSeriesDAO secretSeriesDAO;
 
@@ -65,7 +65,7 @@ public class AutomationSecretResourceTest {
 
   @Before
   public void setUp() {
-    resource = new AutomationSecretResource(secretController, aclJooqDao, secretSeriesDAO);
+    resource = new AutomationSecretResource(secretController, aclDAO, secretSeriesDAO);
 
     when(secretController.builder(anyString(), anyString(), anyString())).thenReturn(secretBuilder);
   }

@@ -27,7 +27,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.api.model.AutomationClient;
-import keywhiz.service.daos.AclJooqDao;
+import keywhiz.service.daos.AclDAO;
 
 /**
  * @parentEndpointName enroll-clients-automation
@@ -37,11 +37,11 @@ import keywhiz.service.daos.AclJooqDao;
 @Path("/automation/clients/{clientId}/groups/{groupId}")
 @Produces(MediaType.APPLICATION_JSON)
 public class AutomationEnrollClientGroupResource {
-  private final AclJooqDao aclJooqDao;
+  private final AclDAO aclDAO;
 
   @Inject
-  public AutomationEnrollClientGroupResource(AclJooqDao aclJooqDao) {
-    this.aclJooqDao = aclJooqDao;
+  public AutomationEnrollClientGroupResource(AclDAO aclDAO) {
+    this.aclDAO = aclDAO;
   }
 
   /**
@@ -61,7 +61,7 @@ public class AutomationEnrollClientGroupResource {
       @PathParam("groupId") LongParam groupId) {
 
     try {
-      aclJooqDao.findAndEnrollClient(clientId.get(), groupId.get());
+      aclDAO.findAndEnrollClient(clientId.get(), groupId.get());
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }
@@ -86,7 +86,7 @@ public class AutomationEnrollClientGroupResource {
       @PathParam("groupId") long groupId) {
 
     try {
-      aclJooqDao.findAndEvictClient(clientId, groupId);
+      aclDAO.findAndEvictClient(clientId, groupId);
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }

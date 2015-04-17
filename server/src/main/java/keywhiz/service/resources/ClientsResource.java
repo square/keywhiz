@@ -44,7 +44,7 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.auth.User;
-import keywhiz.service.daos.AclJooqDao;
+import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.exceptions.ConflictException;
 import org.skife.jdbi.v2.exceptions.StatementException;
@@ -62,12 +62,12 @@ import org.slf4j.LoggerFactory;
 public class ClientsResource {
   private static final Logger logger = LoggerFactory.getLogger(ClientsResource.class);
 
-  private final AclJooqDao aclJooqDao;
+  private final AclDAO aclDAO;
   private final ClientDAO clientDAO;
 
   @Inject
-  public ClientsResource(AclJooqDao aclJooqDao, ClientDAO clientDAO) {
-    this.aclJooqDao = aclJooqDao;
+  public ClientsResource(AclDAO aclDAO, ClientDAO clientDAO) {
+    this.aclDAO = aclDAO;
     this.clientDAO = clientDAO;
   }
 
@@ -183,9 +183,9 @@ public class ClientsResource {
     }
 
     Client client = optionalClient.get();
-    ImmutableList<Group> groups = ImmutableList.copyOf(aclJooqDao.getGroupsFor(client));
+    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(client));
     ImmutableList<SanitizedSecret> sanitizedSecrets =
-        ImmutableList.copyOf(aclJooqDao.getSanitizedSecretsFor(client));
+        ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(client));
 
     return ClientDetailResponse.fromClient(client, groups, sanitizedSecrets);
   }

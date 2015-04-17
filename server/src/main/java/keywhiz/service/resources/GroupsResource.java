@@ -45,7 +45,7 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.auth.User;
-import keywhiz.service.daos.AclJooqDao;
+import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.GroupDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,12 +60,12 @@ import org.slf4j.LoggerFactory;
 @Produces(MediaType.APPLICATION_JSON)
 public class GroupsResource {
   private static final Logger logger = LoggerFactory.getLogger(GroupsResource.class);
-  private final AclJooqDao aclJooqDao;
+  private final AclDAO aclDAO;
   private final GroupDAO groupDAO;
 
   @Inject
-  public GroupsResource(AclJooqDao aclJooqDao, GroupDAO groupDAO) {
-    this.aclJooqDao = aclJooqDao;
+  public GroupsResource(AclDAO aclDAO, GroupDAO groupDAO) {
+    this.aclDAO = aclDAO;
     this.groupDAO = groupDAO;
   }
 
@@ -176,8 +176,8 @@ public class GroupsResource {
 
     Group group = optionalGroup.get();
     ImmutableList<SanitizedSecret> secrets =
-        ImmutableList.copyOf(aclJooqDao.getSanitizedSecretsFor(group));
-    ImmutableList<Client> clients = ImmutableList.copyOf(aclJooqDao.getClientsFor(group));
+        ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(group));
+    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(group));
 
     return GroupDetailResponse.fromGroup(group, secrets, clients);
   }

@@ -34,7 +34,7 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.service.config.Readonly;
-import keywhiz.service.daos.AclJooqDao;
+import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.SecretController;
 import org.hibernate.validator.constraints.NotEmpty;
@@ -54,14 +54,14 @@ import static keywhiz.api.model.Secret.splitNameAndVersion;
 public class SecretDeliveryResource {
   private final Logger logger = LoggerFactory.getLogger(SecretDeliveryResource.class);
   private final SecretController secretController;
-  private final AclJooqDao aclJooqDao;
+  private final AclDAO aclDAO;
   private final ClientDAO clientDAO;
 
   @Inject
   public SecretDeliveryResource(@Readonly SecretController secretController,
-      @Readonly AclJooqDao aclJooqDao, @Readonly ClientDAO clientDAO) {
+      @Readonly AclDAO aclDAO, @Readonly ClientDAO clientDAO) {
     this.secretController = secretController;
-    this.aclJooqDao = aclJooqDao;
+    this.aclDAO = aclDAO;
     this.clientDAO = clientDAO;
   }
 
@@ -88,7 +88,7 @@ public class SecretDeliveryResource {
     String name = parts[0];
     String version = parts[1];
 
-    Optional<SanitizedSecret> sanitizedSecret = aclJooqDao.getSanitizedSecretFor(client, name, version);
+    Optional<SanitizedSecret> sanitizedSecret = aclDAO.getSanitizedSecretFor(client, name, version);
     Optional<Secret> secret = secretController.getSecretByNameAndVersion(name, version);
 
     if (!sanitizedSecret.isPresent()) {

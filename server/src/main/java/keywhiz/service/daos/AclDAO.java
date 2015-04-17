@@ -44,8 +44,8 @@ import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
-public class AclJooqDao {
-  private static final Logger logger = LoggerFactory.getLogger(AclJooqDao.class);
+public class AclDAO {
+  private static final Logger logger = LoggerFactory.getLogger(AclDAO.class);
 
   private final DSLContext dslContext;
   private ClientDAO clientDAO;
@@ -54,7 +54,7 @@ public class AclJooqDao {
   private SecretSeriesDAO secretSeriesDAO;
 
   @Inject
-  public AclJooqDao(DSLContext dslContext, AclDeps aclDeps) {
+  public AclDAO(DSLContext dslContext, AclDeps aclDeps) {
     this.dslContext = dslContext;
     this.clientDAO = aclDeps.createClientDAO();
     this.groupDAO = aclDeps.createGroupDAO();
