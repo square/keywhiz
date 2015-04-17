@@ -210,7 +210,7 @@ public class AddAction implements Runnable {
       }
 
       logger.info("Allowing group '{}' access to secret '{}'.", group.getName(), secretDisplayName);
-      keywhizClient.grantSecretToGroupByIds((int) secretId, (int) group.getId());
+      keywhizClient.grantSecretToGroupByIds(Math.toIntExact(secretId), Math.toIntExact(group.getId()));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

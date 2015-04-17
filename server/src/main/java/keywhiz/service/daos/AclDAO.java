@@ -249,30 +249,32 @@ public class AclDAO {
   protected void allowAccess(long secretId, long groupId) {
     dslContext
         .insertInto(ACCESSGRANTS)
-        .set(ACCESSGRANTS.SECRETID, (int) secretId)
-        .set(ACCESSGRANTS.GROUPID, (int) groupId)
+        .set(ACCESSGRANTS.SECRETID, Math.toIntExact(secretId))
+        .set(ACCESSGRANTS.GROUPID, Math.toIntExact(groupId))
         .execute();
   }
 
   protected void revokeAccess(long secretId, long groupId) {
     dslContext
         .delete(ACCESSGRANTS)
-        .where(ACCESSGRANTS.SECRETID.eq((int) secretId).and(ACCESSGRANTS.GROUPID.eq((int) groupId)))
+        .where(ACCESSGRANTS.SECRETID.eq(Math.toIntExact(secretId))
+            .and(ACCESSGRANTS.GROUPID.eq(Math.toIntExact(groupId))))
         .execute();
   }
 
   protected void enrollClient(long clientId, long groupId) {
     dslContext
         .insertInto(MEMBERSHIPS)
-        .set(MEMBERSHIPS.GROUPID, (int) groupId)
-        .set(MEMBERSHIPS.CLIENTID, (int) clientId)
+        .set(MEMBERSHIPS.GROUPID, Math.toIntExact(groupId))
+        .set(MEMBERSHIPS.CLIENTID, Math.toIntExact(clientId))
         .execute();
   }
 
   protected void evictClient(long clientId, long groupId) {
     dslContext
         .delete(MEMBERSHIPS)
-        .where(MEMBERSHIPS.CLIENTID.eq((int) clientId).and(MEMBERSHIPS.GROUPID.eq((int) groupId)))
+        .where(MEMBERSHIPS.CLIENTID.eq(Math.toIntExact(clientId))
+            .and(MEMBERSHIPS.GROUPID.eq(Math.toIntExact(groupId))))
         .execute();
   }
 
