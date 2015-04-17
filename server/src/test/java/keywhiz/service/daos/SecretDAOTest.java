@@ -66,7 +66,7 @@ public class SecretDAOTest {
     testDBRule.jooqContext().delete(SECRETS).execute();
 
     testDBRule.jooqContext().insertInto(SECRETS)
-        .set(SECRETS.ID, (int) secret1.series().getId())
+        .set(SECRETS.ID, Math.toIntExact(secret1.series().getId()))
         .set(SECRETS.NAME, secret1.series().getName())
         .set(SECRETS.DESCRIPTION, secret1.series().getDescription().orElse(null))
         .set(SECRETS.CREATEDAT, secret1.series().getCreatedAt())
@@ -75,7 +75,7 @@ public class SecretDAOTest {
         .execute();
 
     testDBRule.jooqContext().insertInto(SECRETS_CONTENT)
-        .set(SECRETS_CONTENT.SECRETID, (int) secret1.series().getId())
+        .set(SECRETS_CONTENT.SECRETID, Math.toIntExact(secret1.series().getId()))
         .set(SECRETS_CONTENT.VERSION, secret1.content().version().orElse(null))
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret1.content().encryptedContent())
         .set(SECRETS_CONTENT.CREATEDAT, secret1.content().createdAt())
@@ -85,7 +85,7 @@ public class SecretDAOTest {
         .execute();
 
     testDBRule.jooqContext().insertInto(SECRETS)
-        .set(SECRETS.ID, (int) secret2.series().getId())
+        .set(SECRETS.ID, Math.toIntExact(secret2.series().getId()))
         .set(SECRETS.NAME, secret2.series().getName())
         .set(SECRETS.DESCRIPTION, secret2.series().getDescription().orElse(null))
         .set(SECRETS.CREATEDAT, secret2.series().getCreatedAt())
@@ -94,7 +94,7 @@ public class SecretDAOTest {
         .execute();
 
     testDBRule.jooqContext().insertInto(SECRETS_CONTENT)
-        .set(SECRETS_CONTENT.SECRETID, (int) secret2.series().getId())
+        .set(SECRETS_CONTENT.SECRETID, Math.toIntExact(secret2.series().getId()))
         .set(SECRETS_CONTENT.VERSION, secret2.content().version().orElse(null))
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret2.content().encryptedContent())
         .set(SECRETS_CONTENT.CREATEDAT, secret2.content().createdAt())

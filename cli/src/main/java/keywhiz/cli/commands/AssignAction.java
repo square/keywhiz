@@ -88,13 +88,13 @@ public class AssignAction implements Runnable {
         }
 
         try {
-          if (keywhizClient.groupDetailsForId((int) group.getId()).getClients().contains(client)) {
+          if (keywhizClient.groupDetailsForId(Math.toIntExact(group.getId())).getClients().contains(client)) {
             throw new AssertionError(
                 format("Client '%s' already assigned to group '%s'", assignActionConfig.name,
                     group.getName()));
           }
           logger.info("Enrolling client '{}' in group '{}'.", client.getName(), group.getName());
-          keywhizClient.enrollClientInGroupByIds((int) client.getId(), (int) group.getId());
+          keywhizClient.enrollClientInGroupByIds(Math.toIntExact(client.getId()), Math.toIntExact(group.getId()));
         } catch (IOException e) {
           throw Throwables.propagate(e);
         }
@@ -106,14 +106,14 @@ public class AssignAction implements Runnable {
           String[] parts = splitNameAndVersion(assignActionConfig.name);
           SanitizedSecret sanitizedSecret =
                 keywhizClient.getSanitizedSecretByNameAndVersion(parts[0], parts[1]);
-          if (keywhizClient.groupDetailsForId((int) group.getId()).getSecrets().contains(
+          if (keywhizClient.groupDetailsForId(Math.toIntExact(group.getId())).getSecrets().contains(
               sanitizedSecret)) {
             throw new AssertionError(
                 format("Secret '%s' already assigned to group '%s'", assignActionConfig.name,
                     group.getName()));
           }
           logger.info("Allowing group '{}' access to secret '{}'.", group.getName(), sanitizedSecret.name());
-          keywhizClient.grantSecretToGroupByIds((int) sanitizedSecret.id(), (int) group.getId());
+          keywhizClient.grantSecretToGroupByIds(Math.toIntExact(sanitizedSecret.id()), Math.toIntExact(group.getId()));
         } catch (KeywhizClient.NotFoundException e) {
           throw new AssertionError("Secret doesn't exist.");
         } catch (ParseException e) {

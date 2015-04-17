@@ -26,6 +26,7 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.VersionGenerator;
+import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -53,10 +54,11 @@ public class AclDAOTest {
 
   @Before
   public void setUp() {
-    testDBRule.jooqContext().delete(CLIENTS).execute();
-    testDBRule.jooqContext().delete(GROUPS).execute();
-    testDBRule.jooqContext().delete(SECRETS).execute();
-    testDBRule.jooqContext().delete(SECRETS_CONTENT).execute();
+    DSLContext jooqContext = testDBRule.jooqContext();
+    jooqContext.delete(CLIENTS).execute();
+    jooqContext.delete(GROUPS).execute();
+    jooqContext.delete(SECRETS).execute();
+    jooqContext.delete(SECRETS_CONTENT).execute();
 
     DBI dbi = testDBRule.getDbi();
 
@@ -84,7 +86,8 @@ public class AclDAOTest {
 
     secretSeriesDAO = dbi.onDemand(SecretSeriesDAO.class);
 
-    aclDAO = dbi.onDemand(AclDAO.class);
+    AclDeps aclDeps = dbi.onDemand(AclDeps.class);
+    aclDAO = new AclDAO(jooqContext, aclDeps);
   }
 
   @Test

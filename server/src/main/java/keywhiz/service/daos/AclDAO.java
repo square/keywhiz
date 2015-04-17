@@ -17,8 +17,11 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Inject;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -26,104 +29,123 @@ import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.BindBean;
-import org.skife.jdbi.v2.sqlobject.CreateSqlObject;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.Transaction;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.customizers.SingleValueResult;
+import org.jooq.DSLContext;
+import org.jooq.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
+import static keywhiz.jooq.tables.Clients.CLIENTS;
+import static keywhiz.jooq.tables.Groups.GROUPS;
+import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
+import static keywhiz.jooq.tables.Secrets.SECRETS;
+import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
-@RegisterMapper({SecretSeriesMapper.class, GroupMapper.class, ClientMapper.class})
-public abstract class AclDAO {
+public class AclDAO {
   private static final Logger logger = LoggerFactory.getLogger(AclDAO.class);
 
-  // Creates objects with same underlying connection.
-  @CreateSqlObject protected abstract ClientDAO createClientDAO();
-  @CreateSqlObject protected abstract GroupDAO createGroupDAO();
-  @CreateSqlObject protected abstract SecretContentDAO createSecretContentDAO();
-  @CreateSqlObject protected abstract SecretSeriesDAO createSecretSeriesDAO();
+  private final DSLContext dslContext;
+  private ClientDAO clientDAO;
+  private GroupDAO groupDAO;
+  private SecretContentDAO secretContentDAO;
+  private SecretSeriesDAO secretSeriesDAO;
 
-  @Transaction
+  @Inject
+  public AclDAO(DSLContext dslContext, AclDeps aclDeps) {
+    this.dslContext = dslContext;
+    this.clientDAO = aclDeps.createClientDAO();
+    this.groupDAO = aclDeps.createGroupDAO();
+    this.secretContentDAO = aclDeps.createSecretContentDAO();
+    this.secretSeriesDAO = aclDeps.createSecretSeriesDAO();
+  }
+
   public void findAndAllowAccess(long secretId, long groupId) {
-    Optional<Group> group = createGroupDAO().getGroupById(groupId);
-    if (!group.isPresent()) {
-      logger.info("Failure to allow access groupId {}, secretId {}: groupId not found.", groupId, secretId);
-      throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
-    }
+    dslContext.transaction(configuration -> {
+      Optional<Group> group = groupDAO.getGroupById(groupId);
+      if (!group.isPresent()) {
+        logger.info("Failure to allow access groupId {}, secretId {}: groupId not found.", groupId,
+            secretId);
+        throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
+      }
 
-    Optional<SecretSeries> secret = createSecretSeriesDAO().getSecretSeriesById(secretId);
-    if (!secret.isPresent()) {
-      logger.info("Failure to allow access groupId {}, secretId {}: secretId not found.", groupId, secretId);
-      throw new IllegalStateException(format("SecretId %d doesn't exist.", secretId));
-    }
+      Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
+      if (!secret.isPresent()) {
+        logger.info("Failure to allow access groupId {}, secretId {}: secretId not found.", groupId,
+            secretId);
+        throw new IllegalStateException(format("SecretId %d doesn't exist.", secretId));
+      }
 
-    allowAccess(secretId, groupId);
+      allowAccess(secretId, groupId);
+    });
   }
 
-  @Transaction
   public void findAndRevokeAccess(long secretId, long groupId) {
-    Optional<Group> group = createGroupDAO().getGroupById(groupId);
-    if (!group.isPresent()) {
-      logger.info("Failure to revoke access groupId {}, secretId {}: groupId not found.", groupId, secretId);
-      throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
-    }
+    dslContext.transaction(configuration -> {
+      Optional<Group> group = groupDAO.getGroupById(groupId);
+      if (!group.isPresent()) {
+        logger.info("Failure to revoke access groupId {}, secretId {}: groupId not found.", groupId,
+            secretId);
+        throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
+      }
 
-    Optional<SecretSeries> secret = createSecretSeriesDAO().getSecretSeriesById(secretId);
-    if (!secret.isPresent()) {
-      logger.info("Failure to revoke access groupId {}, secretId {}: secretId not found.", groupId, secretId);
-      throw new IllegalStateException(format("SecretId %d doesn't exist.", secretId));
-    }
+      Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
+      if (!secret.isPresent()) {
+        logger.info("Failure to revoke access groupId {}, secretId {}: secretId not found.",
+            groupId, secretId);
+        throw new IllegalStateException(format("SecretId %d doesn't exist.", secretId));
+      }
 
-    revokeAccess(secretId, groupId);
+      revokeAccess(secretId, groupId);
+    });
   }
 
-  @Transaction
   public void findAndEnrollClient(long clientId, long groupId) {
-    Optional<Client> client = createClientDAO().getClientById(clientId);
-    if (!client.isPresent()) {
-      logger.info("Failure to enroll membership clientId {}, groupId {}: clientId not found.", clientId, groupId);
-      throw new IllegalStateException(format("ClientId %d doesn't exist.", clientId));
-    }
+    dslContext.transaction(configuration -> {
+      Optional<Client> client = clientDAO.getClientById(clientId);
+      if (!client.isPresent()) {
+        logger.info("Failure to enroll membership clientId {}, groupId {}: clientId not found.",
+            clientId, groupId);
+        throw new IllegalStateException(format("ClientId %d doesn't exist.", clientId));
+      }
 
-    Optional<Group> group = createGroupDAO().getGroupById(groupId);
-    if (!group.isPresent()) {
-      logger.info("Failure to enroll membership clientId {}, groupId {}: groupId not found.", clientId, groupId);
-      throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
-    }
+      Optional<Group> group = groupDAO.getGroupById(groupId);
+      if (!group.isPresent()) {
+        logger.info("Failure to enroll membership clientId {}, groupId {}: groupId not found.",
+            clientId, groupId);
+        throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
+      }
 
-    enrollClient(clientId, groupId);
+      enrollClient(clientId, groupId);
+    });
   }
 
-  @Transaction
   public void findAndEvictClient(long clientId, long groupId) {
-    Optional<Client> client = createClientDAO().getClientById(clientId);
-    if (!client.isPresent()) {
-      logger.info("Failure to evict membership clientId {}, groupId {}: clientId not found.", clientId, groupId);
-      throw new IllegalStateException(format("ClientId %d doesn't exist.", clientId));
-    }
+    dslContext.transaction(configuration -> {
+      Optional<Client> client = clientDAO.getClientById(clientId);
+      if (!client.isPresent()) {
+        logger.info("Failure to evict membership clientId {}, groupId {}: clientId not found.",
+            clientId, groupId);
+        throw new IllegalStateException(format("ClientId %d doesn't exist.", clientId));
+      }
 
-    Optional<Group> group = createGroupDAO().getGroupById(groupId);
-    if (!group.isPresent()) {
-      logger.info("Failure to evict membership clientId {}, groupId {}: groupId not found.", clientId, groupId);
-      throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
-    }
+      Optional<Group> group = groupDAO.getGroupById(groupId);
+      if (!group.isPresent()) {
+        logger.info("Failure to evict membership clientId {}, groupId {}: groupId not found.",
+            clientId, groupId);
+        throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
+      }
 
-    evictClient(clientId, groupId);
+      evictClient(clientId, groupId);
+    });
   }
 
   public ImmutableSet<SanitizedSecret> getSanitizedSecretsFor(Group group) {
     checkNotNull(group);
 
     ImmutableSet.Builder<SanitizedSecret> set = ImmutableSet.builder();
-    SecretContentDAO secretContentDAO = createSecretContentDAO();
 
     for (SecretSeries series : getSecretSeriesFor(group)) {
       for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
@@ -135,103 +157,157 @@ public abstract class AclDAO {
     return set.build();
   }
 
-  @SqlQuery("SELECT groups.id, groups.name, groups.description, groups.createdAt, groups.createdBy, " +
-            "groups.updatedAt, groups.updatedBy FROM groups " +
-            "JOIN accessGrants ON groups.id = accessGrants.groupId " +
-            "JOIN secrets ON accessGrants.secretId = secrets.id " +
-            "WHERE secrets.name = :name")
-  public abstract Set<Group> getGroupsFor(@BindSecret Secret secret);
-
-  @SqlQuery("SELECT groups.id, groups.name, groups.description, groups.createdAt, groups.createdBy, " +
-            "groups.updatedAt, groups.updatedBy FROM groups " +
-            "JOIN memberships ON groups.id = memberships.groupId " +
-            "JOIN clients ON clients.id = memberships.clientId " +
-            "WHERE clients.name = :name")
-  public abstract Set<Group> getGroupsFor(@BindBean Client client);
-
-  @SqlQuery("SELECT clients.id, clients.name, clients.description, clients.createdAt, clients.createdBy, " +
-            "clients.updatedAt, clients.updatedBy, clients.enabled, clients.automationAllowed FROM clients " +
-            "JOIN memberships ON clients.id = memberships.clientId " +
-            "JOIN groups ON groups.id = memberships.groupId " +
-            "WHERE groups.name = :name")
-  public abstract Set<Client> getClientsFor(@BindBean Group group);
-
-  @Transaction
-  public ImmutableSet<SanitizedSecret> getSanitizedSecretsFor(Client client) {
-    checkNotNull(client);
-    ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
-    SecretContentDAO secretContentDAO = createSecretContentDAO();
-
-    for (SecretSeries series : getSecretSeriesFor(client)) {
-      for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
-        SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
-        sanitizedSet.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
-      }
-    }
-    return sanitizedSet.build();
+  public Set<Group> getGroupsFor(Secret secret) {
+    List<Group> r = dslContext
+        .select(GROUPS.ID, GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDAT, GROUPS.CREATEDBY,
+            GROUPS.UPDATEDAT, GROUPS.UPDATEDBY)
+        .from(GROUPS)
+        .join(ACCESSGRANTS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
+        .join(SECRETS).on(ACCESSGRANTS.SECRETID.eq(SECRETS.ID))
+        .where(SECRETS.NAME.eq(secret.getName()))
+        .fetch()
+        .map(new GroupJooqMapper());
+    return new HashSet<>(r);
   }
 
-  @SqlQuery("SELECT clients.id, clients.name, clients.description, clients.createdAt, clients.createdBy, " +
-            "clients.updatedAt, clients.updatedBy, clients.enabled, clients.automationAllowed FROM clients " +
-            "JOIN memberships ON clients.id = memberships.clientId " +
-            "JOIN accessGrants ON memberships.groupId = accessGrants.groupId " +
-            "JOIN secrets ON secrets.id = accessGrants.secretId " +
-            "WHERE secrets.name = :name")
-  public abstract Set<Client> getClientsFor(@BindSecret Secret secret);
+  public Set<Group> getGroupsFor(Client client) {
+    List<Group> r = dslContext
+        .select(GROUPS.ID, GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDAT, GROUPS.CREATEDBY,
+            GROUPS.UPDATEDAT, GROUPS.UPDATEDBY)
+        .from(GROUPS)
+        .join(MEMBERSHIPS).on(GROUPS.ID.eq(MEMBERSHIPS.GROUPID))
+        .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
+        .where(CLIENTS.NAME.eq(client.getName()))
+        .fetch()
+        .map(new GroupJooqMapper());
+    return new HashSet<>(r);
+  }
 
-  @Transaction
+  public Set<Client> getClientsFor(Group group) {
+    List<Client> r = dslContext
+        .select(CLIENTS.ID, CLIENTS.NAME, CLIENTS.DESCRIPTION, CLIENTS.CREATEDAT, CLIENTS.CREATEDBY,
+            CLIENTS.UPDATEDAT, CLIENTS.UPDATEDBY, CLIENTS.ENABLED, CLIENTS.AUTOMATIONALLOWED)
+        .from(CLIENTS)
+        .join(MEMBERSHIPS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
+        .join(GROUPS).on(GROUPS.ID.eq(MEMBERSHIPS.GROUPID))
+        .where(GROUPS.NAME.eq(group.getName()))
+        .fetch()
+        .map(new ClientJooqMapper());
+    return new HashSet<>(r);
+  }
+
+  public ImmutableSet<SanitizedSecret> getSanitizedSecretsFor(Client client) {
+    checkNotNull(client);
+    return dslContext.transactionResult(configuration -> {
+      ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
+
+      for (SecretSeries series : getSecretSeriesFor(client)) {
+        for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
+          SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
+          sanitizedSet.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
+        }
+      }
+      return sanitizedSet.build();
+    });
+  }
+
+  public Set<Client> getClientsFor(Secret secret) {
+    List<Client> r = dslContext
+        .select(CLIENTS.ID, CLIENTS.NAME, CLIENTS.DESCRIPTION, CLIENTS.CREATEDAT, CLIENTS.CREATEDBY,
+            CLIENTS.UPDATEDAT, CLIENTS.UPDATEDBY, CLIENTS.ENABLED, CLIENTS.AUTOMATIONALLOWED)
+        .from(CLIENTS)
+        .join(MEMBERSHIPS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
+        .join(ACCESSGRANTS).on(MEMBERSHIPS.GROUPID.eq(ACCESSGRANTS.GROUPID))
+        .join(SECRETS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
+        .where(SECRETS.NAME.eq(secret.getName()))
+        .fetch()
+        .map(new ClientJooqMapper());
+    return new HashSet<>(r);
+  }
+
   public Optional<SanitizedSecret> getSanitizedSecretFor(Client client, String name, String version) {
     checkNotNull(client);
     checkArgument(!name.isEmpty());
     checkNotNull(version);
 
-    Optional<SecretSeries> secretSeries = getSecretSeriesFor(client, name);
-    if (!secretSeries.isPresent()) {
-      return Optional.empty();
-    }
+    return dslContext.<Optional<SanitizedSecret>>transactionResult(configuration -> {
+      Optional<SecretSeries> secretSeries = getSecretSeriesFor(client, name);
+      if (!secretSeries.isPresent()) {
+        return Optional.empty();
+      }
 
-    Optional<SecretContent> secretContent =
-        createSecretContentDAO().getSecretContentBySecretIdAndVersion(
-            secretSeries.get().getId(), version);
-    if (!secretContent.isPresent()) {
-      return Optional.empty();
-    }
+      Optional<SecretContent> secretContent =
+          secretContentDAO.getSecretContentBySecretIdAndVersion(
+              secretSeries.get().getId(), version);
+      if (!secretContent.isPresent()) {
+        return Optional.empty();
+      }
 
-    SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(
-        secretSeries.get(), secretContent.get());
-    return Optional.of(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
+      SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(
+          secretSeries.get(), secretContent.get());
+      return Optional.of(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
+    });
   }
 
-  @SqlUpdate("INSERT INTO accessGrants (secretId, groupId) VALUES (:secretId, :groupId)")
-  protected abstract void allowAccess(@Bind("secretId") long secretId, @Bind("groupId") long groupId);
+  protected void allowAccess(long secretId, long groupId) {
+    dslContext
+        .insertInto(ACCESSGRANTS)
+        .set(ACCESSGRANTS.SECRETID, Math.toIntExact(secretId))
+        .set(ACCESSGRANTS.GROUPID, Math.toIntExact(groupId))
+        .execute();
+  }
 
-  @SqlUpdate("DELETE FROM accessGrants WHERE secretId = :secretId AND groupId = :groupId")
-  protected abstract void revokeAccess(@Bind("secretId") long secretId, @Bind("groupId") long groupId);
+  protected void revokeAccess(long secretId, long groupId) {
+    dslContext
+        .delete(ACCESSGRANTS)
+        .where(ACCESSGRANTS.SECRETID.eq(Math.toIntExact(secretId))
+            .and(ACCESSGRANTS.GROUPID.eq(Math.toIntExact(groupId))))
+        .execute();
+  }
 
-  @SqlUpdate("INSERT INTO memberships (groupId, clientId) VALUES (:groupId, :clientId)")
-  protected abstract void enrollClient(@Bind("clientId") long clientId, @Bind("groupId") long groupId);
+  protected void enrollClient(long clientId, long groupId) {
+    dslContext
+        .insertInto(MEMBERSHIPS)
+        .set(MEMBERSHIPS.GROUPID, Math.toIntExact(groupId))
+        .set(MEMBERSHIPS.CLIENTID, Math.toIntExact(clientId))
+        .execute();
+  }
 
-  @SqlUpdate("DELETE FROM memberships WHERE clientId = :clientId AND groupId = :groupId")
-  protected abstract void evictClient(@Bind("clientId") long clientId, @Bind("groupId") long groupId);
+  protected void evictClient(long clientId, long groupId) {
+    dslContext
+        .delete(MEMBERSHIPS)
+        .where(MEMBERSHIPS.CLIENTID.eq(Math.toIntExact(clientId))
+            .and(MEMBERSHIPS.GROUPID.eq(Math.toIntExact(groupId))))
+        .execute();
+  }
 
-  @SqlQuery("SELECT secrets.id, secrets.name, secrets.description, " +
-      "secrets.createdAt, secrets.createdBy, secrets.updatedAt, secrets.updatedBy, secrets.type, " +
-      "secrets.options " +
-      "FROM secrets " +
-      "JOIN accessGrants ON secrets.id = accessGrants.secretId " +
-      "JOIN groups ON groups.id = accessGrants.groupId " +
-      "WHERE groups.name = :name")
-  protected abstract ImmutableSet<SecretSeries> getSecretSeriesFor(@BindBean Group group);
+  protected ImmutableSet<SecretSeries> getSecretSeriesFor(Group group) {
+    List<SecretSeries> r = dslContext
+        .select(SECRETS.ID, SECRETS.NAME, SECRETS.DESCRIPTION, SECRETS.CREATEDAT, SECRETS.CREATEDBY,
+            SECRETS.UPDATEDAT, SECRETS.UPDATEDBY, SECRETS.TYPE, SECRETS.OPTIONS)
+        .from(SECRETS)
+        .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
+        .join(GROUPS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
+        .where(GROUPS.NAME.eq(group.getName()))
+        .fetch()
+        .map(new SecretSeriesJooqMapper());
+    return ImmutableSet.copyOf(r);
 
-  @SqlQuery("SELECT secrets.id, secrets.name, secrets.description, " +
-      "secrets.createdAt, secrets.createdBy, secrets.updatedAt, secrets.updatedBy, secrets.type, " +
-      "secrets.options " +
-      "FROM secrets " +
-      "JOIN accessGrants ON secrets.id = accessGrants.secretId " +
-      "JOIN memberships ON accessGrants.groupId = memberships.groupId " +
-      "JOIN clients ON clients.id = memberships.clientId " +
-      "WHERE clients.name = :name")
-  protected abstract ImmutableSet<SecretSeries> getSecretSeriesFor(@BindBean Client client);
+  }
+
+  protected ImmutableSet<SecretSeries> getSecretSeriesFor(Client client) {
+    List<SecretSeries> r = dslContext
+        .select(SECRETS.ID, SECRETS.NAME, SECRETS.DESCRIPTION, SECRETS.CREATEDAT, SECRETS.CREATEDBY,
+            SECRETS.UPDATEDAT, SECRETS.UPDATEDBY, SECRETS.TYPE, SECRETS.OPTIONS)
+        .from(SECRETS)
+        .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
+        .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
+        .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
+        .where(CLIENTS.NAME.eq(client.getName()))
+        .fetch()
+        .map(new SecretSeriesJooqMapper());
+    return ImmutableSet.copyOf(r);
+  }
 
   /**
    * @param client client to access secrets
@@ -240,14 +316,19 @@ public abstract class AclDAO {
    * The query doesn't distinguish between these cases. If result absent, a followup call on clients
    * table should be used to determine the exception.
    */
-  @SingleValueResult(SecretSeries.class)
-  @SqlQuery("SELECT secrets.id, secrets.name, secrets.description, " +
-            "secrets.createdAt, secrets.createdBy, secrets.updatedAt, secrets.updatedBy, " +
-            "secrets.type, secrets.options " +
-            "FROM secrets JOIN secrets_content on secrets.id = secrets_content.secretId " +
-            "JOIN accessGrants ON secrets.id = accessGrants.secretId " +
-            "JOIN memberships ON accessGrants.groupId = memberships.groupId " +
-            "JOIN clients ON clients.id = memberships.clientId " +
-            "WHERE secrets.name = :name AND clients.name = :c.name")
-  protected abstract Optional<SecretSeries> getSecretSeriesFor(@BindBean("c") Client client, @Bind("name") String name);
+  protected Optional<SecretSeries> getSecretSeriesFor(Client client, String name) {
+    Record r = dslContext
+        .select(SECRETS.ID, SECRETS.NAME, SECRETS.DESCRIPTION, SECRETS.CREATEDAT, SECRETS.CREATEDBY,
+            SECRETS.UPDATEDAT, SECRETS.UPDATEDBY, SECRETS.TYPE, SECRETS.OPTIONS)
+        .from(SECRETS)
+        .join(SECRETS_CONTENT).on(SECRETS.ID.eq(SECRETS_CONTENT.SECRETID))
+        .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
+        .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
+        .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
+        .where(SECRETS.NAME.eq(name).and(CLIENTS.NAME.eq(client.getName())))
+        .fetchOne();
+
+    return Optional.ofNullable(r).map(
+        (rec) -> rec.map(new SecretSeriesJooqMapper()));
+  }
 }

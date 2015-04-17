@@ -73,14 +73,14 @@ public class UnassignAction implements Runnable {
 
         try {
           Client client = keywhizClient.getClientByName(unassignActionConfig.name);
-          if (!keywhizClient.groupDetailsForId((int) group.getId()).getClients().contains(client)) {
+          if (!keywhizClient.groupDetailsForId(Math.toIntExact(group.getId())).getClients().contains(client)) {
             throw new AssertionError(
                 format("Client '%s' not assigned to group '%s'.", unassignActionConfig.name,
                     group));
           }
 
           logger.info("Evicting client '{}' from group '{}'.", client.getName(), group.getName());
-          keywhizClient.evictClientFromGroupByIds((int) client.getId(), (int) group.getId());
+          keywhizClient.evictClientFromGroupByIds(Math.toIntExact(client.getId()), Math.toIntExact(group.getId()));
         } catch (NotFoundException e) {
           throw new AssertionError("Client or group doesn't exist.");
         } catch (IOException e) {
@@ -94,7 +94,7 @@ public class UnassignAction implements Runnable {
           SanitizedSecret sanitizedSecret =
               keywhizClient.getSanitizedSecretByNameAndVersion(parts[0], parts[1]);
 
-          if (!keywhizClient.groupDetailsForId((int) group.getId())
+          if (!keywhizClient.groupDetailsForId(Math.toIntExact(group.getId()))
               .getSecrets()
               .contains(sanitizedSecret)) {
             throw new AssertionError(
@@ -102,7 +102,7 @@ public class UnassignAction implements Runnable {
           }
           logger.info("Revoke group '{}' access to secret '{}'.", group.getName(),
               SanitizedSecret.displayName(sanitizedSecret));
-          keywhizClient.revokeSecretFromGroupByIds((int) sanitizedSecret.id(), (int) group.getId());
+          keywhizClient.revokeSecretFromGroupByIds(Math.toIntExact(sanitizedSecret.id()), Math.toIntExact(group.getId()));
         } catch (NotFoundException e) {
           throw new AssertionError("Secret or group doesn't exist.");
         } catch (ParseException e) {
