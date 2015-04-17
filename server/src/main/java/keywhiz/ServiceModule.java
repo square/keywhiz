@@ -39,6 +39,7 @@ import io.dropwizard.jdbi.args.JodaDateTimeArgumentFactory;
 import io.dropwizard.jdbi.args.JodaDateTimeMapper;
 import io.dropwizard.jdbi.logging.LogbackLog;
 import io.dropwizard.setup.Environment;
+import java.sql.SQLException;
 import java.time.Clock;
 import keywhiz.auth.BouncyCastle;
 import keywhiz.auth.User;
@@ -60,6 +61,9 @@ import keywhiz.service.daos.MapArgumentFactory;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretSeriesDAO;
+import keywhiz.service.daos.UserDAO;
+import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 import org.skife.jdbi.v2.ColonPrefixNamedParamStatementRewriter;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.LoggerFactory;
@@ -104,6 +108,37 @@ public class ServiceModule extends AbstractModule {
     });
   }
 
+  // ManagedDataSource
+
+  @Provides @Singleton ManagedDataSource writableDataSource(Environment environment,
+      KeywhizConfig config) {
+    DataSourceFactory dataSourceFactory = config.getDataSourceFactory();
+    ManagedDataSource dataSource = dataSourceFactory.build(environment.metrics(), "postgres-writable");
+    environment.lifecycle().manage(dataSource);
+
+    return dataSource;
+  }
+
+
+  @Provides @Singleton @Readonly ManagedDataSource readonlyDataSource(Environment environment,
+      KeywhizConfig config) {
+    DataSourceFactory dataSourceFactory = config.getDataSourceFactory();
+    return dataSourceFactory.build(environment.metrics(), "postgres-readonly");
+  }
+
+  // Jooq
+
+  @Provides @Singleton DSLContext jooqContext(ManagedDataSource dataSource) throws SQLException {
+    return DSL.using(dataSource.getConnection());
+  }
+
+  @Provides @Singleton @Readonly DSLContext readonlyJooqContext(@Readonly ManagedDataSource dataSource)
+      throws SQLException {
+    return DSL.using(dataSource.getConnection());
+  }
+
+  // DBI
+
   @Provides ObjectMapper configuredObjectMapper(Environment environment) {
     return environment.getObjectMapper();
   }
@@ -112,29 +147,16 @@ public class ServiceModule extends AbstractModule {
     return new DBIFactory();
   }
 
-  @Provides @Singleton
-  @Readonly DBI readonlyDbi(DBIFactory factory, Environment environment, KeywhizConfig config,
-      MapArgumentFactory mapArgumentFactory) throws ClassNotFoundException {
-    logger.debug("Creating read-only DBI");
-    DBI dbi = factory.build(environment, config.getReadonlyDataSourceFactory(), "postgres-readonly");
-    dbi.registerArgumentFactory(mapArgumentFactory);
-    return dbi;
-  }
-
   /**
    * Super lame copy of functionality from {@link DBIFactory}. Want both DBI instances to perform
    * similarly, however do NOT want a health check of the writable DBI. Failure should allow host
    * to remain in rotation of healthy servers since readonly DBI sufficient for critical tasks.
    */
   @Provides @Singleton DBI dbi(Environment environment, KeywhizConfig config,
-      MapArgumentFactory mapArgumentFactory) throws ClassNotFoundException {
+      MapArgumentFactory mapArgumentFactory, ManagedDataSource dataSource) throws ClassNotFoundException {
     logger.debug("Creating DBI");
+
     DataSourceFactory dataSourceFactory = config.getDataSourceFactory();
-
-    ManagedDataSource dataSource = dataSourceFactory.build(environment.metrics(), "postgres-writable");
-
-    environment.lifecycle().manage(dataSource);
-
     final DBI dbi = new DBI(dataSource);
     dbi.setSQLLog(new LogbackLog(DBI_LOGGER, Level.TRACE));
     dbi.setTimingCollector(new InstrumentedTimingCollector(environment.metrics(),
@@ -158,6 +180,19 @@ public class ServiceModule extends AbstractModule {
 
     return dbi;
   }
+
+  @Provides @Singleton
+  @Readonly DBI readonlyDbi(DBIFactory factory, Environment environment, KeywhizConfig config,
+      MapArgumentFactory mapArgumentFactory, @Readonly ManagedDataSource dataSource)
+      throws ClassNotFoundException {
+    logger.debug("Creating read-only DBI");
+    DBI dbi = factory.build(environment, config.getReadonlyDataSourceFactory(), dataSource,
+        "postgres-readonly");
+    dbi.registerArgumentFactory(mapArgumentFactory);
+    return dbi;
+  }
+
+  // DAOs
 
   @Provides @Singleton @Readonly SecretController readonlySecretController(
       SecretTransformer transformer, ContentCryptographer cryptographer,
@@ -210,7 +245,9 @@ public class ServiceModule extends AbstractModule {
     return dbi.onDemand(AclDAO.class);
   }
 
-  @Provides @Singleton Authenticator<BasicCredentials, User> authenticator(KeywhizConfig config, DBI dbi) {
-    return config.getUserAuthenticatorFactory().build(dbi);
+  @Provides @Singleton
+  @Readonly Authenticator<BasicCredentials, User> authenticator(KeywhizConfig config,
+      @Readonly DSLContext jooqContext) {
+    return config.getUserAuthenticatorFactory().build(jooqContext);
   }
 }

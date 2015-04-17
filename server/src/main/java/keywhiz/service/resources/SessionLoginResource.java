@@ -38,6 +38,7 @@ import keywhiz.api.LoginRequest;
 import keywhiz.auth.User;
 import keywhiz.auth.cookie.AuthenticatedEncryptedCookieFactory;
 import keywhiz.auth.xsrf.XsrfProtection;
+import keywhiz.service.config.Readonly;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +55,7 @@ public class SessionLoginResource {
   private final XsrfProtection xsrfProtection;
 
   @Inject
-  public SessionLoginResource(Authenticator<BasicCredentials, User> userAuthenticator,
+  public SessionLoginResource(@Readonly Authenticator<BasicCredentials, User> userAuthenticator,
       AuthenticatedEncryptedCookieFactory cookieFactory, XsrfProtection xsrfProtection) {
     this.userAuthenticator = userAuthenticator;
     this.cookieFactory = cookieFactory;

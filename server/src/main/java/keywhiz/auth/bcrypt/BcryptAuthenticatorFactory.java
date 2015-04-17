@@ -22,8 +22,8 @@ import io.dropwizard.auth.basic.BasicCredentials;
 import io.dropwizard.java8.auth.Authenticator;
 import keywhiz.auth.User;
 import keywhiz.auth.UserAuthenticatorFactory;
+import org.jooq.DSLContext;
 import keywhiz.service.daos.UserDAO;
-import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +34,9 @@ import org.slf4j.LoggerFactory;
 public class BcryptAuthenticatorFactory implements UserAuthenticatorFactory {
   private final Logger logger = LoggerFactory.getLogger(BcryptAuthenticatorFactory.class);
 
-  @Override public Authenticator<BasicCredentials, User> build(DBI dbi) {
+  @Override public Authenticator<BasicCredentials, User> build(DSLContext dslContext) {
     logger.debug("Creating BCrypt authenticator");
-    UserDAO userDAO = dbi.onDemand(UserDAO.class);
+    UserDAO userDAO = new UserDAO(dslContext);
     return new BcryptAuthenticator(userDAO);
   }
 }
