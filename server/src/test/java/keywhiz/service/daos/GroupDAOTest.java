@@ -29,16 +29,16 @@ import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class GroupJooqDaoTest {
+public class GroupDAOTest {
   @Rule public final TestDBRule testDBRule = new TestDBRule();
 
   Group group1, group2;
 
-  GroupJooqDao groupJooqDao;
+  GroupDAO groupDAO;
 
   @Before
   public void setUp() throws Exception {
-    groupJooqDao = new GroupJooqDao(testDBRule.jooqContext());
+    groupDAO = new GroupDAO(testDBRule.jooqContext());
 
     testDBRule.jooqContext().insertInto(GROUPS,
         GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDBY, GROUPS.UPDATEDBY)
@@ -46,17 +46,17 @@ public class GroupJooqDaoTest {
         .values("group2", "desc2", "creator2", "updater2")
         .execute();
 
-    group1 = groupJooqDao.getGroup("group1").get();
-    group2 = groupJooqDao.getGroup("group2").get();
+    group1 = groupDAO.getGroup("group1").get();
+    group2 = groupDAO.getGroup("group2").get();
   }
 
   @Test
   public void createGroup() {
     int before = tableSize();
-    groupJooqDao.createGroup("newGroup", "creator3", Optional.empty());
+    groupDAO.createGroup("newGroup", "creator3", Optional.empty());
     assertThat(tableSize()).isEqualTo(before + 1);
 
-    List<String> names = groupJooqDao.getGroups()
+    List<String> names = groupDAO.getGroups()
         .stream()
         .map(Group::getName)
         .collect(toList());
@@ -66,10 +66,10 @@ public class GroupJooqDaoTest {
   @Test
   public void deleteGroup() {
     int before = tableSize();
-    groupJooqDao.deleteGroup(group1);
+    groupDAO.deleteGroup(group1);
 
     assertThat(tableSize()).isEqualTo(before - 1);
-    assertThat(groupJooqDao.getGroups()).containsOnly(group2);
+    assertThat(groupDAO.getGroups()).containsOnly(group2);
   }
 
   @Test
@@ -83,25 +83,25 @@ public class GroupJooqDaoTest {
 
   @Test
   public void getGroupById() {
-    Group group = groupJooqDao.getGroupById(group1.getId())
+    Group group = groupDAO.getGroupById(group1.getId())
         .orElseThrow(RuntimeException::new);
     assertThat(group).isEqualTo(group1);
   }
 
   @Test
   public void getNonExistentGroup() {
-    assertThat(groupJooqDao.getGroup("non-existent").isPresent()).isFalse();
-    assertThat(groupJooqDao.getGroupById(-1234).isPresent()).isFalse();
+    assertThat(groupDAO.getGroup("non-existent").isPresent()).isFalse();
+    assertThat(groupDAO.getGroupById(-1234).isPresent()).isFalse();
   }
 
   @Test
   public void getGroups() {
-    assertThat(groupJooqDao.getGroups()).containsOnly(group1, group2);
+    assertThat(groupDAO.getGroups()).containsOnly(group1, group2);
   }
 
   @Test(expected = DataAccessException.class)
   public void willNotCreateDuplicateGroup() throws Exception {
-    groupJooqDao.createGroup("group1", "creator1", Optional.empty());
+    groupDAO.createGroup("group1", "creator1", Optional.empty());
   }
 
   private int tableSize() {

@@ -27,10 +27,10 @@ import org.jooq.DSLContext;
 
 import static keywhiz.jooq.tables.Groups.GROUPS;
 
-public class GroupJooqDao {
+public class GroupDAO {
   private final DSLContext dslContext;
 
-  @Inject public GroupJooqDao(DSLContext dslContext) {
+  @Inject public GroupDAO(DSLContext dslContext) {
     this.dslContext = dslContext;
   }
 
@@ -54,7 +54,7 @@ public class GroupJooqDao {
   public Optional<Group> getGroup(String name) {
     GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.NAME.eq(name));
     if (r != null) {
-      return Optional.of(r.map(new GroupJooqMapper()));
+      return Optional.of(r.map(new GroupMapper()));
     }
     return Optional.empty();
   }
@@ -62,13 +62,13 @@ public class GroupJooqDao {
   public Optional<Group> getGroupById(long id) {
     GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq((int) id));
     if (r != null) {
-      return Optional.of(r.map(new GroupJooqMapper()));
+      return Optional.of(r.map(new GroupMapper()));
     }
     return Optional.empty();
   }
 
   public Set<Group> getGroups() {
-    List<Group> r = dslContext.select().from(GROUPS).fetch().map(new GroupJooqMapper());
+    List<Group> r = dslContext.select().from(GROUPS).fetch().map(new GroupMapper());
     return new HashSet<>(r);
   }
 }

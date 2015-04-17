@@ -25,7 +25,7 @@ import static keywhiz.jooq.tables.Groups.GROUPS;
 /**
  * Comments in {@link ClientMapper} are applicable here.
  */
-class GroupJooqMapper implements RecordMapper<Record, Group> {
+class GroupMapper implements RecordMapper<Record, Group> {
   public Group map(Record r) {
     return new Group(
         r.getValue(GROUPS.ID),

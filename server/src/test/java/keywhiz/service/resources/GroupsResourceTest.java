@@ -30,7 +30,7 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
-import keywhiz.service.daos.GroupJooqDao;
+import keywhiz.service.daos.GroupDAO;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,7 +44,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class GroupsResourceTest {
   @Mock AclDAO aclDAO;
-  @Mock GroupJooqDao groupJooqDao;
+  @Mock GroupDAO groupDAO;
 
   User user = User.named("user");
   OffsetDateTime now = OffsetDateTime.now();
@@ -53,13 +53,13 @@ public class GroupsResourceTest {
   GroupsResource resource;
 
   @Before public void setUp() {
-    resource = new GroupsResource(aclDAO, groupJooqDao);
+    resource = new GroupsResource(aclDAO, groupDAO);
   }
 
   @Test public void listingOfGroups() {
     Group group1 = new Group(1, "group1", "desc", now, "creator", now, "updater");
     Group group2 = new Group(2, "group2", "desc", now, "creator", now, "updater");
-    when(groupJooqDao.getGroups()).thenReturn(ImmutableSet.of(group1, group2));
+    when(groupDAO.getGroups()).thenReturn(ImmutableSet.of(group1, group2));
 
     List<Group> response = resource.listGroups(user);
     assertThat(response).containsOnly(group1, group2);
@@ -67,9 +67,9 @@ public class GroupsResourceTest {
 
   @Test public void createsGroup() {
     CreateGroupRequest request = new CreateGroupRequest("newGroup", "description");
-    when(groupJooqDao.getGroup("newGroup")).thenReturn(Optional.empty());
-    when(groupJooqDao.createGroup("newGroup", "user", Optional.of("description"))).thenReturn(55L);
-    when(groupJooqDao.getGroupById(55L)).thenReturn(Optional.of(group));
+    when(groupDAO.getGroup("newGroup")).thenReturn(Optional.empty());
+    when(groupDAO.createGroup("newGroup", "user", Optional.of("description"))).thenReturn(55L);
+    when(groupDAO.getGroupById(55L)).thenReturn(Optional.of(group));
     when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of());
 
     Response response = resource.createGroup(user, request);
@@ -80,13 +80,13 @@ public class GroupsResourceTest {
   public void rejectsWhenGroupExists() {
     CreateGroupRequest request = new CreateGroupRequest("newGroup", "description");
     Group group = new Group(3, "newGroup", "desc", now, "creator", now, "updater");
-    when(groupJooqDao.getGroup("newGroup")).thenReturn(Optional.of(group));
+    when(groupDAO.getGroup("newGroup")).thenReturn(Optional.of(group));
 
     resource.createGroup(user, request);
   }
 
   @Test public void getSpecificIncludesAllTheThings() {
-    when(groupJooqDao.getGroupById(4444)).thenReturn(Optional.of(group));
+    when(groupDAO.getGroupById(4444)).thenReturn(Optional.of(group));
 
     SanitizedSecret secret = SanitizedSecret.of(1, "name", "", null, now, "creator", now, "creator", null, null, null);
     when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of(secret));
@@ -109,32 +109,32 @@ public class GroupsResourceTest {
 
   @Test(expected = NotFoundException.class)
   public void notFoundWhenRetrievingBadId() {
-    when(groupJooqDao.getGroupById(0x1bad1dea)).thenReturn(Optional.empty());
+    when(groupDAO.getGroupById(0x1bad1dea)).thenReturn(Optional.empty());
     resource.getGroup(user, new LongParam(Long.toString(0x1bad1dea)));
   }
 
   @Test public void findGroupByName() {
-    when(groupJooqDao.getGroup(group.getName())).thenReturn(Optional.of(group));
+    when(groupDAO.getGroup(group.getName())).thenReturn(Optional.of(group));
     assertThat(resource.getGroupByName(user, "group")).isEqualTo(group);
   }
 
   @Test(expected = NotFoundException.class)
   public void notFoundWhenRetrievingBadName() {
-    when(groupJooqDao.getGroup("non-existent-group")).thenReturn(Optional.empty());
+    when(groupDAO.getGroup("non-existent-group")).thenReturn(Optional.empty());
     resource.getGroupByName(user, "non-existent-group");
   }
 
   @Test public void canDelete() {
-    when(groupJooqDao.getGroupById(0xdeadbeef)).thenReturn(Optional.of(group));
+    when(groupDAO.getGroupById(0xdeadbeef)).thenReturn(Optional.of(group));
 
     Response response = resource.deleteGroup(user, new LongParam(Long.toString(0xdeadbeef)));
-    verify(groupJooqDao).deleteGroup(group);
+    verify(groupDAO).deleteGroup(group);
     assertThat(response.getStatus()).isEqualTo(204);
   }
 
   @Test(expected = NotFoundException.class)
   public void notFoundWhenDeletingBadId() {
-    when(groupJooqDao.getGroupById(0x1bad1dea)).thenReturn(Optional.empty());
+    when(groupDAO.getGroupById(0x1bad1dea)).thenReturn(Optional.empty());
     resource.deleteGroup(user, new LongParam(Long.toString(0x1bad1dea)));
   }
 }

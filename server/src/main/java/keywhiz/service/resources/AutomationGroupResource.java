@@ -41,7 +41,7 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.service.daos.AclDAO;
-import keywhiz.service.daos.GroupJooqDao;
+import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.exceptions.ConflictException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,12 +59,12 @@ import static java.util.stream.Collectors.toList;
 public class AutomationGroupResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationGroupResource.class);
 
-  private final GroupJooqDao groupJooqDao;
+  private final GroupDAO groupDAO;
   private final AclDAO aclDAO;
 
   @Inject
-  public AutomationGroupResource(GroupJooqDao groupJooqDao, AclDAO aclDAO) {
-    this.groupJooqDao = groupJooqDao;
+  public AutomationGroupResource(GroupDAO groupDAO, AclDAO aclDAO) {
+    this.groupDAO = groupDAO;
     this.aclDAO = aclDAO;
   }
 
@@ -82,7 +82,7 @@ public class AutomationGroupResource {
   public GroupDetailResponse getGroupById(
       @Auth AutomationClient automationClient,
       @PathParam("groupId") LongParam groupId) {
-    Group group = groupJooqDao.getGroupById(groupId.get()).orElseThrow(NotFoundException::new);
+    Group group = groupDAO.getGroupById(groupId.get()).orElseThrow(NotFoundException::new);
 
     ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(group));
     ImmutableList<SanitizedSecret> sanitizedSecrets =
@@ -103,7 +103,7 @@ public class AutomationGroupResource {
   @GET
   public Response getGroupByName(@QueryParam("name") Optional<String> name) {
     if (name.isPresent()) {
-      Group group = groupJooqDao.getGroup(name.get()).orElseThrow(NotFoundException::new);
+      Group group = groupDAO.getGroup(name.get()).orElseThrow(NotFoundException::new);
 
       ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(group));
       ImmutableList<SanitizedSecret> sanitizedSecrets = ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(group));
@@ -114,7 +114,7 @@ public class AutomationGroupResource {
 
     ImmutableList<SanitizedSecret> emptySecrets = ImmutableList.of();
     ImmutableList<Client> emptyClients = ImmutableList.of();
-    List<GroupDetailResponse> groups = groupJooqDao.getGroups().stream()
+    List<GroupDetailResponse> groups = groupDAO.getGroups().stream()
         .map((g) -> GroupDetailResponse.fromGroup(g, emptySecrets, emptyClients))
         .collect(toList());
     return Response.ok()
@@ -137,15 +137,15 @@ public class AutomationGroupResource {
       @Auth AutomationClient automationClient,
       @Valid CreateGroupRequest groupRequest) {
 
-    Optional<Group> group = groupJooqDao.getGroup(groupRequest.name);
+    Optional<Group> group = groupDAO.getGroup(groupRequest.name);
     if (group.isPresent()) {
       logger.info("Automation ({}) - Group {} already exists", automationClient.getName(), groupRequest.name);
       throw new ConflictException("Group name already exists.");
     }
 
-    long id = groupJooqDao.createGroup(groupRequest.name, automationClient.getName(),
+    long id = groupDAO.createGroup(groupRequest.name, automationClient.getName(),
         Optional.ofNullable(groupRequest.description));
-    return groupJooqDao.getGroupById(id).get();
+    return groupDAO.getGroupById(id).get();
   }
 
   /**
@@ -161,8 +161,8 @@ public class AutomationGroupResource {
   @Path("{groupId}")
   public Response deleteGroup(@Auth AutomationClient automationClient,
       @PathParam("groupId") LongParam groupId) {
-    Group group = groupJooqDao.getGroupById(groupId.get()).orElseThrow(NotFoundException::new);
-    groupJooqDao.deleteGroup(group);
+    Group group = groupDAO.getGroupById(groupId.get()).orElseThrow(NotFoundException::new);
+    groupDAO.deleteGroup(group);
     return Response.ok().build();
   }
 }

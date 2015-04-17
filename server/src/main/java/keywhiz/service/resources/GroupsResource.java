@@ -46,7 +46,7 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
-import keywhiz.service.daos.GroupJooqDao;
+import keywhiz.service.daos.GroupDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,12 +61,12 @@ import org.slf4j.LoggerFactory;
 public class GroupsResource {
   private static final Logger logger = LoggerFactory.getLogger(GroupsResource.class);
   private final AclDAO aclDAO;
-  private final GroupJooqDao groupJooqDao;
+  private final GroupDAO groupDAO;
 
   @Inject
-  public GroupsResource(AclDAO aclDAO, GroupJooqDao groupJooqDao) {
+  public GroupsResource(AclDAO aclDAO, GroupDAO groupDAO) {
     this.aclDAO = aclDAO;
-    this.groupJooqDao = groupJooqDao;
+    this.groupDAO = groupDAO;
   }
 
   /**
@@ -90,7 +90,7 @@ public class GroupsResource {
 
   protected List<Group> listGroups(@Auth User user) {
     logger.info("User '{}' listing groups.", user);
-    Set<Group> groups = groupJooqDao.getGroups();
+    Set<Group> groups = groupDAO.getGroups();
     return ImmutableList.copyOf(groups);
   }
 
@@ -114,11 +114,11 @@ public class GroupsResource {
   public Response createGroup(@Auth User user, @Valid CreateGroupRequest request) {
 
     logger.info("User '{}' creating group.", user);
-    if (groupJooqDao.getGroup(request.name).isPresent()) {
+    if (groupDAO.getGroup(request.name).isPresent()) {
       throw new BadRequestException("Group already exists.");
     }
 
-    long groupId = groupJooqDao.createGroup(request.name, user.getName(),
+    long groupId = groupDAO.createGroup(request.name, user.getName(),
         Optional.ofNullable(request.description));
     URI uri = UriBuilder.fromResource(GroupsResource.class).build(groupId);
     return Response
@@ -159,17 +159,17 @@ public class GroupsResource {
   public Response deleteGroup(@Auth User user, @PathParam("groupId") LongParam groupId) {
     logger.info("User '{}' deleting group id={}.", user, groupId);
 
-    Optional<Group> group = groupJooqDao.getGroupById(groupId.get());
+    Optional<Group> group = groupDAO.getGroupById(groupId.get());
     if (!group.isPresent()) {
       throw new NotFoundException("Group not found.");
     }
 
-    groupJooqDao.deleteGroup(group.get());
+    groupDAO.deleteGroup(group.get());
     return Response.noContent().build();
   }
 
   private GroupDetailResponse groupDetailResponseFromId(long groupId) {
-    Optional<Group> optionalGroup = groupJooqDao.getGroupById(groupId);
+    Optional<Group> optionalGroup = groupDAO.getGroupById(groupId);
     if (!optionalGroup.isPresent()) {
       throw new NotFoundException("Group not found.");
     }
@@ -183,7 +183,7 @@ public class GroupsResource {
   }
 
   private Group groupFromName(String name) {
-    Optional<Group> optionalGroup = groupJooqDao.getGroup(name);
+    Optional<Group> optionalGroup = groupDAO.getGroup(name);
     if (!optionalGroup.isPresent()) {
       throw new NotFoundException("Group not found.");
     }
