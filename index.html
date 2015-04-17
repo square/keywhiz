@@ -161,9 +161,9 @@ keywhizdb_development=#</pre>
 
             <p>Create your own configuration files:</p>
             <pre class="prettyprint">$ cp server/src/main/resources/keywhiz-development.yaml server/src/main/resources/keywhiz-local.yaml
-$ sed -i sed -i .bak 's/dev_and_test_keystore/local_keystore/' server/src/main/resources/keywhiz-local.yaml
-$ sed -i sed -i .bak 's/dev_and_test_truststore/truststore/' server/src/main/resources/keywhiz-local.yaml
-$ sed -i sed -i .bak 's/ponies/password/' server/src/main/resources/keywhiz-local.yaml
+$ sed -i 's/dev_and_test_keystore/local_keystore/' server/src/main/resources/keywhiz-local.yaml
+$ sed -i 's/dev_and_test_truststore/truststore/' server/src/main/resources/keywhiz-local.yaml
+$ sed -i 's/ponies/password/' server/src/main/resources/keywhiz-local.yaml
             </pre>
 
             <p>Create local keystore and truststore (replace your-host)</p>
