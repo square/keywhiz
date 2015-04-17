@@ -63,7 +63,7 @@ public class ClientsResourceTest {
     Client client1 = new Client(1, "client", "1st client", now, "test", now, "test", true, false);
     Client client2 = new Client(2, "client2", "2nd client", now, "test", now, "test", true, false);
 
-    when(clientDAO.getClients()).thenReturn(Sets.newHashSet(client1, client2));
+    when(clientDAO.getClients()).thenReturn(ImmutableSet.of(client1, client2));
 
     List<Client> response = resource.listClients(user);
     assertThat(response).containsOnly(client1, client2);

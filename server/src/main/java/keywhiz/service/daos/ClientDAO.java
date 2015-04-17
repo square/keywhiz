@@ -16,7 +16,7 @@
 
 package keywhiz.service.daos;
 
-import java.util.HashSet;
+import com.google.common.collect.ImmutableSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -50,28 +50,25 @@ public class ClientDAO {
   }
 
   public void deleteClient(Client client) {
-    ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.ID.eq(Math.toIntExact(client.getId())));
-    r.delete();
+    dslContext.delete(CLIENTS).where(CLIENTS.ID.eq(Math.toIntExact(client.getId()))).execute();
   }
 
   public Optional<Client> getClient(String name) {
     ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.NAME.eq(name));
-    if (r != null) {
-      return Optional.of(r.map(new ClientMapper()));
-    }
-    return Optional.empty();
+    return Optional.ofNullable(r).map(
+        (rec) -> rec.map(new ClientMapper()));
   }
 
   public Optional<Client> getClientById(long id) {
-    ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.ID.eq((int)id));
+    ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.ID.eq(Math.toIntExact(id)));
     if (r != null) {
       return Optional.of(r.map(new ClientMapper()));
     }
     return Optional.empty();
   }
 
-  public Set<Client> getClients() {
+  public ImmutableSet<Client> getClients() {
     List<Client> r = dslContext.select().from(CLIENTS).fetch().map(new ClientMapper());
-    return new HashSet<>(r);
+    return ImmutableSet.copyOf(r);
   }
 }
