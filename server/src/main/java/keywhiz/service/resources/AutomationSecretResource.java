@@ -40,7 +40,7 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.VersionGenerator;
-import keywhiz.service.daos.AclDAO;
+import keywhiz.service.daos.AclJooqDao;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.exceptions.ConflictException;
@@ -61,14 +61,14 @@ import static java.lang.String.format;
 public class AutomationSecretResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationSecretResource.class);
   private final SecretController secretController;
-  private final AclDAO aclDAO;
+  private final AclJooqDao aclJooqDao;
   private final SecretSeriesDAO secretSeriesDAO;
 
   @Inject
-  public AutomationSecretResource(SecretController secretController, AclDAO aclDAO,
+  public AutomationSecretResource(SecretController secretController, AclJooqDao aclJooqDao,
       SecretSeriesDAO secretSeriesDAO) {
     this.secretController = secretController;
-    this.aclDAO = aclDAO;
+    this.aclJooqDao = aclJooqDao;
     this.secretSeriesDAO = secretSeriesDAO;
   }
 
@@ -110,7 +110,7 @@ public class AutomationSecretResource {
       throw new ConflictException(format("Cannot create secret %s.", request.name));
     }
     ImmutableList<Group> groups =
-        ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
+        ImmutableList.copyOf(aclJooqDao.getGroupsFor(secret));
 
     return AutomationSecretResponse.fromSecret(secret, groups);
   }
@@ -140,7 +140,7 @@ public class AutomationSecretResource {
 
       Secret secret = optionalSecret.get();
       ImmutableList<Group> groups =
-          ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
+          ImmutableList.copyOf(aclJooqDao.getGroupsFor(secret));
       responseBuilder.add(AutomationSecretResponse.fromSecret(secret, groups));
     } else {
       List<SanitizedSecret> secrets = secretController.getSanitizedSecrets();
@@ -151,7 +151,7 @@ public class AutomationSecretResource {
             () -> new IllegalStateException("Cannot find record related to " + sanitizedSecret));
 
         ImmutableList<Group> groups =
-            ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
+            ImmutableList.copyOf(aclJooqDao.getGroupsFor(secret));
         responseBuilder.add(AutomationSecretResponse.fromSecret(secret, groups));
       }
     }
@@ -180,7 +180,7 @@ public class AutomationSecretResource {
 
     Secret secret = secrets.get(0);
     ImmutableList<Group> groups =
-        ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
+        ImmutableList.copyOf(aclJooqDao.getGroupsFor(secret));
 
     return AutomationSecretResponse.fromSecret(secret, groups);
   }

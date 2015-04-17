@@ -44,7 +44,7 @@ import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
-class AclJooqDao {
+public class AclJooqDao {
   private static final Logger logger = LoggerFactory.getLogger(AclJooqDao.class);
 
   private final DSLContext dslContext;

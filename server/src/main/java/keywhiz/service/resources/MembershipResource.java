@@ -27,7 +27,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.auth.User;
-import keywhiz.service.daos.AclDAO;
+import keywhiz.service.daos.AclJooqDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,11 +42,11 @@ import org.slf4j.LoggerFactory;
 public class MembershipResource {
   private static final Logger logger = LoggerFactory.getLogger(MembershipResource.class);
 
-  private final AclDAO aclDAO;
+  private final AclJooqDao aclJooqDao;
 
   @Inject
-  public MembershipResource(AclDAO aclDAO) {
-    this.aclDAO = aclDAO;
+  public MembershipResource(AclJooqDao aclJooqDao) {
+    this.aclJooqDao = aclJooqDao;
   }
 
   /**
@@ -71,7 +71,7 @@ public class MembershipResource {
     logger.info("User '{}' allowing groupId {} access to secretId {}", user, secretId, groupId);
 
     try {
-      aclDAO.findAndAllowAccess(secretId.get(), groupId.get());
+      aclJooqDao.findAndAllowAccess(secretId.get(), groupId.get());
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }
@@ -101,7 +101,7 @@ public class MembershipResource {
     logger.info("User '{}' disallowing groupId {} access to secretId {}", user, secretId, groupId);
 
     try {
-      aclDAO.findAndRevokeAccess(secretId.get(), groupId.get());
+      aclJooqDao.findAndRevokeAccess(secretId.get(), groupId.get());
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }
@@ -130,7 +130,7 @@ public class MembershipResource {
     logger.info("User {} enrolling clientId {} in groupId {}.", user.getName(), clientId, groupId);
 
     try {
-      aclDAO.findAndEnrollClient(clientId.get(), groupId.get());
+      aclJooqDao.findAndEnrollClient(clientId.get(), groupId.get());
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }
@@ -158,7 +158,7 @@ public class MembershipResource {
     logger.info("User {} evicting clientId {} from groupId {}.", user.getName(), clientId, groupId);
 
     try {
-      aclDAO.findAndEvictClient(clientId.get(), groupId.get());
+      aclJooqDao.findAndEvictClient(clientId.get(), groupId.get());
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }

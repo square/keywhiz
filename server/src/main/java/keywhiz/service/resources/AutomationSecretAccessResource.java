@@ -28,7 +28,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.api.model.AutomationClient;
-import keywhiz.service.daos.AclDAO;
+import keywhiz.service.daos.AclJooqDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,11 +41,11 @@ import org.slf4j.LoggerFactory;
 @Produces(MediaType.APPLICATION_JSON)
 public class AutomationSecretAccessResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationSecretAccessResource.class);
-  private final AclDAO aclDAO;
+  private final AclJooqDao aclJooqDao;
 
   @Inject
-  public AutomationSecretAccessResource(AclDAO aclDAO) {
-    this.aclDAO = aclDAO;
+  public AutomationSecretAccessResource(AclJooqDao aclJooqDao) {
+    this.aclJooqDao = aclJooqDao;
   }
 
   /**
@@ -67,7 +67,7 @@ public class AutomationSecretAccessResource {
         automationClient, secretId, groupId);
 
     try {
-      aclDAO.findAndAllowAccess(secretId.get(), groupId.get());
+      aclJooqDao.findAndAllowAccess(secretId.get(), groupId.get());
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }
@@ -94,7 +94,7 @@ public class AutomationSecretAccessResource {
         automationClient, secretId, groupId);
 
     try {
-      aclDAO.findAndRevokeAccess(secretId.get(), groupId.get());
+      aclJooqDao.findAndRevokeAccess(secretId.get(), groupId.get());
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }

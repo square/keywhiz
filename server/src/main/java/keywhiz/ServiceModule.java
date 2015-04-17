@@ -54,14 +54,14 @@ import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoModule;
 import keywhiz.service.crypto.SecretTransformer;
-import keywhiz.service.daos.AclDAO;
+import keywhiz.service.daos.AclDeps;
+import keywhiz.service.daos.AclJooqDao;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.daos.MapArgumentFactory;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretSeriesDAO;
-import keywhiz.service.daos.UserDAO;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.skife.jdbi.v2.ColonPrefixNamedParamStatementRewriter;
@@ -110,7 +110,7 @@ public class ServiceModule extends AbstractModule {
 
   // ManagedDataSource
 
-  @Provides @Singleton ManagedDataSource writableDataSource(Environment environment,
+  @Provides @Singleton ManagedDataSource dataSource(Environment environment,
       KeywhizConfig config) {
     DataSourceFactory dataSourceFactory = config.getDataSourceFactory();
     ManagedDataSource dataSource = dataSourceFactory.build(environment.metrics(), "postgres-writable");
@@ -119,14 +119,13 @@ public class ServiceModule extends AbstractModule {
     return dataSource;
   }
 
-
   @Provides @Singleton @Readonly ManagedDataSource readonlyDataSource(Environment environment,
       KeywhizConfig config) {
     DataSourceFactory dataSourceFactory = config.getDataSourceFactory();
     return dataSourceFactory.build(environment.metrics(), "postgres-readonly");
   }
 
-  // Jooq
+  // jOOQ
 
   @Provides @Singleton DSLContext jooqContext(ManagedDataSource dataSource) throws SQLException {
     return DSL.using(dataSource.getConnection());
@@ -192,7 +191,7 @@ public class ServiceModule extends AbstractModule {
     return dbi;
   }
 
-  // DAOs
+  // DAOs using DBI
 
   @Provides @Singleton @Readonly SecretController readonlySecretController(
       SecretTransformer transformer, ContentCryptographer cryptographer,
@@ -237,12 +236,15 @@ public class ServiceModule extends AbstractModule {
     return dbi.onDemand(SecretSeriesDAO.class);
   }
 
-  @Provides @Singleton @Readonly AclDAO readonlyAclDAO(@Readonly DBI dbi) {
-    return dbi.onDemand(AclDAO.class);
+  // DAOs using jOOQ
+
+  @Provides @Singleton AclJooqDao aclJooqDao(DSLContext jooqContext, DBI dbi) {
+    return new AclJooqDao(jooqContext, dbi.onDemand(AclDeps.class));
   }
 
-  @Provides @Singleton AclDAO aclDAO(DBI dbi) {
-    return dbi.onDemand(AclDAO.class);
+  @Provides @Singleton
+  @Readonly AclJooqDao readonlyAclJooqDao(@Readonly DSLContext jooqContext, DBI dbi) {
+    return new AclJooqDao(jooqContext, dbi.onDemand(AclDeps.class));
   }
 
   @Provides @Singleton
