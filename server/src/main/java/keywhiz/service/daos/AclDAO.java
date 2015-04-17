@@ -66,13 +66,15 @@ public class AclDAO {
     dslContext.transaction(configuration -> {
       Optional<Group> group = groupDAO.getGroupById(groupId);
       if (!group.isPresent()) {
-        logger.info("Failure to allow access groupId {}, secretId {}: groupId not found.", groupId, secretId);
+        logger.info("Failure to allow access groupId {}, secretId {}: groupId not found.", groupId,
+            secretId);
         throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
       }
 
       Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
       if (!secret.isPresent()) {
-        logger.info("Failure to allow access groupId {}, secretId {}: secretId not found.", groupId, secretId);
+        logger.info("Failure to allow access groupId {}, secretId {}: secretId not found.", groupId,
+            secretId);
         throw new IllegalStateException(format("SecretId %d doesn't exist.", secretId));
       }
 
@@ -84,13 +86,15 @@ public class AclDAO {
     dslContext.transaction(configuration -> {
       Optional<Group> group = groupDAO.getGroupById(groupId);
       if (!group.isPresent()) {
-        logger.info("Failure to revoke access groupId {}, secretId {}: groupId not found.", groupId, secretId);
+        logger.info("Failure to revoke access groupId {}, secretId {}: groupId not found.", groupId,
+            secretId);
         throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
       }
 
       Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
       if (!secret.isPresent()) {
-        logger.info("Failure to revoke access groupId {}, secretId {}: secretId not found.", groupId, secretId);
+        logger.info("Failure to revoke access groupId {}, secretId {}: secretId not found.",
+            groupId, secretId);
         throw new IllegalStateException(format("SecretId %d doesn't exist.", secretId));
       }
 
@@ -226,8 +230,7 @@ public class AclDAO {
     checkArgument(!name.isEmpty());
     checkNotNull(version);
 
-    // Cast to fix issue with mvn + java8 (not showing up in Intellij).
-    return (Optional<SanitizedSecret>)dslContext.transactionResult(configuration -> {
+    return dslContext.<Optional<SanitizedSecret>>transactionResult(configuration -> {
       Optional<SecretSeries> secretSeries = getSecretSeriesFor(client, name);
       if (!secretSeries.isPresent()) {
         return Optional.empty();
