@@ -23,7 +23,7 @@ public class CliConfiguration {
   @Parameter(names = { "-V", "--version" }, description = "Version")
   public boolean version = false;
 
-  @Parameter(names = { "-U", "--url" }, description = "Base URL of client")
+  @Parameter(names = { "-U", "--url" }, description = "Base URL of server")
   public String url;
 }
 

@@ -47,7 +47,7 @@ import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.exceptions.ConflictException;
-import org.skife.jdbi.v2.exceptions.StatementException;
+import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,7 +121,7 @@ public class ClientsResource {
     long clientId;
     try {
       clientId = clientDAO.createClient(createClientRequest.name, user.getName(), Optional.empty());
-    } catch (StatementException e) {
+    } catch (DataAccessException e) {
       logger.warn("Cannot create client {}: {}", createClientRequest.name, e);
       throw new ConflictException("Conflict creating client.");
     }

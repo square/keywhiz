@@ -16,23 +16,36 @@
 
 package keywhiz.service.daos;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.ZoneOffset;
 import keywhiz.api.model.Client;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
+import org.jooq.Record;
+import org.jooq.RecordMapper;
 
-public class ClientMapper implements ResultSetMapper<Client> {
-  public Client map(int index, ResultSet r, StatementContext ctx) throws SQLException {
-    return new Client(r.getLong("id"),
-                      r.getString("name"),
-                      r.getString("description"),
-                      r.getTimestamp("createdAt").toLocalDateTime().atOffset(ZoneOffset.UTC),
-                      r.getString("createdBy"),
-                      r.getTimestamp("updatedAt").toLocalDateTime().atOffset(ZoneOffset.UTC),
-                      r.getString("updatedBy"),
-                      r.getBoolean("enabled"),
-                      r.getBoolean("automationAllowed"));
+import static keywhiz.jooq.tables.Clients.CLIENTS;
+
+/**
+ * Jooq has the ability to map records to classes using Reflection. We however need a mapper because
+ * the constructor's parameter and the columns in the database do not share the same order.
+ *
+ * In general, I feel having a mapper is cleaner, so it might not be a bad thing.
+ *
+ * The way jooq built their generic API is somewhat broken, so we need to implement
+ * RecordMapper<Record, Client> instead of RecordMapper<ClientsRecord, Client>. I'll file a task
+ * and follow up on this issue.
+ *
+ * Also, when doing JOINS, I don't know if there's a good way to preserve the right Record type.
+ */
+class ClientMapper implements RecordMapper<Record, Client> {
+  public Client map(Record r) {
+    // Lots of :(
+    return new Client(
+        r.getValue(CLIENTS.ID),
+        r.getValue(CLIENTS.NAME),
+        r.getValue(CLIENTS.DESCRIPTION),
+        r.getValue(CLIENTS.CREATEDAT),
+        r.getValue(CLIENTS.CREATEDBY),
+        r.getValue(CLIENTS.UPDATEDAT),
+        r.getValue(CLIENTS.UPDATEDBY),
+        r.getValue(CLIENTS.ENABLED),
+        r.getValue(CLIENTS.AUTOMATIONALLOWED));
   }
 }

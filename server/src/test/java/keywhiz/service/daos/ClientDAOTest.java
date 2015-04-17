@@ -35,7 +35,7 @@ public class ClientDAOTest {
 
   @Before
   public void setUp() throws Exception {
-    clientDAO = testDBRule.getDbi().onDemand(ClientDAO.class);
+    clientDAO = new ClientDAO(testDBRule.jooqContext());
 
     testDBRule.jooqContext().delete(CLIENTS).execute();
 

@@ -23,7 +23,7 @@ import org.jooq.RecordMapper;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 
 /**
- * Comments in {@link ClientJooqMapper} are applicable here.
+ * Comments in {@link ClientMapper} are applicable here.
  */
 class GroupJooqMapper implements RecordMapper<Record, Group> {
   public Group map(Record r) {
