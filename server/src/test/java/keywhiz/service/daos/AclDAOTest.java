@@ -47,7 +47,7 @@ public class AclDAOTest {
   Group group1, group2, group3;
   Secret secret1, secret2;
   ClientDAO clientDAO;
-  GroupDAO groupDAO;
+  GroupJooqDao groupJooqDao;
   SecretDAO secretDAO;
   SecretSeriesDAO secretSeriesDAO;
   AclDAO aclDAO;
@@ -69,15 +69,15 @@ public class AclDAOTest {
     id = clientDAO.createClient("client2", "creator", Optional.empty());
     client2 = clientDAO.getClientById(id).get();
 
-    groupDAO = dbi.onDemand(GroupDAO.class);
-    id = groupDAO.createGroup("group1", "creator", Optional.empty());
-    group1 = groupDAO.getGroupById(id).get();
+    groupJooqDao = new GroupJooqDao(jooqContext);
+    id = groupJooqDao.createGroup("group1", "creator", Optional.empty());
+    group1 = groupJooqDao.getGroupById(id).get();
 
-    id = groupDAO.createGroup("group2", "creator", Optional.empty());
-    group2 = groupDAO.getGroupById(id).get();
+    id = groupJooqDao.createGroup("group2", "creator", Optional.empty());
+    group2 = groupJooqDao.getGroupById(id).get();
 
-    id = groupDAO.createGroup("group3", "creator", Optional.empty());
-    group3 = groupDAO.getGroupById(id).get();
+    id = groupJooqDao.createGroup("group3", "creator", Optional.empty());
+    group3 = groupJooqDao.getGroupById(id).get();
 
     secretDAO = dbi.onDemand(SecretDAO.class);
     SecretFixtures secretFixtures = SecretFixtures.using(secretDAO);
@@ -87,7 +87,7 @@ public class AclDAOTest {
     secretSeriesDAO = dbi.onDemand(SecretSeriesDAO.class);
 
     AclDeps aclDeps = dbi.onDemand(AclDeps.class);
-    aclDAO = new AclDAO(jooqContext, clientDAO, aclDeps);
+    aclDAO = new AclDAO(jooqContext, clientDAO, groupJooqDao, aclDeps);
   }
 
   @Test
@@ -115,7 +115,7 @@ public class AclDAOTest {
     aclDAO.allowAccess(secret2.getId(), group2.getId());
     int before = accessGrantsTableSize();
 
-    groupDAO.deleteGroup(group1);
+    groupJooqDao.deleteGroup(group1);
     assertThat(accessGrantsTableSize()).isEqualTo(before - 1);
 
     secretSeriesDAO.deleteSecretSeriesById(secret2.getId());
@@ -147,7 +147,7 @@ public class AclDAOTest {
     aclDAO.enrollClient(client2.getId(), group2.getId());
     int before = membershipsTableSize();
 
-    groupDAO.deleteGroup(group1);
+    groupJooqDao.deleteGroup(group1);
     assertThat(membershipsTableSize()).isEqualTo(before - 1);
 
     clientDAO.deleteClient(client2);

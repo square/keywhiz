@@ -49,22 +49,22 @@ public class AclDAO {
 
   private final DSLContext dslContext;
   private ClientDAO clientDAO;
-  private GroupDAO groupDAO;
+  private GroupJooqDao groupJooqDao;
   private SecretContentDAO secretContentDAO;
   private SecretSeriesDAO secretSeriesDAO;
 
   @Inject
-  public AclDAO(DSLContext dslContext, ClientDAO clientDAO, AclDeps aclDeps) {
+  public AclDAO(DSLContext dslContext, ClientDAO clientDAO, GroupJooqDao groupJooqDao, AclDeps aclDeps) {
     this.dslContext = dslContext;
     this.clientDAO = clientDAO;
-    this.groupDAO = aclDeps.createGroupDAO();
+    this.groupJooqDao = groupJooqDao;
     this.secretContentDAO = aclDeps.createSecretContentDAO();
     this.secretSeriesDAO = aclDeps.createSecretSeriesDAO();
   }
 
   public void findAndAllowAccess(long secretId, long groupId) {
     dslContext.transaction(configuration -> {
-      Optional<Group> group = groupDAO.getGroupById(groupId);
+      Optional<Group> group = groupJooqDao.getGroupById(groupId);
       if (!group.isPresent()) {
         logger.info("Failure to allow access groupId {}, secretId {}: groupId not found.", groupId,
             secretId);
@@ -84,7 +84,7 @@ public class AclDAO {
 
   public void findAndRevokeAccess(long secretId, long groupId) {
     dslContext.transaction(configuration -> {
-      Optional<Group> group = groupDAO.getGroupById(groupId);
+      Optional<Group> group = groupJooqDao.getGroupById(groupId);
       if (!group.isPresent()) {
         logger.info("Failure to revoke access groupId {}, secretId {}: groupId not found.", groupId,
             secretId);
@@ -111,7 +111,7 @@ public class AclDAO {
         throw new IllegalStateException(format("ClientId %d doesn't exist.", clientId));
       }
 
-      Optional<Group> group = groupDAO.getGroupById(groupId);
+      Optional<Group> group = groupJooqDao.getGroupById(groupId);
       if (!group.isPresent()) {
         logger.info("Failure to enroll membership clientId {}, groupId {}: groupId not found.",
             clientId, groupId);
@@ -131,7 +131,7 @@ public class AclDAO {
         throw new IllegalStateException(format("ClientId %d doesn't exist.", clientId));
       }
 
-      Optional<Group> group = groupDAO.getGroupById(groupId);
+      Optional<Group> group = groupJooqDao.getGroupById(groupId);
       if (!group.isPresent()) {
         logger.info("Failure to evict membership clientId {}, groupId {}: groupId not found.",
             clientId, groupId);

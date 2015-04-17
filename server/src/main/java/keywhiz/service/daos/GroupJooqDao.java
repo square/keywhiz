@@ -27,10 +27,7 @@ import org.jooq.DSLContext;
 
 import static keywhiz.jooq.tables.Groups.GROUPS;
 
-/**
- * Jooq version of GroupDAO.
- */
-class GroupJooqDao {
+public class GroupJooqDao {
   private final DSLContext dslContext;
 
   @Inject public GroupJooqDao(DSLContext dslContext) {
