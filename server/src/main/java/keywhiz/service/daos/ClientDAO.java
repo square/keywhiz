@@ -27,11 +27,11 @@ import org.jooq.DSLContext;
 
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 
-class ClientJooqDao {
+public class ClientDAO {
   private final DSLContext dslContext;
 
   @Inject
-  public ClientJooqDao(DSLContext dslContext) {
+  public ClientDAO(DSLContext dslContext) {
     this.dslContext = dslContext;
   }
 
@@ -57,7 +57,7 @@ class ClientJooqDao {
   public Optional<Client> getClient(String name) {
     ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.NAME.eq(name));
     if (r != null) {
-      return Optional.of(r.map(new ClientJooqMapper()));
+      return Optional.of(r.map(new ClientMapper()));
     }
     return Optional.empty();
   }
@@ -65,13 +65,13 @@ class ClientJooqDao {
   public Optional<Client> getClientById(long id) {
     ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.ID.eq((int)id));
     if (r != null) {
-      return Optional.of(r.map(new ClientJooqMapper()));
+      return Optional.of(r.map(new ClientMapper()));
     }
     return Optional.empty();
   }
 
   public Set<Client> getClients() {
-    List<Client> r = dslContext.select().from(CLIENTS).fetch().map(new ClientJooqMapper());
+    List<Client> r = dslContext.select().from(CLIENTS).fetch().map(new ClientMapper());
     return new HashSet<>(r);
   }
 }

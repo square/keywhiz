@@ -46,7 +46,7 @@ public class AclDAOTest {
   Client client1, client2;
   Group group1, group2, group3;
   Secret secret1, secret2;
-  ClientJooqDao clientDAO;
+  ClientDAO clientDAO;
   GroupDAO groupDAO;
   SecretDAO secretDAO;
   SecretSeriesDAO secretSeriesDAO;
@@ -62,7 +62,7 @@ public class AclDAOTest {
 
     DBI dbi = testDBRule.getDbi();
 
-    clientDAO = new ClientJooqDao(jooqContext);
+    clientDAO = new ClientDAO(jooqContext);
     long id = clientDAO.createClient("client1", "creator", Optional.empty());
     client1 = clientDAO.getClientById(id).get();
 

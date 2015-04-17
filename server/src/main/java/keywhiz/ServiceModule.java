@@ -56,7 +56,7 @@ import keywhiz.service.crypto.CryptoModule;
 import keywhiz.service.crypto.SecretTransformer;
 import keywhiz.service.daos.AclDeps;
 import keywhiz.service.daos.AclDAO;
-import keywhiz.service.daos.ClientJooqDao;
+import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.daos.MapArgumentFactory;
 import keywhiz.service.daos.SecretController;
@@ -230,21 +230,21 @@ public class ServiceModule extends AbstractModule {
 
   // DAOs using jOOQ
 
-  @Provides @Singleton AclDAO aclDAO(DSLContext jooqContext, ClientJooqDao clientJooqDao, DBI dbi) {
-    return new AclDAO(jooqContext, clientJooqDao, dbi.onDemand(AclDeps.class));
+  @Provides @Singleton AclDAO aclDAO(DSLContext jooqContext, ClientDAO clientDAO, DBI dbi) {
+    return new AclDAO(jooqContext, clientDAO, dbi.onDemand(AclDeps.class));
   }
 
   @Provides @Singleton
-  @Readonly AclDAO readonlyAclDAO(@Readonly DSLContext jooqContext, @Readonly ClientJooqDao clientJooqDao, @Readonly DBI dbi) {
-    return new AclDAO(jooqContext, clientJooqDao, dbi.onDemand(AclDeps.class));
+  @Readonly AclDAO readonlyAclDAO(@Readonly DSLContext jooqContext, @Readonly ClientDAO clientDAO, @Readonly DBI dbi) {
+    return new AclDAO(jooqContext, clientDAO, dbi.onDemand(AclDeps.class));
   }
 
-  @Provides @Singleton ClientJooqDao clientJooqDao(DSLContext jooqContext) {
-    return new ClientJooqDao(jooqContext);
+  @Provides @Singleton ClientDAO clientDAO(DSLContext jooqContext) {
+    return new ClientDAO(jooqContext);
   }
 
-  @Provides @Singleton @Readonly ClientJooqDao readonlyClientJooqDao(@Readonly DSLContext jooqContext) {
-    return new ClientJooqDao(jooqContext);
+  @Provides @Singleton @Readonly ClientDAO readonlyClientDAO(@Readonly DSLContext jooqContext) {
+    return new ClientDAO(jooqContext);
   }
 
   @Provides @Singleton

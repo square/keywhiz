@@ -33,7 +33,7 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
-import keywhiz.service.daos.ClientJooqDao;
+import keywhiz.service.daos.ClientDAO;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,7 +47,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class ClientsResourceTest {
   @Mock AclDAO aclDAO;
-  @Mock ClientJooqDao clientJooqDao;
+  @Mock ClientDAO clientDAO;
 
   User user = User.named("user");
   OffsetDateTime now = OffsetDateTime.now();
@@ -56,14 +56,14 @@ public class ClientsResourceTest {
   ClientsResource resource;
 
   @Before public void setUp() {
-    resource = new ClientsResource(aclDAO, clientJooqDao);
+    resource = new ClientsResource(aclDAO, clientDAO);
   }
 
   @Test public void listClients() {
     Client client1 = new Client(1, "client", "1st client", now, "test", now, "test", true, false);
     Client client2 = new Client(2, "client2", "2nd client", now, "test", now, "test", true, false);
 
-    when(clientJooqDao.getClients()).thenReturn(Sets.newHashSet(client1, client2));
+    when(clientDAO.getClients()).thenReturn(Sets.newHashSet(client1, client2));
 
     List<Client> response = resource.listClients(user);
     assertThat(response).containsOnly(client1, client2);
@@ -71,8 +71,8 @@ public class ClientsResourceTest {
 
   @Test public void createsClient() {
     CreateClientRequest request = new CreateClientRequest("new-client-name");
-    when(clientJooqDao.createClient("new-client-name", "user", Optional.empty())).thenReturn(42L);
-    when(clientJooqDao.getClientById(42L)).thenReturn(Optional.of(client));
+    when(clientDAO.createClient("new-client-name", "user", Optional.empty())).thenReturn(42L);
+    when(clientDAO.getClientById(42L)).thenReturn(Optional.of(client));
     when(aclDAO.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of());
 
     Response response = resource.createClient(user, request);
@@ -80,7 +80,7 @@ public class ClientsResourceTest {
   }
 
   @Test public void includesTheClient() {
-    when(clientJooqDao.getClientById(1)).thenReturn(Optional.of(client));
+    when(clientDAO.getClientById(1)).thenReturn(Optional.of(client));
     when(aclDAO.getGroupsFor(client)).thenReturn(Collections.emptySet());
     when(aclDAO.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of());
 
@@ -96,7 +96,7 @@ public class ClientsResourceTest {
   }
 
   @Test public void handlesNoAssociations() {
-    when(clientJooqDao.getClientById(1)).thenReturn(Optional.of(client));
+    when(clientDAO.getClientById(1)).thenReturn(Optional.of(client));
     when(aclDAO.getGroupsFor(client)).thenReturn(Collections.emptySet());
     when(aclDAO.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of());
 
@@ -111,7 +111,7 @@ public class ClientsResourceTest {
     Secret secret = new Secret(15, "secret", null, null, "supersecretdata", now, "creator", now,
         "updater", null, null, null);
 
-    when(clientJooqDao.getClientById(1)).thenReturn(Optional.of(client));
+    when(clientDAO.getClientById(1)).thenReturn(Optional.of(client));
     when(aclDAO.getGroupsFor(client)).thenReturn(Sets.newHashSet(group1, group2));
     when(aclDAO.getSanitizedSecretsFor(client))
         .thenReturn(ImmutableSet.of(SanitizedSecret.fromSecret(secret)));
@@ -122,27 +122,27 @@ public class ClientsResourceTest {
   }
 
   @Test public void findClientByName() {
-    when(clientJooqDao.getClient(client.getName())).thenReturn(Optional.of(client));
+    when(clientDAO.getClient(client.getName())).thenReturn(Optional.of(client));
     assertThat(resource.getClientByName(user, "client")).isEqualTo(client);
   }
 
   @Test(expected = NotFoundException.class)
   public void badIdNotFound() {
-    when(clientJooqDao.getClientById(41)).thenReturn(Optional.empty());
+    when(clientDAO.getClientById(41)).thenReturn(Optional.empty());
     resource.getClient(user, new LongParam("41"));
   }
 
   @Test(expected = NotFoundException.class)
   public void notFoundWhenRetrievingBadName() {
-    when(clientJooqDao.getClient("non-existent-client")).thenReturn(Optional.empty());
+    when(clientDAO.getClient("non-existent-client")).thenReturn(Optional.empty());
     resource.getClientByName(user, "non-existent-client");
   }
 
   @Test public void deleteCallsDelete() {
-    when(clientJooqDao.getClientById(12)).thenReturn(Optional.of(client));
+    when(clientDAO.getClientById(12)).thenReturn(Optional.of(client));
 
     Response blah = resource.deleteClient(user, new LongParam("12"));
-    verify(clientJooqDao).deleteClient(client);
+    verify(clientDAO).deleteClient(client);
     assertThat(blah.getStatus()).isEqualTo(204);
   }
 }

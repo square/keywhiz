@@ -34,7 +34,7 @@ import static keywhiz.jooq.tables.Clients.CLIENTS;
  *
  * Also, when doing JOINS, I don't know if there's a good way to preserve the right Record type.
  */
-class ClientJooqMapper implements RecordMapper<Record, Client> {
+class ClientMapper implements RecordMapper<Record, Client> {
   public Client map(Record r) {
     // Lots of :(
     return new Client(

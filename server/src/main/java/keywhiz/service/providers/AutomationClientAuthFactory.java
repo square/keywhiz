@@ -24,7 +24,7 @@ import javax.inject.Inject;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
 import keywhiz.api.model.AutomationClient;
-import keywhiz.service.daos.ClientJooqDao;
+import keywhiz.service.daos.ClientDAO;
 import org.glassfish.jersey.server.ContainerRequest;
 
 import static java.lang.String.format;
@@ -39,8 +39,8 @@ import static java.lang.String.format;
 public class AutomationClientAuthFactory {
   private final Authenticator<String, AutomationClient> authenticator;
 
-  @Inject public AutomationClientAuthFactory(ClientJooqDao clientJooqDao) {
-    this.authenticator = new MyAuthenticator(clientJooqDao);
+  @Inject public AutomationClientAuthFactory(ClientDAO clientDAO) {
+    this.authenticator = new MyAuthenticator(clientDAO);
   }
 
   public AutomationClient provide(ContainerRequest request) {
@@ -60,15 +60,15 @@ public class AutomationClientAuthFactory {
   }
 
   private static class MyAuthenticator implements Authenticator<String, AutomationClient> {
-    private final ClientJooqDao clientJooqDao;
+    private final ClientDAO clientDAO;
 
-    private MyAuthenticator(ClientJooqDao clientJooqDao) {
-      this.clientJooqDao = clientJooqDao;
+    private MyAuthenticator(ClientDAO clientDAO) {
+      this.clientDAO = clientDAO;
     }
 
     @Override public Optional<AutomationClient> authenticate(String name)
         throws AuthenticationException {
-      return clientJooqDao.getClient(name).map(AutomationClient::of);
+      return clientDAO.getClient(name).map(AutomationClient::of);
     }
   }
 }

@@ -27,15 +27,15 @@ import org.junit.Test;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ClientJooqDaoTest {
+public class ClientDAOTest {
   @Rule public final TestDBRule testDBRule = new TestDBRule();
 
   Client client1, client2;
-  ClientJooqDao clientJooqDao;
+  ClientDAO clientDAO;
 
   @Before
   public void setUp() throws Exception {
-    clientJooqDao = new ClientJooqDao(testDBRule.jooqContext());
+    clientDAO = new ClientDAO(testDBRule.jooqContext());
 
     testDBRule.jooqContext().delete(CLIENTS).execute();
 
@@ -45,24 +45,24 @@ public class ClientJooqDaoTest {
         .values("client2", "desc2", "creator", "updater", false)
         .execute();
 
-    client1 = clientJooqDao.getClient("client1").get();
-    client2 = clientJooqDao.getClient("client2").get();
+    client1 = clientDAO.getClient("client1").get();
+    client2 = clientDAO.getClient("client2").get();
   }
 
   @Test
   public void createClient() {
     int before = tableSize();
-    clientJooqDao.createClient("newClient", "creator", Optional.empty());
-    Client newClient = clientJooqDao.getClient("newClient").orElseThrow(RuntimeException::new);
+    clientDAO.createClient("newClient", "creator", Optional.empty());
+    Client newClient = clientDAO.getClient("newClient").orElseThrow(RuntimeException::new);
 
     assertThat(tableSize()).isEqualTo(before + 1);
-    assertThat(clientJooqDao.getClients()).containsOnly(client1, client2, newClient);
+    assertThat(clientDAO.getClients()).containsOnly(client1, client2, newClient);
   }
 
   @Test
   public void createClientReturnsId() {
-    long id = clientJooqDao.createClient("newClientWithSameId", "creator2", Optional.empty());
-    Client clientById = clientJooqDao.getClient("newClientWithSameId")
+    long id = clientDAO.createClient("newClientWithSameId", "creator2", Optional.empty());
+    Client clientById = clientDAO.getClient("newClientWithSameId")
         .orElseThrow(RuntimeException::new);
     assertThat(clientById.getId()).isEqualTo(id);
   }
@@ -70,36 +70,36 @@ public class ClientJooqDaoTest {
   @Test
   public void deleteClient() {
     int before = tableSize();
-    clientJooqDao.deleteClient(client1);
+    clientDAO.deleteClient(client1);
     assertThat(tableSize()).isEqualTo(before - 1);
-    assertThat(clientJooqDao.getClients()).containsOnly(client2);
+    assertThat(clientDAO.getClients()).containsOnly(client2);
   }
 
   @Test
   public void getClientByName() {
-    Client client = clientJooqDao.getClient("client1").orElseThrow(RuntimeException::new);
+    Client client = clientDAO.getClient("client1").orElseThrow(RuntimeException::new);
     assertThat(client).isEqualTo(client1);
   }
 
   @Test
   public void getNonExistentClientByName() {
-    assertThat(clientJooqDao.getClient("non-existent").isPresent()).isFalse();
+    assertThat(clientDAO.getClient("non-existent").isPresent()).isFalse();
   }
 
   @Test
   public void getClientById() {
-    Client client = clientJooqDao.getClientById(client1.getId()).orElseThrow(RuntimeException::new);
+    Client client = clientDAO.getClientById(client1.getId()).orElseThrow(RuntimeException::new);
     assertThat(client).isEqualTo(client1);
   }
 
   @Test
   public void getNonExistentClientById() {
-    assertThat(clientJooqDao.getClientById(-1).isPresent()).isFalse();
+    assertThat(clientDAO.getClientById(-1).isPresent()).isFalse();
   }
 
   @Test
   public void getsClients() {
-    Set<Client> clients = clientJooqDao.getClients();
+    Set<Client> clients = clientDAO.getClients();
     assertThat(clients).containsOnly(client1, client2);
   }
 

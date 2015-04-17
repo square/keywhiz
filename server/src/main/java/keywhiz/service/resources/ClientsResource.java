@@ -45,7 +45,7 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
-import keywhiz.service.daos.ClientJooqDao;
+import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.exceptions.ConflictException;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
@@ -63,12 +63,12 @@ public class ClientsResource {
   private static final Logger logger = LoggerFactory.getLogger(ClientsResource.class);
 
   private final AclDAO aclDAO;
-  private final ClientJooqDao clientJooqDao;
+  private final ClientDAO clientDAO;
 
   @Inject
-  public ClientsResource(AclDAO aclDAO, ClientJooqDao clientJooqDao) {
+  public ClientsResource(AclDAO aclDAO, ClientDAO clientDAO) {
     this.aclDAO = aclDAO;
-    this.clientJooqDao = clientJooqDao;
+    this.clientDAO = clientDAO;
   }
 
   /**
@@ -92,7 +92,7 @@ public class ClientsResource {
 
   protected List<Client> listClients(@Auth User user) {
     logger.info("User '{}' listing clients.", user);
-    Set<Client> clients = clientJooqDao.getClients();
+    Set<Client> clients = clientDAO.getClients();
     return ImmutableList.copyOf(clients);
   }
 
@@ -120,7 +120,7 @@ public class ClientsResource {
 
     long clientId;
     try {
-      clientId = clientJooqDao.createClient(createClientRequest.name, user.getName(), Optional.empty());
+      clientId = clientDAO.createClient(createClientRequest.name, user.getName(), Optional.empty());
     } catch (DataAccessException e) {
       logger.warn("Cannot create client {}: {}", createClientRequest.name, e);
       throw new ConflictException("Conflict creating client.");
@@ -166,18 +166,18 @@ public class ClientsResource {
   public Response deleteClient(@Auth User user, @PathParam("clientId") LongParam clientId) {
     logger.info("User '{}' deleting client id={}.", user, clientId);
 
-    Optional<Client> client = clientJooqDao.getClientById(clientId.get());
+    Optional<Client> client = clientDAO.getClientById(clientId.get());
     if (!client.isPresent()) {
       throw new NotFoundException("Client not found.");
     }
 
-    clientJooqDao.deleteClient(client.get());
+    clientDAO.deleteClient(client.get());
 
     return Response.noContent().build();
   }
 
   private ClientDetailResponse clientDetailResponseFromId(long clientId) {
-    Optional<Client> optionalClient = clientJooqDao.getClientById(clientId);
+    Optional<Client> optionalClient = clientDAO.getClientById(clientId);
     if (!optionalClient.isPresent()) {
       throw new NotFoundException("Client not found.");
     }
@@ -191,7 +191,7 @@ public class ClientsResource {
   }
 
   private Client clientFromName(String clientName) {
-    Optional<Client> optionalClient = clientJooqDao.getClient(clientName);
+    Optional<Client> optionalClient = clientDAO.getClient(clientName);
     if (!optionalClient.isPresent()) {
       throw new NotFoundException("Client not found.");
     }
