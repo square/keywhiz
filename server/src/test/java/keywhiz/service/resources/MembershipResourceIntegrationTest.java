@@ -20,6 +20,7 @@ import keywhiz.IntegrationTestRule;
 import keywhiz.TestClients;
 import keywhiz.api.model.Group;
 import keywhiz.client.KeywhizClient;
+import keywhiz.commands.DbSeedCommand;
 import org.assertj.core.api.Condition;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -47,7 +48,7 @@ public class MembershipResourceIntegrationTest {
   }
 
   @Test public void allowingSecretInGroup() throws IOException {
-    keywhizClient.login("keywhizAdmin", "adminPass");
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
 
     assertThat(keywhizClient.secretDetailsForId(741).groups).doNotHave(groupId(919));
     keywhizClient.grantSecretToGroupByIds(741, 919);
@@ -56,7 +57,7 @@ public class MembershipResourceIntegrationTest {
 
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void allowingMissingSecretInGroup() throws IOException {
-    keywhizClient.login("keywhizAdmin", "adminPass");
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
     keywhizClient.grantSecretToGroupByIds(4539475, 237694);
   }
 
@@ -72,7 +73,7 @@ public class MembershipResourceIntegrationTest {
   }
 
   @Test public void revokesSecretFromGroup() throws IOException {
-    keywhizClient.login("keywhizAdmin", "adminPass");
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
 
     assertThat(keywhizClient.secretDetailsForId(737).groups).haveExactly(1, groupId(918));
     keywhizClient.revokeSecretFromGroupByIds(737, 918);
@@ -81,12 +82,12 @@ public class MembershipResourceIntegrationTest {
 
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void revokingMissingSecretFromGroup() throws IOException {
-    keywhizClient.login("keywhizAdmin", "adminPass");
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
     keywhizClient.revokeSecretFromGroupByIds(4539475, 237694);
   }
 
   @Test public void enrollsClientInGroup() throws IOException {
-    keywhizClient.login("keywhizAdmin", "adminPass");
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
 
     assertThat(keywhizClient.clientDetailsForId(770).groups).doNotHave(groupId(918));
     keywhizClient.enrollClientInGroupByIds(770, 918);
@@ -95,12 +96,12 @@ public class MembershipResourceIntegrationTest {
 
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void enrollingMissingClientInGroup() throws IOException {
-    keywhizClient.login("keywhizAdmin", "adminPass");
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
     keywhizClient.enrollClientInGroupByIds(4539575, 237694);
   }
 
   @Test public void evictsClientFromGroup() throws IOException {
-    keywhizClient.login("keywhizAdmin", "adminPass");
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
 
     assertThat(keywhizClient.clientDetailsForId(770).groups).haveExactly(1, groupId(917));
     keywhizClient.evictClientFromGroupByIds(770, 917);
@@ -109,7 +110,7 @@ public class MembershipResourceIntegrationTest {
 
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void evictingMissingClientFromGroup() throws IOException {
-    keywhizClient.login("keywhizAdmin", "adminPass");
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
 
     keywhizClient.evictClientFromGroupByIds(4539475, 237694);
   }

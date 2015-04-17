@@ -24,15 +24,17 @@ import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.jackson.Jackson;
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
 import javax.sql.DataSource;
 import javax.validation.Validation;
 import javax.validation.Validator;
+import keywhiz.commands.DbSeedCommand;
 import org.flywaydb.core.Flyway;
+import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-import org.skife.jdbi.v2.DBI;
-import org.skife.jdbi.v2.Handle;
 
 public class MigrationsRule implements TestRule {
   @Override public Statement apply(final Statement base, Description description) {
@@ -57,10 +59,10 @@ public class MigrationsRule implements TestRule {
         flyway.clean();
         flyway.migrate();
 
-        DBI dbi = new DBI(dataSource);
-        Handle handle = dbi.open();
-        handle.createScript("server_test_data.sql").execute();
-        handle.close();
+        try (Connection conn = dataSource.getConnection()) {
+          DSLContext dslContext = DSL.using(conn);
+          DbSeedCommand.doImport(dslContext);
+        }
 
         base.evaluate();
       }

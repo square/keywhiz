@@ -20,6 +20,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import keywhiz.IntegrationTestRule;
 import keywhiz.TestClients;
+import keywhiz.commands.DbSeedCommand;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -40,7 +41,7 @@ public class XsrfServletFilterIntegrationTest {
   }
 
   @Test public void xsrfNotRequiredForLogin() throws Exception {
-    Response response = client.newCall(buildLoginPost("keywhizAdmin", "adminPass")).execute();
+    Response response = client.newCall(buildLoginPost(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword)).execute();
     assertThat(response.code()).isNotEqualTo(401);
   }
 
@@ -55,7 +56,7 @@ public class XsrfServletFilterIntegrationTest {
   }
 
   @Test public void rejectsForAdminUrlWithoutXsrf() throws Exception {
-    noXsrfClient.newCall(buildLoginPost("keywhizAdmin", "adminPass")).execute();
+    noXsrfClient.newCall(buildLoginPost(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword)).execute();
     Request request = new Request.Builder()
         .url("/admin/clients/")
         .get()
@@ -66,7 +67,7 @@ public class XsrfServletFilterIntegrationTest {
   }
 
   @Test public void allowsForAdminUrlWithXsrf() throws Exception {
-    client.newCall(buildLoginPost("keywhizAdmin", "adminPass")).execute();
+    client.newCall(buildLoginPost(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword)).execute();
     Request request = new Request.Builder()
         .url("/admin/clients/")
         .get()

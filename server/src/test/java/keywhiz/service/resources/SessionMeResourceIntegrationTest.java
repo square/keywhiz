@@ -25,6 +25,7 @@ import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
 import keywhiz.auth.User;
+import keywhiz.commands.DbSeedCommand;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -44,8 +45,8 @@ public class SessionMeResourceIntegrationTest {
   }
 
   @Test public void getInformation() throws IOException {
-    User validUser = User.named("keywhizAdmin");
-    client.newCall(buildLoginPost(validUser.getName(), "adminPass")).execute();
+    User validUser = User.named(DbSeedCommand.defaultUser);
+    client.newCall(buildLoginPost(validUser.getName(), DbSeedCommand.defaultPassword)).execute();
 
     Request get = new Request.Builder()
         .get()
