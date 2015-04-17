@@ -16,6 +16,7 @@
 
 package keywhiz.service.daos;
 
+import com.google.common.collect.ImmutableSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +48,7 @@ public class GroupDAO {
   }
 
   public void deleteGroup(Group group) {
-    GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq((int) group.getId()));
+    GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq(Math.toIntExact(group.getId())));
     r.delete();
   }
 
@@ -60,16 +61,16 @@ public class GroupDAO {
   }
 
   public Optional<Group> getGroupById(long id) {
-    GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq((int) id));
+    GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq(Math.toIntExact(id)));
     if (r != null) {
       return Optional.of(r.map(new GroupMapper()));
     }
     return Optional.empty();
   }
 
-  public Set<Group> getGroups() {
+  public ImmutableSet<Group> getGroups() {
     List<Group> r = dslContext.select().from(GROUPS).fetch().map(new GroupMapper());
-    return new HashSet<>(r);
+    return ImmutableSet.copyOf(r);
   }
 }
 
