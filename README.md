@@ -1,6 +1,8 @@
 # Keywhiz
 
-[![license](http://img.shields.io/badge/license-apache_2.0-red.svg?style=flat)](https://raw.githubusercontent.com/square/keywhiz/master/LICENSE) [![maven](https://img.shields.io/maven-central/v/com.squareup.keywhiz/keywhiz-server.svg)](http://maven-repository.com/artifact/com.squareup.keywhiz) [![build](https://img.shields.io/travis/square/keywhiz.svg?style=flat)](https://travis-ci.org/square/keywhiz)
+[![license](https://img.shields.io/badge/license-apache_2.0-red.svg?style=flat)](https://raw.githubusercontent.com/square/keywhiz/master/LICENSE)
+[![maven](https://img.shields.io/maven-central/v/com.squareup.keywhiz/keywhiz-server.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.squareup.keywhiz%22)
+[![build](https://img.shields.io/travis/square/keywhiz.svg?style=flat)](https://travis-ci.org/square/keywhiz)
 
 Keywhiz is a system for distributing and managing secrets.
 For more information, see the [website][1].
