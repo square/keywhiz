@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.swing.text.html.Option;
 import keywhiz.api.model.Group;
 import keywhiz.jooq.tables.records.GroupsRecord;
 import org.jooq.DSLContext;
@@ -48,24 +49,18 @@ public class GroupDAO {
   }
 
   public void deleteGroup(Group group) {
-    GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq(Math.toIntExact(group.getId())));
-    r.delete();
+    dslContext.delete(GROUPS).where(GROUPS.ID.eq(Math.toIntExact(group.getId()))).execute();
   }
 
   public Optional<Group> getGroup(String name) {
     GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.NAME.eq(name));
-    if (r != null) {
-      return Optional.of(r.map(new GroupMapper()));
-    }
-    return Optional.empty();
+    return Optional.ofNullable(r).map((rec) -> rec.map(new GroupMapper()));
   }
 
   public Optional<Group> getGroupById(long id) {
     GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq(Math.toIntExact(id)));
-    if (r != null) {
-      return Optional.of(r.map(new GroupMapper()));
-    }
-    return Optional.empty();
+    return Optional.ofNullable(r).map(
+        (rec) -> rec.map(new GroupMapper()));
   }
 
   public ImmutableSet<Group> getGroups() {
