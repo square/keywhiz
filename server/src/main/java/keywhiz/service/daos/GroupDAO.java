@@ -17,12 +17,9 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import javax.inject.Inject;
-import javax.swing.text.html.Option;
 import keywhiz.api.model.Group;
 import keywhiz.jooq.tables.records.GroupsRecord;
 import org.jooq.DSLContext;
@@ -54,7 +51,8 @@ public class GroupDAO {
 
   public Optional<Group> getGroup(String name) {
     GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.NAME.eq(name));
-    return Optional.ofNullable(r).map((rec) -> rec.map(new GroupMapper()));
+    return Optional.ofNullable(r).map(
+        (rec) -> rec.map(new GroupMapper()));
   }
 
   public Optional<Group> getGroupById(long id) {
@@ -68,5 +66,3 @@ public class GroupDAO {
     return ImmutableSet.copyOf(r);
   }
 }
-
-
