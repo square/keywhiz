@@ -37,7 +37,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Does not map to a table itself, but utilizes both {@link SecretSeriesJooqDao} and
  * {@link SecretContentJooqDao} to provide a more usable API.
  */
-class SecretJooqDao {
+public class SecretJooqDao {
   private final DSLContext dslContext;
   private SecretContentJooqDao secretContentJooqDao;
   private SecretSeriesJooqDao secretSeriesJooqDao;

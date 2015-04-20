@@ -34,7 +34,7 @@ import org.jooq.tools.json.JSONObject;
 
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 
-class SecretSeriesJooqDao {
+public class SecretSeriesJooqDao {
   private final DSLContext dslContext;
   private final ObjectMapper
       mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
