@@ -28,7 +28,7 @@ import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
-import keywhiz.service.daos.SecretJooqDao;
+import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.exceptions.ConflictException;
 import org.jooq.exception.DataAccessException;
@@ -55,7 +55,7 @@ public class AutomationSecretResourceTest {
   @Mock SecretController secretController;
   @Mock SecretController.SecretBuilder secretBuilder;
   @Mock AclDAO aclDAO;
-  @Mock SecretJooqDao secretJooqDao;
+  @Mock SecretDAO secretDAO;
   @Mock SecretSeriesDAO secretSeriesDAO;
 
   AutomationClient automation = AutomationClient.of(

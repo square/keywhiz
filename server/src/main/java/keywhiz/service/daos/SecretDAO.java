@@ -37,13 +37,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Does not map to a table itself, but utilizes both {@link SecretSeriesJooqDao} and
  * {@link SecretContentJooqDao} to provide a more usable API.
  */
-public class SecretJooqDao {
+public class SecretDAO {
   private final DSLContext dslContext;
   private SecretContentJooqDao secretContentJooqDao;
   private SecretSeriesJooqDao secretSeriesJooqDao;
 
   @Inject
-  public SecretJooqDao(DSLContext dslContext, SecretContentJooqDao secretContentJooqDao,
+  public SecretDAO(DSLContext dslContext, SecretContentJooqDao secretContentJooqDao,
       SecretSeriesJooqDao secretSeriesJooqDao) {
     this.dslContext = dslContext;
     this.secretContentJooqDao = secretContentJooqDao;

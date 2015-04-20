@@ -48,7 +48,7 @@ public class AclDAOTest {
   Secret secret1, secret2;
   ClientDAO clientDAO;
   GroupDAO groupDAO;
-  SecretJooqDao secretJooqDao;
+  SecretDAO secretDAO;
   SecretContentJooqDao secretContentJooqDao;
   SecretSeriesJooqDao secretSeriesJooqDao;
   AclDAO aclDAO;
@@ -83,8 +83,8 @@ public class AclDAOTest {
     secretSeriesJooqDao = new SecretSeriesJooqDao(jooqContext);
     secretContentJooqDao = new SecretContentJooqDao(jooqContext);
 
-    secretJooqDao = new SecretJooqDao(jooqContext, secretContentJooqDao, secretSeriesJooqDao);
-    SecretFixtures secretFixtures = SecretFixtures.using(secretJooqDao);
+    secretDAO = new SecretDAO(jooqContext, secretContentJooqDao, secretSeriesJooqDao);
+    SecretFixtures secretFixtures = SecretFixtures.using(secretDAO);
     secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==", VersionGenerator.now().toHex());
     secret2 = secretFixtures.createSecret("secret2", "c2VjcmV0Mg==");
 

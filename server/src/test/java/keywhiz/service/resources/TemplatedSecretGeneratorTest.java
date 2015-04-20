@@ -29,7 +29,7 @@ import keywhiz.auth.User;
 import keywhiz.generators.TemplatedSecretGenerator;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
-import keywhiz.service.daos.SecretJooqDao;
+import keywhiz.service.daos.SecretDAO;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,7 +47,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class TemplatedSecretGeneratorTest {
   @Mock AclDAO aclDAO;
-  @Mock SecretJooqDao secretJooqDao;
+  @Mock SecretDAO secretDAO;
   @Mock SecretController secretController;
   @Mock SecretController.SecretBuilder secretBuilder;
 

@@ -26,21 +26,21 @@ import keywhiz.service.crypto.SecretTransformer;
  * Helper methods to make secrets, reducing the amount of work for testing.
  */
 public class SecretFixtures {
-  private final SecretJooqDao secretJooqDao;
+  private final SecretDAO secretDAO;
   private final ContentCryptographer cryptographer;
   private final SecretTransformer transformer;
 
-  private SecretFixtures(SecretJooqDao secretJooqDao) {
-    this.secretJooqDao = secretJooqDao;
+  private SecretFixtures(SecretDAO secretDAO) {
+    this.secretDAO = secretDAO;
     this.cryptographer = CryptoFixtures.contentCryptographer();
     this.transformer = new SecretTransformer(cryptographer);
   }
 
   /**
-   * @return builds a fixture-making object using the given SecretJooqDao
+   * @return builds a fixture-making object using the given {@link SecretDAO}
    */
-  public static SecretFixtures using(SecretJooqDao secretJooqDao) {
-    return new SecretFixtures(secretJooqDao);
+  public static SecretFixtures using(SecretDAO secretDAO) {
+    return new SecretFixtures(secretDAO);
   }
 
   /**
@@ -65,8 +65,8 @@ public class SecretFixtures {
   public Secret createSecret(String name, String content, String version) {
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
     long id =
-        secretJooqDao.createSecret(name, encryptedContent, version, "creator", ImmutableMap.of(),
+        secretDAO.createSecret(name, encryptedContent, version, "creator", ImmutableMap.of(),
             "", null, ImmutableMap.of());
-    return transformer.transform(secretJooqDao.getSecretByIdAndVersion(id, version).get());
+    return transformer.transform(secretDAO.getSecretByIdAndVersion(id, version).get());
   }
 }

@@ -32,13 +32,13 @@ import static java.util.stream.Collectors.toList;
 public class SecretController {
   private final SecretTransformer transformer;
   private final ContentCryptographer cryptographer;
-  private final SecretJooqDao secretJooqDao;
+  private final SecretDAO secretDAO;
 
   public SecretController(SecretTransformer transformer, ContentCryptographer cryptographer,
-      SecretJooqDao secretJooqDao) {
+      SecretDAO secretDAO) {
     this.transformer = transformer;
     this.cryptographer = cryptographer;
-    this.secretJooqDao = secretJooqDao;
+    this.secretDAO = secretDAO;
   }
 
   /**
@@ -46,7 +46,7 @@ public class SecretController {
    * @return all Secrets with given id. May be empty or include multiple versions.
    */
   public List<Secret> getSecretsById(long secretId) {
-    return transformer.transform(secretJooqDao.getSecretsById(secretId));
+    return transformer.transform(secretDAO.getSecretsById(secretId));
   }
 
   /**
@@ -55,7 +55,7 @@ public class SecretController {
    * @return Secret matching input parameters or Optional.absent().
    */
   public Optional<Secret> getSecretByIdAndVersion(long secretId, String version) {
-    return secretJooqDao.getSecretByIdAndVersion(secretId, version).map(transformer::transform);
+    return secretDAO.getSecretByIdAndVersion(secretId, version).map(transformer::transform);
   }
 
   /**
@@ -64,17 +64,17 @@ public class SecretController {
    * @return Secret matching input parameters or Optional.absent().
    */
   public Optional<Secret> getSecretByNameAndVersion(String name, String version) {
-    return secretJooqDao.getSecretByNameAndVersion(name, version).map(transformer::transform);
+    return secretDAO.getSecretByNameAndVersion(name, version).map(transformer::transform);
   }
 
   /** @return all existing secrets. */
   public List<Secret> getSecrets() {
-    return transformer.transform(secretJooqDao.getSecrets());
+    return transformer.transform(secretDAO.getSecrets());
   }
 
   /** @return all existing sanitized secrets. */
   public List<SanitizedSecret> getSanitizedSecrets() {
-    return secretJooqDao.getSecrets().stream()
+    return secretDAO.getSecrets().stream()
         .map(SanitizedSecret::fromSecretSeriesAndContent)
         .collect(toList());
   }
@@ -82,7 +82,7 @@ public class SecretController {
   /** @return all versions for this secret name. */
   public List<String> getVersionsForName(String name) {
     checkArgument(!name.isEmpty());
-    return secretJooqDao.getVersionsForSecretName(name);
+    return secretDAO.getVersionsForSecretName(name);
   }
 
   /**
@@ -91,7 +91,7 @@ public class SecretController {
    * @param name of secret series to delete.
    */
   public void deleteSecretsByName(String name) {
-    secretJooqDao.deleteSecretsByName(name);
+    secretDAO.deleteSecretsByName(name);
   }
 
   /**
@@ -101,7 +101,7 @@ public class SecretController {
    * @param version of secret to specifically delete.
    */
   public void deleteSecretByNameAndVersion(String name, String version) {
-    secretJooqDao.deleteSecretByNameAndVersion(name, version);
+    secretDAO.deleteSecretByNameAndVersion(name, version);
   }
 
   public SecretBuilder builder(String name, String secret, String creator) {
@@ -109,13 +109,13 @@ public class SecretController {
     checkArgument(!secret.isEmpty());
     checkArgument(!creator.isEmpty());
     String encryptedSecret = cryptographer.encryptionKeyDerivedFrom(name).encrypt(secret);
-    return new SecretBuilder(transformer, secretJooqDao, name, encryptedSecret, creator);
+    return new SecretBuilder(transformer, secretDAO, name, encryptedSecret, creator);
   }
 
   /** Builder to generate new secret series or versions with. */
   public static class SecretBuilder {
     private final SecretTransformer transformer;
-    private final SecretJooqDao secretJooqDao;
+    private final SecretDAO secretDAO;
     private final String name;
     private final String encryptedSecret;
     private final String creator;
@@ -127,15 +127,15 @@ public class SecretController {
 
     /**
      * @param transformer
-     * @param secretJooqDao
+     * @param secretDAO
      * @param name of secret series.
      * @param encryptedSecret encrypted content of secret version
      * @param creator username responsible for creating this secret version.
      */
-    private SecretBuilder(SecretTransformer transformer, SecretJooqDao secretJooqDao, String name, String encryptedSecret,
+    private SecretBuilder(SecretTransformer transformer, SecretDAO secretDAO, String name, String encryptedSecret,
         String creator) {
       this.transformer = transformer;
-      this.secretJooqDao = secretJooqDao;
+      this.secretDAO = secretDAO;
       this.name = name;
       this.encryptedSecret = encryptedSecret;
       this.creator = creator;
@@ -197,8 +197,8 @@ public class SecretController {
      * @return an instance of the newly created secret.
      */
     public Secret build() {
-        secretJooqDao.createSecret(name, encryptedSecret, version, creator, metadata, description, type, generationOptions);
-        return transformer.transform(secretJooqDao.getSecretByNameAndVersion(name, version).get());
+        secretDAO.createSecret(name, encryptedSecret, version, creator, metadata, description, type, generationOptions);
+        return transformer.transform(secretDAO.getSecretByNameAndVersion(name, version).get());
 /*
         // TODO: I don't know if propagating the DataAccessException is the right thing to do.
 

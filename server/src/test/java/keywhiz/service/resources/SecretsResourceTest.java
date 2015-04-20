@@ -37,7 +37,7 @@ import keywhiz.api.model.Secret;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
-import keywhiz.service.daos.SecretJooqDao;
+import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.exceptions.ConflictException;
 import org.jooq.exception.DataAccessException;
@@ -58,7 +58,7 @@ public class SecretsResourceTest {
   private static final OffsetDateTime NOW = OffsetDateTime.now();
 
   @Mock AclDAO aclDAO;
-  @Mock SecretJooqDao secretJooqDao;
+  @Mock SecretDAO secretDAO;
   @Mock SecretSeriesDAO secretSeriesDAO;
   @Mock SecretController secretController;
 
