@@ -49,7 +49,8 @@ public class AclDAOTest {
   ClientDAO clientDAO;
   GroupDAO groupDAO;
   SecretDAO secretDAO;
-  SecretSeriesDAO secretSeriesDAO;
+  SecretContentJooqDao secretContentJooqDao;
+  SecretSeriesJooqDao secretSeriesJooqDao;
   AclDAO aclDAO;
 
   @Before
@@ -84,10 +85,10 @@ public class AclDAOTest {
     secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==", VersionGenerator.now().toHex());
     secret2 = secretFixtures.createSecret("secret2", "c2VjcmV0Mg==");
 
-    secretSeriesDAO = dbi.onDemand(SecretSeriesDAO.class);
+    secretSeriesJooqDao = new SecretSeriesJooqDao(jooqContext);
+    secretContentJooqDao = new SecretContentJooqDao(jooqContext);
 
-    AclDeps aclDeps = dbi.onDemand(AclDeps.class);
-    aclDAO = new AclDAO(jooqContext, clientDAO, groupDAO, aclDeps);
+    aclDAO = new AclDAO(jooqContext, clientDAO, groupDAO, secretContentJooqDao, secretSeriesJooqDao);
   }
 
   @Test
@@ -118,7 +119,7 @@ public class AclDAOTest {
     groupDAO.deleteGroup(group1);
     assertThat(accessGrantsTableSize()).isEqualTo(before - 1);
 
-    secretSeriesDAO.deleteSecretSeriesById(secret2.getId());
+    secretSeriesJooqDao.deleteSecretSeriesById(secret2.getId());
     assertThat(accessGrantsTableSize()).isEqualTo(before - 2);
   }
 
@@ -256,7 +257,7 @@ public class AclDAOTest {
 
   @Test
   public void getSecretSeriesFor() throws Exception {
-    SecretSeries secretSeries1 = secretSeriesDAO.getSecretSeriesById(secret1.getId()).get();
+    SecretSeries secretSeries1 = secretSeriesJooqDao.getSecretSeriesById(secret1.getId()).get();
 
     aclDAO.enrollClient(client2.getId(), group1.getId());
     aclDAO.enrollClient(client2.getId(), group3.getId());

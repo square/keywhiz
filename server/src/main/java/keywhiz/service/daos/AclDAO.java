@@ -50,16 +50,16 @@ public class AclDAO {
   private final DSLContext dslContext;
   private ClientDAO clientDAO;
   private GroupDAO groupDAO;
-  private SecretContentDAO secretContentDAO;
-  private SecretSeriesDAO secretSeriesDAO;
+  private SecretContentJooqDao secretContentJooqDao;
+  private SecretSeriesJooqDao secretSeriesJooqDao;
 
   @Inject
-  public AclDAO(DSLContext dslContext, ClientDAO clientDAO, GroupDAO groupDAO, AclDeps aclDeps) {
+  public AclDAO(DSLContext dslContext, ClientDAO clientDAO, GroupDAO groupDAO, SecretContentJooqDao secretContentJooqDao, SecretSeriesJooqDao secretSeriesJooqDao) {
     this.dslContext = dslContext;
     this.clientDAO = clientDAO;
     this.groupDAO = groupDAO;
-    this.secretContentDAO = aclDeps.createSecretContentDAO();
-    this.secretSeriesDAO = aclDeps.createSecretSeriesDAO();
+    this.secretContentJooqDao = secretContentJooqDao;
+    this.secretSeriesJooqDao = secretSeriesJooqDao;
   }
 
   public void findAndAllowAccess(long secretId, long groupId) {
@@ -71,7 +71,7 @@ public class AclDAO {
         throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
       }
 
-      Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
+      Optional<SecretSeries> secret = secretSeriesJooqDao.getSecretSeriesById(secretId);
       if (!secret.isPresent()) {
         logger.info("Failure to allow access groupId {}, secretId {}: secretId not found.", groupId,
             secretId);
@@ -91,7 +91,7 @@ public class AclDAO {
         throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
       }
 
-      Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
+      Optional<SecretSeries> secret = secretSeriesJooqDao.getSecretSeriesById(secretId);
       if (!secret.isPresent()) {
         logger.info("Failure to revoke access groupId {}, secretId {}: secretId not found.",
             groupId, secretId);
@@ -148,7 +148,7 @@ public class AclDAO {
     ImmutableSet.Builder<SanitizedSecret> set = ImmutableSet.builder();
 
     for (SecretSeries series : getSecretSeriesFor(group)) {
-      for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
+      for (SecretContent content : secretContentJooqDao.getSecretContentsBySecretId(series.getId())) {
         SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
         set.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
       }
@@ -202,7 +202,7 @@ public class AclDAO {
       ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
 
       for (SecretSeries series : getSecretSeriesFor(client)) {
-        for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
+        for (SecretContent content : secretContentJooqDao.getSecretContentsBySecretId(series.getId())) {
           SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
           sanitizedSet.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
         }
@@ -237,7 +237,7 @@ public class AclDAO {
       }
 
       Optional<SecretContent> secretContent =
-          secretContentDAO.getSecretContentBySecretIdAndVersion(
+          secretContentJooqDao.getSecretContentBySecretIdAndVersion(
               secretSeries.get().getId(), version);
       if (!secretContent.isPresent()) {
         return Optional.empty();

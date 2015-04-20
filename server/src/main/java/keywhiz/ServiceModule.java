@@ -54,14 +54,15 @@ import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoModule;
 import keywhiz.service.crypto.SecretTransformer;
-import keywhiz.service.daos.AclDeps;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.daos.MapArgumentFactory;
+import keywhiz.service.daos.SecretContentJooqDao;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretSeriesDAO;
+import keywhiz.service.daos.SecretSeriesJooqDao;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.skife.jdbi.v2.ColonPrefixNamedParamStatementRewriter;
@@ -223,14 +224,16 @@ public class ServiceModule extends AbstractModule {
   // DAOs using jOOQ
 
   @Provides @Singleton AclDAO aclDAO(DSLContext jooqContext, ClientDAO clientDAO,
-      GroupDAO groupDAO, DBI dbi) {
-    return new AclDAO(jooqContext, clientDAO, groupDAO, dbi.onDemand(AclDeps.class));
+      GroupDAO groupDAO, SecretContentJooqDao secretContentJooqDao,
+      SecretSeriesJooqDao secretSeriesJooqDao) {
+    return new AclDAO(jooqContext, clientDAO, groupDAO, secretContentJooqDao, secretSeriesJooqDao);
   }
 
   @Provides @Singleton
   @Readonly AclDAO readonlyAclDAO(@Readonly DSLContext jooqContext, @Readonly ClientDAO clientDAO,
-      @Readonly GroupDAO groupDAO, @Readonly DBI dbi) {
-    return new AclDAO(jooqContext, clientDAO, groupDAO, dbi.onDemand(AclDeps.class));
+      @Readonly GroupDAO groupDAO, @Readonly SecretContentJooqDao secretContentJooqDao,
+      @Readonly SecretSeriesJooqDao secretSeriesJooqDao) {
+    return new AclDAO(jooqContext, clientDAO, groupDAO, secretContentJooqDao, secretSeriesJooqDao);
   }
 
   @Provides @Singleton ClientDAO clientDAO(DSLContext jooqContext) {
@@ -247,6 +250,24 @@ public class ServiceModule extends AbstractModule {
 
   @Provides @Singleton @Readonly GroupDAO readonlyGroupDAO(@Readonly DSLContext jooqContext) {
     return new GroupDAO(jooqContext);
+  }
+
+  @Provides @Singleton SecretContentJooqDao secretContentJooqDao(DSLContext jooqContext) {
+    return new SecretContentJooqDao(jooqContext);
+  }
+
+  @Provides @Singleton
+  @Readonly SecretContentJooqDao readonlySecretContentJooqDao(@Readonly DSLContext jooqContext) {
+    return new SecretContentJooqDao(jooqContext);
+  }
+
+  @Provides @Singleton SecretSeriesJooqDao secretSeriesJooqDao(DSLContext jooqContext) {
+    return new SecretSeriesJooqDao(jooqContext);
+  }
+
+  @Provides @Singleton
+  @Readonly SecretSeriesJooqDao readonlySecretSeriesJooqDao(@Readonly DSLContext jooqContext) {
+    return new SecretSeriesJooqDao(jooqContext);
   }
 
   @Provides @Singleton
