@@ -51,7 +51,7 @@ import static keywhiz.jooq.tables.Users.USERS;
 public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
   // Didn't we say not to keep passwords in code? ;)
   public static String defaultUser = "keywhizAdmin";
-  public static char[] defaultPassword = "adminPass".toCharArray();
+  public static String defaultPassword = "adminPass";
 
   public DbSeedCommand() {
     super("db-seed", "Populates database with development data.");
@@ -152,7 +152,7 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
     dslContext
         .insertInto(USERS)
         .set(USERS.USERNAME, defaultUser)
-        .set(USERS.PASSWORD_HASH, BCrypt.hashpw(String.copyValueOf(defaultPassword), BCrypt.gensalt()))
+        .set(USERS.PASSWORD_HASH, BCrypt.hashpw(defaultPassword, BCrypt.gensalt()))
         .set(USERS.CREATED_AT, OffsetDateTime.parse("2012-06-22T14:38:09.982586Z"))
         .set(USERS.UPDATED_AT, OffsetDateTime.parse("2012-06-22T14:38:09.982586Z"))
         .execute();

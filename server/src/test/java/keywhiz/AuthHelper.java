@@ -46,14 +46,14 @@ public class AuthHelper {
    * @param password login password
    * @return valid login request, given a valid username and password
    */
-  public static Request buildLoginPost(@Nullable String username, @Nullable char[] password) {
+  public static Request buildLoginPost(@Nullable String username, @Nullable String password) {
     Map<String, String> login = Maps.newHashMap();
     if (username != null) {
       login.put("username", username);
     }
 
     if (password != null) {
-      login.put("password", String.copyValueOf(password));
+      login.put("password", password);
     }
 
     RequestBody body;

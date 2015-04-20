@@ -44,7 +44,7 @@ public class GroupsResourceIntegrationTest {
   }
 
   @Test public void listsGroups() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
     List<Group> groups = keywhizClient.allGroups();
     List<String> names = Lists.transform(groups, new Function<Group, String>() {
@@ -69,12 +69,12 @@ public class GroupsResourceIntegrationTest {
 
   @Test(expected = KeywhizClient.MalformedRequestException.class)
   public void createFailsWhenGroupExists() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
     keywhizClient.createGroup("Blackops", "should already exist");
   }
 
   @Test public void createsGroup() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
     GroupDetailResponse groupDetails = keywhizClient.createGroup("NewGroup", "");
     assertThat(groupDetails.getName()).isEqualTo("NewGroup");
 
@@ -88,31 +88,31 @@ public class GroupsResourceIntegrationTest {
   }
 
   @Test public void getGroupInfo() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
     GroupDetailResponse groupDetail = keywhizClient.groupDetailsForId(916);
     assertThat(groupDetail.getName()).isEqualTo("Blackops");
   }
 
   @Test public void getGroupInfoByName() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
     Group group = keywhizClient.getGroupByName("Blackops");
     assertThat(group.getId()).isEqualTo(916);
   }
 
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void notFoundOnMissingId() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
     keywhizClient.groupDetailsForId(900000);
   }
 
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void notFoundOnMissingName() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
     keywhizClient.getGroupByName("non-existent-group");
   }
 
   @Test public void deletesGroup() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
     keywhizClient.deleteGroupWithId(920);
 
     try {
