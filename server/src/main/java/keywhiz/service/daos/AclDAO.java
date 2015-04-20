@@ -51,15 +51,15 @@ public class AclDAO {
   private ClientDAO clientDAO;
   private GroupDAO groupDAO;
   private SecretContentDAO secretContentDAO;
-  private SecretSeriesJooqDao secretSeriesJooqDao;
+  private SecretSeriesDAO secretSeriesDAO;
 
   @Inject
-  public AclDAO(DSLContext dslContext, ClientDAO clientDAO, GroupDAO groupDAO, SecretContentDAO secretContentDAO, SecretSeriesJooqDao secretSeriesJooqDao) {
+  public AclDAO(DSLContext dslContext, ClientDAO clientDAO, GroupDAO groupDAO, SecretContentDAO secretContentDAO, SecretSeriesDAO secretSeriesDAO) {
     this.dslContext = dslContext;
     this.clientDAO = clientDAO;
     this.groupDAO = groupDAO;
     this.secretContentDAO = secretContentDAO;
-    this.secretSeriesJooqDao = secretSeriesJooqDao;
+    this.secretSeriesDAO = secretSeriesDAO;
   }
 
   public void findAndAllowAccess(long secretId, long groupId) {
@@ -71,7 +71,7 @@ public class AclDAO {
         throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
       }
 
-      Optional<SecretSeries> secret = secretSeriesJooqDao.getSecretSeriesById(secretId);
+      Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
       if (!secret.isPresent()) {
         logger.info("Failure to allow access groupId {}, secretId {}: secretId not found.", groupId,
             secretId);
@@ -91,7 +91,7 @@ public class AclDAO {
         throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
       }
 
-      Optional<SecretSeries> secret = secretSeriesJooqDao.getSecretSeriesById(secretId);
+      Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
       if (!secret.isPresent()) {
         logger.info("Failure to revoke access groupId {}, secretId {}: secretId not found.",
             groupId, secretId);
@@ -290,7 +290,7 @@ public class AclDAO {
         .join(GROUPS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
         .where(GROUPS.NAME.eq(group.getName()))
         .fetch()
-        .map(new SecretSeriesJooqMapper());
+        .map(new SecretSeriesMapper());
     return ImmutableSet.copyOf(r);
 
   }
@@ -305,7 +305,7 @@ public class AclDAO {
         .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .where(CLIENTS.NAME.eq(client.getName()))
         .fetch()
-        .map(new SecretSeriesJooqMapper());
+        .map(new SecretSeriesMapper());
     return ImmutableSet.copyOf(r);
   }
 
@@ -328,6 +328,6 @@ public class AclDAO {
         .where(SECRETS.NAME.eq(name).and(CLIENTS.NAME.eq(client.getName())))
         .fetchOne();
 
-    return Optional.ofNullable(r).map((rec) -> rec.map(new SecretSeriesJooqMapper()));
+    return Optional.ofNullable(r).map((rec) -> rec.map(new SecretSeriesMapper()));
   }
 }

@@ -30,7 +30,7 @@ import org.jooq.RecordMapper;
 import static java.lang.String.format;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 
-class SecretSeriesJooqMapper implements RecordMapper<Record, SecretSeries> {
+class SecretSeriesMapper implements RecordMapper<Record, SecretSeries> {
   private static final TypeReference MAP_STRING_STRING_TYPE =
       new TypeReference<Map<String, String>>() {};
   private final ObjectMapper mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());

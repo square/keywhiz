@@ -42,7 +42,7 @@ import keywhiz.api.model.Secret;
 import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
-import keywhiz.service.daos.SecretSeriesJooqDao;
+import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.exceptions.ConflictException;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
@@ -62,14 +62,14 @@ public class AutomationSecretResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationSecretResource.class);
   private final SecretController secretController;
   private final AclDAO aclDAO;
-  private final SecretSeriesJooqDao secretSeriesJooqDao;
+  private final SecretSeriesDAO secretSeriesDAO;
 
   @Inject
   public AutomationSecretResource(SecretController secretController, AclDAO aclDAO,
-      SecretSeriesJooqDao secretSeriesJooqDao) {
+      SecretSeriesDAO secretSeriesDAO) {
     this.secretController = secretController;
     this.aclDAO = aclDAO;
-    this.secretSeriesJooqDao = secretSeriesJooqDao;
+    this.secretSeriesDAO = secretSeriesDAO;
   }
 
   /**
@@ -199,9 +199,9 @@ public class AutomationSecretResource {
   public Response deleteSecretSeries(@Auth AutomationClient automationClient,
       @PathParam("secretName") String secretName) {
 
-    secretSeriesJooqDao.getSecretSeriesByName(secretName)
+    secretSeriesDAO.getSecretSeriesByName(secretName)
         .orElseThrow(() -> new NotFoundException("Secret series not found."));
-    secretSeriesJooqDao.deleteSecretSeriesByName(secretName);
+    secretSeriesDAO.deleteSecretSeriesByName(secretName);
 
     return Response.ok().build();
   }

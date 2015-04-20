@@ -28,14 +28,14 @@ import org.junit.Test;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class SecretSeriesJooqDaoTest {
+public class SecretSeriesDAOTest {
   @Rule public final TestDBRule testDBRule = new TestDBRule();
 
-  SecretSeriesJooqDao secretSeriesJooqDao;
+  SecretSeriesDAO secretSeriesDAO;
 
   @Before
   public void setUp() {
-    secretSeriesJooqDao = new SecretSeriesJooqDao(testDBRule.jooqContext());
+    secretSeriesDAO = new SecretSeriesDAO(testDBRule.jooqContext());
   }
 
   @Test
@@ -43,19 +43,19 @@ public class SecretSeriesJooqDaoTest {
     int before = tableSize();
     OffsetDateTime now = OffsetDateTime.now();
 
-    long id = secretSeriesJooqDao.createSecretSeries("newSecretSeries", "creator", "desc", null,
+    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
         ImmutableMap.of("foo", "bar"));
     SecretSeries expected = new SecretSeries(id, "newSecretSeries", "desc", now, "creator", now,
         "creator", null, ImmutableMap.of("foo", "bar"));
 
     assertThat(tableSize()).isEqualTo(before + 1);
 
-    SecretSeries actual = secretSeriesJooqDao.getSecretSeriesByName("newSecretSeries")
+    SecretSeries actual = secretSeriesDAO.getSecretSeriesByName("newSecretSeries")
         .orElseThrow(RuntimeException::new);
     assertThat(actual).isEqualToComparingOnlyGivenFields(expected,
         "name", "description", "type", "generationOptions");
 
-    actual = secretSeriesJooqDao.getSecretSeriesById(id)
+    actual = secretSeriesDAO.getSecretSeriesById(id)
         .orElseThrow(RuntimeException::new);
     assertThat(actual).isEqualToComparingOnlyGivenFields(expected,
         "name", "description", "type", "generationOptions");
@@ -63,36 +63,36 @@ public class SecretSeriesJooqDaoTest {
 
   @Test
   public void deleteSecretSeriesByName() {
-    secretSeriesJooqDao.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", "creator", "", null, null);
+    secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", "creator", "", null, null);
 
     int secretsBefore = tableSize();
 
-    secretSeriesJooqDao.deleteSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName");
+    secretSeriesDAO.deleteSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName");
 
     assertThat(tableSize()).isEqualTo(secretsBefore - 1);
 
     Optional<SecretSeries> missingSecret =
-        secretSeriesJooqDao.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName");
+        secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName");
     assertThat(missingSecret.isPresent()).isFalse();
   }
 
   @Test
   public void deleteSecretSeriesById() {
-    long id = secretSeriesJooqDao.createSecretSeries("toBeDeleted_deleteSecretSeriesById", "creator", "", null, null);
+    long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesById", "creator", "", null, null);
 
     int secretsBefore = tableSize();
 
-    secretSeriesJooqDao.deleteSecretSeriesById(id);
+    secretSeriesDAO.deleteSecretSeriesById(id);
 
     assertThat(tableSize()).isEqualTo(secretsBefore - 1);
-    Optional<SecretSeries> missingSecret = secretSeriesJooqDao.getSecretSeriesById(id);
+    Optional<SecretSeries> missingSecret = secretSeriesDAO.getSecretSeriesById(id);
     assertThat(missingSecret.isPresent()).isFalse();
   }
 
   @Test
   public void getNonExistentSecretSeries() {
-    assertThat(secretSeriesJooqDao.getSecretSeriesByName("non-existent").isPresent()).isFalse();
-    assertThat(secretSeriesJooqDao.getSecretSeriesById(-2328).isPresent()).isFalse();
+    assertThat(secretSeriesDAO.getSecretSeriesByName("non-existent").isPresent()).isFalse();
+    assertThat(secretSeriesDAO.getSecretSeriesById(-2328).isPresent()).isFalse();
   }
 
   private int tableSize() {

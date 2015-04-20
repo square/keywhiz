@@ -106,7 +106,7 @@ public class SecretDAOTest {
         .execute();
 
     secretDAO = new SecretDAO(dslContext, new SecretContentDAO(dslContext),
-        new SecretSeriesJooqDao(dslContext));
+        new SecretSeriesDAO(dslContext));
 
     // Secrets created in the DB will have different id, updatedAt values.
     secret1 = secretDAO.getSecretByNameAndVersion(
