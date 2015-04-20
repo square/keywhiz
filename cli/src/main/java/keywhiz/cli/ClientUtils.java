@@ -182,13 +182,13 @@ public class ClientUtils {
    *
    * @return user-inputted password
    */
-  public static String readPassword() throws IOException {
+  public static char[] readPassword() {
     Console console = System.console();
     if (console != null) {
       System.out.format("password for '%s': ", USER_NAME.value());
-      return String.copyValueOf(System.console().readPassword());
+      return System.console().readPassword();
     } else {
-      throw new IOException("Please login by running a command without piping.\n"
+      throw new RuntimeException("Please login by running a command without piping.\n"
           + "For example: keywhiz.cli login");
     }
   }

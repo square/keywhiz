@@ -77,7 +77,7 @@ public class SessionLoginResource {
   public Response login(@Valid LoginRequest request) {
 
     String username = request.username;
-    String password = request.password;
+    String password = String.copyValueOf(request.password);
 
     Optional<User> optionalUser = Optional.empty();
     try {

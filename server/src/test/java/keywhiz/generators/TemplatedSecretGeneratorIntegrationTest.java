@@ -49,7 +49,7 @@ public class TemplatedSecretGeneratorIntegrationTest {
   }
 
   @Test public void createsSecret() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
     keywhizClient.generateSecrets("templated",
         new TemplatedSecretsGeneratorRequest(
             "{{#alphanumeric}}20{{/alphanumeric}}",
@@ -63,7 +63,7 @@ public class TemplatedSecretGeneratorIntegrationTest {
   }
 
   @Test public void rollsBackOnBatchTemplates() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
     List<TemplatedSecretsGeneratorRequest> templateBatch = ImmutableList.of(
         new TemplatedSecretsGeneratorRequest("{{#numeric}}20{{/numeric}}",
@@ -82,7 +82,7 @@ public class TemplatedSecretGeneratorIntegrationTest {
   }
 
   @Test public void createsTemplatesInBatch() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
     List<TemplatedSecretsGeneratorRequest> templateBatch = ImmutableList.of(
       new TemplatedSecretsGeneratorRequest("{{#numeric}}20{{/numeric}}",
@@ -99,7 +99,7 @@ public class TemplatedSecretGeneratorIntegrationTest {
 
   @Test(expected = KeywhizClient.MalformedRequestException.class)
   public void rejectsBatchesThatAreTooBig() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
     List<TemplatedSecretsGeneratorRequest> templateBatch = Lists.newArrayList();
 
@@ -113,7 +113,7 @@ public class TemplatedSecretGeneratorIntegrationTest {
 
   @Test(expected = KeywhizClient.MalformedRequestException.class)
   public void rejectsEmptyBatches() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
     List<TemplatedSecretsGeneratorRequest> templateBatch = new ArrayList<>();
 
@@ -121,7 +121,7 @@ public class TemplatedSecretGeneratorIntegrationTest {
   }
 
   @Test public void createsDuplicateSecretWithVersion() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
     keywhizClient.generateSecrets("templated",
         new TemplatedSecretsGeneratorRequest(
@@ -166,7 +166,7 @@ public class TemplatedSecretGeneratorIntegrationTest {
 
   @Test(expected = KeywhizClient.MalformedRequestException.class)
   public void rejectsCreatingDuplicateSecretWithoutVersion() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
     keywhizClient.generateSecrets("templated",
         new TemplatedSecretsGeneratorRequest(
