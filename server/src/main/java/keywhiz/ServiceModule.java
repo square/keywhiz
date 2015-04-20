@@ -61,7 +61,6 @@ import keywhiz.service.daos.MapArgumentFactory;
 import keywhiz.service.daos.SecretContentDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
-import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.daos.SecretSeriesJooqDao;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
@@ -211,14 +210,6 @@ public class ServiceModule extends AbstractModule {
   @Provides @Singleton SecretController secretController(SecretTransformer transformer,
       ContentCryptographer cryptographer, SecretDAO secretDAO) {
     return new SecretController(transformer, cryptographer, secretDAO);
-  }
-
-  @Provides @Singleton @Readonly SecretSeriesDAO readonlySecretSeriesDAO(@Readonly DBI dbi) {
-    return dbi.onDemand(SecretSeriesDAO.class);
-  }
-
-  @Provides @Singleton SecretSeriesDAO secretSeriesDAO(DBI dbi) {
-    return dbi.onDemand(SecretSeriesDAO.class);
   }
 
   // DAOs using jOOQ
