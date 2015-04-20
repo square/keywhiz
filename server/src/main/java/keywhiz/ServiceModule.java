@@ -122,8 +122,11 @@ public class ServiceModule extends AbstractModule {
 
   @Provides @Singleton @Readonly ManagedDataSource readonlyDataSource(Environment environment,
       KeywhizConfig config) {
-    DataSourceFactory dataSourceFactory = config.getDataSourceFactory();
-    return dataSourceFactory.build(environment.metrics(), "postgres-readonly");
+    DataSourceFactory dataSourceFactory = config.getReadonlyDataSourceFactory();
+    ManagedDataSource dataSource = dataSourceFactory.build(environment.metrics(), "postgres-readonly");
+    environment.lifecycle().manage(dataSource);
+
+    return dataSource;
   }
 
   // jOOQ
@@ -182,12 +185,16 @@ public class ServiceModule extends AbstractModule {
   }
 
   @Provides @Singleton
-  @Readonly DBI readonlyDbi(DBIFactory factory, Environment environment, KeywhizConfig config,
-      MapArgumentFactory mapArgumentFactory, @Readonly ManagedDataSource dataSource)
+  @Readonly DBI readonlyDbi(KeywhizConfig config, MapArgumentFactory mapArgumentFactory,
+      @Readonly ManagedDataSource dataSource)
       throws ClassNotFoundException {
     logger.debug("Creating read-only DBI");
-    DBI dbi = factory.build(environment, config.getReadonlyDataSourceFactory(), dataSource,
-        "postgres-readonly");
+    final DBI dbi = new DBI(dataSource);
+    dbi.registerArgumentFactory(new OptionalArgumentFactory(config.getReadonlyDataSourceFactory().getDriverClass()));
+    dbi.registerContainerFactory(new OptionalContainerFactory());
+    dbi.registerArgumentFactory(new LocalDateTimeArgumentFactory());
+    dbi.registerMapper(new LocalDateTimeMapper());
+
     dbi.registerArgumentFactory(mapArgumentFactory);
     return dbi;
   }
