@@ -16,40 +16,57 @@
 
 package keywhiz.service.daos;
 
+import com.google.common.collect.ImmutableSet;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.swing.text.html.Option;
 import keywhiz.api.model.Group;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.BindBean;
-import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.customizers.SingleValueResult;
+import keywhiz.jooq.tables.records.GroupsRecord;
+import org.jooq.DSLContext;
 
-@RegisterMapper(GroupMapper.class)
-public interface GroupDAO {
-  @GetGeneratedKeys
-  @SqlUpdate("INSERT INTO groups (name, createdBy, updatedBy, description) " +
-             "VALUES (:name, :creator, :creator, :desc)")
-  public long createGroup(@Bind("name") String name, @Bind("creator") String creator,
-      @Bind("desc") Optional<String> description);
+import static keywhiz.jooq.tables.Groups.GROUPS;
 
-  @SqlUpdate("DELETE FROM groups WHERE id = :id")
-  public void deleteGroup(@BindBean Group Group);
+public class GroupDAO {
+  private final DSLContext dslContext;
 
-  @SingleValueResult(Group.class)
-  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy " +
-            "FROM groups WHERE name = :name")
-  public Optional<Group> getGroup(@Bind("name") String name);
+  @Inject public GroupDAO(DSLContext dslContext) {
+    this.dslContext = dslContext;
+  }
 
-  @SingleValueResult(Group.class)
-  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy " +
-      "FROM groups WHERE id = :id")
-  public Optional<Group> getGroupById(@Bind("id") long id);
+  public long createGroup(String name, String creator, Optional<String> description) {
+    GroupsRecord r = dslContext.newRecord(GROUPS);
 
-  // Write update methods as needed.
+    r.setName(name);
+    r.setCreatedby(creator);
+    r.setUpdatedby(creator);
+    r.setDescription(description.orElse(null));
+    r.store();
 
-  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy FROM groups")
-  public Set<Group> getGroups();
+    return r.getId();
+  }
+
+  public void deleteGroup(Group group) {
+    dslContext.delete(GROUPS).where(GROUPS.ID.eq(Math.toIntExact(group.getId()))).execute();
+  }
+
+  public Optional<Group> getGroup(String name) {
+    GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.NAME.eq(name));
+    return Optional.ofNullable(r).map((rec) -> rec.map(new GroupMapper()));
+  }
+
+  public Optional<Group> getGroupById(long id) {
+    GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq(Math.toIntExact(id)));
+    return Optional.ofNullable(r).map(
+        (rec) -> rec.map(new GroupMapper()));
+  }
+
+  public ImmutableSet<Group> getGroups() {
+    List<Group> r = dslContext.select().from(GROUPS).fetch().map(new GroupMapper());
+    return ImmutableSet.copyOf(r);
+  }
 }
+
+

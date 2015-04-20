@@ -16,22 +16,24 @@
 
 package keywhiz.service.daos;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.ZoneOffset;
 import keywhiz.api.model.Group;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
+import org.jooq.Record;
+import org.jooq.RecordMapper;
 
-public class GroupMapper implements ResultSetMapper<Group> {
-  @Override
-  public Group map(int index, ResultSet r, StatementContext ctx) throws SQLException {
-    return new Group(r.getLong("id"),
-                     r.getString("name"),
-                     r.getString("description"),
-                     r.getTimestamp("createdAt").toLocalDateTime().atOffset(ZoneOffset.UTC),
-                     r.getString("createdBy"),
-                     r.getTimestamp("updatedAt").toLocalDateTime().atOffset(ZoneOffset.UTC),
-                     r.getString("updatedBy"));
+import static keywhiz.jooq.tables.Groups.GROUPS;
+
+/**
+ * Comments in {@link ClientMapper} are applicable here.
+ */
+class GroupMapper implements RecordMapper<Record, Group> {
+  public Group map(Record r) {
+    return new Group(
+        r.getValue(GROUPS.ID),
+        r.getValue(GROUPS.NAME),
+        r.getValue(GROUPS.DESCRIPTION),
+        r.getValue(GROUPS.CREATEDAT),
+        r.getValue(GROUPS.CREATEDBY),
+        r.getValue(GROUPS.UPDATEDAT),
+        r.getValue(GROUPS.UPDATEDBY));
   }
 }

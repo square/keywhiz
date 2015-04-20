@@ -69,7 +69,7 @@ public class AclDAOTest {
     id = clientDAO.createClient("client2", "creator", Optional.empty());
     client2 = clientDAO.getClientById(id).get();
 
-    groupDAO = dbi.onDemand(GroupDAO.class);
+    groupDAO = new GroupDAO(jooqContext);
     id = groupDAO.createGroup("group1", "creator", Optional.empty());
     group1 = groupDAO.getGroupById(id).get();
 
@@ -87,7 +87,7 @@ public class AclDAOTest {
     secretSeriesDAO = dbi.onDemand(SecretSeriesDAO.class);
 
     AclDeps aclDeps = dbi.onDemand(AclDeps.class);
-    aclDAO = new AclDAO(jooqContext, clientDAO, aclDeps);
+    aclDAO = new AclDAO(jooqContext, clientDAO, groupDAO, aclDeps);
   }
 
   @Test

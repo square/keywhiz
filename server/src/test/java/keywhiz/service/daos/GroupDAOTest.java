@@ -20,10 +20,10 @@ import java.util.List;
 import java.util.Optional;
 import keywhiz.TestDBRule;
 import keywhiz.api.model.Group;
+import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.skife.jdbi.v2.exceptions.StatementException;
 
 import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Groups.GROUPS;
@@ -38,7 +38,7 @@ public class GroupDAOTest {
 
   @Before
   public void setUp() throws Exception {
-    groupDAO = testDBRule.getDbi().onDemand(GroupDAO.class);
+    groupDAO = new GroupDAO(testDBRule.jooqContext());
 
     testDBRule.jooqContext().insertInto(GROUPS,
         GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDBY, GROUPS.UPDATEDBY)
@@ -99,7 +99,7 @@ public class GroupDAOTest {
     assertThat(groupDAO.getGroups()).containsOnly(group1, group2);
   }
 
-  @Test(expected = StatementException.class)
+  @Test(expected = DataAccessException.class)
   public void willNotCreateDuplicateGroup() throws Exception {
     groupDAO.createGroup("group1", "creator1", Optional.empty());
   }
