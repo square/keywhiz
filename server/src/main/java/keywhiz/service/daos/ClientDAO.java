@@ -19,7 +19,6 @@ package keywhiz.service.daos;
 import com.google.common.collect.ImmutableSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import javax.inject.Inject;
 import keywhiz.api.model.Client;
 import keywhiz.jooq.tables.records.ClientsRecord;
@@ -50,7 +49,10 @@ public class ClientDAO {
   }
 
   public void deleteClient(Client client) {
-    dslContext.delete(CLIENTS).where(CLIENTS.ID.eq(Math.toIntExact(client.getId()))).execute();
+    dslContext
+        .delete(CLIENTS)
+        .where(CLIENTS.ID.eq(Math.toIntExact(client.getId())))
+        .execute();
   }
 
   public Optional<Client> getClient(String name) {
@@ -61,14 +63,16 @@ public class ClientDAO {
 
   public Optional<Client> getClientById(long id) {
     ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.ID.eq(Math.toIntExact(id)));
-    if (r != null) {
-      return Optional.of(r.map(new ClientMapper()));
-    }
-    return Optional.empty();
+    return Optional.ofNullable(r).map(
+        (rec) -> rec.map(new ClientMapper()));
   }
 
   public ImmutableSet<Client> getClients() {
-    List<Client> r = dslContext.select().from(CLIENTS).fetch().map(new ClientMapper());
+    List<Client> r = dslContext
+        .select()
+        .from(CLIENTS)
+        .fetch()
+        .map(new ClientMapper());
     return ImmutableSet.copyOf(r);
   }
 }
