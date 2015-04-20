@@ -28,7 +28,7 @@ import keywhiz.jooq.tables.records.SecretsContentRecord;
 import org.jooq.Record;
 import org.jooq.RecordMapper;
 
-class SecretContentJooqMapper implements RecordMapper<Record, SecretContent> {
+class SecretContentMapper implements RecordMapper<Record, SecretContent> {
   private static final TypeReference MAP_STRING_STRING_TYPE =
       new TypeReference<Map<String, String>>() {};
   private final ObjectMapper

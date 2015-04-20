@@ -50,15 +50,15 @@ public class AclDAO {
   private final DSLContext dslContext;
   private ClientDAO clientDAO;
   private GroupDAO groupDAO;
-  private SecretContentJooqDao secretContentJooqDao;
+  private SecretContentDAO secretContentDAO;
   private SecretSeriesJooqDao secretSeriesJooqDao;
 
   @Inject
-  public AclDAO(DSLContext dslContext, ClientDAO clientDAO, GroupDAO groupDAO, SecretContentJooqDao secretContentJooqDao, SecretSeriesJooqDao secretSeriesJooqDao) {
+  public AclDAO(DSLContext dslContext, ClientDAO clientDAO, GroupDAO groupDAO, SecretContentDAO secretContentDAO, SecretSeriesJooqDao secretSeriesJooqDao) {
     this.dslContext = dslContext;
     this.clientDAO = clientDAO;
     this.groupDAO = groupDAO;
-    this.secretContentJooqDao = secretContentJooqDao;
+    this.secretContentDAO = secretContentDAO;
     this.secretSeriesJooqDao = secretSeriesJooqDao;
   }
 
@@ -148,7 +148,7 @@ public class AclDAO {
     ImmutableSet.Builder<SanitizedSecret> set = ImmutableSet.builder();
 
     for (SecretSeries series : getSecretSeriesFor(group)) {
-      for (SecretContent content : secretContentJooqDao.getSecretContentsBySecretId(series.getId())) {
+      for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
         SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
         set.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
       }
@@ -202,7 +202,7 @@ public class AclDAO {
       ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
 
       for (SecretSeries series : getSecretSeriesFor(client)) {
-        for (SecretContent content : secretContentJooqDao.getSecretContentsBySecretId(series.getId())) {
+        for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
           SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
           sanitizedSet.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
         }
@@ -237,7 +237,7 @@ public class AclDAO {
       }
 
       Optional<SecretContent> secretContent =
-          secretContentJooqDao.getSecretContentBySecretIdAndVersion(
+          secretContentDAO.getSecretContentBySecretIdAndVersion(
               secretSeries.get().getId(), version);
       if (!secretContent.isPresent()) {
         return Optional.empty();

@@ -35,13 +35,13 @@ import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 /**
  * Interacts with 'secrets_content' table and actions on {@link SecretContent} entities.
  */
-public class SecretContentJooqDao {
+public class SecretContentDAO {
   private final DSLContext dslContext;
   private final ObjectMapper
       mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
 
   @Inject
-  public SecretContentJooqDao(DSLContext dslContext) {
+  public SecretContentDAO(DSLContext dslContext) {
     this.dslContext = dslContext;
   }
 
@@ -72,7 +72,7 @@ public class SecretContentJooqDao {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
         SECRETS_CONTENT.ID.eq(Math.toIntExact(id)));
     return Optional.ofNullable(r).map(
-        (rec) -> rec.map(new SecretContentJooqMapper()));
+        (rec) -> rec.map(new SecretContentMapper()));
   }
 
   public Optional<SecretContent> getSecretContentBySecretIdAndVersion(long secretId,
@@ -80,7 +80,7 @@ public class SecretContentJooqDao {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
         SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId))
             .and(SECRETS_CONTENT.VERSION.eq(version)));
-    return Optional.ofNullable(r).map((rec) -> rec.map(new SecretContentJooqMapper()));
+    return Optional.ofNullable(r).map((rec) -> rec.map(new SecretContentMapper()));
   }
 
   public ImmutableList<SecretContent> getSecretContentsBySecretId(long secretId) {
@@ -89,7 +89,7 @@ public class SecretContentJooqDao {
         .from(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId)))
         .fetch()
-        .map(new SecretContentJooqMapper());
+        .map(new SecretContentMapper());
 
     return ImmutableList.copyOf(r);
   }

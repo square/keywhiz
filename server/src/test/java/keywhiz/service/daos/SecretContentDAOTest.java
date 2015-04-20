@@ -33,7 +33,7 @@ import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class SecretContentJooqDaoTest {
+public class SecretContentDAOTest {
   @Rule public final TestDBRule testDBRule = new TestDBRule();
 
   final static OffsetDateTime date = OffsetDateTime.now(ZoneId.of("UTC"));
@@ -42,11 +42,11 @@ public class SecretContentJooqDaoTest {
   SecretContent secretContent1 = SecretContent.of(11, 22, "[crypted]", "", date, "creator", date,
       "creator", metadata);
 
-  SecretContentJooqDao secretContentJooqDao;
+  SecretContentDAO secretContentDAO;
 
   @Before
   public void setUp() throws Exception {
-    secretContentJooqDao = new SecretContentJooqDao(testDBRule.jooqContext());
+    secretContentDAO = new SecretContentDAO(testDBRule.jooqContext());
 
     testDBRule.jooqContext().delete(SECRETS).execute();
     testDBRule.jooqContext().insertInto(SECRETS, SECRETS.ID, SECRETS.NAME)
@@ -67,30 +67,30 @@ public class SecretContentJooqDaoTest {
 
   @Test public void createSecretContent() {
     int before = tableSize();
-    secretContentJooqDao.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
         metadata);
-    secretContentJooqDao.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
         metadata);
-    secretContentJooqDao.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
         metadata);
     assertThat(tableSize()).isEqualTo(before + 3);
   }
 
   @Test public void getSecretContentById() {
-    SecretContent actualSecretContent = secretContentJooqDao.getSecretContentById(secretContent1.id())
+    SecretContent actualSecretContent = secretContentDAO.getSecretContentById(secretContent1.id())
         .orElseThrow(RuntimeException::new);
     assertThat(actualSecretContent).isEqualTo(secretContent1);
   }
 
   @Test public void getSecretContentsBySecretId() {
-    long id1 = secretContentJooqDao.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
+    long id1 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
         metadata);
-    long id2 = secretContentJooqDao.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
+    long id2 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
         metadata);
-    long id3 = secretContentJooqDao.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
+    long id3 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
         metadata);
 
-    List<Long> actualIds = secretContentJooqDao.getSecretContentsBySecretId(secretContent1.secretSeriesId())
+    List<Long> actualIds = secretContentDAO.getSecretContentsBySecretId(secretContent1.secretSeriesId())
         .stream()
         .map((content) -> (content == null) ? 0 : content.id())
         .collect(toList());
@@ -99,15 +99,15 @@ public class SecretContentJooqDaoTest {
   }
 
   @Test public void getVersionsBySecretId() {
-    secretContentJooqDao.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
         metadata);
-    secretContentJooqDao.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
         metadata);
-    secretContentJooqDao.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
         metadata);
 
     // We have the empty string as a version from the setUp() call
-    assertThat(secretContentJooqDao.getVersionFromSecretId(secretContent1.secretSeriesId()))
+    assertThat(secretContentDAO.getVersionFromSecretId(secretContent1.secretSeriesId()))
         .hasSameElementsAs(ImmutableList.of("", "version", "version2", "version3"));
   }
 

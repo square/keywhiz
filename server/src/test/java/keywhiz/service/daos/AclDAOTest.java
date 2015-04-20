@@ -49,7 +49,7 @@ public class AclDAOTest {
   ClientDAO clientDAO;
   GroupDAO groupDAO;
   SecretDAO secretDAO;
-  SecretContentJooqDao secretContentJooqDao;
+  SecretContentDAO secretContentDAO;
   SecretSeriesJooqDao secretSeriesJooqDao;
   AclDAO aclDAO;
 
@@ -81,14 +81,14 @@ public class AclDAOTest {
     group3 = groupDAO.getGroupById(id).get();
 
     secretSeriesJooqDao = new SecretSeriesJooqDao(jooqContext);
-    secretContentJooqDao = new SecretContentJooqDao(jooqContext);
+    secretContentDAO = new SecretContentDAO(jooqContext);
 
-    secretDAO = new SecretDAO(jooqContext, secretContentJooqDao, secretSeriesJooqDao);
+    secretDAO = new SecretDAO(jooqContext, secretContentDAO, secretSeriesJooqDao);
     SecretFixtures secretFixtures = SecretFixtures.using(secretDAO);
     secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==", VersionGenerator.now().toHex());
     secret2 = secretFixtures.createSecret("secret2", "c2VjcmV0Mg==");
 
-    aclDAO = new AclDAO(jooqContext, clientDAO, groupDAO, secretContentJooqDao, secretSeriesJooqDao);
+    aclDAO = new AclDAO(jooqContext, clientDAO, groupDAO, secretContentDAO, secretSeriesJooqDao);
   }
 
   @Test
