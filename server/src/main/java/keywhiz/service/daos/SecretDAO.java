@@ -118,6 +118,25 @@ public abstract class SecretDAO implements Transactional<SecretDAO> {
   }
 
   /**
+   * @param name external secret series name to look up versions by
+   * @return Latest secret version for secret name.
+   */
+  @Transaction
+  public Optional<String> getLatestVersion(String name) {
+    checkNotNull(name);
+    Optional<SecretSeries> series = createSecretSeriesDAO().getSecretSeriesByName(name);
+    if (!series.isPresent()) {
+      return Optional.empty();
+    }
+
+    ImmutableList<String> versions = createSecretContentDAO().getVersionFromSecretId(series.get().getId());
+    if (versions.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(versions.get(0));
+  }
+
+  /**
    * @param name of secret series to look up secrets by.
    * @param version specific version of secret. May be empty.
    * @return Secret matching input parameters or Optional.absent().
@@ -154,6 +173,12 @@ public abstract class SecretDAO implements Transactional<SecretDAO> {
             (content) -> secretsBuilder.add(SecretSeriesAndContent.of(series, content))));
 
     return secretsBuilder.build();
+  }
+
+  /** @return all existing secrets series (one series shared across versions). */
+  @Transaction
+  public ImmutableList<SecretSeries> getSecretSeries() {
+    return createSecretSeriesDAO().getSecretSeries();
   }
 
   /**

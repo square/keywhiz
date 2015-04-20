@@ -102,11 +102,17 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
         .insertInto(SECRETS_CONTENT, SECRETS_CONTENT.ID, SECRETS_CONTENT.SECRETID, SECRETS_CONTENT.VERSION, SECRETS_CONTENT.CREATEDAT, SECRETS_CONTENT.UPDATEDAT, SECRETS_CONTENT.ENCRYPTED_CONTENT, SECRETS_CONTENT.METADATA)
         .values(937, 737, "", OffsetDateTime.parse("2011-09-29T15:46:00.232Z"), OffsetDateTime.parse("2015-01-07T12:00:47.674786Z"), "{\"derivationInfo\":\"Nobody_PgPass\",\"content\":\"5Eq97Y/6LMLUqH8rlXxEkOeMFmc3cYhQny0eotojNrF3DTFdQPyHVG5HeP5vzaFxqttcZkO56NvIwdD8k2xyIL5YRbCIA5MQ9LOnKN4tpnwb+Q\",\"iv\":\"jQAFJizi1MKZUcCxb6mTCA\"}", "{\"mode\":\"0400\",\"owner\":\"nobody\"}")
         .values(938, 738, "", OffsetDateTime.parse("2011-09-29T15:46:00.312Z"), OffsetDateTime.parse("2015-01-07T12:01:59.335018Z"), "{\"derivationInfo\":\"Hacking_Password\",\"content\":\"jpNVoXZao+b+f591w+CHWTj7D1M\",\"iv\":\"W+pT37jJP4uDGHmuczXVCA\"}", "")
-        .values(939, 739, "", OffsetDateTime.parse("2011-09-29T15:46:00.232Z"), OffsetDateTime.parse("2015-01-07T12:02:06.73539Z"), "{\"derivationInfo\":\"Database_Password\",\"content\":\"etQQFqMHQQpGr4aDlj5gDjiABkOb\",\"iv\":\"ia+YixjAEqp9W3JEjaYLvQ\"}", "")
-        .values(940, 740, "", OffsetDateTime.parse("2011-09-29T15:46:00.312Z"), OffsetDateTime.parse("2015-01-07T12:02:06.758446Z"), "{\"derivationInfo\":\"General_Password\",\"content\":\"A6kBLXwmx0EVtuIGTzxHiEZ/6yrXgg\",\"iv\":\"e4I0c3fog0TKqTAC2UxYtQ\"}", "")
+        .values(939, 739, "", OffsetDateTime.parse("2011-09-29T15:46:00.232Z"),
+            OffsetDateTime.parse("2015-01-07T12:02:06.73539Z"),
+            "{\"derivationInfo\":\"Database_Password\",\"content\":\"etQQFqMHQQpGr4aDlj5gDjiABkOb\",\"iv\":\"ia+YixjAEqp9W3JEjaYLvQ\"}",
+            "")
+        .values(940, 740, "", OffsetDateTime.parse("2011-09-29T15:46:00.312Z"),
+            OffsetDateTime.parse("2015-01-07T12:02:06.758446Z"),
+            "{\"derivationInfo\":\"General_Password\",\"content\":\"A6kBLXwmx0EVtuIGTzxHiEZ/6yrXgg\",\"iv\":\"e4I0c3fog0TKqTAC2UxYtQ\"}",
+            "")
         .values(941, 741, "", OffsetDateTime.parse("2011-09-29T15:46:00.232Z"), OffsetDateTime.parse("2015-01-07T12:02:06.78574Z"), "{\"derivationInfo\":\"NonexistentOwner_Pass\",\"content\":\"+Pu1B5YgqGRIHzh17s5tPT3AYb+W\",\"iv\":\"ewRV3RhFfLnbWxY5pr401g\"}", "{\"owner\":\"NonExistant\",\"mode\":\"0400\"}")
-        .values(942, 742, "0aae825a73e161d8", OffsetDateTime.parse("2011-09-29T15:46:00.232Z"), OffsetDateTime.parse("2015-01-07T12:02:06.806212Z"), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
-        .values(943, 742, "0aae825a73e161e8", OffsetDateTime.parse("2011-09-29T16:46:00.232Z"), OffsetDateTime.parse("2011-09-29T16:46:00.232Z"), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
+        .values(942, 742, "0aae825a73e161d8", OffsetDateTime.parse("2011-09-29T15:46:00.232Z"), OffsetDateTime.parse("2015-01-07T12:02:06.806212Z"), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "{\"mode\":\"0400\",\"owner\":\"admin\"}")
+        .values(943, 742, "0aae825a73e161e8", OffsetDateTime.parse("2011-09-29T16:46:00.232Z"), OffsetDateTime.parse("2011-09-29T16:46:00.232Z"), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "{\"mode\":\"0400\",\"owner\":\"new-admin\"}")
         .values(944, 742, "0aae825a73e161f8", OffsetDateTime.parse("2011-09-29T17:46:00.232Z"), OffsetDateTime.parse("2011-09-29T17:46:00.232Z"), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
         .values(945, 742, "0aae825a73e161g8", OffsetDateTime.parse("2011-09-29T18:46:00.232Z"), OffsetDateTime.parse("2011-09-29T18:46:00.232Z"), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
         .execute();

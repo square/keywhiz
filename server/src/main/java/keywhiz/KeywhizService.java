@@ -62,6 +62,7 @@ import keywhiz.service.resources.SecretsResource;
 import keywhiz.service.resources.SessionLoginResource;
 import keywhiz.service.resources.SessionLogoutResource;
 import keywhiz.service.resources.SessionMeResource;
+import keywhiz.service.resources.VersionedSecretResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zapodot.jackson.java8.JavaOptionalModule;
@@ -197,6 +198,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(injector.getInstance(AutomationEnrollClientGroupResource.class));
     jersey.register(injector.getInstance(AutomationSecretAccessResource.class));
     jersey.register(injector.getInstance(AutomationSecretGeneratorsResource.class));
+    jersey.register(injector.getInstance(VersionedSecretResource.class));
     logger.debug("Keywhiz configuration complete");
   }
 
