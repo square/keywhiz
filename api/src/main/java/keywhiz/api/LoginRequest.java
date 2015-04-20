@@ -17,7 +17,8 @@
 package keywhiz.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
+import java.util.Arrays;
+import java.util.Objects;
 import javax.validation.constraints.NotNull;
 
 public class LoginRequest {
@@ -27,24 +28,24 @@ public class LoginRequest {
 
   @NotNull
   @JsonProperty
-  public final String password;
+  public final char[] password;
 
   public LoginRequest(@JsonProperty("username") String username,
-      @JsonProperty("password") String password) {
+      @JsonProperty("password") char[] password) {
     this.username = username;
     this.password = password;
   }
 
   @Override public int hashCode() {
-    return Objects.hashCode(username, password);
+    return Objects.hash(username, password);
   }
 
   @Override public boolean equals(Object o) {
     if (this == o) return true;
     if (o instanceof LoginRequest) {
       LoginRequest that = (LoginRequest) o;
-      if (Objects.equal(this.username, that.username) &&
-          Objects.equal(this.password, that.password)) {
+      if (Objects.equals(this.username, that.username) &&
+          Arrays.equals(this.password, that.password)) {
         return true;
       }
     }

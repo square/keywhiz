@@ -107,7 +107,7 @@ public class KeywhizClient {
    * @param password login password
    * @throws IOException if a network IO error occurs
    */
-  public void login(String username, String password) throws IOException {
+  public void login(String username, char[] password) throws IOException {
     httpPost("/admin/login", new LoginRequest(username, password));
   }
 

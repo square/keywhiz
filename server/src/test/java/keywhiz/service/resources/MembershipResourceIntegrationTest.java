@@ -63,7 +63,7 @@ public class MembershipResourceIntegrationTest {
 
   @Test(expected = KeywhizClient.UnauthorizedException.class)
   public void adminRejectsNonKeywhizUsers() throws IOException {
-    keywhizClient.login("username", "password");
+    keywhizClient.login("username", "password".toCharArray());
     keywhizClient.grantSecretToGroupByIds(741, 916);
   }
 

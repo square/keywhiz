@@ -82,7 +82,7 @@ public class SessionLoginResourceIntegrationTest {
 
   @Test
   public void invalidCredentialsAreUnauthorized() throws Exception {
-    Request request = buildLoginPost("username", "badpassword");
+    Request request = buildLoginPost("username", "badpassword".toCharArray());
 
     Response response = client.newCall(request).execute();
     assertThat(response.code()).isEqualTo(401);
@@ -90,7 +90,7 @@ public class SessionLoginResourceIntegrationTest {
 
   @Test
   public void insufficientRolesAreUnauthorized() throws Exception {
-    Request request = buildLoginPost("username", "password");
+    Request request = buildLoginPost("username", "password".toCharArray());
 
     Response response = client.newCall(request).execute();
     assertThat(response.code()).isEqualTo(401);
@@ -106,7 +106,7 @@ public class SessionLoginResourceIntegrationTest {
 
   @Test
   public void missingUsernameIsBadRequest() throws Exception {
-    Request request = buildLoginPost(null, "password");
+    Request request = buildLoginPost(null, "password".toCharArray());
 
     Response response = client.newCall(request).execute();
     assertThat(response.code()).isEqualTo(422);

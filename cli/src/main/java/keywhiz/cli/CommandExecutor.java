@@ -28,6 +28,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -115,8 +116,9 @@ public class CommandExecutor {
       encapsulatedClient = ClientUtils.sslOkHttpClient(ImmutableList.of());
       client = new KeywhizClient(mapper, ClientUtils.hostBoundWrappedHttpClient(host,
           encapsulatedClient));
-      String password = ClientUtils.readPassword();
+      char[] password = ClientUtils.readPassword();
       client.login(USER_NAME.value(), password);
+      Arrays.fill(password, '\0');
     }
     // Save/update the cookies if we logged in successfully
     ClientUtils.saveCookies((CookieManager) encapsulatedClient.getCookieHandler(), COOKIE_PATH);

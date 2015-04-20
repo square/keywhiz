@@ -61,7 +61,7 @@ public class SessionMeResourceIntegrationTest {
   }
 
   @Test public void adminRejectsNonLoggedInUser() throws IOException {
-    client.newCall(buildLoginPost("username", "password")).execute();
+    client.newCall(buildLoginPost("username", "password".toCharArray())).execute();
 
     Request get = new Request.Builder()
         .get()
