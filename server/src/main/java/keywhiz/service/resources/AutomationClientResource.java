@@ -57,6 +57,7 @@ import static java.util.stream.Collectors.toList;
 @Produces(MediaType.APPLICATION_JSON)
 public class AutomationClientResource {
   private static final Logger logger = LoggerFactory.getLogger(ClientsResource.class);
+
   private final ClientDAO clientDAO;
   private final AclDAO aclDAO;
 

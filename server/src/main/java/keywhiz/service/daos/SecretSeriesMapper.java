@@ -52,15 +52,14 @@ class SecretSeriesMapper implements RecordMapper<Record, SecretSeries> {
 
   private Map<String, String> tryToReadMapValue(Record r, Field<String> field) {
     String value = r.getValue(field);
-    Map<String, String> map = null;
     if (!value.isEmpty()) {
       try {
-        map = mapper.readValue(value, MAP_STRING_STRING_TYPE);
+        return mapper.readValue(value, MAP_STRING_STRING_TYPE);
       } catch (IOException e) {
         throw new RuntimeException(
             format("Failed to create a Map from data. Bad json in %s column?", field.getName()), e);
       }
     }
-    return map;
+    return null;
   }
 }
