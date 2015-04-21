@@ -142,19 +142,19 @@
                 config).</p>
 
             <p>Assuming the default configuration, create a database
-                <code>keywhizdb_development</code>. For PostgreSQL, use:</p>
-            <pre class="prettyprint">$ createdb keywhizdb_development</pre>
+                <code>keywhizdb_test</code>. For PostgreSQL, use:</p>
+            <pre class="prettyprint">$ createdb keywhizdb_test</pre>
 
             <p>Create a <code>keywhiz</code> database user. For a development system,
                 a PostgreSQL user can be added using:</p>
             <pre class="prettyprint">$ createuser keywhiz</pre>
 
             <p>Test that it works:</p>
-            <pre class="prettyprint">$ psql keywhizdb_development keywhiz
+            <pre class="prettyprint">$ psql keywhizdb_test keywhiz
 psql (9.2.2, server 9.2.4)
 Type "help" for help.
 
-keywhizdb_development=#</pre>
+keywhizdb_test=#</pre>
 
             <p>From the base of the keywhiz repository, build the server:</p>
             <pre class="prettyprint">$ mvn package -am -pl server</pre>
