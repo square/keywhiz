@@ -65,7 +65,7 @@ public class ContentCryptographer {
   private static final String ENCRYPTION_ALGORITHM = "AES/GCM/NoPadding";
   private static final String KEY_ALGORITHM = "AES";
   private static final int TAG_BITS = 128;
-  private static final int NONCE_BYTES = 16;
+  private static final int NONCE_BYTES = 12;
   private static final ObjectMapper MAPPER = Jackson.newObjectMapper();
 
   private final SecretKey key;
