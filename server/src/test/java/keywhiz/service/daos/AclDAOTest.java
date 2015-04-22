@@ -16,6 +16,7 @@
 
 package keywhiz.service.daos;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
 import java.util.Optional;
 import java.util.Set;
@@ -55,6 +56,7 @@ public class AclDAOTest {
 
   @Before
   public void setUp() {
+    ObjectMapper objectMapper = new ObjectMapper();
     DSLContext jooqContext = testDBRule.jooqContext();
     jooqContext.delete(CLIENTS).execute();
     jooqContext.delete(GROUPS).execute();
@@ -80,15 +82,16 @@ public class AclDAOTest {
     id = groupDAO.createGroup("group3", "creator", Optional.empty());
     group3 = groupDAO.getGroupById(id).get();
 
-    secretSeriesDAO = new SecretSeriesDAO(jooqContext);
-    secretContentDAO = new SecretContentDAO(jooqContext);
+    secretSeriesDAO = new SecretSeriesDAO(jooqContext, objectMapper);
+    secretContentDAO = new SecretContentDAO(jooqContext, objectMapper);
 
     secretDAO = new SecretDAO(jooqContext, secretContentDAO, secretSeriesDAO);
     SecretFixtures secretFixtures = SecretFixtures.using(secretDAO);
     secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==", VersionGenerator.now().toHex());
     secret2 = secretFixtures.createSecret("secret2", "c2VjcmV0Mg==");
 
-    aclDAO = new AclDAO(jooqContext, clientDAO, groupDAO, secretContentDAO, secretSeriesDAO);
+    aclDAO = new AclDAO(jooqContext, clientDAO, groupDAO, secretContentDAO, secretSeriesDAO,
+        objectMapper);
   }
 
   @Test

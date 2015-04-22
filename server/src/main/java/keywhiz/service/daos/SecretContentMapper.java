@@ -19,10 +19,8 @@ package keywhiz.service.daos;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.util.Map;
-import keywhiz.KeywhizService;
 import keywhiz.api.model.SecretContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import org.jooq.Record;
@@ -31,8 +29,11 @@ import org.jooq.RecordMapper;
 class SecretContentMapper implements RecordMapper<Record, SecretContent> {
   private static final TypeReference MAP_STRING_STRING_TYPE =
       new TypeReference<Map<String, String>>() {};
-  private final ObjectMapper
-      mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
+  private final ObjectMapper mapper;
+
+  SecretContentMapper(ObjectMapper mapper) {
+    this.mapper = mapper;
+  }
 
   public SecretContent map(Record record) {
     SecretsContentRecord r = (SecretsContentRecord) record;

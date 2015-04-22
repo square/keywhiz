@@ -16,6 +16,7 @@
 
 package keywhiz.service.daos;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.Optional;
@@ -35,7 +36,8 @@ public class SecretSeriesDAOTest {
 
   @Before
   public void setUp() {
-    secretSeriesDAO = new SecretSeriesDAO(testDBRule.jooqContext());
+    ObjectMapper objectMapper = new ObjectMapper();
+    secretSeriesDAO = new SecretSeriesDAO(testDBRule.jooqContext(), objectMapper);
   }
 
   @Test

@@ -18,10 +18,8 @@ package keywhiz.service.daos;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.util.Map;
-import keywhiz.KeywhizService;
 import keywhiz.api.model.SecretSeries;
 import org.jooq.Field;
 import org.jooq.Record;
@@ -33,7 +31,11 @@ import static keywhiz.jooq.tables.Secrets.SECRETS;
 class SecretSeriesMapper implements RecordMapper<Record, SecretSeries> {
   private static final TypeReference MAP_STRING_STRING_TYPE =
       new TypeReference<Map<String, String>>() {};
-  private final ObjectMapper mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
+  private final ObjectMapper mapper;
+
+  SecretSeriesMapper(ObjectMapper mapper) {
+    this.mapper = mapper;
+  }
 
   public SecretSeries map(Record r) {
     return new SecretSeries(

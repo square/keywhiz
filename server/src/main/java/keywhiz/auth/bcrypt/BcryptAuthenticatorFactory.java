@@ -22,8 +22,8 @@ import io.dropwizard.auth.basic.BasicCredentials;
 import io.dropwizard.java8.auth.Authenticator;
 import keywhiz.auth.User;
 import keywhiz.auth.UserAuthenticatorFactory;
-import org.jooq.DSLContext;
 import keywhiz.service.daos.UserDAO;
+import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

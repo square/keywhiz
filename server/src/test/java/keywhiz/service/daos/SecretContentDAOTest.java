@@ -16,6 +16,7 @@
 
 package keywhiz.service.daos;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
@@ -46,7 +47,8 @@ public class SecretContentDAOTest {
 
   @Before
   public void setUp() throws Exception {
-    secretContentDAO = new SecretContentDAO(testDBRule.jooqContext());
+    ObjectMapper objectMapper = new ObjectMapper();
+    secretContentDAO = new SecretContentDAO(testDBRule.jooqContext(), objectMapper);
 
     testDBRule.jooqContext().delete(SECRETS).execute();
     testDBRule.jooqContext().insertInto(SECRETS, SECRETS.ID, SECRETS.NAME)

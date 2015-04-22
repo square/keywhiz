@@ -20,12 +20,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import io.dropwizard.jackson.Jackson;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
-import keywhiz.KeywhizService;
 import keywhiz.api.model.SecretContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import org.jooq.DSLContext;
@@ -37,12 +35,12 @@ import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
  */
 public class SecretContentDAO {
   private final DSLContext dslContext;
-  private final ObjectMapper
-      mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
+  private final ObjectMapper mapper;
 
   @Inject
-  public SecretContentDAO(DSLContext dslContext) {
+  public SecretContentDAO(DSLContext dslContext, ObjectMapper mapper) {
     this.dslContext = dslContext;
+    this.mapper = mapper;
   }
 
   public long createSecretContent(long secretId, String encryptedContent, String version,
@@ -72,7 +70,7 @@ public class SecretContentDAO {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
         SECRETS_CONTENT.ID.eq(Math.toIntExact(id)));
     return Optional.ofNullable(r).map(
-        (rec) -> rec.map(new SecretContentMapper()));
+        (rec) -> rec.map(new SecretContentMapper(mapper)));
   }
 
   public Optional<SecretContent> getSecretContentBySecretIdAndVersion(long secretId,
@@ -80,7 +78,7 @@ public class SecretContentDAO {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
         SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId))
             .and(SECRETS_CONTENT.VERSION.eq(version)));
-    return Optional.ofNullable(r).map((rec) -> rec.map(new SecretContentMapper()));
+    return Optional.ofNullable(r).map((rec) -> rec.map(new SecretContentMapper(mapper)));
   }
 
   public ImmutableList<SecretContent> getSecretContentsBySecretId(long secretId) {
@@ -89,7 +87,7 @@ public class SecretContentDAO {
         .from(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId)))
         .fetch()
-        .map(new SecretContentMapper());
+        .map(new SecretContentMapper(mapper));
 
     return ImmutableList.copyOf(r);
   }

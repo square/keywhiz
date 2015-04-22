@@ -105,8 +105,8 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret2.content().metadata()))
         .execute();
 
-    secretDAO = new SecretDAO(dslContext, new SecretContentDAO(dslContext),
-        new SecretSeriesDAO(dslContext));
+    secretDAO = new SecretDAO(dslContext, new SecretContentDAO(dslContext, objectMapper),
+        new SecretSeriesDAO(dslContext, objectMapper));
 
     // Secrets created in the DB will have different id, updatedAt values.
     secret1 = secretDAO.getSecretByNameAndVersion(
