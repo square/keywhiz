@@ -17,23 +17,18 @@
 package keywhiz.service.daos;
 
 import keywhiz.api.model.Group;
-import org.jooq.Record;
+import keywhiz.jooq.tables.records.GroupsRecord;
 import org.jooq.RecordMapper;
 
-import static keywhiz.jooq.tables.Groups.GROUPS;
-
-/**
- * Comments in {@link ClientMapper} are applicable here.
- */
-class GroupMapper implements RecordMapper<Record, Group> {
-  public Group map(Record r) {
+class GroupMapper implements RecordMapper<GroupsRecord, Group> {
+  public Group map(GroupsRecord r) {
     return new Group(
-        r.getValue(GROUPS.ID),
-        r.getValue(GROUPS.NAME),
-        r.getValue(GROUPS.DESCRIPTION),
-        r.getValue(GROUPS.CREATEDAT),
-        r.getValue(GROUPS.CREATEDBY),
-        r.getValue(GROUPS.UPDATEDAT),
-        r.getValue(GROUPS.UPDATEDBY));
+        r.getId(),
+        r.getName(),
+        r.getDescription(),
+        r.getCreatedat(),
+        r.getCreatedby(),
+        r.getUpdatedat(),
+        r.getUpdatedby());
   }
 }

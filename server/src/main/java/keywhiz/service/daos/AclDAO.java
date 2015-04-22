@@ -163,26 +163,24 @@ public class AclDAO {
 
   public Set<Group> getGroupsFor(Secret secret) {
     List<Group> r = dslContext
-        .select(GROUPS.ID, GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDAT, GROUPS.CREATEDBY,
-            GROUPS.UPDATEDAT, GROUPS.UPDATEDBY)
+        .select()
         .from(GROUPS)
         .join(ACCESSGRANTS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
         .join(SECRETS).on(ACCESSGRANTS.SECRETID.eq(SECRETS.ID))
         .where(SECRETS.NAME.eq(secret.getName()))
-        .fetch()
+        .fetchInto(GROUPS)
         .map(new GroupMapper());
     return new HashSet<>(r);
   }
 
   public Set<Group> getGroupsFor(Client client) {
     List<Group> r = dslContext
-        .select(GROUPS.ID, GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDAT, GROUPS.CREATEDBY,
-            GROUPS.UPDATEDAT, GROUPS.UPDATEDBY)
+        .select()
         .from(GROUPS)
         .join(MEMBERSHIPS).on(GROUPS.ID.eq(MEMBERSHIPS.GROUPID))
         .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .where(CLIENTS.NAME.eq(client.getName()))
-        .fetch()
+        .fetchInto(GROUPS)
         .map(new GroupMapper());
     return new HashSet<>(r);
   }

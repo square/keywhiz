@@ -55,17 +55,17 @@ public class GroupDAO {
   public Optional<Group> getGroup(String name) {
     GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.NAME.eq(name));
     return Optional.ofNullable(r).map(
-        (rec) -> rec.map(new GroupMapper()));
+        rec -> new GroupMapper().map(rec));
   }
 
   public Optional<Group> getGroupById(long id) {
     GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq(Math.toIntExact(id)));
     return Optional.ofNullable(r).map(
-        (rec) -> rec.map(new GroupMapper()));
+        rec -> new GroupMapper().map(rec));
   }
 
   public ImmutableSet<Group> getGroups() {
-    List<Group> r = dslContext.select().from(GROUPS).fetch().map(new GroupMapper());
+    List<Group> r = dslContext.selectFrom(GROUPS).fetch().map(new GroupMapper());
     return ImmutableSet.copyOf(r);
   }
 }
