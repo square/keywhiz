@@ -21,14 +21,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Map;
 import keywhiz.api.model.SecretSeries;
-import org.jooq.Field;
-import org.jooq.Record;
+import keywhiz.jooq.tables.records.SecretsRecord;
 import org.jooq.RecordMapper;
 
-import static java.lang.String.format;
-import static keywhiz.jooq.tables.Secrets.SECRETS;
-
-class SecretSeriesMapper implements RecordMapper<Record, SecretSeries> {
+class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSeries> {
   private static final TypeReference MAP_STRING_STRING_TYPE =
       new TypeReference<Map<String, String>>() {};
   private final ObjectMapper mapper;
@@ -37,27 +33,27 @@ class SecretSeriesMapper implements RecordMapper<Record, SecretSeries> {
     this.mapper = mapper;
   }
 
-  public SecretSeries map(Record r) {
+  public SecretSeries map(SecretsRecord r) {
     return new SecretSeries(
-        r.getValue(SECRETS.ID),
-        r.getValue(SECRETS.NAME),
-        r.getValue(SECRETS.DESCRIPTION),
-        r.getValue(SECRETS.CREATEDAT),
-        r.getValue(SECRETS.CREATEDBY),
-        r.getValue(SECRETS.UPDATEDAT),
-        r.getValue(SECRETS.UPDATEDBY),
-        r.getValue(SECRETS.TYPE),
-        tryToReadMapValue(r, SECRETS.OPTIONS));
+        r.getId(),
+        r.getName(),
+        r.getDescription(),
+        r.getCreatedat(),
+        r.getCreatedby(),
+        r.getUpdatedat(),
+        r.getUpdatedby(),
+        r.getType(),
+        tryToReadMapValue(r));
   }
 
-  private Map<String, String> tryToReadMapValue(Record r, Field<String> field) {
-    String value = r.getValue(field);
+  private Map<String, String> tryToReadMapValue(SecretsRecord r) {
+    String value = r.getOptions();
     if (!value.isEmpty()) {
       try {
         return mapper.readValue(value, MAP_STRING_STRING_TYPE);
       } catch (IOException e) {
         throw new RuntimeException(
-            format("Failed to create a Map from data. Bad json in %s column?", field.getName()), e);
+            "Failed to create a Map from data. Bad json in options column?", e);
       }
     }
     return null;

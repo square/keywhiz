@@ -30,8 +30,8 @@ import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
+import keywhiz.jooq.tables.records.SecretsRecord;
 import org.jooq.DSLContext;
-import org.jooq.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -283,13 +283,12 @@ public class AclDAO {
 
   protected ImmutableSet<SecretSeries> getSecretSeriesFor(Group group) {
     List<SecretSeries> r = dslContext
-        .select(SECRETS.ID, SECRETS.NAME, SECRETS.DESCRIPTION, SECRETS.CREATEDAT, SECRETS.CREATEDBY,
-            SECRETS.UPDATEDAT, SECRETS.UPDATEDBY, SECRETS.TYPE, SECRETS.OPTIONS)
+        .select()
         .from(SECRETS)
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .join(GROUPS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
         .where(GROUPS.NAME.eq(group.getName()))
-        .fetch()
+        .fetchInto(SECRETS)
         .map(new SecretSeriesMapper(mapper));
     return ImmutableSet.copyOf(r);
 
@@ -297,14 +296,13 @@ public class AclDAO {
 
   protected ImmutableSet<SecretSeries> getSecretSeriesFor(Client client) {
     List<SecretSeries> r = dslContext
-        .select(SECRETS.ID, SECRETS.NAME, SECRETS.DESCRIPTION, SECRETS.CREATEDAT, SECRETS.CREATEDBY,
-            SECRETS.UPDATEDAT, SECRETS.UPDATEDBY, SECRETS.TYPE, SECRETS.OPTIONS)
+        .select()
         .from(SECRETS)
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
         .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .where(CLIENTS.NAME.eq(client.getName()))
-        .fetch()
+        .fetchInto(SECRETS)
         .map(new SecretSeriesMapper(mapper));
     return ImmutableSet.copyOf(r);
   }
@@ -317,17 +315,17 @@ public class AclDAO {
    * table should be used to determine the exception.
    */
   protected Optional<SecretSeries> getSecretSeriesFor(Client client, String name) {
-    Record r = dslContext
-        .select(SECRETS.ID, SECRETS.NAME, SECRETS.DESCRIPTION, SECRETS.CREATEDAT, SECRETS.CREATEDBY,
-            SECRETS.UPDATEDAT, SECRETS.UPDATEDBY, SECRETS.TYPE, SECRETS.OPTIONS)
+    SecretsRecord r = dslContext
+        .select()
         .from(SECRETS)
         .join(SECRETS_CONTENT).on(SECRETS.ID.eq(SECRETS_CONTENT.SECRETID))
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
         .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .where(SECRETS.NAME.eq(name).and(CLIENTS.NAME.eq(client.getName())))
-        .fetchOne();
+        .fetchOneInto(SECRETS);
 
-    return Optional.ofNullable(r).map((rec) -> rec.map(new SecretSeriesMapper(mapper)));
+    return Optional.ofNullable(r).map(
+        rec -> new SecretSeriesMapper(mapper).map(rec));
   }
 }
