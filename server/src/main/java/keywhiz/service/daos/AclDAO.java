@@ -189,13 +189,12 @@ public class AclDAO {
 
   public Set<Client> getClientsFor(Group group) {
     List<Client> r = dslContext
-        .select(CLIENTS.ID, CLIENTS.NAME, CLIENTS.DESCRIPTION, CLIENTS.CREATEDAT, CLIENTS.CREATEDBY,
-            CLIENTS.UPDATEDAT, CLIENTS.UPDATEDBY, CLIENTS.ENABLED, CLIENTS.AUTOMATIONALLOWED)
+        .select()
         .from(CLIENTS)
         .join(MEMBERSHIPS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .join(GROUPS).on(GROUPS.ID.eq(MEMBERSHIPS.GROUPID))
         .where(GROUPS.NAME.eq(group.getName()))
-        .fetch()
+        .fetchInto(CLIENTS)
         .map(new ClientMapper());
     return new HashSet<>(r);
   }
@@ -217,14 +216,13 @@ public class AclDAO {
 
   public Set<Client> getClientsFor(Secret secret) {
     List<Client> r = dslContext
-        .select(CLIENTS.ID, CLIENTS.NAME, CLIENTS.DESCRIPTION, CLIENTS.CREATEDAT, CLIENTS.CREATEDBY,
-            CLIENTS.UPDATEDAT, CLIENTS.UPDATEDBY, CLIENTS.ENABLED, CLIENTS.AUTOMATIONALLOWED)
+        .select()
         .from(CLIENTS)
         .join(MEMBERSHIPS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .join(ACCESSGRANTS).on(MEMBERSHIPS.GROUPID.eq(ACCESSGRANTS.GROUPID))
         .join(SECRETS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .where(SECRETS.NAME.eq(secret.getName()))
-        .fetch()
+        .fetchInto(CLIENTS)
         .map(new ClientMapper());
     return new HashSet<>(r);
   }

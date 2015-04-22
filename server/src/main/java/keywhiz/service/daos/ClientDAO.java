@@ -58,19 +58,18 @@ public class ClientDAO {
   public Optional<Client> getClient(String name) {
     ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.NAME.eq(name));
     return Optional.ofNullable(r).map(
-        (rec) -> rec.map(new ClientMapper()));
+        rec -> new ClientMapper().map(rec));
   }
 
   public Optional<Client> getClientById(long id) {
     ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.ID.eq(Math.toIntExact(id)));
     return Optional.ofNullable(r).map(
-        (rec) -> rec.map(new ClientMapper()));
+        rec -> new ClientMapper().map(rec));
   }
 
   public ImmutableSet<Client> getClients() {
     List<Client> r = dslContext
-        .select()
-        .from(CLIENTS)
+        .selectFrom(CLIENTS)
         .fetch()
         .map(new ClientMapper());
     return ImmutableSet.copyOf(r);
