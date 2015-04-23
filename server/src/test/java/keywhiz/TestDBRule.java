@@ -15,17 +15,6 @@
  */
 package keywhiz;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.jackson.Jackson;
-import io.dropwizard.java8.jdbi.OptionalContainerFactory;
-import io.dropwizard.java8.jdbi.args.LocalDateTimeArgumentFactory;
-import io.dropwizard.java8.jdbi.args.LocalDateTimeMapper;
-import io.dropwizard.java8.jdbi.args.OptionalArgumentFactory;
-import io.dropwizard.jdbi.ImmutableListContainerFactory;
-import io.dropwizard.jdbi.ImmutableSetContainerFactory;
-import io.dropwizard.jdbi.args.JodaDateTimeArgumentFactory;
-import io.dropwizard.jdbi.args.JodaDateTimeMapper;
-import keywhiz.service.daos.MapArgumentFactory;
 import org.flywaydb.core.Flyway;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.jooq.DSLContext;
@@ -34,7 +23,6 @@ import org.jooq.conf.RenderNameStyle;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.junit.rules.ExternalResource;
-import org.skife.jdbi.v2.DBI;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -44,9 +32,7 @@ import static com.google.common.base.Preconditions.checkState;
  * automatically closed down.
  */
 public class TestDBRule extends ExternalResource {
-  private final ObjectMapper mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
   private DSLContext dslContext;
-  private DBI dbi;
   private JdbcConnectionPool dataSource;
 
   @Override public void before() throws Throwable {
@@ -61,20 +47,6 @@ public class TestDBRule extends ExternalResource {
         new Settings()
             .withRenderSchema(false)
             .withRenderNameStyle(RenderNameStyle.AS_IS));
-
-    dbi = new DBI(dataSource);
-    dbi.registerArgumentFactory(new MapArgumentFactory(mapper));
-    dbi.registerArgumentFactory(
-        new io.dropwizard.jdbi.args.OptionalArgumentFactory("org.h2.Driver"));
-    dbi.registerContainerFactory(new ImmutableListContainerFactory());
-    dbi.registerContainerFactory(new ImmutableSetContainerFactory());
-    dbi.registerContainerFactory(new io.dropwizard.jdbi.OptionalContainerFactory());
-    dbi.registerArgumentFactory(new JodaDateTimeArgumentFactory());
-    dbi.registerMapper(new JodaDateTimeMapper());
-    dbi.registerArgumentFactory(new OptionalArgumentFactory("org.h2.Driver"));
-    dbi.registerContainerFactory(new OptionalContainerFactory());
-    dbi.registerArgumentFactory(new LocalDateTimeArgumentFactory());
-    dbi.registerMapper(new LocalDateTimeMapper());
   }
 
   @Override public void after() {
@@ -85,13 +57,5 @@ public class TestDBRule extends ExternalResource {
   public DSLContext jooqContext() {
     checkState(dslContext != null, "JOOQ DSLContext not yet initialized.");
     return dslContext;
-  }
-
-  /**
-   * @return a ready-to-go DBI instance after before() has run.
-   */
-  public DBI getDbi() {
-    checkState(dbi != null, "DBI not yet initialized.");
-    return dbi;
   }
 }

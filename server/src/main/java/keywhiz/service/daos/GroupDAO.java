@@ -46,7 +46,10 @@ public class GroupDAO {
   }
 
   public void deleteGroup(Group group) {
-    dslContext.delete(GROUPS).where(GROUPS.ID.eq(Math.toIntExact(group.getId()))).execute();
+    dslContext
+        .delete(GROUPS)
+        .where(GROUPS.ID.eq(Math.toIntExact(group.getId())))
+        .execute();
   }
 
   public Optional<Group> getGroup(String name) {
