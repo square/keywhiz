@@ -33,6 +33,9 @@ import org.jooq.DSLContext;
 
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 
+/**
+ * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
+ */
 public class SecretSeriesDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
@@ -47,7 +50,7 @@ public class SecretSeriesDAO {
       @Nullable Map<String, String> generationOptions) {
     SecretsRecord r =  dslContext.newRecord(SECRETS);
 
-    r.setName(name);;
+    r.setName(name);
     r.setDescription(description);
     r.setCreatedby(creator);
     r.setUpdatedby(creator);

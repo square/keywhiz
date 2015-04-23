@@ -110,6 +110,12 @@ public class ServiceModule extends AbstractModule {
 
   // ManagedDataSource
 
+  /**
+   * TODO: make sure that the read-write health check does not impact availability of
+   * the service.
+   * TODO: make sure that the readonly has a health check and marks the service as unhealthy if
+   * the connection is down. Optionally, fallback to read-write if that connection is healthy.
+   */
   @Provides @Singleton ManagedDataSource dataSource(Environment environment,
       KeywhizConfig config) {
     DataSourceFactory dataSourceFactory = config.getDataSourceFactory();

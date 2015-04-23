@@ -101,7 +101,6 @@ public class SecretDAO {
   public Optional<SecretSeriesAndContent> getSecretByIdAndVersion(long secretId, String version) {
     checkNotNull(version);
 
-    // Cast to fix issue with mvn + java8 (not showing up in Intellij).
     return dslContext.<Optional<SecretSeriesAndContent>>transactionResult(configuration -> {
       Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesById(secretId);
       if (!series.isPresent()) {
@@ -125,7 +124,6 @@ public class SecretDAO {
   public ImmutableList<String> getVersionsForSecretName(String name) {
     checkNotNull(name);
 
-    // Cast to fix issue with mvn + java8 (not showing up in Intellij).
     return dslContext.<ImmutableList<String>>transactionResult(configuration -> {
       Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesByName(name);
       if (!series.isPresent()) {
@@ -145,7 +143,6 @@ public class SecretDAO {
     checkArgument(!name.isEmpty());
     checkNotNull(version);
 
-    // Cast to fix issue with mvn + java8 (not showing up in Intellij).
     return dslContext.<Optional<SecretSeriesAndContent>>transactionResult(configuration -> {
       Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
       if (!secretSeries.isPresent()) {

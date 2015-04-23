@@ -67,11 +67,6 @@ public class SecretController {
     return secretDAO.getSecretByNameAndVersion(name, version).map(transformer::transform);
   }
 
-  /** @return all existing secrets. */
-  public List<Secret> getSecrets() {
-    return transformer.transform(secretDAO.getSecrets());
-  }
-
   /** @return all existing sanitized secrets. */
   public List<SanitizedSecret> getSanitizedSecrets() {
     return secretDAO.getSecrets().stream()
@@ -83,25 +78,6 @@ public class SecretController {
   public List<String> getVersionsForName(String name) {
     checkArgument(!name.isEmpty());
     return secretDAO.getVersionsForSecretName(name);
-  }
-
-  /**
-   * Deletes the series and all associated version of the given secret series name.
-   *
-   * @param name of secret series to delete.
-   */
-  public void deleteSecretsByName(String name) {
-    secretDAO.deleteSecretsByName(name);
-  }
-
-  /**
-   * Deletes a specific version in a secret series.
-   *
-   * @param name of secret series to delete from.
-   * @param version of secret to specifically delete.
-   */
-  public void deleteSecretByNameAndVersion(String name, String version) {
-    secretDAO.deleteSecretByNameAndVersion(name, version);
   }
 
   public SecretBuilder builder(String name, String secret, String creator) {
@@ -197,27 +173,9 @@ public class SecretController {
      * @return an instance of the newly created secret.
      */
     public Secret build() {
-        secretDAO.createSecret(name, encryptedSecret, version, creator, metadata, description, type, generationOptions);
+        secretDAO.createSecret(name, encryptedSecret, version, creator, metadata, description, type,
+            generationOptions);
         return transformer.transform(secretDAO.getSecretByNameAndVersion(name, version).get());
-/*
-        // TODO: I don't know if propagating the DataAccessException is the right thing to do.
-
-        // The StatementExceptions thrown by JDBI include a StatementContext with the SQL parameters
-        // in them. This re-throws each exception type without a context so the underlying SQL error
-        // is preserved but sensitive data from the raw SQL will not be logged.
-      } catch (NoResultsException e) {
-        throw new NoResultsException(e.getCause(), null);
-      } catch (ResultSetException e) {
-        throw new ResultSetException("Sanitized ResultSetException", (Exception) e.getCause(), null);
-      } catch (UnableToCreateStatementException e) {
-        throw new UnableToCreateStatementException((Exception) e.getCause(), null);
-      } catch (UnableToExecuteStatementException e) {
-        throw new UnableToExecuteStatementException((Exception) e.getCause(), null);
-      } catch (StatementException e) {
-        // All implementations of StatementException should have been caught. Catch-all for safety.
-        throw Throwables.propagate(e.getCause());
-      }
-*/
     }
   }
 }
