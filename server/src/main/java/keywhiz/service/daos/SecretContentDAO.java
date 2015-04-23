@@ -16,46 +16,97 @@
 
 package keywhiz.service.daos;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
 import keywhiz.api.model.SecretContent;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.customizers.SingleValueResult;
+import keywhiz.jooq.tables.records.SecretsContentRecord;
+import org.jooq.DSLContext;
 
-/** Interacts with 'secrets_content' table and actions on {@link SecretContent} entities. */
-@RegisterMapper(SecretContentMapper.class)
-public interface SecretContentDAO {
-  @GetGeneratedKeys
-  @SqlUpdate("INSERT INTO secrets_content (secretId, encrypted_content, version, createdBy, updatedBy, metadata) " +
-             "VALUES (:secretId, :encryptedContent, :version, :creator, :creator, :metadata)")
-  long createSecretContent(@Bind("secretId") long secretId,
-      @Bind("encryptedContent") String encryptedContent, @Bind("version") String version,
-      @Bind("creator") String creator, @Bind("metadata") Map<String, String> metadata);
+import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
-  @SingleValueResult(SecretContent.class)
-  @SqlQuery("SELECT id, secretId, encrypted_content, version, createdAt, createdBy, updatedAt, updatedBy, metadata " +
-            "FROM secrets_content WHERE id = :id")
-  Optional<SecretContent> getSecretContentById(@Bind("id") long id);
+/**
+ * Interacts with 'secrets_content' table and actions on {@link SecretContent} entities.
+ */
+public class SecretContentDAO {
+  private final DSLContext dslContext;
+  private final ObjectMapper mapper;
 
-  @SingleValueResult(SecretContent.class)
-  @SqlQuery("SELECT id, secretId, encrypted_content, version, createdAt, createdBy, updatedAt, updatedBy, metadata " +
-            "FROM secrets_content WHERE secretId = :secretId AND version = :version")
-  Optional<SecretContent> getSecretContentBySecretIdAndVersion(
-      @Bind("secretId") long secretId, @Bind("version") String version);
+  @Inject
+  public SecretContentDAO(DSLContext dslContext, ObjectMapper mapper) {
+    this.dslContext = dslContext;
+    this.mapper = mapper;
+  }
 
-  @SqlQuery("SELECT id, secretId, encrypted_content, version, createdAt, createdBy, updatedAt, updatedBy, metadata " +
-            "FROM secrets_content WHERE secretId = :secretId")
-  ImmutableList<SecretContent> getSecretContentsBySecretId(@Bind("secretId") long secretId);
+  public long createSecretContent(long secretId, String encryptedContent, String version,
+      String creator, Map<String, String> metadata) {
+    SecretsContentRecord r = dslContext.newRecord(SECRETS_CONTENT);
 
-  @SqlUpdate("DELETE FROM secrets_content WHERE secretId = :secretId AND version = :version")
-  void deleteSecretContentBySecretIdAndVersion(
-      @Bind("secretId") long secretId, @Bind("version") String version);
+    String jsonMetadata;
+    try {
+      jsonMetadata = mapper.writeValueAsString(metadata);
+    } catch (JsonProcessingException e) {
+      // Serialization of a Map<String, String> can never fail.
+      throw Throwables.propagate(e);
+    }
 
-  @SqlQuery("SELECT version FROM secrets_content WHERE secretId = :secretId")
-  ImmutableList<String> getVersionFromSecretId(@Bind("secretId") long secretId);
+    r.setSecretid(Math.toIntExact(secretId));
+    r.setEncryptedContent(encryptedContent);
+    r.setVersion(version);
+    r.setCreatedby(creator);
+    r.setUpdatedby(creator);
+    r.setMetadata(jsonMetadata);
+    r.store();
+
+    return r.getId();
+  }
+
+  public Optional<SecretContent> getSecretContentById(long id) {
+    SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
+        SECRETS_CONTENT.ID.eq(Math.toIntExact(id)));
+    return Optional.ofNullable(r).map(
+        (rec) -> rec.map(new SecretContentMapper(mapper)));
+  }
+
+  public Optional<SecretContent> getSecretContentBySecretIdAndVersion(long secretId,
+      String version) {
+    SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
+        SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId))
+            .and(SECRETS_CONTENT.VERSION.eq(version)));
+    return Optional.ofNullable(r).map((rec) -> rec.map(new SecretContentMapper(mapper)));
+  }
+
+  public ImmutableList<SecretContent> getSecretContentsBySecretId(long secretId) {
+    List<SecretContent> r = dslContext
+        .select()
+        .from(SECRETS_CONTENT)
+        .where(SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId)))
+        .fetch()
+        .map(new SecretContentMapper(mapper));
+
+    return ImmutableList.copyOf(r);
+  }
+
+  public void deleteSecretContentBySecretIdAndVersion(long secretId, String version) {
+    dslContext
+        .delete(SECRETS_CONTENT)
+        .where(SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId))
+            .and(SECRETS_CONTENT.VERSION.eq(version)))
+        .execute();
+  }
+
+  public ImmutableList<String> getVersionFromSecretId(long secretId) {
+    List<String> r = dslContext
+        .select(SECRETS_CONTENT.VERSION)
+        .from(SECRETS_CONTENT)
+        .where(SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId)))
+        .fetch(SECRETS_CONTENT.VERSION);
+
+    return ImmutableList.copyOf(r);
+  }
 }

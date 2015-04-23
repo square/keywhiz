@@ -18,47 +18,47 @@ package keywhiz.service.daos;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.ZoneOffset;
 import java.util.Map;
-import keywhiz.KeywhizService;
 import keywhiz.api.model.SecretSeries;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
+import org.jooq.Field;
+import org.jooq.Record;
+import org.jooq.RecordMapper;
 
 import static java.lang.String.format;
+import static keywhiz.jooq.tables.Secrets.SECRETS;
 
-public class SecretSeriesMapper implements ResultSetMapper<SecretSeries> {
+class SecretSeriesMapper implements RecordMapper<Record, SecretSeries> {
   private static final TypeReference MAP_STRING_STRING_TYPE =
       new TypeReference<Map<String, String>>() {};
-  private final ObjectMapper mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
+  private final ObjectMapper mapper;
 
-  @Override
-  public SecretSeries map(int index, ResultSet r, StatementContext ctx) throws SQLException {
-    return new SecretSeries(r.getLong("id"),
-                            r.getString("name"),
-                            r.getString("description"),
-                            r.getTimestamp("createdAt").toLocalDateTime().atOffset(ZoneOffset.UTC),
-                            r.getString("createdBy"),
-                            r.getTimestamp("updatedAt").toLocalDateTime().atOffset(ZoneOffset.UTC),
-                            r.getString("updatedBy"),
-                            r.getString("type"),
-                            tryToReadMapValue(r, "options"));
+  SecretSeriesMapper(ObjectMapper mapper) {
+    this.mapper = mapper;
   }
 
-  private Map<String, String> tryToReadMapValue(ResultSet resultSet, String fieldName)
-      throws SQLException {
+  public SecretSeries map(Record r) {
+    return new SecretSeries(
+        r.getValue(SECRETS.ID),
+        r.getValue(SECRETS.NAME),
+        r.getValue(SECRETS.DESCRIPTION),
+        r.getValue(SECRETS.CREATEDAT),
+        r.getValue(SECRETS.CREATEDBY),
+        r.getValue(SECRETS.UPDATEDAT),
+        r.getValue(SECRETS.UPDATEDBY),
+        r.getValue(SECRETS.TYPE),
+        tryToReadMapValue(r, SECRETS.OPTIONS));
+  }
+
+  private Map<String, String> tryToReadMapValue(Record r, Field<String> field) {
+    String value = r.getValue(field);
     Map<String, String> map = null;
-    String field = resultSet.getString(fieldName);
-    if (!field.isEmpty()) {
+    if (!value.isEmpty()) {
       try {
-        map = mapper.readValue(field, MAP_STRING_STRING_TYPE);
+        map = mapper.readValue(value, MAP_STRING_STRING_TYPE);
       } catch (IOException e) {
         throw new RuntimeException(
-            format("Failed to create a Map from data. Bad json in %s column?", fieldName), e);
+            format("Failed to create a Map from data. Bad json in %s column?", field.getName()), e);
       }
     }
     return map;

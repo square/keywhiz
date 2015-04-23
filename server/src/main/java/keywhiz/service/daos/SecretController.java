@@ -16,7 +16,6 @@
 
 package keywhiz.service.daos;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
@@ -25,11 +24,6 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.SecretTransformer;
-import org.skife.jdbi.v2.exceptions.NoResultsException;
-import org.skife.jdbi.v2.exceptions.ResultSetException;
-import org.skife.jdbi.v2.exceptions.StatementException;
-import org.skife.jdbi.v2.exceptions.UnableToCreateStatementException;
-import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -179,24 +173,9 @@ public class SecretController {
      * @return an instance of the newly created secret.
      */
     public Secret build() {
-      try {
-        secretDAO.createSecret(name, encryptedSecret, version, creator, metadata, description, type, generationOptions);
+        secretDAO.createSecret(name, encryptedSecret, version, creator, metadata, description, type,
+            generationOptions);
         return transformer.transform(secretDAO.getSecretByNameAndVersion(name, version).get());
-        // The StatementExceptions thrown by JDBI include a StatementContext with the SQL parameters
-        // in them. This re-throws each exception type without a context so the underlying SQL error
-        // is preserved but sensitive data from the raw SQL will not be logged.
-      } catch (NoResultsException e) {
-        throw new NoResultsException(e.getCause(), null);
-      } catch (ResultSetException e) {
-        throw new ResultSetException("Sanitized ResultSetException", (Exception) e.getCause(), null);
-      } catch (UnableToCreateStatementException e) {
-        throw new UnableToCreateStatementException((Exception) e.getCause(), null);
-      } catch (UnableToExecuteStatementException e) {
-        throw new UnableToExecuteStatementException((Exception) e.getCause(), null);
-      } catch (StatementException e) {
-        // All implementations of StatementException should have been caught. Catch-all for safety.
-        throw Throwables.propagate(e.getCause());
-      }
     }
   }
 }

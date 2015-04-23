@@ -16,6 +16,7 @@
 
 package keywhiz.service.daos;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
 import java.util.HashSet;
 import java.util.List;
@@ -48,18 +49,21 @@ public class AclDAO {
   private static final Logger logger = LoggerFactory.getLogger(AclDAO.class);
 
   private final DSLContext dslContext;
-  private ClientDAO clientDAO;
-  private GroupDAO groupDAO;
-  private SecretContentDAO secretContentDAO;
-  private SecretSeriesDAO secretSeriesDAO;
+  private final ClientDAO clientDAO;
+  private final GroupDAO groupDAO;
+  private final SecretContentDAO secretContentDAO;
+  private final SecretSeriesDAO secretSeriesDAO;
+  private final ObjectMapper mapper;
 
   @Inject
-  public AclDAO(DSLContext dslContext, ClientDAO clientDAO, GroupDAO groupDAO, AclDeps aclDeps) {
+  public AclDAO(DSLContext dslContext, ClientDAO clientDAO, GroupDAO groupDAO,
+      SecretContentDAO secretContentDAO, SecretSeriesDAO secretSeriesDAO, ObjectMapper mapper) {
     this.dslContext = dslContext;
     this.clientDAO = clientDAO;
     this.groupDAO = groupDAO;
-    this.secretContentDAO = aclDeps.createSecretContentDAO();
-    this.secretSeriesDAO = aclDeps.createSecretSeriesDAO();
+    this.secretContentDAO = secretContentDAO;
+    this.secretSeriesDAO = secretSeriesDAO;
+    this.mapper = mapper;
   }
 
   public void findAndAllowAccess(long secretId, long groupId) {
@@ -290,7 +294,7 @@ public class AclDAO {
         .join(GROUPS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
         .where(GROUPS.NAME.eq(group.getName()))
         .fetch()
-        .map(new SecretSeriesJooqMapper());
+        .map(new SecretSeriesMapper(mapper));
     return ImmutableSet.copyOf(r);
 
   }
@@ -305,7 +309,7 @@ public class AclDAO {
         .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .where(CLIENTS.NAME.eq(client.getName()))
         .fetch()
-        .map(new SecretSeriesJooqMapper());
+        .map(new SecretSeriesMapper(mapper));
     return ImmutableSet.copyOf(r);
   }
 
@@ -328,6 +332,6 @@ public class AclDAO {
         .where(SECRETS.NAME.eq(name).and(CLIENTS.NAME.eq(client.getName())))
         .fetchOne();
 
-    return Optional.ofNullable(r).map((rec) -> rec.map(new SecretSeriesJooqMapper()));
+    return Optional.ofNullable(r).map((rec) -> rec.map(new SecretSeriesMapper(mapper)));
   }
 }

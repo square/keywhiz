@@ -28,11 +28,12 @@ import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
+import org.jooq.DSLContext;
 import org.jooq.Table;
+import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.skife.jdbi.v2.exceptions.StatementException;
 
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
@@ -48,7 +49,8 @@ public class SecretDAOTest {
 
   SecretSeries series1 = new SecretSeries(1, "secret1", "desc1", date, "creator", date, "updater", null, null);
   String content = "c2VjcmV0MQ==";
-  String encryptedContent = cryptographer.encryptionKeyDerivedFrom(series1.getName()).encrypt(content);
+  String encryptedContent = cryptographer.encryptionKeyDerivedFrom(series1.getName()).encrypt(
+      content);
   SecretContent content1 = SecretContent.of(101, 1, encryptedContent, version, date, "creator", date, "updater", emptyMetadata);
   SecretSeriesAndContent secret1 = SecretSeriesAndContent.of(series1, content1);
 
@@ -57,15 +59,15 @@ public class SecretDAOTest {
   SecretSeriesAndContent secret2 = SecretSeriesAndContent.of(series2, content2);
 
   SecretDAO secretDAO;
-  SecretContentDAO secretContentDAO;
 
   @Before
   public void setUp() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
+    DSLContext dslContext = testDBRule.jooqContext();
 
-    testDBRule.jooqContext().delete(SECRETS).execute();
+    dslContext.delete(SECRETS).execute();
 
-    testDBRule.jooqContext().insertInto(SECRETS)
+    dslContext.insertInto(SECRETS)
         .set(SECRETS.ID, Math.toIntExact(secret1.series().getId()))
         .set(SECRETS.NAME, secret1.series().getName())
         .set(SECRETS.DESCRIPTION, secret1.series().getDescription().orElse(null))
@@ -74,7 +76,7 @@ public class SecretDAOTest {
         .set(SECRETS.UPDATEDBY, secret1.series().getUpdatedBy())
         .execute();
 
-    testDBRule.jooqContext().insertInto(SECRETS_CONTENT)
+    dslContext.insertInto(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.SECRETID, Math.toIntExact(secret1.series().getId()))
         .set(SECRETS_CONTENT.VERSION, secret1.content().version().orElse(null))
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret1.content().encryptedContent())
@@ -84,7 +86,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret1.content().metadata()))
         .execute();
 
-    testDBRule.jooqContext().insertInto(SECRETS)
+    dslContext.insertInto(SECRETS)
         .set(SECRETS.ID, Math.toIntExact(secret2.series().getId()))
         .set(SECRETS.NAME, secret2.series().getName())
         .set(SECRETS.DESCRIPTION, secret2.series().getDescription().orElse(null))
@@ -93,7 +95,7 @@ public class SecretDAOTest {
         .set(SECRETS.UPDATEDBY, secret2.series().getUpdatedBy())
         .execute();
 
-    testDBRule.jooqContext().insertInto(SECRETS_CONTENT)
+    dslContext.insertInto(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.SECRETID, Math.toIntExact(secret2.series().getId()))
         .set(SECRETS_CONTENT.VERSION, secret2.content().version().orElse(null))
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret2.content().encryptedContent())
@@ -103,8 +105,8 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret2.content().metadata()))
         .execute();
 
-    secretDAO = testDBRule.getDbi().onDemand(SecretDAO.class);
-    secretContentDAO = testDBRule.getDbi().onDemand(SecretContentDAO.class);
+    secretDAO = new SecretDAO(dslContext, new SecretContentDAO(dslContext, objectMapper),
+        new SecretSeriesDAO(dslContext, objectMapper));
 
     // Secrets created in the DB will have different id, updatedAt values.
     secret1 = secretDAO.getSecretByNameAndVersion(
@@ -301,14 +303,14 @@ public class SecretDAOTest {
     assertThat(missingSecret.isPresent()).isFalse();
   }
 
-  @Test(expected = StatementException.class)
+  @Test(expected = DataAccessException.class)
   public void willNotCreateDuplicateVersionedSecret() throws Exception {
     ImmutableMap<String, String> emptyMap = ImmutableMap.of();
     secretDAO.createSecret("secret1", "encrypted1", version, "creator", emptyMap, "", null, emptyMap);
     secretDAO.createSecret("secret1", "encrypted1", version, "creator", emptyMap, "", null, emptyMap);
   }
 
-  @Test(expected = StatementException.class)
+  @Test(expected = DataAccessException.class)
   public void willNotCreateDuplicateSecret() throws Exception {
     ImmutableMap<String, String> emptyMap = ImmutableMap.of();
     secretDAO.createSecret("secret1", "encrypted1", "", "creator", emptyMap, "", null, emptyMap);

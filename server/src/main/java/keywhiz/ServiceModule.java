@@ -54,11 +54,11 @@ import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoModule;
 import keywhiz.service.crypto.SecretTransformer;
-import keywhiz.service.daos.AclDeps;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.daos.MapArgumentFactory;
+import keywhiz.service.daos.SecretContentDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretSeriesDAO;
@@ -110,6 +110,12 @@ public class ServiceModule extends AbstractModule {
 
   // ManagedDataSource
 
+  /**
+   * TODO: make sure that the read-write health check does not impact availability of
+   * the service.
+   * TODO: make sure that the readonly has a health check and marks the service as unhealthy if
+   * the connection is down. Optionally, fallback to read-write if that connection is healthy.
+   */
   @Provides @Singleton ManagedDataSource dataSource(Environment environment,
       KeywhizConfig config) {
     DataSourceFactory dataSourceFactory = config.getDataSourceFactory();
@@ -121,8 +127,11 @@ public class ServiceModule extends AbstractModule {
 
   @Provides @Singleton @Readonly ManagedDataSource readonlyDataSource(Environment environment,
       KeywhizConfig config) {
-    DataSourceFactory dataSourceFactory = config.getDataSourceFactory();
-    return dataSourceFactory.build(environment.metrics(), "postgres-readonly");
+    DataSourceFactory dataSourceFactory = config.getReadonlyDataSourceFactory();
+    ManagedDataSource dataSource = dataSourceFactory.build(environment.metrics(), "postgres-readonly");
+    environment.lifecycle().manage(dataSource);
+
+    return dataSource;
   }
 
   // jOOQ
@@ -131,7 +140,8 @@ public class ServiceModule extends AbstractModule {
     return DSL.using(dataSource.getConnection());
   }
 
-  @Provides @Singleton @Readonly DSLContext readonlyJooqContext(@Readonly ManagedDataSource dataSource)
+  @Provides @Singleton
+  @Readonly DSLContext readonlyJooqContext(@Readonly ManagedDataSource dataSource)
       throws SQLException {
     return DSL.using(dataSource.getConnection());
   }
@@ -181,12 +191,16 @@ public class ServiceModule extends AbstractModule {
   }
 
   @Provides @Singleton
-  @Readonly DBI readonlyDbi(DBIFactory factory, Environment environment, KeywhizConfig config,
-      MapArgumentFactory mapArgumentFactory, @Readonly ManagedDataSource dataSource)
+  @Readonly DBI readonlyDbi(KeywhizConfig config, MapArgumentFactory mapArgumentFactory,
+      @Readonly ManagedDataSource dataSource)
       throws ClassNotFoundException {
     logger.debug("Creating read-only DBI");
-    DBI dbi = factory.build(environment, config.getReadonlyDataSourceFactory(), dataSource,
-        "postgres-readonly");
+    final DBI dbi = new DBI(dataSource);
+    dbi.registerArgumentFactory(new OptionalArgumentFactory(config.getReadonlyDataSourceFactory().getDriverClass()));
+    dbi.registerContainerFactory(new OptionalContainerFactory());
+    dbi.registerArgumentFactory(new LocalDateTimeArgumentFactory());
+    dbi.registerMapper(new LocalDateTimeMapper());
+
     dbi.registerArgumentFactory(mapArgumentFactory);
     return dbi;
   }
@@ -204,33 +218,19 @@ public class ServiceModule extends AbstractModule {
     return new SecretController(transformer, cryptographer, secretDAO);
   }
 
-  @Provides @Singleton @Readonly SecretDAO readonlySecretDAO(@Readonly DBI dbi) {
-    return dbi.onDemand(SecretDAO.class);
-  }
-
-  @Provides @Singleton SecretDAO secretDAO(DBI dbi) {
-    return dbi.onDemand(SecretDAO.class);
-  }
-
-  @Provides @Singleton @Readonly SecretSeriesDAO readonlySecretSeriesDAO(@Readonly DBI dbi) {
-    return dbi.onDemand(SecretSeriesDAO.class);
-  }
-
-  @Provides @Singleton SecretSeriesDAO secretSeriesDAO(DBI dbi) {
-    return dbi.onDemand(SecretSeriesDAO.class);
-  }
-
   // DAOs using jOOQ
 
   @Provides @Singleton AclDAO aclDAO(DSLContext jooqContext, ClientDAO clientDAO,
-      GroupDAO groupDAO, DBI dbi) {
-    return new AclDAO(jooqContext, clientDAO, groupDAO, dbi.onDemand(AclDeps.class));
+      GroupDAO groupDAO, SecretContentDAO secretContentDAO,
+      SecretSeriesDAO secretSeriesDAO, ObjectMapper mapper) {
+    return new AclDAO(jooqContext, clientDAO, groupDAO, secretContentDAO, secretSeriesDAO, mapper);
   }
 
   @Provides @Singleton
   @Readonly AclDAO readonlyAclDAO(@Readonly DSLContext jooqContext, @Readonly ClientDAO clientDAO,
-      @Readonly GroupDAO groupDAO, @Readonly DBI dbi) {
-    return new AclDAO(jooqContext, clientDAO, groupDAO, dbi.onDemand(AclDeps.class));
+      @Readonly GroupDAO groupDAO, @Readonly SecretContentDAO secretContentDAO,
+      @Readonly SecretSeriesDAO secretSeriesDAO, ObjectMapper mapper) {
+    return new AclDAO(jooqContext, clientDAO, groupDAO, secretContentDAO, secretSeriesDAO, mapper);
   }
 
   @Provides @Singleton ClientDAO clientDAO(DSLContext jooqContext) {
@@ -247,6 +247,40 @@ public class ServiceModule extends AbstractModule {
 
   @Provides @Singleton @Readonly GroupDAO readonlyGroupDAO(@Readonly DSLContext jooqContext) {
     return new GroupDAO(jooqContext);
+  }
+
+  @Provides @Singleton SecretContentDAO secretContentDAO(DSLContext jooqContext,
+      ObjectMapper mapper) {
+    return new SecretContentDAO(jooqContext, mapper);
+  }
+
+  @Provides @Singleton
+  @Readonly SecretContentDAO readonlySecretContentDAO(@Readonly DSLContext jooqContext,
+      ObjectMapper mapper) {
+    return new SecretContentDAO(jooqContext, mapper);
+  }
+
+  @Provides @Singleton SecretSeriesDAO secretSeriesDAO(DSLContext jooqContext,
+      ObjectMapper mapper) {
+    return new SecretSeriesDAO(jooqContext, mapper);
+  }
+
+  @Provides @Singleton
+  @Readonly SecretSeriesDAO readonlySecretSeriesDAO(@Readonly DSLContext jooqContext,
+      ObjectMapper mapper) {
+    return new SecretSeriesDAO(jooqContext, mapper);
+  }
+
+  @Provides @Singleton SecretDAO secretDAO(DSLContext jooqContext,
+      SecretContentDAO secretContentDAO, SecretSeriesDAO secretSeriesDAO) {
+    return new SecretDAO(jooqContext, secretContentDAO, secretSeriesDAO);
+  }
+
+  @Provides @Singleton
+  @Readonly SecretDAO readonlySecretDAO(@Readonly DSLContext jooqContext,
+      @Readonly SecretContentDAO secretContentDAO,
+      @Readonly SecretSeriesDAO secretSeriesDAO) {
+    return new SecretDAO(jooqContext, secretContentDAO, secretSeriesDAO);
   }
 
   @Provides @Singleton

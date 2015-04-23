@@ -37,7 +37,7 @@ public class SecretFixtures {
   }
 
   /**
-   * @return builds a fixture-making object using the given SecretDAO
+   * @return builds a fixture-making object using the given {@link SecretDAO}
    */
   public static SecretFixtures using(SecretDAO secretDAO) {
     return new SecretFixtures(secretDAO);
@@ -64,8 +64,9 @@ public class SecretFixtures {
    */
   public Secret createSecret(String name, String content, String version) {
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    long id = secretDAO.createSecret(name, encryptedContent, version, "creator",
-        ImmutableMap.of(), "", null, ImmutableMap.of());
+    long id =
+        secretDAO.createSecret(name, encryptedContent, version, "creator", ImmutableMap.of(),
+            "", null, ImmutableMap.of());
     return transformer.transform(secretDAO.getSecretByIdAndVersion(id, version).get());
   }
 }

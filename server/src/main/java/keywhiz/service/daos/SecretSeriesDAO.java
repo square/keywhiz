@@ -16,46 +16,92 @@
 
 package keywhiz.service.daos;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import io.dropwizard.jackson.Jackson;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
+import keywhiz.KeywhizService;
 import keywhiz.api.model.SecretSeries;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.GetGeneratedKeys;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.customizers.SingleValueResult;
+import keywhiz.jooq.tables.records.SecretsRecord;
+import org.jooq.DSLContext;
 
-/** Interacts with 'secrets' table and actions on {@link SecretSeries} entities. */
-@RegisterMapper(SecretSeriesMapper.class)
-public interface SecretSeriesDAO {
-  @GetGeneratedKeys
-  @SqlUpdate("INSERT INTO secrets (name, description, createdBy, updatedBy, type, options) " +
-      "VALUES (:name, :description, :creator, :creator, :type, COALESCE(:options,'{}'))")
-  long createSecretSeries(@Bind("name") String name, @Bind("creator") String creator,
-      @Bind("description") String description,
-      @Nullable @Bind("type") String type,
-      @Nullable @Bind("options") Map<String, String> generationOptions);
+import static keywhiz.jooq.tables.Secrets.SECRETS;
 
-  @SingleValueResult(SecretSeries.class)
-  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy, " +
-      "type, options FROM secrets WHERE id = :id")
-  Optional<SecretSeries> getSecretSeriesById(@Bind("id") long id);
+/**
+ * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
+ */
+public class SecretSeriesDAO {
+  private final DSLContext dslContext;
+  private final ObjectMapper mapper;
 
-  @SingleValueResult(SecretSeries.class)
-  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy, " +
-      "type, options FROM secrets WHERE name = :name")
-  Optional<SecretSeries> getSecretSeriesByName(@Bind("name") String name);
+  @Inject
+  public SecretSeriesDAO(DSLContext dslContext, ObjectMapper mapper) {
+    this.dslContext = dslContext;
+    this.mapper = mapper;
+  }
 
-  @SqlQuery("SELECT id, name, description, createdAt, createdBy, updatedAt, updatedBy, " +
-      "type, options FROM secrets")
-  ImmutableList<SecretSeries> getSecretSeries();
+  long createSecretSeries(String name, String creator, String description, @Nullable String type,
+      @Nullable Map<String, String> generationOptions) {
+    SecretsRecord r =  dslContext.newRecord(SECRETS);
 
-  @SqlUpdate("DELETE FROM secrets WHERE name = :name")
-  void deleteSecretSeriesByName(@Bind("name") String name);
+    r.setName(name);
+    r.setDescription(description);
+    r.setCreatedby(creator);
+    r.setUpdatedby(creator);
+    r.setType(type);
+    if (generationOptions != null) {
+      try {
+        r.setOptions(mapper.writeValueAsString(generationOptions));
+      } catch (JsonProcessingException e) {
+        // Serialization of a Map<String, String> can never fail.
+        throw Throwables.propagate(e);
+      }
+    } else {
+      r.setOptions("{}");
+    }
+    r.store();
 
-  @SqlUpdate("DELETE FROM secrets WHERE id = :id")
-  void deleteSecretSeriesById(@Bind("id") long id);
+    return r.getId();
+  }
+
+  public Optional<SecretSeries> getSecretSeriesById(long id) {
+    SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.ID.eq(Math.toIntExact(id)));
+    return Optional.ofNullable(r).map(
+        (rec) -> rec.map(new SecretSeriesMapper(mapper)));
+  }
+
+  public Optional<SecretSeries> getSecretSeriesByName(String name) {
+    SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.NAME.eq(name));
+    return Optional.ofNullable(r).map(
+        (rec) -> rec.map(new SecretSeriesMapper(mapper)));
+  }
+
+  public ImmutableList<SecretSeries> getSecretSeries() {
+    List<SecretSeries> r = dslContext
+        .select()
+        .from(SECRETS)
+        .fetch()
+        .map(new SecretSeriesMapper(mapper));
+
+    return ImmutableList.copyOf(r);
+  }
+
+  public void deleteSecretSeriesByName(String name) {
+    dslContext
+        .delete(SECRETS)
+        .where(SECRETS.NAME.eq(name))
+        .execute();
+  }
+
+  public void deleteSecretSeriesById(long id) {
+    dslContext.delete(SECRETS)
+        .where(SECRETS.ID.eq(Math.toIntExact(id)))
+        .execute();
+  }
 }

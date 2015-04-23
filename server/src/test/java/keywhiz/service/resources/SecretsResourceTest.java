@@ -40,14 +40,12 @@ import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.exceptions.ConflictException;
+import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.exceptions.StatementException;
-import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
@@ -119,7 +117,7 @@ public class SecretsResourceTest {
   public void triesToCreateDuplicateSecret() throws Exception {
     SecretController.SecretBuilder secretBuilder = mock(SecretController.SecretBuilder.class);
     when(secretController.builder("name", "content", user.getName())).thenReturn(secretBuilder);
-    StatementException exception = new UnableToExecuteStatementException("", (StatementContext) null);
+    DataAccessException exception = new DataAccessException("");
     doThrow(exception).when(secretBuilder).build();
 
     CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", false, emptyMap);

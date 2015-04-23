@@ -19,54 +19,47 @@ package keywhiz.service.daos;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Map;
-import keywhiz.KeywhizService;
 import keywhiz.api.model.SecretContent;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
+import keywhiz.jooq.tables.records.SecretsContentRecord;
+import org.jooq.Record;
+import org.jooq.RecordMapper;
 
-import static java.lang.String.format;
-import static java.time.ZoneOffset.UTC;
-
-/** Maps DB query result rows to {@link SecretContent} objects. */
-public class SecretContentMapper implements ResultSetMapper<SecretContent> {
+class SecretContentMapper implements RecordMapper<Record, SecretContent> {
   private static final TypeReference MAP_STRING_STRING_TYPE =
       new TypeReference<Map<String, String>>() {};
-  private final ObjectMapper
-      mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
+  private final ObjectMapper mapper;
 
-  @Override
-  public SecretContent map(int index, ResultSet r, StatementContext ctx) throws SQLException {
-    return SecretContent.of(r.getLong("id"),
-                            r.getLong("secretId"),
-                            r.getString("encrypted_content"),
-                            r.getString("version"),
-                            r.getTimestamp("createdAt").toLocalDateTime().atOffset(UTC),
-                            r.getString("createdBy"),
-                            r.getTimestamp("updatedAt").toLocalDateTime().atOffset(UTC),
-                            r.getString("updatedBy"),
-                            tryToReadMetadata(r, "metadata"));
+  SecretContentMapper(ObjectMapper mapper) {
+    this.mapper = mapper;
   }
 
-  private ImmutableMap<String, String> tryToReadMetadata(ResultSet resultSet, String fieldName)
-      throws SQLException {
-    Map<String, String> map = null;
-    String field = resultSet.getString(fieldName);
-    if (!field.isEmpty()) {
+  public SecretContent map(Record record) {
+    SecretsContentRecord r = (SecretsContentRecord) record;
+
+    return SecretContent.of(
+        r.getId(),
+        r.getSecretid(),
+        r.getEncryptedContent(),
+        r.getVersion(),
+        r.getCreatedat(),
+        r.getCreatedby(),
+        r.getUpdatedat(),
+        r.getUpdatedby(),
+        tryToReadMapFromMetadata(r));
+  }
+
+  private ImmutableMap<String, String> tryToReadMapFromMetadata(SecretsContentRecord r) {
+    String value = r.getMetadata();
+    if (!value.isEmpty()) {
       try {
-        map = mapper.readValue(field, MAP_STRING_STRING_TYPE);
+        return ImmutableMap.copyOf(mapper.readValue(value, MAP_STRING_STRING_TYPE));
       } catch (IOException e) {
         throw new RuntimeException(
-            format("Failed to create a Map from data. Bad json in %s column?", fieldName), e);
+            "Failed to create a Map from data. Bad json in metadata column?", e);
       }
     }
-    if (map == null) {
-      return ImmutableMap.of();
-    }
-    return ImmutableMap.copyOf(map);
+    return ImmutableMap.of();
   }
 }
