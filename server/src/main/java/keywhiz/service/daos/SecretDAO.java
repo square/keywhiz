@@ -39,8 +39,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class SecretDAO {
   private final DSLContext dslContext;
-  private SecretContentDAO secretContentDAO;
-  private SecretSeriesDAO secretSeriesDAO;
+  private final SecretContentDAO secretContentDAO;
+  private final SecretSeriesDAO secretSeriesDAO;
 
   @Inject
   public SecretDAO(DSLContext dslContext, SecretContentDAO secretContentDAO,

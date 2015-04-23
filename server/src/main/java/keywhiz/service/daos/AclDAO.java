@@ -49,11 +49,11 @@ public class AclDAO {
   private static final Logger logger = LoggerFactory.getLogger(AclDAO.class);
 
   private final DSLContext dslContext;
-  private ClientDAO clientDAO;
-  private GroupDAO groupDAO;
-  private SecretContentDAO secretContentDAO;
-  private SecretSeriesDAO secretSeriesDAO;
-  private ObjectMapper mapper;
+  private final ClientDAO clientDAO;
+  private final GroupDAO groupDAO;
+  private final SecretContentDAO secretContentDAO;
+  private final SecretSeriesDAO secretSeriesDAO;
+  private final ObjectMapper mapper;
 
   @Inject
   public AclDAO(DSLContext dslContext, ClientDAO clientDAO, GroupDAO groupDAO,
