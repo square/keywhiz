@@ -70,7 +70,7 @@ public class SecretContentDAO {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
         SECRETS_CONTENT.ID.eq(Math.toIntExact(id)));
     return Optional.ofNullable(r).map(
-        (rec) -> rec.map(new SecretContentMapper(mapper)));
+        rec -> new SecretContentMapper(mapper).map(rec));
   }
 
   public Optional<SecretContent> getSecretContentBySecretIdAndVersion(long secretId,
@@ -78,13 +78,13 @@ public class SecretContentDAO {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
         SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId))
             .and(SECRETS_CONTENT.VERSION.eq(version)));
-    return Optional.ofNullable(r).map((rec) -> rec.map(new SecretContentMapper(mapper)));
+    return Optional.ofNullable(r).map(
+        rec -> new SecretContentMapper(mapper).map(rec));
   }
 
   public ImmutableList<SecretContent> getSecretContentsBySecretId(long secretId) {
     List<SecretContent> r = dslContext
-        .select()
-        .from(SECRETS_CONTENT)
+        .selectFrom(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId)))
         .fetch()
         .map(new SecretContentMapper(mapper));

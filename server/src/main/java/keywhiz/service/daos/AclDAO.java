@@ -30,8 +30,8 @@ import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
+import keywhiz.jooq.tables.records.SecretsRecord;
 import org.jooq.DSLContext;
-import org.jooq.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -163,39 +163,36 @@ public class AclDAO {
 
   public Set<Group> getGroupsFor(Secret secret) {
     List<Group> r = dslContext
-        .select(GROUPS.ID, GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDAT, GROUPS.CREATEDBY,
-            GROUPS.UPDATEDAT, GROUPS.UPDATEDBY)
+        .select()
         .from(GROUPS)
         .join(ACCESSGRANTS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
         .join(SECRETS).on(ACCESSGRANTS.SECRETID.eq(SECRETS.ID))
         .where(SECRETS.NAME.eq(secret.getName()))
-        .fetch()
+        .fetchInto(GROUPS)
         .map(new GroupMapper());
     return new HashSet<>(r);
   }
 
   public Set<Group> getGroupsFor(Client client) {
     List<Group> r = dslContext
-        .select(GROUPS.ID, GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDAT, GROUPS.CREATEDBY,
-            GROUPS.UPDATEDAT, GROUPS.UPDATEDBY)
+        .select()
         .from(GROUPS)
         .join(MEMBERSHIPS).on(GROUPS.ID.eq(MEMBERSHIPS.GROUPID))
         .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .where(CLIENTS.NAME.eq(client.getName()))
-        .fetch()
+        .fetchInto(GROUPS)
         .map(new GroupMapper());
     return new HashSet<>(r);
   }
 
   public Set<Client> getClientsFor(Group group) {
     List<Client> r = dslContext
-        .select(CLIENTS.ID, CLIENTS.NAME, CLIENTS.DESCRIPTION, CLIENTS.CREATEDAT, CLIENTS.CREATEDBY,
-            CLIENTS.UPDATEDAT, CLIENTS.UPDATEDBY, CLIENTS.ENABLED, CLIENTS.AUTOMATIONALLOWED)
+        .select()
         .from(CLIENTS)
         .join(MEMBERSHIPS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .join(GROUPS).on(GROUPS.ID.eq(MEMBERSHIPS.GROUPID))
         .where(GROUPS.NAME.eq(group.getName()))
-        .fetch()
+        .fetchInto(CLIENTS)
         .map(new ClientMapper());
     return new HashSet<>(r);
   }
@@ -217,14 +214,13 @@ public class AclDAO {
 
   public Set<Client> getClientsFor(Secret secret) {
     List<Client> r = dslContext
-        .select(CLIENTS.ID, CLIENTS.NAME, CLIENTS.DESCRIPTION, CLIENTS.CREATEDAT, CLIENTS.CREATEDBY,
-            CLIENTS.UPDATEDAT, CLIENTS.UPDATEDBY, CLIENTS.ENABLED, CLIENTS.AUTOMATIONALLOWED)
+        .select()
         .from(CLIENTS)
         .join(MEMBERSHIPS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .join(ACCESSGRANTS).on(MEMBERSHIPS.GROUPID.eq(ACCESSGRANTS.GROUPID))
         .join(SECRETS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .where(SECRETS.NAME.eq(secret.getName()))
-        .fetch()
+        .fetchInto(CLIENTS)
         .map(new ClientMapper());
     return new HashSet<>(r);
   }
@@ -287,13 +283,12 @@ public class AclDAO {
 
   protected ImmutableSet<SecretSeries> getSecretSeriesFor(Group group) {
     List<SecretSeries> r = dslContext
-        .select(SECRETS.ID, SECRETS.NAME, SECRETS.DESCRIPTION, SECRETS.CREATEDAT, SECRETS.CREATEDBY,
-            SECRETS.UPDATEDAT, SECRETS.UPDATEDBY, SECRETS.TYPE, SECRETS.OPTIONS)
+        .select()
         .from(SECRETS)
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .join(GROUPS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
         .where(GROUPS.NAME.eq(group.getName()))
-        .fetch()
+        .fetchInto(SECRETS)
         .map(new SecretSeriesMapper(mapper));
     return ImmutableSet.copyOf(r);
 
@@ -301,14 +296,13 @@ public class AclDAO {
 
   protected ImmutableSet<SecretSeries> getSecretSeriesFor(Client client) {
     List<SecretSeries> r = dslContext
-        .select(SECRETS.ID, SECRETS.NAME, SECRETS.DESCRIPTION, SECRETS.CREATEDAT, SECRETS.CREATEDBY,
-            SECRETS.UPDATEDAT, SECRETS.UPDATEDBY, SECRETS.TYPE, SECRETS.OPTIONS)
+        .select()
         .from(SECRETS)
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
         .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .where(CLIENTS.NAME.eq(client.getName()))
-        .fetch()
+        .fetchInto(SECRETS)
         .map(new SecretSeriesMapper(mapper));
     return ImmutableSet.copyOf(r);
   }
@@ -321,17 +315,17 @@ public class AclDAO {
    * table should be used to determine the exception.
    */
   protected Optional<SecretSeries> getSecretSeriesFor(Client client, String name) {
-    Record r = dslContext
-        .select(SECRETS.ID, SECRETS.NAME, SECRETS.DESCRIPTION, SECRETS.CREATEDAT, SECRETS.CREATEDBY,
-            SECRETS.UPDATEDAT, SECRETS.UPDATEDBY, SECRETS.TYPE, SECRETS.OPTIONS)
+    SecretsRecord r = dslContext
+        .select()
         .from(SECRETS)
         .join(SECRETS_CONTENT).on(SECRETS.ID.eq(SECRETS_CONTENT.SECRETID))
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
         .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .where(SECRETS.NAME.eq(name).and(CLIENTS.NAME.eq(client.getName())))
-        .fetchOne();
+        .fetchOneInto(SECRETS);
 
-    return Optional.ofNullable(r).map((rec) -> rec.map(new SecretSeriesMapper(mapper)));
+    return Optional.ofNullable(r).map(
+        rec -> new SecretSeriesMapper(mapper).map(rec));
   }
 }

@@ -73,19 +73,18 @@ public class SecretSeriesDAO {
   public Optional<SecretSeries> getSecretSeriesById(long id) {
     SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.ID.eq(Math.toIntExact(id)));
     return Optional.ofNullable(r).map(
-        (rec) -> rec.map(new SecretSeriesMapper(mapper)));
+        rec -> new SecretSeriesMapper(mapper).map(rec));
   }
 
   public Optional<SecretSeries> getSecretSeriesByName(String name) {
     SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.NAME.eq(name));
     return Optional.ofNullable(r).map(
-        (rec) -> rec.map(new SecretSeriesMapper(mapper)));
+        rec -> new SecretSeriesMapper(mapper).map(rec));
   }
 
   public ImmutableList<SecretSeries> getSecretSeries() {
     List<SecretSeries> r = dslContext
-        .select()
-        .from(SECRETS)
+        .selectFrom(SECRETS)
         .fetch()
         .map(new SecretSeriesMapper(mapper));
 
