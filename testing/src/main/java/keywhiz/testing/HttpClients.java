@@ -20,7 +20,6 @@ import com.google.common.base.Throwables;
 import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
-import java.io.IOException;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.security.KeyManagementException;
@@ -28,19 +27,13 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
 import org.apache.http.HttpHost;
 import org.apache.http.conn.ssl.SSLContextBuilder;
-import org.apache.http.conn.ssl.TrustStrategy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -66,29 +59,11 @@ public class HttpClients {
   }
 
   /**
-   * Creates strategy to only trust a single certificate regardless of signatures.
-   *
-   * @param certificate server certificate to trust.
-   * @return TrustStrategy which only trusts the certificate.
-   */
-  public static TrustStrategy trustStrategy(final X509Certificate certificate) {
-    checkNotNull(certificate);
-    return (chain, authType) -> chain.length > 0 && chain[0].equals(certificate);
-  }
-
-  private static class LocalhostSslClientHostnameVerifier implements HostnameVerifier {
-    @Override public boolean verify(String s, SSLSession sslSession) {
-      return true;
-    }
-  }
-
-  /**
    * Create a {@link OkHttpClient} which can only connect to localhost.
    *
    * @param port SSL port
    * @param keyStore Use a client certificate from keystore if present. Client certs disabled if null.
    * @param keyStorePassword keyStore password. Client certs disabled if null.
-   * @param trustStrategy Trust strategy for servers, used in place of normal certificate validation.
    * @param requestInterceptors Any request interceptors to register with client.
    * @return new http client
    */
@@ -96,7 +71,6 @@ public class HttpClients {
       @Nullable KeyStore keyStore,
       @Nullable String keyStorePassword,
       KeyStore trustStore,
-      TrustStrategy trustStrategy,
       List<Interceptor> requestInterceptors) {
 
     boolean usingClientCert = keyStore != null && keyStorePassword != null;
@@ -105,7 +79,7 @@ public class HttpClients {
     try {
       SSLContextBuilder sslContextBuilder = new SSLContextBuilder()
           .useProtocol("TLSv1.2")
-          .loadTrustMaterial(trustStore, trustStrategy);
+          .loadTrustMaterial(trustStore);
 
       if (usingClientCert) {
         sslContextBuilder.loadKeyMaterial(keyStore, keyStorePassword.toCharArray());
@@ -116,13 +90,10 @@ public class HttpClients {
       throw Throwables.propagate(e);
     }
 
-    SSLSocketFactory socketFactory = sslContext.getSocketFactory();
-
     OkHttpClient client = new OkHttpClient()
-        .setSslSocketFactory(socketFactory)
+        .setSslSocketFactory(sslContext.getSocketFactory())
         .setConnectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS))
-        .setFollowSslRedirects(false)
-        .setHostnameVerifier(new LocalhostSslClientHostnameVerifier());
+        .setFollowSslRedirects(false);
 
     client.setFollowRedirects(false);
     client.setRetryOnConnectionFailure(false);
@@ -151,8 +122,7 @@ public class HttpClients {
     private String password;
     private List<Interceptor> requestInterceptors = new ArrayList<>();
 
-    private LocalhostClientBuilder() {
-    }
+    private LocalhostClientBuilder() {}
 
     public LocalhostClientBuilder withClientCert(KeyStore keyStore, String password) {
       this.keyStore = keyStore;
@@ -160,26 +130,15 @@ public class HttpClients {
       return this;
     }
 
-    public LocalhostClientBuilder addRequestInterceptors(Interceptor first,
-        Interceptor... others) {
+    public LocalhostClientBuilder addRequestInterceptors(Interceptor first, Interceptor... others) {
       checkNotNull(first);
       requestInterceptors.add(first);
       requestInterceptors.addAll(Arrays.asList(others));
       return this;
     }
 
-    public OkHttpClient build(X509Certificate serverCertificate, int port) {
-      TrustStrategy trustStrategy = HttpClients.trustStrategy(serverCertificate);
-      KeyStore trustStore;
-      try {
-        trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        trustStore.load(null, "changeit".toCharArray());
-        trustStore.setCertificateEntry("serverCert", serverCertificate);
-      } catch (CertificateException| IOException | KeyStoreException | NoSuchAlgorithmException e) {
-        throw Throwables.propagate(e);
-      }
-
-      return localhostSslClient(port, keyStore, password, trustStore, trustStrategy, requestInterceptors);
+    public OkHttpClient build(KeyStore trustStore, int port) {
+      return localhostSslClient(port, keyStore, password, trustStore, requestInterceptors);
     }
   }
 }

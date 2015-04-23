@@ -45,6 +45,7 @@ public class ResourcesHttpsConnectorFactory extends HttpsConnectorFactory {
     SslContextFactory factory = super.buildSslContextFactory();
     factory.setKeyStorePath(resolveResource(factory.getKeyStorePath()));
     factory.setTrustStorePath(resolveResource(factory.getTrustStore()));
+    factory.setCrlPath(resolveResource(getCrlPath().getName()));
     return factory;
   }
 

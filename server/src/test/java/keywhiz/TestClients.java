@@ -17,7 +17,6 @@
 package keywhiz;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Throwables;
 import com.google.common.io.Resources;
 import com.squareup.okhttp.OkHttpClient;
 import io.dropwizard.jackson.Jackson;
@@ -27,7 +26,6 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import javax.ws.rs.core.MediaType;
 import keywhiz.client.KeywhizClient;
 import keywhiz.testing.HttpClients;
@@ -37,86 +35,56 @@ public class TestClients {
 
   public static OkHttpClient unauthenticatedClient() {
     String password = "ponies";
-    KeyStore trustStore = keyStoreFromResource("clients/client_pub.jceks", password);
-    X509Certificate serverCert;
-    try {
-      serverCert = (X509Certificate) trustStore.getCertificate("mykey");
-    } catch (KeyStoreException e) {
-      throw Throwables.propagate(e);
-    }
+    KeyStore trustStore = keyStoreFromResource("dev_and_test_truststore.p12", password);
 
     return HttpClients.builder()
         .addRequestInterceptors(
             new AuthHelper.XsrfRequestInterceptor("XSRF-TOKEN", "X-XSRF-TOKEN"),
             new AuthHelper.AcceptRequestInterceptor(MediaType.APPLICATION_JSON))
-        .build(serverCert, 4445);
+        .build(trustStore, 4445);
   }
 
   public static OkHttpClient mutualSslClient() {
     String password = "ponies";
-    KeyStore keyStore = keyStoreFromResource("clients/client.jceks", password);
-    KeyStore trustStore = keyStoreFromResource("clients/client_pub.jceks", password);
-    X509Certificate serverCert;
-    try {
-      serverCert = (X509Certificate) trustStore.getCertificate("mykey");
-    } catch (KeyStoreException e) {
-      throw Throwables.propagate(e);
-    }
+    KeyStore keyStore = keyStoreFromResource("clients/client.p12", password);
+    KeyStore trustStore = keyStoreFromResource("dev_and_test_truststore.p12", password);
 
     return HttpClients.builder()
         .withClientCert(keyStore, password)
         .addRequestInterceptors(new AuthHelper.AcceptRequestInterceptor(MediaType.APPLICATION_JSON))
-        .build(serverCert, 4445);
+        .build(trustStore, 4445);
   }
 
   /** Provides a client certificate authenticated client which has no assigned secrets. */
   public static OkHttpClient noSecretsClient() {
     String password = "ponies";
-    KeyStore keyStore = keyStoreFromResource("clients/noSecretsClient.jceks", password);
-    KeyStore trustStore = keyStoreFromResource("clients/client_pub.jceks", password);
-    X509Certificate serverCert;
-    try {
-      serverCert = (X509Certificate) trustStore.getCertificate("mykey");
-    } catch (KeyStoreException e) {
-      throw Throwables.propagate(e);
-    }
+    KeyStore keyStore = keyStoreFromResource("clients/noSecretsClient.p12", password);
+    KeyStore trustStore = keyStoreFromResource("dev_and_test_truststore.p12", password);
 
     return HttpClients.builder()
         .withClientCert(keyStore, password)
         .addRequestInterceptors(new AuthHelper.AcceptRequestInterceptor(MediaType.APPLICATION_JSON))
-        .build(serverCert, 4445);
+        .build(trustStore, 4445);
   }
 
   public static OkHttpClient noCertNoXsrfClient() {
     String password = "ponies";
-    KeyStore trustStore = keyStoreFromResource("clients/client_pub.jceks", password);
-    X509Certificate serverCert;
-    try {
-      serverCert = (X509Certificate) trustStore.getCertificate("mykey");
-    } catch (KeyStoreException e) {
-      throw Throwables.propagate(e);
-    }
+    KeyStore trustStore = keyStoreFromResource("dev_and_test_truststore.p12", password);
 
     return HttpClients.builder()
         .addRequestInterceptors(new AuthHelper.AcceptRequestInterceptor(MediaType.APPLICATION_JSON))
-        .build(serverCert, 4445);
+        .build(trustStore, 4445);
   }
 
   public static KeywhizClient keywhizClient() {
     String password = "ponies";
-    KeyStore trustStore = keyStoreFromResource("clients/client_pub.jceks", password);
-    X509Certificate serverCert;
-    try {
-      serverCert = (X509Certificate) trustStore.getCertificate("mykey");
-    } catch (KeyStoreException e) {
-      throw Throwables.propagate(e);
-    }
+    KeyStore trustStore = keyStoreFromResource("dev_and_test_truststore.p12", password);
 
     OkHttpClient httpClient = HttpClients.builder()
         .addRequestInterceptors(
             new AuthHelper.XsrfRequestInterceptor("XSRF-TOKEN", "X-XSRF-TOKEN"),
             new AuthHelper.AcceptRequestInterceptor(MediaType.APPLICATION_JSON))
-        .build(serverCert, 4445);
+        .build(trustStore, 4445);
 
     ObjectMapper mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
     return new KeywhizClient(mapper, httpClient);
@@ -125,7 +93,7 @@ public class TestClients {
   private static KeyStore keyStoreFromResource(String path, String password) {
     KeyStore keyStore;
     try (InputStream stream = Resources.getResource(path).openStream()) {
-      keyStore = KeyStore.getInstance("JCEKS");
+      keyStore = KeyStore.getInstance("PKCS12");
       keyStore.load(stream, password.toCharArray());
     } catch (IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException e) {
       throw new AssertionError(e);
