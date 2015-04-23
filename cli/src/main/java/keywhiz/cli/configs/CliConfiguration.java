@@ -16,6 +16,7 @@
 package keywhiz.cli.configs;
 
 import com.beust.jcommander.Parameter;
+import java.util.Optional;
 
 /** Global command line configuration. */
 public class CliConfiguration {
@@ -25,5 +26,11 @@ public class CliConfiguration {
 
   @Parameter(names = { "-U", "--url" }, description = "Base URL of server")
   public String url;
-}
 
+  @Parameter(names = "--user", description = "User to login as")
+  private String user;
+
+  public Optional<String> getUser() {
+    return Optional.of(user);
+  }
+}
