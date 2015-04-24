@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.jackson.Jackson;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,10 +51,14 @@ public class SecretSeriesDAO {
       @Nullable Map<String, String> generationOptions) {
     SecretsRecord r =  dslContext.newRecord(SECRETS);
 
+    OffsetDateTime now = OffsetDateTime.now();
+
     r.setName(name);
     r.setDescription(description);
     r.setCreatedby(creator);
+    r.setCreatedat(now);
     r.setUpdatedby(creator);
+    r.setUpdatedat(now);
     r.setType(type);
     if (generationOptions != null) {
       try {
@@ -65,6 +70,7 @@ public class SecretSeriesDAO {
     } else {
       r.setOptions("{}");
     }
+
     r.store();
 
     return r.getId();

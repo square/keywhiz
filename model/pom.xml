@@ -26,22 +26,22 @@
     </dependency>
 
     <dependency>
-      <groupId>postgresql</groupId>
-      <artifactId>postgresql</artifactId>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
-      <!-- Creates a keywhizdb_test postgres database if it doesn't exist. -->
+      <!-- Creates (or re-creates) a keywhizdb_test mysql database. -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>sql-maven-plugin</artifactId>
         <dependencies>
           <dependency>
-            <groupId>postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>9.1-901-1.jdbc4</version>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.35</version>
           </dependency>
         </dependencies>
 
@@ -55,13 +55,12 @@
         </executions>
 
         <configuration>
-          <driver>org.postgresql.Driver</driver>
-          <url>jdbc:postgresql:postgres</url>
-          <username>${user.name}</username>
-          <autocommit>true</autocommit>
+          <driver>com.mysql.jdbc.Driver</driver>
+          <url>jdbc:mysql://localhost/?useUnicode=true&amp;characterEncoding=utf8</url>
+          <username>root</username>
           <sqlCommand>
-            DROP DATABASE IF EXISTS keywhizdb_test;
-            CREATE DATABASE keywhizdb_test;
+              DROP DATABASE IF EXISTS keywhizdb_test;
+              CREATE DATABASE keywhizdb_test;
           </sqlCommand>
         </configuration>
       </plugin>
@@ -80,10 +79,10 @@
         </executions>
 
         <configuration>
-          <url>jdbc:postgresql:keywhizdb_test</url>
-          <user>${user.name}</user>
+          <url>jdbc:mysql://localhost/keywhizdb_test?useUnicode=true&amp;characterEncoding=utf8</url>
+          <user>root</user>
           <locations>
-            <location>filesystem:../server/src/main/resources/db/postgres/migration</location>
+            <location>filesystem:../server/src/main/resources/db/mysql/migration</location>
           </locations>
         </configuration>
       </plugin>
@@ -104,19 +103,19 @@
 
         <configuration>
           <jdbc>
-            <driver>org.postgresql.Driver</driver>
-            <url>jdbc:postgresql:keywhizdb_test</url>
-            <user>${user.name}</user>
+            <driver>com.mysql.jdbc.Driver</driver>
+            <url>jdbc:mysql://localhost/keywhizdb_test?useUnicode=true&amp;characterEncoding=utf8</url>
+            <user>root</user>
           </jdbc>
 
           <!-- Generator parameters -->
           <generator>
             <name>org.jooq.util.JavaGenerator</name>
             <database>
-              <name>org.jooq.util.postgres.PostgresDatabase</name>
+              <name>org.jooq.util.mysql.MySQLDatabase</name>
               <includes>.*</includes>
-              <excludes>pg.*</excludes>
-              <inputSchema>public</inputSchema>
+              <excludes>mysql.*</excludes>
+              <inputSchema>keywhizdb_test</inputSchema>
 
               <!-- Registers custom types -->
               <customTypes>
@@ -124,6 +123,10 @@
                   <name>OffsetDateTime</name>
                   <type>java.time.OffsetDateTime</type>
                   <converter>keywhiz.model.OffsetDateTimeConverter</converter>
+                </customType>
+                <customType>
+                  <name>java.lang.Boolean</name>
+                  <converter>keywhiz.model.TinyIntConverter</converter>
                 </customType>
               </customTypes>
 
@@ -133,6 +136,11 @@
                   <name>OffsetDateTime</name>
                   <expression>.*\.createdat|.*\.updatedat|.*\.created_at|.*\.updated_at</expression>
                   <types>timestamp.*</types>
+                </forcedType>
+                <forcedType>
+                  <name>java.lang.Boolean</name>
+                  <expression>.*\.enabled|.*\.automationallowed</expression>
+                  <types>tinyint.*</types>
                 </forcedType>
               </forcedTypes>
             </database>

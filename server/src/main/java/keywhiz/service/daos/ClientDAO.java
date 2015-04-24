@@ -17,6 +17,7 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -37,9 +38,13 @@ public class ClientDAO {
   public long createClient(String name, String user, Optional<String> description) {
     ClientsRecord r = dslContext.newRecord(CLIENTS);
 
+    OffsetDateTime now = OffsetDateTime.now();
+
     r.setName(name);
     r.setCreatedby(user);
+    r.setCreatedat(now);
     r.setUpdatedby(user);
+    r.setUpdatedat(now);
     r.setDescription(description.orElse(null));
     r.setEnabled(true);
     r.setAutomationallowed(false);

@@ -49,8 +49,9 @@ logging:
 environment: development
 
 database:
-  driverClass: org.postgresql.Driver
-  url: jdbc:postgresql://localhost/keywhizdb_development
+  driverClass: com.mysql.jdbc.Driver
+  url: jdbc:mysql://localhost/keywhizdb_development?useUnicode=true&characterEncoding=utf8
+  user: root
   properties:
     charSet: UTF-8
   initialSize: 10
@@ -60,8 +61,9 @@ database:
   # password:
 
 readonlyDatabase:
-  driverClass: org.postgresql.Driver
-  url: jdbc:postgresql://127.0.0.1/keywhizdb_development
+  driverClass: com.mysql.jdbc.Driver
+  url: jdbc:mysql://localhost/keywhizdb_development?useUnicode=true&characterEncoding=utf8
+  user: root
   properties:
     charSet: UTF-8
   readOnlyByDefault: true
@@ -72,7 +74,7 @@ readonlyDatabase:
   # password:
 
 migrationsDir:
-  db/postgres/migration
+  db/mysql/migration
 
 userAuth:
   type: bcrypt
