@@ -68,7 +68,7 @@ public class MembershipResource {
       @PathParam("secretId") LongParam secretId,
       @PathParam("groupId") LongParam groupId) {
 
-    logger.info("User '{}' allowing groupId {} access to secretId {}", user, secretId, groupId);
+    logger.info("User '{}' allowing groupId {} access to secretId {}", user, groupId, secretId);
 
     try {
       aclDAO.findAndAllowAccess(secretId.get(), groupId.get());
@@ -98,7 +98,7 @@ public class MembershipResource {
       @PathParam("secretId") LongParam secretId,
       @PathParam("groupId") LongParam groupId) {
 
-    logger.info("User '{}' disallowing groupId {} access to secretId {}", user, secretId, groupId);
+    logger.info("User '{}' disallowing groupId {} access to secretId {}", user, groupId, secretId);
 
     try {
       aclDAO.findAndRevokeAccess(secretId.get(), groupId.get());
