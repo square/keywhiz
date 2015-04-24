@@ -38,7 +38,13 @@ server:
       port: 8085
 
 logging:
-  level: ALL
+  appenders:
+    - type: console
+      threshold: ALL
+
+## Use this logging configuration if you want EVERYTHING
+# logging:
+#   level: ALL
 
 environment: development
 
