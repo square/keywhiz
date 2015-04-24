@@ -35,6 +35,7 @@ public class MigrateCommand extends ConfiguredCommand<KeywhizConfig> {
 
     Flyway flyway = new Flyway();
     flyway.setDataSource(dataSource);
+    flyway.setLocations(config.getMigrationsDir());
     flyway.migrate();
   }
 }

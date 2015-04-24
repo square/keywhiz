@@ -13,6 +13,7 @@
 
   <properties>
     <db.url>jdbc:postgresql:keywhizdb_test</db.url>
+    <db.migration>db/postgres/migration</db.migration>
   </properties>
 
   <dependencies>
@@ -81,7 +82,7 @@
           <url>${db.url}</url>
           <user>${user.name}</user>
           <locations>
-            <location>filesystem:../server/src/main/resources/db/migration</location>
+            <location>filesystem:../server/src/main/resources/${db.migration}</location>
           </locations>
         </configuration>
       </plugin>

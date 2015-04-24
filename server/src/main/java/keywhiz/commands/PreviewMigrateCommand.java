@@ -41,6 +41,7 @@ public class PreviewMigrateCommand extends ConfiguredCommand<KeywhizConfig> {
 
     Flyway flyway = new Flyway();
     flyway.setDataSource(dataSource);
+    flyway.setLocations(config.getMigrationsDir());
     MigrationInfoService info = flyway.info();
 
     MigrationInfo current = info.current();

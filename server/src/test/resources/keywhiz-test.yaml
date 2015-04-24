@@ -64,6 +64,9 @@ readonlyDatabase:
   # There is explicitly no password. Do not uncomment.
   # password:
 
+migrationsDir:
+  db/postgres/migration
+
 userAuth:
   type: bcrypt
 
