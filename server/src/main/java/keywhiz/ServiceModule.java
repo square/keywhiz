@@ -61,7 +61,7 @@ public class ServiceModule extends AbstractModule {
   }
 
   @Override protected void configure() {
-    // Initialize the BouncyCastle security provider for BKS and cryptography support.
+    // Initialize the BouncyCastle security provider for cryptography support.
     BouncyCastle.require();
 
     bind(Clock.class).toInstance(Clock.systemUTC());

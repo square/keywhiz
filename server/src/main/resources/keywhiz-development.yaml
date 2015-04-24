@@ -8,16 +8,16 @@ server:
   applicationConnectors:
     - type: https
       port: 4444
-      keyStorePath: server/src/main/resources/dev_and_test_keystore.jceks
+      keyStorePath: server/src/main/resources/dev_and_test_keystore.p12
       keyStorePassword: ponies
-      keyStoreType: JCEKS
-      trustStorePath: server/src/main/resources/dev_and_test_truststore.jceks
+      keyStoreType: PKCS12
+      trustStorePath: server/src/main/resources/dev_and_test_truststore.p12
       trustStorePassword: ponies
-      trustStoreType: JCEKS
+      trustStoreType: PKCS12
       wantClientAuth: true
       enableCRLDP: false
       enableOCSP: false
-      validateCerts: false
+      crlPath: server/src/main/resources/dev_and_test.crl
       supportedProtocols: [TLSv1.2]
       supportedCipherSuites:
         - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
