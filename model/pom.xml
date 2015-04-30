@@ -11,11 +11,6 @@
   <artifactId>keywhiz-model</artifactId>
   <name>Keywhiz Model</name>
 
-  <properties>
-    <db.url>jdbc:postgresql:keywhizdb_test</db.url>
-    <db.migration>db/postgres/migration</db.migration>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.jooq</groupId>
@@ -41,27 +36,33 @@
       <!-- Creates a keywhizdb_test postgres database if it doesn't exist. -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
+        <artifactId>sql-maven-plugin</artifactId>
+        <dependencies>
+          <dependency>
+            <groupId>postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>9.1-901-1.jdbc4</version>
+          </dependency>
+        </dependencies>
 
         <executions>
           <execution>
             <phase>initialize</phase>
             <goals>
-              <goal>exec</goal>
+              <goal>execute</goal>
             </goals>
           </execution>
         </executions>
 
         <configuration>
-          <executable>createdb</executable>
-          <arguments>
-            <argument>keywhizdb_test</argument>
-          </arguments>
-          <!-- Exits 1 if db exists. That's OK. -->
-          <successCodes>
-            <successCode>0</successCode>
-            <successCode>1</successCode>
-          </successCodes>
+          <driver>org.postgresql.Driver</driver>
+          <url>jdbc:postgresql:postgres</url>
+          <username>${user.name}</username>
+          <autocommit>true</autocommit>
+          <sqlCommand>
+            DROP DATABASE IF EXISTS keywhizdb_test;
+            CREATE DATABASE keywhizdb_test;
+          </sqlCommand>
         </configuration>
       </plugin>
 
@@ -79,10 +80,10 @@
         </executions>
 
         <configuration>
-          <url>${db.url}</url>
+          <url>jdbc:postgresql:keywhizdb_test</url>
           <user>${user.name}</user>
           <locations>
-            <location>filesystem:../server/src/main/resources/${db.migration}</location>
+            <location>filesystem:../server/src/main/resources/db/postgres/migration</location>
           </locations>
         </configuration>
       </plugin>
@@ -104,7 +105,7 @@
         <configuration>
           <jdbc>
             <driver>org.postgresql.Driver</driver>
-            <url>${db.url}</url>
+            <url>jdbc:postgresql:keywhizdb_test</url>
             <user>${user.name}</user>
           </jdbc>
 
