@@ -56,6 +56,7 @@ public class MigrationsRule implements TestRule {
 
         Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
+        flyway.setLocations(config.getMigrationsDir());
         flyway.clean();
         flyway.migrate();
 

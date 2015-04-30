@@ -78,6 +78,9 @@ public class KeywhizConfig extends Configuration {
   @JsonProperty
   private String derivationProviderClass = "com.sun.crypto.provider.SunJCE";
 
+  @JsonProperty
+  private String migrationsDir;
+
   public String getEnvironment() {
     return environment;
   }
@@ -106,6 +109,21 @@ public class KeywhizConfig extends Configuration {
       readonlyDatabase.setUser(USER_NAME.value());
     }
     return readonlyDatabase;
+  }
+
+  /**
+   * Customizes the migrations directory.
+   *
+   * The content of the directory might vary depending on the database engine. Having it
+   * configurable is useful.
+   *
+   * @return path relative to the resources directory.
+   */
+  public String getMigrationsDir() {
+    if (migrationsDir == null) {
+      return "db/migration";
+    }
+    return migrationsDir;
   }
 
   /** @return LDAP configuration to authenticate admin users. Absent if fakeLdap is true. */
