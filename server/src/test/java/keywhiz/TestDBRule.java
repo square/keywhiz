@@ -61,7 +61,8 @@ public class TestDBRule extends ExternalResource {
 
     Flyway flyway = new Flyway();
     flyway.setDataSource(dataSource);
-    flyway.setLocations(config.getMigrationsDir());
+    // sql stuff for h2:
+    flyway.setLocations("db/postgres/migration");
     flyway.migrate();
 
     dslContext = DSL.using(dataSource, SQLDialect.H2,

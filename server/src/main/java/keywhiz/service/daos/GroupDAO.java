@@ -17,6 +17,7 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -36,9 +37,13 @@ public class GroupDAO {
   public long createGroup(String name, String creator, Optional<String> description) {
     GroupsRecord r = dslContext.newRecord(GROUPS);
 
+    OffsetDateTime now = OffsetDateTime.now();
+
     r.setName(name);
     r.setCreatedby(creator);
+    r.setCreatedat(now);
     r.setUpdatedby(creator);
+    r.setUpdatedat(now);
     r.setDescription(description.orElse(null));
     r.store();
 
