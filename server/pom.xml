@@ -11,6 +11,40 @@
   <artifactId>keywhiz-server</artifactId>
   <name>Keywhiz Server</name>
 
+  <properties>
+    <development-yaml/>
+    <test-yaml/>
+  </properties>
+
+  <profiles>
+    <profile>
+      <id>postgres</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <development-yaml>src/main/resources/keywhiz-development.yaml.postgres</development-yaml>
+        <test-yaml>src/test/resources/keywhiz-test.yaml.postgres</test-yaml>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>mysql</id>
+      <properties>
+        <development-yaml>src/main/resources/keywhiz-development.yaml.mysql</development-yaml>
+        <test-yaml>src/test/resources/keywhiz-test.yaml.mysql</test-yaml>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>h2</id>
+      <properties>
+        <development-yaml>src/main/resources/keywhiz-development.yaml.h2</development-yaml>
+        <test-yaml>src/test/resources/keywhiz-test.yaml.h2</test-yaml>
+      </properties>
+    </profile>
+  </profiles>
+
   <dependencies>
     <dependency>
       <groupId>com.squareup.keywhiz</groupId>
@@ -185,6 +219,30 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>com.coderplus.maven.plugins</groupId>
+        <artifactId>copy-rename-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <fileSets>
+            <fileSet>
+              <sourceFile>${development-yaml}</sourceFile>
+              <destinationFile>src/main/resources/keywhiz-development.yaml</destinationFile>
+            </fileSet>
+            <fileSet>
+              <sourceFile>${test-yaml}</sourceFile>
+              <destinationFile>src/test/resources/keywhiz-test.yaml</destinationFile>
+            </fileSet>
+          </fileSets>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>

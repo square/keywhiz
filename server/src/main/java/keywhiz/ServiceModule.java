@@ -46,8 +46,8 @@ import keywhiz.service.daos.SecretContentDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretSeriesDAO;
+import keywhiz.utility.DSLContexts;
 import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.JooqHealthCheck.OnFailure.LOG_ONLY;
@@ -121,13 +121,13 @@ public class ServiceModule extends AbstractModule {
   // jOOQ
 
   @Provides @Singleton DSLContext jooqContext(ManagedDataSource dataSource) throws SQLException {
-    return DSL.using(dataSource.getConnection());
+    return DSLContexts.databaseAgnostic(dataSource);
   }
 
   @Provides @Singleton
   @Readonly DSLContext readonlyJooqContext(@Readonly ManagedDataSource dataSource)
       throws SQLException {
-    return DSL.using(dataSource.getConnection());
+    return DSLContexts.databaseAgnostic(dataSource);
   }
 
   // DAOs

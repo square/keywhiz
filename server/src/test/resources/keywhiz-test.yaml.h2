@@ -1,0 +1,91 @@
+# Copyright 2013 Square, Inc.
+
+# Passwords/secrets should not be checked into SCM. However, sprinkled below are some passwords and
+# keys that are NOT considered sensitive and only to be used in development and testing.
+---
+
+server:
+  applicationConnectors:
+    - type: resources-https
+      port: 4445
+      keyStorePath: dev_and_test_keystore.p12
+      keyStorePassword: ponies
+      keyStoreType: PKCS12
+      trustStorePath: dev_and_test_truststore.p12
+      trustStorePassword: ponies
+      trustStoreType: PKCS12
+      wantClientAuth: true
+      crlPath: dev_and_test.crl
+      supportedProtocols: [TLSv1.2]
+      supportedCipherSuites:
+        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_DHE_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
+        - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
+        - TLS_RSA_WITH_AES_128_CBC_SHA
+        - TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA
+        - TLS_ECDH_RSA_WITH_AES_128_CBC_SHA
+        - TLS_DHE_RSA_WITH_AES_128_CBC_SHA
+  adminConnectors:
+    - type: http
+      bindHost: localhost
+      port: 8081
+
+logging:
+  appenders:
+    - type: console
+
+environment: testing
+
+database:
+  driverClass: org.h2.Driver
+  url: jdbc:h2:/tmp/h2_data/keywhizdb_test
+  user: root
+  properties:
+    charSet: UTF-8
+  initialSize: 5
+  minSize: 5
+  maxSize: 5
+  # There is explicitly no password. Do not uncomment.
+  # password:
+
+readonlyDatabase:
+  driverClass: org.h2.Driver
+  url: jdbc:h2:/tmp/h2_data/keywhizdb_test
+  user: root
+  properties:
+    charSet: UTF-8
+  readOnlyByDefault: true
+  initialSize: 5
+  minSize: 5
+  maxSize: 5
+  # There is explicitly no password. Do not uncomment.
+  # password:
+
+migrationsDir:
+  db/h2/migration
+
+userAuth:
+  type: bcrypt
+
+# Base64 of "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+cookieKey: QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE=
+
+sessionCookie:
+  name: session
+  path: /admin
+
+xsrfCookie:
+  name: XSRF-TOKEN
+  path: /
+  httpOnly: false
+
+contentKeyStore:
+  path: derivation.jceks
+  type: JCEKS
+  password: CHANGE
+  alias: basekey

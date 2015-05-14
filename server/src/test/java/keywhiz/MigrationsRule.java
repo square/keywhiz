@@ -24,14 +24,13 @@ import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.jackson.Jackson;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
 import javax.sql.DataSource;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import keywhiz.commands.DbSeedCommand;
+import keywhiz.utility.DSLContexts;
 import org.flywaydb.core.Flyway;
 import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -60,10 +59,8 @@ public class MigrationsRule implements TestRule {
         flyway.clean();
         flyway.migrate();
 
-        try (Connection conn = dataSource.getConnection()) {
-          DSLContext dslContext = DSL.using(conn);
-          DbSeedCommand.doImport(dslContext);
-        }
+        DSLContext dslContext = DSLContexts.databaseAgnostic(dataSource);
+        DbSeedCommand.doImport(dslContext);
 
         base.evaluate();
       }

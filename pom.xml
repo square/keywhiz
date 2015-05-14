@@ -562,6 +562,12 @@ Place the jars in this directory: `/usr/libexec/java_home -v
             </dependency>
           </dependencies>
         </plugin>
+
+        <plugin>
+          <groupId>com.coderplus.maven.plugins</groupId>
+          <artifactId>copy-rename-maven-plugin</artifactId>
+          <version>1.0</version>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>

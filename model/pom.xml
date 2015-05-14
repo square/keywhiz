@@ -39,6 +39,56 @@
     </dependency>
   </dependencies>
 
+  <profiles>
+    <profile>
+      <id>postgres</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <skipResetDatabase>false</skipResetDatabase>
+        <db.driver>org.postgresql.Driver</db.driver>
+        <db.create-url>jdbc:postgresql:postgres</db.create-url>
+        <db.migrate-url>jdbc:postgresql:keywhizdb_test</db.migrate-url>
+        <db.username>${user.name}</db.username>
+        <db.migrations-path>postgres/migration</db.migrations-path>
+        <jooq.dialect>org.jooq.util.postgres.PostgresDatabase</jooq.dialect>
+        <jooq.excludes>pg.*</jooq.excludes>
+        <jooq.input-schema>public</jooq.input-schema>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>mysql</id>
+      <properties>
+        <skipResetDatabase>false</skipResetDatabase>
+        <db.driver>com.mysql.jdbc.Driver</db.driver>
+        <db.create-url>jdbc:mysql://localhost/?useUnicode=true&amp;characterEncoding=utf8</db.create-url>
+        <db.migrate-url>jdbc:mysql://localhost/keywhizdb_test?useUnicode=true&amp;characterEncoding=utf8</db.migrate-url>
+        <db.username>root</db.username>
+        <db.migrations-path>mysql/migration</db.migrations-path>
+        <jooq.dialect>org.jooq.util.mysql.MySQLDatabase</jooq.dialect>
+        <jooq.excludes>mysql.*</jooq.excludes>
+        <jooq.input-schema>keywhizdb_test</jooq.input-schema>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>h2</id>
+      <properties>
+        <skipResetDatabase>true</skipResetDatabase>
+        <db.driver>org.h2.Driver</db.driver>
+        <db.create-url>jdbc:h2:/tmp/h2_data/keywhizdb_test</db.create-url>
+        <db.migrate-url>jdbc:h2:/tmp/h2_data/keywhizdb_test</db.migrate-url>
+        <db.username>root</db.username>
+        <db.migrations-path>h2/migration</db.migrations-path>
+        <jooq.dialect>org.jooq.util.h2.H2Database</jooq.dialect>
+        <jooq.excludes/>
+        <jooq.input-schema>PUBLIC</jooq.input-schema>
+      </properties>
+    </profile>
+  </profiles>
+
   <build>
     <plugins>
       <!-- Creates (or re-creates) a keywhizdb_test postgres database. -->
@@ -55,9 +105,10 @@
         </executions>
 
         <configuration>
-          <driver>org.postgresql.Driver</driver>
-          <url>jdbc:postgresql:postgres</url>
-          <username>${user.name}</username>
+          <skip>${skipResetDatabase}</skip>
+          <driver>${db.driver}</driver>
+          <url>${db.create-url}</url>
+          <username>${db.username}</username>
           <autocommit>true</autocommit>
           <sqlCommand>
             DROP DATABASE IF EXISTS keywhizdb_test;
@@ -80,10 +131,10 @@
         </executions>
 
         <configuration>
-          <url>jdbc:postgresql:keywhizdb_test</url>
-          <user>${user.name}</user>
+          <url>${db.migrate-url}</url>
+          <user>${db.username}</user>
           <locations>
-            <location>filesystem:../server/src/main/resources/db/postgres/migration</location>
+            <location>filesystem:../server/src/main/resources/db/${db.migrations-path}</location>
           </locations>
         </configuration>
       </plugin>
@@ -104,19 +155,19 @@
 
         <configuration>
           <jdbc>
-            <driver>org.postgresql.Driver</driver>
-            <url>jdbc:postgresql:keywhizdb_test</url>
-            <user>${user.name}</user>
+            <driver>${db.driver}</driver>
+            <url>${db.migrate-url}</url>
+            <user>${db.username}</user>
           </jdbc>
 
           <!-- Generator parameters -->
           <generator>
             <name>org.jooq.util.JavaGenerator</name>
             <database>
-              <name>org.jooq.util.postgres.PostgresDatabase</name>
+              <name>${jooq.dialect}</name>
               <includes>.*</includes>
-              <excludes>pg.*</excludes>
-              <inputSchema>public</inputSchema>
+              <excludes>${jooq.excludes}</excludes>
+              <inputSchema>${jooq.input-schema}</inputSchema>
 
               <!-- Registers custom types -->
               <customTypes>
