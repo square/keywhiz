@@ -41,6 +41,7 @@
     <jooq.version>3.5.1</jooq.version>
     <powermock.version>1.6.1</powermock.version>
     <slf4j.version>1.7.7</slf4j.version>
+    <postgres.version>9.1-901-1.jdbc4</postgres.version>
   </properties>
 
   <scm>
@@ -289,7 +290,7 @@
       <dependency>
         <groupId>postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>9.1-901-1.jdbc4</version>
+        <version>${postgres.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -536,6 +537,19 @@ Place the jars in this directory: `/usr/libexec/java_home -v
               <link>https://square.github.io/keywhiz/javadoc/</link>
             </links>
           </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>sql-maven-plugin</artifactId>
+          <version>1.5</version>
+          <dependencies>
+            <dependency>
+              <groupId>postgresql</groupId>
+              <artifactId>postgresql</artifactId>
+              <version>${postgres.version}</version>
+            </dependency>
+          </dependencies>
         </plugin>
       </plugins>
     </pluginManagement>
