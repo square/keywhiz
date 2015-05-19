@@ -49,14 +49,14 @@ public class AclDAOTest {
   ClientDAO clientDAO;
   GroupDAO groupDAO;
   SecretDAO secretDAO;
-  SecretContentDAO secretContentDAO;
   SecretSeriesDAO secretSeriesDAO;
   AclDAO aclDAO;
+  DSLContext jooqContext;
 
   @Before
   public void setUp() {
     ObjectMapper objectMapper = new ObjectMapper();
-    DSLContext jooqContext = testDBRule.jooqContext();
+    jooqContext = testDBRule.jooqContext();
     jooqContext.delete(CLIENTS).execute();
     jooqContext.delete(GROUPS).execute();
     jooqContext.delete(SECRETS).execute();
@@ -80,40 +80,38 @@ public class AclDAOTest {
     group3 = groupDAO.getGroupById(id).get();
 
     secretSeriesDAO = new SecretSeriesDAO(jooqContext, objectMapper);
-    secretContentDAO = new SecretContentDAO(jooqContext, objectMapper);
 
-    secretDAO = new SecretDAO(jooqContext, secretContentDAO, secretSeriesDAO);
+    secretDAO = new SecretDAO(jooqContext, objectMapper);
     SecretFixtures secretFixtures = SecretFixtures.using(secretDAO);
     secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==", VersionGenerator.now().toHex());
     secret2 = secretFixtures.createSecret("secret2", "c2VjcmV0Mg==");
 
-    aclDAO = new AclDAO(jooqContext, clientDAO, groupDAO, secretContentDAO, secretSeriesDAO,
-        objectMapper);
+    aclDAO = new AclDAO(jooqContext, objectMapper);
   }
 
   @Test
   public void allowsAccess() {
     int before = accessGrantsTableSize();
-    aclDAO.allowAccess(secret2.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext, secret2.getId(), group1.getId());
     assertThat(accessGrantsTableSize()).isEqualTo(before + 1);
   }
 
   @Test
   public void revokesAccess() {
-    aclDAO.allowAccess(secret2.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext, secret2.getId(), group1.getId());
     int before = accessGrantsTableSize();
 
-    aclDAO.revokeAccess(secret2.getId(), group2.getId());
+    aclDAO.revokeAccess(jooqContext, secret2.getId(), group2.getId());
     assertThat(accessGrantsTableSize()).isEqualTo(before);
 
-    aclDAO.revokeAccess(secret2.getId(), group1.getId());
+    aclDAO.revokeAccess(jooqContext, secret2.getId(), group1.getId());
     assertThat(accessGrantsTableSize()).isEqualTo(before - 1);
   }
 
   @Test
   public void accessGrantsHasReferentialIntegrity() {
-    aclDAO.allowAccess(secret1.getId(), group1.getId());
-    aclDAO.allowAccess(secret2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext, secret1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext, secret2.getId(), group2.getId());
     int before = accessGrantsTableSize();
 
     groupDAO.deleteGroup(group1);
@@ -160,11 +158,11 @@ public class AclDAOTest {
     SanitizedSecret sanitizedSecret1 = SanitizedSecret.fromSecret(secret1);
     SanitizedSecret sanitizedSecret2 = SanitizedSecret.fromSecret(secret2);
 
-    aclDAO.allowAccess(secret2.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext, secret2.getId(), group1.getId());
     Set<SanitizedSecret> secrets = aclDAO.getSanitizedSecretsFor(group1);
     assertThat(Iterables.getOnlyElement(secrets)).isEqualToIgnoringGivenFields(sanitizedSecret2, "id");
 
-    aclDAO.allowAccess(secret1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext, secret1.getId(), group1.getId());
     secrets = aclDAO.getSanitizedSecretsFor(group1);
     assertThat(secrets).hasSize(2).doesNotHaveDuplicates();
 
@@ -179,10 +177,10 @@ public class AclDAOTest {
 
   @Test
   public void getGroupsForSecret() {
-    aclDAO.allowAccess(secret1.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext, secret1.getId(), group2.getId());
     assertThat(aclDAO.getGroupsFor(secret1)).containsOnly(group2);
 
-    aclDAO.allowAccess(secret1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext, secret1.getId(), group1.getId());
     assertThat(aclDAO.getGroupsFor(secret1)).containsOnly(group1, group2);
   }
 
@@ -209,12 +207,12 @@ public class AclDAOTest {
     assertThat(aclDAO.getSanitizedSecretsFor(client2)).isEmpty();
 
     aclDAO.enrollClient(client2.getId(), group2.getId());
-    aclDAO.allowAccess(secret2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext, secret2.getId(), group2.getId());
     Set<SanitizedSecret> secrets = aclDAO.getSanitizedSecretsFor(client2);
     assertThat(Iterables.getOnlyElement(secrets))
         .isEqualToIgnoringGivenFields(SanitizedSecret.fromSecret(secret2), "id");
 
-    aclDAO.allowAccess(secret1.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext, secret1.getId(), group2.getId());
     secrets = aclDAO.getSanitizedSecretsFor(client2);
     assertThat(secrets).hasSize(2).doesNotHaveDuplicates();
 
@@ -234,25 +232,25 @@ public class AclDAOTest {
   public void getClientsForSecret() {
     assertThat(aclDAO.getClientsFor(secret2)).isEmpty();
 
-    aclDAO.allowAccess(secret2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext, secret2.getId(), group2.getId());
     aclDAO.enrollClient(client2.getId(), group2.getId());
     assertThat(aclDAO.getClientsFor(secret2)).containsOnly(client2);
 
     aclDAO.enrollClient(client1.getId(), group2.getId());
     assertThat(aclDAO.getClientsFor(secret2)).containsOnly(client1, client2);
 
-    aclDAO.revokeAccess(secret2.getId(), group2.getId());
+    aclDAO.revokeAccess(jooqContext, secret2.getId(), group2.getId());
     assertThat(aclDAO.getClientsFor(secret2)).isEmpty();
   }
 
   @Test
   public void getSecretSeriesForWhenUnauthorized() throws Exception {
-    assertThat(aclDAO.getSecretSeriesFor(client1, secret1.getName()).isPresent()).isFalse();
+    assertThat(aclDAO.getSecretSeriesFor(jooqContext, client1, secret1.getName()).isPresent()).isFalse();
   }
 
   @Test
   public void getSecretSeriesForWhenMissing() throws Exception {
-    assertThat(aclDAO.getSecretSeriesFor(client1, "non-existent").isPresent()).isFalse();
+    assertThat(aclDAO.getSecretSeriesFor(jooqContext, client1, "non-existent").isPresent()).isFalse();
   }
 
   @Test
@@ -261,18 +259,18 @@ public class AclDAOTest {
 
     aclDAO.enrollClient(client2.getId(), group1.getId());
     aclDAO.enrollClient(client2.getId(), group3.getId());
-    aclDAO.allowAccess(secret1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext, secret1.getId(), group1.getId());
 
-    SecretSeries secretSeries = aclDAO.getSecretSeriesFor(client2, secret1.getName())
+    SecretSeries secretSeries = aclDAO.getSecretSeriesFor(jooqContext, client2, secret1.getName())
         .orElseThrow(RuntimeException::new);
     assertThat(secretSeries).isEqualToIgnoringGivenFields(secretSeries1, "id");
 
     aclDAO.evictClient(client2.getId(), group1.getId());
-    assertThat(aclDAO.getSecretSeriesFor(client2, secret1.getName()).isPresent()).isFalse();
+    assertThat(aclDAO.getSecretSeriesFor(jooqContext, client2, secret1.getName()).isPresent()).isFalse();
 
-    aclDAO.allowAccess(secret1.getId(), group3.getId());
+    aclDAO.allowAccess(jooqContext, secret1.getId(), group3.getId());
 
-    secretSeries = aclDAO.getSecretSeriesFor(client2, secret1.getName())
+    secretSeries = aclDAO.getSecretSeriesFor(jooqContext, client2, secret1.getName())
         .orElseThrow(RuntimeException::new);
     assertThat(secretSeries).isEqualToIgnoringGivenFields(secretSeries1, "id");
   }
@@ -295,7 +293,7 @@ public class AclDAOTest {
     aclDAO.enrollClient(client2.getId(), group1.getId());
     aclDAO.enrollClient(client2.getId(), group3.getId());
 
-    aclDAO.allowAccess(secret1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext, secret1.getId(), group1.getId());
 
     SanitizedSecret secret = aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name(), sanitizedSecret1.version())
         .orElseThrow(RuntimeException::new);
@@ -306,7 +304,7 @@ public class AclDAOTest {
         aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name(), sanitizedSecret1.version());
     assertThat(missingSecret.isPresent()).isFalse();
 
-    aclDAO.allowAccess(sanitizedSecret1.id(), group3.getId());
+    aclDAO.allowAccess(jooqContext, sanitizedSecret1.id(), group3.getId());
 
     secret = aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name(), sanitizedSecret1.version())
         .orElseThrow(RuntimeException::new);
@@ -318,8 +316,8 @@ public class AclDAOTest {
     // client1 has two paths to secret1
     aclDAO.enrollClient(client1.getId(), group1.getId());
     aclDAO.enrollClient(client1.getId(), group2.getId());
-    aclDAO.allowAccess(secret1.getId(), group1.getId());
-    aclDAO.allowAccess(secret1.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext, secret1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext, secret1.getId(), group2.getId());
 
     Set<SanitizedSecret> secret = aclDAO.getSanitizedSecretsFor(client1);
     assertThat(secret).hasSize(1);

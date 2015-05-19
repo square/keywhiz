@@ -16,6 +16,7 @@
 
 package keywhiz.service.daos;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.util.Map;
@@ -27,6 +28,7 @@ import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -39,15 +41,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class SecretDAO {
   private final DSLContext dslContext;
-  private final SecretContentDAO secretContentDAO;
-  private final SecretSeriesDAO secretSeriesDAO;
+  private final ObjectMapper mapper;
 
   @Inject
-  public SecretDAO(DSLContext dslContext, SecretContentDAO secretContentDAO,
-      SecretSeriesDAO secretSeriesDAO) {
+  public SecretDAO(DSLContext dslContext, ObjectMapper mapper) {
     this.dslContext = dslContext;
-    this.secretContentDAO = secretContentDAO;
-    this.secretSeriesDAO = secretSeriesDAO;
+    this.mapper = mapper;
   }
 
   @VisibleForTesting
@@ -57,6 +56,10 @@ public class SecretDAO {
     // TODO(jlfwong): Should the description be updated...?
 
     return dslContext.transactionResult(configuration -> {
+      DSLContext innerDslContext = DSL.using(configuration);
+      SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
+      SecretContentDAO secretContentDAO = new SecretContentDAO(innerDslContext, mapper);
+
       Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
       long secretId;
       if (secretSeries.isPresent()) {
@@ -78,6 +81,10 @@ public class SecretDAO {
    */
   public ImmutableList<SecretSeriesAndContent> getSecretsById(long secretId) {
     return dslContext.transactionResult(configuration -> {
+      DSLContext innerDslContext = DSL.using(configuration);
+      SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
+      SecretContentDAO secretContentDAO = new SecretContentDAO(innerDslContext, mapper);
+
       ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
 
       Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesById(secretId);
@@ -102,6 +109,10 @@ public class SecretDAO {
     checkNotNull(version);
 
     return dslContext.<Optional<SecretSeriesAndContent>>transactionResult(configuration -> {
+      DSLContext innerDslContext = DSL.using(configuration);
+      SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
+      SecretContentDAO secretContentDAO = new SecretContentDAO(innerDslContext, mapper);
+
       Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesById(secretId);
       if (!series.isPresent()) {
         return Optional.empty();
@@ -125,6 +136,10 @@ public class SecretDAO {
     checkNotNull(name);
 
     return dslContext.<ImmutableList<String>>transactionResult(configuration -> {
+      DSLContext innerDslContext = DSL.using(configuration);
+      SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
+      SecretContentDAO secretContentDAO = new SecretContentDAO(innerDslContext, mapper);
+
       Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesByName(name);
       if (!series.isPresent()) {
         return ImmutableList.of();
@@ -144,6 +159,10 @@ public class SecretDAO {
     checkNotNull(version);
 
     return dslContext.<Optional<SecretSeriesAndContent>>transactionResult(configuration -> {
+      DSLContext innerDslContext = DSL.using(configuration);
+      SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
+      SecretContentDAO secretContentDAO = new SecretContentDAO(innerDslContext, mapper);
+
       Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
       if (!secretSeries.isPresent()) {
         return Optional.empty();
@@ -163,6 +182,10 @@ public class SecretDAO {
   /** @return all existing secrets. */
   public ImmutableList<SecretSeriesAndContent> getSecrets() {
     return dslContext.transactionResult(configuration -> {
+      DSLContext innerDslContext = DSL.using(configuration);
+      SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
+      SecretContentDAO secretContentDAO = new SecretContentDAO(innerDslContext, mapper);
+
       ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
 
       secretSeriesDAO.getSecretSeries()
@@ -181,6 +204,7 @@ public class SecretDAO {
    */
   public void deleteSecretsByName(String name) {
     checkArgument(!name.isEmpty());
+    SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(dslContext, mapper);
     secretSeriesDAO.deleteSecretSeriesByName(name);
   }
 
@@ -195,6 +219,10 @@ public class SecretDAO {
     checkNotNull(version);
 
     dslContext.transaction(configuration -> {
+      DSLContext innerDslContext = DSL.using(configuration);
+      SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
+      SecretContentDAO secretContentDAO = new SecretContentDAO(innerDslContext, mapper);
+
       Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
       if (!secretSeries.isPresent()) {
         return;

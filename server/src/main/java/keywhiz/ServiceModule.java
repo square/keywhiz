@@ -130,17 +130,13 @@ public class ServiceModule extends AbstractModule {
 
   // DAOs
 
-  @Provides @Singleton AclDAO aclDAO(DSLContext jooqContext, ClientDAO clientDAO,
-      GroupDAO groupDAO, SecretContentDAO secretContentDAO,
-      SecretSeriesDAO secretSeriesDAO, ObjectMapper mapper) {
-    return new AclDAO(jooqContext, clientDAO, groupDAO, secretContentDAO, secretSeriesDAO, mapper);
+  @Provides @Singleton AclDAO aclDAO(DSLContext jooqContext, ObjectMapper mapper) {
+    return new AclDAO(jooqContext, mapper);
   }
 
   @Provides @Singleton
-  @Readonly AclDAO readonlyAclDAO(@Readonly DSLContext jooqContext, @Readonly ClientDAO clientDAO,
-      @Readonly GroupDAO groupDAO, @Readonly SecretContentDAO secretContentDAO,
-      @Readonly SecretSeriesDAO secretSeriesDAO, ObjectMapper mapper) {
-    return new AclDAO(jooqContext, clientDAO, groupDAO, secretContentDAO, secretSeriesDAO, mapper);
+  @Readonly AclDAO readonlyAclDAO(@Readonly DSLContext jooqContext, ObjectMapper mapper) {
+    return new AclDAO(jooqContext, mapper);
   }
 
   @Provides @Singleton ClientDAO clientDAO(DSLContext jooqContext) {
@@ -181,16 +177,13 @@ public class ServiceModule extends AbstractModule {
     return new SecretSeriesDAO(jooqContext, mapper);
   }
 
-  @Provides @Singleton SecretDAO secretDAO(DSLContext jooqContext,
-      SecretContentDAO secretContentDAO, SecretSeriesDAO secretSeriesDAO) {
-    return new SecretDAO(jooqContext, secretContentDAO, secretSeriesDAO);
+  @Provides @Singleton SecretDAO secretDAO(DSLContext jooqContext, ObjectMapper mapper) {
+    return new SecretDAO(jooqContext, mapper);
   }
 
   @Provides @Singleton
-  @Readonly SecretDAO readonlySecretDAO(@Readonly DSLContext jooqContext,
-      @Readonly SecretContentDAO secretContentDAO,
-      @Readonly SecretSeriesDAO secretSeriesDAO) {
-    return new SecretDAO(jooqContext, secretContentDAO, secretSeriesDAO);
+  @Readonly SecretDAO readonlySecretDAO(@Readonly DSLContext jooqContext, ObjectMapper mapper) {
+    return new SecretDAO(jooqContext, mapper);
   }
 
   @Provides @Singleton SecretController secretController(SecretTransformer transformer,

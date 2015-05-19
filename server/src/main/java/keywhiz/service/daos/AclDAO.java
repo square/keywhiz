@@ -32,6 +32,7 @@ import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,25 +50,20 @@ public class AclDAO {
   private static final Logger logger = LoggerFactory.getLogger(AclDAO.class);
 
   private final DSLContext dslContext;
-  private final ClientDAO clientDAO;
-  private final GroupDAO groupDAO;
-  private final SecretContentDAO secretContentDAO;
-  private final SecretSeriesDAO secretSeriesDAO;
   private final ObjectMapper mapper;
 
   @Inject
-  public AclDAO(DSLContext dslContext, ClientDAO clientDAO, GroupDAO groupDAO,
-      SecretContentDAO secretContentDAO, SecretSeriesDAO secretSeriesDAO, ObjectMapper mapper) {
+  public AclDAO(DSLContext dslContext, ObjectMapper mapper) {
     this.dslContext = dslContext;
-    this.clientDAO = clientDAO;
-    this.groupDAO = groupDAO;
-    this.secretContentDAO = secretContentDAO;
-    this.secretSeriesDAO = secretSeriesDAO;
     this.mapper = mapper;
   }
 
   public void findAndAllowAccess(long secretId, long groupId) {
     dslContext.transaction(configuration -> {
+      DSLContext innerDslContext = DSL.using(configuration);
+      GroupDAO groupDAO = new GroupDAO(innerDslContext);
+      SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
+
       Optional<Group> group = groupDAO.getGroupById(groupId);
       if (!group.isPresent()) {
         logger.info("Failure to allow access groupId {}, secretId {}: groupId not found.", groupId,
@@ -82,12 +78,16 @@ public class AclDAO {
         throw new IllegalStateException(format("SecretId %d doesn't exist.", secretId));
       }
 
-      allowAccess(secretId, groupId);
+      allowAccess(innerDslContext, secretId, groupId);
     });
   }
 
   public void findAndRevokeAccess(long secretId, long groupId) {
     dslContext.transaction(configuration -> {
+      DSLContext innerDslContext = DSL.using(configuration);
+      GroupDAO groupDAO = new GroupDAO(innerDslContext);
+      SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
+
       Optional<Group> group = groupDAO.getGroupById(groupId);
       if (!group.isPresent()) {
         logger.info("Failure to revoke access groupId {}, secretId {}: groupId not found.", groupId,
@@ -102,12 +102,16 @@ public class AclDAO {
         throw new IllegalStateException(format("SecretId %d doesn't exist.", secretId));
       }
 
-      revokeAccess(secretId, groupId);
+      revokeAccess(innerDslContext, secretId, groupId);
     });
   }
 
   public void findAndEnrollClient(long clientId, long groupId) {
     dslContext.transaction(configuration -> {
+      DSLContext innerDslContext = DSL.using(configuration);
+      ClientDAO clientDAO = new ClientDAO(innerDslContext);
+      GroupDAO groupDAO = new GroupDAO(innerDslContext);
+
       Optional<Client> client = clientDAO.getClientById(clientId);
       if (!client.isPresent()) {
         logger.info("Failure to enroll membership clientId {}, groupId {}: clientId not found.",
@@ -128,6 +132,10 @@ public class AclDAO {
 
   public void findAndEvictClient(long clientId, long groupId) {
     dslContext.transaction(configuration -> {
+      DSLContext innerDslContext = DSL.using(configuration);
+      ClientDAO clientDAO = new ClientDAO(innerDslContext);
+      GroupDAO groupDAO = new GroupDAO(innerDslContext);
+
       Optional<Client> client = clientDAO.getClientById(clientId);
       if (!client.isPresent()) {
         logger.info("Failure to evict membership clientId {}, groupId {}: clientId not found.",
@@ -150,6 +158,8 @@ public class AclDAO {
     checkNotNull(group);
 
     ImmutableSet.Builder<SanitizedSecret> set = ImmutableSet.builder();
+
+    SecretContentDAO secretContentDAO = new SecretContentDAO(dslContext, mapper);
 
     for (SecretSeries series : getSecretSeriesFor(group)) {
       for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
@@ -200,9 +210,12 @@ public class AclDAO {
   public ImmutableSet<SanitizedSecret> getSanitizedSecretsFor(Client client) {
     checkNotNull(client);
     return dslContext.transactionResult(configuration -> {
+      DSLContext innerDslContext = DSL.using(configuration);
+      SecretContentDAO secretContentDAO = new SecretContentDAO(dslContext, mapper);
+
       ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
 
-      for (SecretSeries series : getSecretSeriesFor(client)) {
+      for (SecretSeries series : getSecretSeriesFor(innerDslContext, client)) {
         for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
           SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
           sanitizedSet.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
@@ -231,7 +244,10 @@ public class AclDAO {
     checkNotNull(version);
 
     return dslContext.<Optional<SanitizedSecret>>transactionResult(configuration -> {
-      Optional<SecretSeries> secretSeries = getSecretSeriesFor(client, name);
+      DSLContext innerDslContext = DSL.using(configuration);
+      SecretContentDAO secretContentDAO = new SecretContentDAO(innerDslContext, mapper);
+
+      Optional<SecretSeries> secretSeries = getSecretSeriesFor(innerDslContext, client, name);
       if (!secretSeries.isPresent()) {
         return Optional.empty();
       }
@@ -249,16 +265,16 @@ public class AclDAO {
     });
   }
 
-  protected void allowAccess(long secretId, long groupId) {
-    dslContext
+  protected void allowAccess(DSLContext context, long secretId, long groupId) {
+    context
         .insertInto(ACCESSGRANTS)
         .set(ACCESSGRANTS.SECRETID, Math.toIntExact(secretId))
         .set(ACCESSGRANTS.GROUPID, Math.toIntExact(groupId))
         .execute();
   }
 
-  protected void revokeAccess(long secretId, long groupId) {
-    dslContext
+  protected void revokeAccess(DSLContext context, long secretId, long groupId) {
+    context
         .delete(ACCESSGRANTS)
         .where(ACCESSGRANTS.SECRETID.eq(Math.toIntExact(secretId))
             .and(ACCESSGRANTS.GROUPID.eq(Math.toIntExact(groupId))))
@@ -294,8 +310,8 @@ public class AclDAO {
 
   }
 
-  protected ImmutableSet<SecretSeries> getSecretSeriesFor(Client client) {
-    List<SecretSeries> r = dslContext
+  protected ImmutableSet<SecretSeries> getSecretSeriesFor(DSLContext context, Client client) {
+    List<SecretSeries> r = context
         .select()
         .from(SECRETS)
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
@@ -314,8 +330,8 @@ public class AclDAO {
    * The query doesn't distinguish between these cases. If result absent, a followup call on clients
    * table should be used to determine the exception.
    */
-  protected Optional<SecretSeries> getSecretSeriesFor(Client client, String name) {
-    SecretsRecord r = dslContext
+  protected Optional<SecretSeries> getSecretSeriesFor(DSLContext context, Client client, String name) {
+    SecretsRecord r = context
         .select()
         .from(SECRETS)
         .join(SECRETS_CONTENT).on(SECRETS.ID.eq(SECRETS_CONTENT.SECRETID))
