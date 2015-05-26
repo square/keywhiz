@@ -79,4 +79,9 @@ public class TestDBRule extends ExternalResource {
     checkState(dslContext != null, "JOOQ DSLContext not yet initialized.");
     return dslContext;
   }
+
+  public JdbcConnectionPool dataSource() {
+    checkState(dataSource != null, "dataSource not yet initialized.");
+    return dataSource;
+  }
 }
