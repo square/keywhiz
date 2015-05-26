@@ -81,7 +81,8 @@ userAuth:
 # can be changed on-the-fly. DO NOT USE IN PRODUCTION because assets are not cached.
 # alternateUiPath: ui/app/
 
-# Base64 of "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+# Contains base64 of "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA". A real key could be generated with
+# `head -c 32 /dev/urandom | base64 > cookiekey.base64`.
 cookieKey: external:server/src/main/resources/dev_and_test_cookiekey.base64
 
 sessionCookie:
