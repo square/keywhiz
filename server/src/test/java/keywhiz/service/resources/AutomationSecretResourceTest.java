@@ -30,6 +30,7 @@ import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.exceptions.ConflictException;
+import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,6 +54,7 @@ public class AutomationSecretResourceTest {
 
   @Mock SecretController secretController;
   @Mock SecretController.SecretBuilder secretBuilder;
+  @Mock DSLContext dslContext;
   @Mock AclDAO aclDAO;
   @Mock SecretSeriesDAO secretSeriesDAO;
 
@@ -61,7 +63,7 @@ public class AutomationSecretResourceTest {
 
   @Before
   public void setUp() {
-    resource = new AutomationSecretResource(secretController, aclDAO, secretSeriesDAO);
+    resource = new AutomationSecretResource(secretController, dslContext, aclDAO, secretSeriesDAO);
 
     when(secretController.builder(anyString(), anyString(), anyString())).thenReturn(secretBuilder);
   }

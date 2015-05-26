@@ -27,6 +27,7 @@ import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.SecretController;
+import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,6 +42,7 @@ public class SecretDeliveryResourceTest {
   private static final OffsetDateTime NOW = OffsetDateTime.now();
 
   @Mock SecretController secretController;
+  @Mock DSLContext dslContext;
   @Mock AclDAO aclDAO;
   @Mock ClientDAO clientDAO;
   SecretDeliveryResource secretDeliveryResource;
@@ -52,7 +54,7 @@ public class SecretDeliveryResourceTest {
       null, null, null, null);
 
   @Before public void setUp() {
-    secretDeliveryResource = new SecretDeliveryResource(secretController, aclDAO, clientDAO);
+    secretDeliveryResource = new SecretDeliveryResource(secretController, dslContext, aclDAO, clientDAO);
   }
 
   @Test public void returnsSecretWhenAllowed() throws Exception {
@@ -61,7 +63,7 @@ public class SecretDeliveryResourceTest {
     String name = sanitizedSecret.name();
     String version = sanitizedSecret.version();
 
-    when(aclDAO.getSanitizedSecretFor(client, name, version))
+    when(aclDAO.getSanitizedSecretFor(dslContext, client, name, version))
         .thenReturn(Optional.of(sanitizedSecret));
     when(secretController.getSecretByNameAndVersion(name, version))
         .thenReturn(Optional.of(secret));
@@ -76,7 +78,7 @@ public class SecretDeliveryResourceTest {
     Secret versionedSecret = new Secret(2, name, version, null, "U3BpZGVybWFu", NOW, null, NOW,
         null, null, null, null);
 
-    when(aclDAO.getSanitizedSecretFor(client, name, version))
+    when(aclDAO.getSanitizedSecretFor(dslContext, client, name, version))
         .thenReturn(Optional.of(SanitizedSecret.fromSecret(versionedSecret)));
     when(secretController.getSecretByNameAndVersion(name, version))
         .thenReturn(Optional.of(versionedSecret));
@@ -88,7 +90,7 @@ public class SecretDeliveryResourceTest {
 
   @Test(expected = NotFoundException.class)
   public void returnsNotFoundWhenClientDoesNotExist() throws Exception {
-    when(aclDAO.getSanitizedSecretFor(client, secret.getName(), "")).thenReturn(Optional.empty());
+    when(aclDAO.getSanitizedSecretFor(dslContext, client, secret.getName(), "")).thenReturn(Optional.empty());
     when(clientDAO.getClient(client.getName())).thenReturn(Optional.empty());
     when(secretController.getSecretByNameAndVersion(secret.getName(), ""))
         .thenReturn(Optional.of(secret));
@@ -98,7 +100,7 @@ public class SecretDeliveryResourceTest {
 
   @Test(expected = NotFoundException.class)
   public void returnsNotFoundWhenSecretDoesNotExist() throws Exception {
-    when(aclDAO.getSanitizedSecretFor(client, "secret_name", "")).thenReturn(Optional.empty());
+    when(aclDAO.getSanitizedSecretFor(dslContext, client, "secret_name", "")).thenReturn(Optional.empty());
     when(clientDAO.getClient(client.getName())).thenReturn(Optional.of(client));
     when(secretController.getSecretByNameAndVersion("secret_name", ""))
         .thenReturn(Optional.empty());
@@ -108,7 +110,7 @@ public class SecretDeliveryResourceTest {
 
   @Test(expected = ForbiddenException.class)
   public void returnsUnauthorizedWhenDenied() throws Exception {
-    when(aclDAO.getSanitizedSecretFor(client, secret.getName(), "")).thenReturn(Optional.empty());
+    when(aclDAO.getSanitizedSecretFor(dslContext, client, secret.getName(), "")).thenReturn(Optional.empty());
     when(clientDAO.getClient(client.getName())).thenReturn(Optional.of(client));
     when(secretController.getSecretByNameAndVersion(secret.getName(), ""))
         .thenReturn(Optional.of(secret));
@@ -120,7 +122,7 @@ public class SecretDeliveryResourceTest {
     String name = secretBase64.getName();
     String version = secretBase64.getVersion();
 
-    when(aclDAO.getSanitizedSecretFor(client, name, version))
+    when(aclDAO.getSanitizedSecretFor(dslContext, client, name, version))
         .thenReturn(Optional.of(SanitizedSecret.fromSecret(secretBase64)));
     when(secretController.getSecretByNameAndVersion(name, version))
         .thenReturn(Optional.of(secretBase64));

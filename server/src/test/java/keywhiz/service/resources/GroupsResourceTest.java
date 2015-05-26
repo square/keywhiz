@@ -31,6 +31,7 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.GroupDAO;
+import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +44,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GroupsResourceTest {
+  @Mock DSLContext dslContext;
   @Mock AclDAO aclDAO;
   @Mock GroupDAO groupDAO;
 
@@ -53,7 +55,7 @@ public class GroupsResourceTest {
   GroupsResource resource;
 
   @Before public void setUp() {
-    resource = new GroupsResource(aclDAO, groupDAO);
+    resource = new GroupsResource(dslContext, aclDAO, groupDAO);
   }
 
   @Test public void listingOfGroups() {
@@ -70,7 +72,7 @@ public class GroupsResourceTest {
     when(groupDAO.getGroup("newGroup")).thenReturn(Optional.empty());
     when(groupDAO.createGroup("newGroup", "user", Optional.of("description"))).thenReturn(55L);
     when(groupDAO.getGroupById(55L)).thenReturn(Optional.of(group));
-    when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of());
+    when(aclDAO.getSanitizedSecretsFor(dslContext, group)).thenReturn(ImmutableSet.of());
 
     Response response = resource.createGroup(user, request);
     assertThat(response.getStatus()).isEqualTo(201);
@@ -89,10 +91,10 @@ public class GroupsResourceTest {
     when(groupDAO.getGroupById(4444)).thenReturn(Optional.of(group));
 
     SanitizedSecret secret = SanitizedSecret.of(1, "name", "", null, now, "creator", now, "creator", null, null, null);
-    when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of(secret));
+    when(aclDAO.getSanitizedSecretsFor(dslContext, group)).thenReturn(ImmutableSet.of(secret));
 
     Client client = new Client(1, "client", "desc", now, "creator", now, "creator", true, false);
-    when(aclDAO.getClientsFor(group)).thenReturn(ImmutableSet.of(client));
+    when(aclDAO.getClientsFor(dslContext, group)).thenReturn(ImmutableSet.of(client));
 
     GroupDetailResponse response = resource.getGroup(user, new LongParam("4444"));
 

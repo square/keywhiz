@@ -49,16 +49,16 @@ import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 public class AclDAO {
   private static final Logger logger = LoggerFactory.getLogger(AclDAO.class);
 
-  private final DSLContext dslContext;
   private final ObjectMapper mapper;
 
   @Inject
-  public AclDAO(DSLContext dslContext, ObjectMapper mapper) {
-    this.dslContext = dslContext;
+  public AclDAO(ObjectMapper mapper) {
     this.mapper = mapper;
   }
 
-  public void findAndAllowAccess(long secretId, long groupId) {
+  public void findAndAllowAccess(DSLContext dslContext, long secretId, long groupId) {
+    checkNotNull(dslContext);
+
     dslContext.transaction(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
       GroupDAO groupDAO = new GroupDAO(innerDslContext);
@@ -82,7 +82,9 @@ public class AclDAO {
     });
   }
 
-  public void findAndRevokeAccess(long secretId, long groupId) {
+  public void findAndRevokeAccess(DSLContext dslContext, long secretId, long groupId) {
+    checkNotNull(dslContext);
+
     dslContext.transaction(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
       GroupDAO groupDAO = new GroupDAO(innerDslContext);
@@ -106,7 +108,9 @@ public class AclDAO {
     });
   }
 
-  public void findAndEnrollClient(long clientId, long groupId) {
+  public void findAndEnrollClient(DSLContext dslContext, long clientId, long groupId) {
+    checkNotNull(dslContext);
+
     dslContext.transaction(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
       ClientDAO clientDAO = new ClientDAO(innerDslContext);
@@ -126,11 +130,13 @@ public class AclDAO {
         throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
       }
 
-      enrollClient(clientId, groupId);
+      enrollClient(dslContext, clientId, groupId);
     });
   }
 
-  public void findAndEvictClient(long clientId, long groupId) {
+  public void findAndEvictClient(DSLContext dslContext, long clientId, long groupId) {
+    checkNotNull(dslContext);
+
     dslContext.transaction(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
       ClientDAO clientDAO = new ClientDAO(innerDslContext);
@@ -150,18 +156,19 @@ public class AclDAO {
         throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
       }
 
-      evictClient(clientId, groupId);
+      evictClient(dslContext, clientId, groupId);
     });
   }
 
-  public ImmutableSet<SanitizedSecret> getSanitizedSecretsFor(Group group) {
+  public ImmutableSet<SanitizedSecret> getSanitizedSecretsFor(DSLContext dslContext, Group group) {
+    checkNotNull(dslContext);
     checkNotNull(group);
 
     ImmutableSet.Builder<SanitizedSecret> set = ImmutableSet.builder();
 
     SecretContentDAO secretContentDAO = new SecretContentDAO(dslContext, mapper);
 
-    for (SecretSeries series : getSecretSeriesFor(group)) {
+    for (SecretSeries series : getSecretSeriesFor(dslContext, group)) {
       for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
         SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
         set.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
@@ -171,7 +178,9 @@ public class AclDAO {
     return set.build();
   }
 
-  public Set<Group> getGroupsFor(Secret secret) {
+  public Set<Group> getGroupsFor(DSLContext dslContext, Secret secret) {
+    checkNotNull(dslContext);
+
     List<Group> r = dslContext
         .select()
         .from(GROUPS)
@@ -183,7 +192,9 @@ public class AclDAO {
     return new HashSet<>(r);
   }
 
-  public Set<Group> getGroupsFor(Client client) {
+  public Set<Group> getGroupsFor(DSLContext dslContext, Client client) {
+    checkNotNull(dslContext);
+
     List<Group> r = dslContext
         .select()
         .from(GROUPS)
@@ -195,7 +206,9 @@ public class AclDAO {
     return new HashSet<>(r);
   }
 
-  public Set<Client> getClientsFor(Group group) {
+  public Set<Client> getClientsFor(DSLContext dslContext, Group group) {
+    checkNotNull(dslContext);
+
     List<Client> r = dslContext
         .select()
         .from(CLIENTS)
@@ -207,8 +220,10 @@ public class AclDAO {
     return new HashSet<>(r);
   }
 
-  public ImmutableSet<SanitizedSecret> getSanitizedSecretsFor(Client client) {
+  public ImmutableSet<SanitizedSecret> getSanitizedSecretsFor(DSLContext dslContext, Client client) {
+    checkNotNull(dslContext);
     checkNotNull(client);
+
     return dslContext.transactionResult(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
       SecretContentDAO secretContentDAO = new SecretContentDAO(dslContext, mapper);
@@ -225,7 +240,9 @@ public class AclDAO {
     });
   }
 
-  public Set<Client> getClientsFor(Secret secret) {
+  public Set<Client> getClientsFor(DSLContext dslContext, Secret secret) {
+    checkNotNull(dslContext);
+
     List<Client> r = dslContext
         .select()
         .from(CLIENTS)
@@ -238,7 +255,8 @@ public class AclDAO {
     return new HashSet<>(r);
   }
 
-  public Optional<SanitizedSecret> getSanitizedSecretFor(Client client, String name, String version) {
+  public Optional<SanitizedSecret> getSanitizedSecretFor(DSLContext dslContext, Client client, String name, String version) {
+    checkNotNull(dslContext);
     checkNotNull(client);
     checkArgument(!name.isEmpty());
     checkNotNull(version);
@@ -265,23 +283,29 @@ public class AclDAO {
     });
   }
 
-  protected void allowAccess(DSLContext context, long secretId, long groupId) {
-    context
+  protected void allowAccess(DSLContext dslContext, long secretId, long groupId) {
+    checkNotNull(dslContext);
+
+    dslContext
         .insertInto(ACCESSGRANTS)
         .set(ACCESSGRANTS.SECRETID, Math.toIntExact(secretId))
         .set(ACCESSGRANTS.GROUPID, Math.toIntExact(groupId))
         .execute();
   }
 
-  protected void revokeAccess(DSLContext context, long secretId, long groupId) {
-    context
+  protected void revokeAccess(DSLContext dslContext, long secretId, long groupId) {
+    checkNotNull(dslContext);
+
+    dslContext
         .delete(ACCESSGRANTS)
         .where(ACCESSGRANTS.SECRETID.eq(Math.toIntExact(secretId))
             .and(ACCESSGRANTS.GROUPID.eq(Math.toIntExact(groupId))))
         .execute();
   }
 
-  protected void enrollClient(long clientId, long groupId) {
+  protected void enrollClient(DSLContext dslContext, long clientId, long groupId) {
+    checkNotNull(dslContext);
+
     dslContext
         .insertInto(MEMBERSHIPS)
         .set(MEMBERSHIPS.GROUPID, Math.toIntExact(groupId))
@@ -289,7 +313,9 @@ public class AclDAO {
         .execute();
   }
 
-  protected void evictClient(long clientId, long groupId) {
+  protected void evictClient(DSLContext dslContext, long clientId, long groupId) {
+    checkNotNull(dslContext);
+
     dslContext
         .delete(MEMBERSHIPS)
         .where(MEMBERSHIPS.CLIENTID.eq(Math.toIntExact(clientId))
@@ -297,7 +323,9 @@ public class AclDAO {
         .execute();
   }
 
-  protected ImmutableSet<SecretSeries> getSecretSeriesFor(Group group) {
+  protected ImmutableSet<SecretSeries> getSecretSeriesFor(DSLContext dslContext, Group group) {
+    checkNotNull(dslContext);
+
     List<SecretSeries> r = dslContext
         .select()
         .from(SECRETS)
@@ -310,8 +338,10 @@ public class AclDAO {
 
   }
 
-  protected ImmutableSet<SecretSeries> getSecretSeriesFor(DSLContext context, Client client) {
-    List<SecretSeries> r = context
+  protected ImmutableSet<SecretSeries> getSecretSeriesFor(DSLContext dslContext, Client client) {
+    checkNotNull(dslContext);
+
+    List<SecretSeries> r = dslContext
         .select()
         .from(SECRETS)
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
@@ -330,8 +360,10 @@ public class AclDAO {
    * The query doesn't distinguish between these cases. If result absent, a followup call on clients
    * table should be used to determine the exception.
    */
-  protected Optional<SecretSeries> getSecretSeriesFor(DSLContext context, Client client, String name) {
-    SecretsRecord r = context
+  protected Optional<SecretSeries> getSecretSeriesFor(DSLContext dslContext, Client client, String name) {
+    checkNotNull(dslContext);
+
+    SecretsRecord r = dslContext
         .select()
         .from(SECRETS)
         .join(SECRETS_CONTENT).on(SECRETS.ID.eq(SECRETS_CONTENT.SECRETID))

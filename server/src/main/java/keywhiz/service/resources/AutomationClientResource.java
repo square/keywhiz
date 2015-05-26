@@ -42,6 +42,7 @@ import keywhiz.api.model.Group;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.exceptions.ConflictException;
+import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,12 +59,13 @@ import static java.util.stream.Collectors.toList;
 public class AutomationClientResource {
   private static final Logger logger = LoggerFactory.getLogger(ClientsResource.class);
 
+  private final DSLContext dslContext;
   private final ClientDAO clientDAO;
   private final AclDAO aclDAO;
 
-
   @Inject
-  public AutomationClientResource(ClientDAO clientDAO, AclDAO aclDAO) {
+  public AutomationClientResource(DSLContext dslContext, ClientDAO clientDAO, AclDAO aclDAO) {
+    this.dslContext = dslContext;
     this.clientDAO = clientDAO;
     this.aclDAO = aclDAO;
   }
@@ -86,7 +88,7 @@ public class AutomationClientResource {
 
     Client client = clientDAO.getClientById(clientId.get())
         .orElseThrow(NotFoundException::new);
-    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(client));
+    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(dslContext, client));
 
     return Response.ok()
         .entity(ClientDetailResponse.fromClient(client, groups, ImmutableList.of()))
@@ -111,14 +113,14 @@ public class AutomationClientResource {
 
     if (name.isPresent()) {
       Client client = clientDAO.getClient(name.get()).orElseThrow(NotFoundException::new);
-      ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(client));
+      ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(dslContext, client));
       return Response.ok()
           .entity(ClientDetailResponse.fromClient(client, groups, ImmutableList.of()))
           .build();
     }
 
     List<ClientDetailResponse> clients = clientDAO.getClients().stream()
-        .map(c -> ClientDetailResponse.fromClient(c, ImmutableList.copyOf(aclDAO.getGroupsFor(c)),
+        .map(c -> ClientDetailResponse.fromClient(c, ImmutableList.copyOf(aclDAO.getGroupsFor(dslContext, c)),
             ImmutableList.of()))
         .collect(toList());
     return Response.ok().entity(clients).build();

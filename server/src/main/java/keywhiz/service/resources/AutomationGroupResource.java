@@ -43,6 +43,7 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.exceptions.ConflictException;
+import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,11 +60,13 @@ import static java.util.stream.Collectors.toList;
 public class AutomationGroupResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationGroupResource.class);
 
+  private final DSLContext dslContext;
   private final GroupDAO groupDAO;
   private final AclDAO aclDAO;
 
   @Inject
-  public AutomationGroupResource(GroupDAO groupDAO, AclDAO aclDAO) {
+  public AutomationGroupResource(DSLContext dslContext, GroupDAO groupDAO, AclDAO aclDAO) {
+    this.dslContext = dslContext;
     this.groupDAO = groupDAO;
     this.aclDAO = aclDAO;
   }
@@ -84,9 +87,9 @@ public class AutomationGroupResource {
       @PathParam("groupId") LongParam groupId) {
     Group group = groupDAO.getGroupById(groupId.get()).orElseThrow(NotFoundException::new);
 
-    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(group));
+    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(dslContext, group));
     ImmutableList<SanitizedSecret> sanitizedSecrets =
-        ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(group));
+        ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(dslContext, group));
     return GroupDetailResponse.fromGroup(group, sanitizedSecrets, clients);
   }
 
@@ -105,8 +108,8 @@ public class AutomationGroupResource {
     if (name.isPresent()) {
       Group group = groupDAO.getGroup(name.get()).orElseThrow(NotFoundException::new);
 
-      ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(group));
-      ImmutableList<SanitizedSecret> sanitizedSecrets = ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(group));
+      ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(dslContext, group));
+      ImmutableList<SanitizedSecret> sanitizedSecrets = ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(dslContext, group));
       return Response.ok()
           .entity(GroupDetailResponse.fromGroup(group, sanitizedSecrets, clients))
           .build();
