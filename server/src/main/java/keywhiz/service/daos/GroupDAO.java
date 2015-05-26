@@ -24,16 +24,14 @@ import keywhiz.api.model.Group;
 import keywhiz.jooq.tables.records.GroupsRecord;
 import org.jooq.DSLContext;
 
+import static jersey.repackaged.com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 
 public class GroupDAO {
-  private final DSLContext dslContext;
 
-  @Inject public GroupDAO(DSLContext dslContext) {
-    this.dslContext = dslContext;
-  }
+  public long createGroup(DSLContext dslContext, String name, String creator, Optional<String> description) {
+    checkNotNull(dslContext);
 
-  public long createGroup(String name, String creator, Optional<String> description) {
     GroupsRecord r = dslContext.newRecord(GROUPS);
 
     r.setName(name);
@@ -45,26 +43,34 @@ public class GroupDAO {
     return r.getId();
   }
 
-  public void deleteGroup(Group group) {
+  public void deleteGroup(DSLContext dslContext, Group group) {
+    checkNotNull(dslContext);
+
     dslContext
         .delete(GROUPS)
         .where(GROUPS.ID.eq(Math.toIntExact(group.getId())))
         .execute();
   }
 
-  public Optional<Group> getGroup(String name) {
+  public Optional<Group> getGroup(DSLContext dslContext, String name) {
+    checkNotNull(dslContext);
+
     GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.NAME.eq(name));
     return Optional.ofNullable(r).map(
         rec -> new GroupMapper().map(rec));
   }
 
-  public Optional<Group> getGroupById(long id) {
+  public Optional<Group> getGroupById(DSLContext dslContext, long id) {
+    checkNotNull(dslContext);
+
     GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq(Math.toIntExact(id)));
     return Optional.ofNullable(r).map(
         rec -> new GroupMapper().map(rec));
   }
 
-  public ImmutableSet<Group> getGroups() {
+  public ImmutableSet<Group> getGroups(DSLContext dslContext) {
+    checkNotNull(dslContext);
+
     List<Group> r = dslContext.selectFrom(GROUPS).fetch().map(new GroupMapper());
     return ImmutableSet.copyOf(r);
   }

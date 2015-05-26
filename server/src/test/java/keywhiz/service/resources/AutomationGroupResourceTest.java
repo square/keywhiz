@@ -59,7 +59,7 @@ public class AutomationGroupResourceTest {
 
   @Test public void findGroupById() {
     Group group = new Group(50, "testGroup", "testing group", now, "automation client", now, "automation client");
-    when(groupDAO.getGroupById(50)).thenReturn(Optional.of(group));
+    when(groupDAO.getGroupById(dslContext, 50)).thenReturn(Optional.of(group));
     when(aclDAO.getClientsFor(dslContext, group)).thenReturn(ImmutableSet.of());
     when(aclDAO.getSanitizedSecretsFor(dslContext, group)).thenReturn(ImmutableSet.of());
 
@@ -71,7 +71,7 @@ public class AutomationGroupResourceTest {
 
   @Test public void findGroupByName() {
     Group group = new Group(50, "testGroup", "testing group", now, "automation client", now, "automation client");
-    when(groupDAO.getGroup("testGroup")).thenReturn(Optional.of(group));
+    when(groupDAO.getGroup(dslContext, "testGroup")).thenReturn(Optional.of(group));
     when(aclDAO.getClientsFor(dslContext, group)).thenReturn(ImmutableSet.of());
     when(aclDAO.getSanitizedSecretsFor(dslContext, group)).thenReturn(ImmutableSet.of());
 
@@ -90,7 +90,7 @@ public class AutomationGroupResourceTest {
     SanitizedSecret secondGroupSecret =
         SanitizedSecret.of(2, "name2", "v1", "desc", now, "test", now, "test", null, "", null);
 
-    when(groupDAO.getGroup("testGroup")).thenReturn(Optional.of(group));
+    when(groupDAO.getGroup(dslContext, "testGroup")).thenReturn(Optional.of(group));
     when(aclDAO.getClientsFor(dslContext, group)).thenReturn(ImmutableSet.of(groupClient));
     when(aclDAO.getSanitizedSecretsFor(dslContext, group))
         .thenReturn(ImmutableSet.of(firstGroupSecret, secondGroupSecret));
@@ -106,9 +106,9 @@ public class AutomationGroupResourceTest {
 
     CreateGroupRequest request = new CreateGroupRequest("testGroup", null);
 
-    when(groupDAO.getGroup("testGroup")).thenReturn(Optional.empty());
-    when(groupDAO.createGroup(group.getName(), automation.getName(), Optional.empty())).thenReturn(500L);
-    when(groupDAO.getGroupById(500L)).thenReturn(Optional.of(group));
+    when(groupDAO.getGroup(dslContext, "testGroup")).thenReturn(Optional.empty());
+    when(groupDAO.createGroup(dslContext, group.getName(), automation.getName(), Optional.empty())).thenReturn(500L);
+    when(groupDAO.getGroupById(dslContext, 500L)).thenReturn(Optional.of(group));
     Group responseGroup = resource.createGroup(automation, request);
 
     assertThat(responseGroup).isEqualTo(group);

@@ -94,7 +94,7 @@ public class GroupsResource {
 
   protected List<Group> listGroups(@Auth User user) {
     logger.info("User '{}' listing groups.", user);
-    Set<Group> groups = groupDAO.getGroups();
+    Set<Group> groups = groupDAO.getGroups(dslContext);
     return ImmutableList.copyOf(groups);
   }
 
@@ -118,11 +118,11 @@ public class GroupsResource {
   public Response createGroup(@Auth User user, @Valid CreateGroupRequest request) {
 
     logger.info("User '{}' creating group.", user);
-    if (groupDAO.getGroup(request.name).isPresent()) {
+    if (groupDAO.getGroup(dslContext, request.name).isPresent()) {
       throw new BadRequestException("Group already exists.");
     }
 
-    long groupId = groupDAO.createGroup(request.name, user.getName(),
+    long groupId = groupDAO.createGroup(dslContext, request.name, user.getName(),
         Optional.ofNullable(request.description));
     URI uri = UriBuilder.fromResource(GroupsResource.class).build(groupId);
     return Response
@@ -163,17 +163,17 @@ public class GroupsResource {
   public Response deleteGroup(@Auth User user, @PathParam("groupId") LongParam groupId) {
     logger.info("User '{}' deleting group id={}.", user, groupId);
 
-    Optional<Group> group = groupDAO.getGroupById(groupId.get());
+    Optional<Group> group = groupDAO.getGroupById(dslContext, groupId.get());
     if (!group.isPresent()) {
       throw new NotFoundException("Group not found.");
     }
 
-    groupDAO.deleteGroup(group.get());
+    groupDAO.deleteGroup(dslContext, group.get());
     return Response.noContent().build();
   }
 
   private GroupDetailResponse groupDetailResponseFromId(long groupId) {
-    Optional<Group> optionalGroup = groupDAO.getGroupById(groupId);
+    Optional<Group> optionalGroup = groupDAO.getGroupById(dslContext, groupId);
     if (!optionalGroup.isPresent()) {
       throw new NotFoundException("Group not found.");
     }
@@ -187,7 +187,7 @@ public class GroupsResource {
   }
 
   private Group groupFromName(String name) {
-    Optional<Group> optionalGroup = groupDAO.getGroup(name);
+    Optional<Group> optionalGroup = groupDAO.getGroup(dslContext, name);
     if (!optionalGroup.isPresent()) {
       throw new NotFoundException("Group not found.");
     }

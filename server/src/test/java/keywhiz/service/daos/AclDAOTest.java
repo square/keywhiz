@@ -69,15 +69,15 @@ public class AclDAOTest {
     id = clientDAO.createClient(jooqContext, "client2", "creator", Optional.empty());
     client2 = clientDAO.getClientById(jooqContext, id).get();
 
-    groupDAO = new GroupDAO(jooqContext);
-    id = groupDAO.createGroup("group1", "creator", Optional.empty());
-    group1 = groupDAO.getGroupById(id).get();
+    groupDAO = new GroupDAO();
+    id = groupDAO.createGroup(jooqContext, "group1", "creator", Optional.empty());
+    group1 = groupDAO.getGroupById(jooqContext, id).get();
 
-    id = groupDAO.createGroup("group2", "creator", Optional.empty());
-    group2 = groupDAO.getGroupById(id).get();
+    id = groupDAO.createGroup(jooqContext, "group2", "creator", Optional.empty());
+    group2 = groupDAO.getGroupById(jooqContext, id).get();
 
-    id = groupDAO.createGroup("group3", "creator", Optional.empty());
-    group3 = groupDAO.getGroupById(id).get();
+    id = groupDAO.createGroup(jooqContext, "group3", "creator", Optional.empty());
+    group3 = groupDAO.getGroupById(jooqContext, id).get();
 
     secretSeriesDAO = new SecretSeriesDAO(jooqContext, objectMapper);
 
@@ -86,7 +86,7 @@ public class AclDAOTest {
     secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==", VersionGenerator.now().toHex());
     secret2 = secretFixtures.createSecret("secret2", "c2VjcmV0Mg==");
 
-    aclDAO = new AclDAO(objectMapper, clientDAO);
+    aclDAO = new AclDAO(objectMapper, clientDAO, groupDAO);
   }
 
   @Test
@@ -114,7 +114,7 @@ public class AclDAOTest {
     aclDAO.allowAccess(jooqContext, secret2.getId(), group2.getId());
     int before = accessGrantsTableSize();
 
-    groupDAO.deleteGroup(group1);
+    groupDAO.deleteGroup(jooqContext, group1);
     assertThat(accessGrantsTableSize()).isEqualTo(before - 1);
 
     secretSeriesDAO.deleteSecretSeriesById(secret2.getId());
@@ -146,7 +146,7 @@ public class AclDAOTest {
     aclDAO.enrollClient(jooqContext, client2.getId(), group2.getId());
     int before = membershipsTableSize();
 
-    groupDAO.deleteGroup(group1);
+    groupDAO.deleteGroup(jooqContext, group1);
     assertThat(membershipsTableSize()).isEqualTo(before - 1);
 
     clientDAO.deleteClient(jooqContext, client2);

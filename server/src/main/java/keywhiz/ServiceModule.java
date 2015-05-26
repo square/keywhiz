@@ -130,20 +130,16 @@ public class ServiceModule extends AbstractModule {
 
   // DAOs
 
-  @Provides @Singleton AclDAO aclDAO(ObjectMapper mapper, ClientDAO clientDAO) {
-    return new AclDAO(mapper, clientDAO);
+  @Provides @Singleton AclDAO aclDAO(ObjectMapper mapper, ClientDAO clientDAO, GroupDAO groupDAO) {
+    return new AclDAO(mapper, clientDAO, groupDAO);
   }
 
   @Provides @Singleton ClientDAO clientDAO() {
     return new ClientDAO();
   }
 
-  @Provides @Singleton GroupDAO groupDAO(DSLContext jooqContext) {
-    return new GroupDAO(jooqContext);
-  }
-
-  @Provides @Singleton @Readonly GroupDAO readonlyGroupDAO(@Readonly DSLContext jooqContext) {
-    return new GroupDAO(jooqContext);
+  @Provides @Singleton GroupDAO groupDAO() {
+    return new GroupDAO();
   }
 
   @Provides @Singleton SecretContentDAO secretContentDAO(DSLContext jooqContext,

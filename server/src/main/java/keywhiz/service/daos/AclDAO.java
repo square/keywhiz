@@ -51,11 +51,13 @@ public class AclDAO {
 
   private final ObjectMapper mapper;
   private final ClientDAO clientDAO;
+  private final GroupDAO groupDAO;
 
   @Inject
-  public AclDAO(ObjectMapper mapper, ClientDAO clientDAO) {
+  public AclDAO(ObjectMapper mapper, ClientDAO clientDAO, GroupDAO groupDAO) {
     this.mapper = mapper;
     this.clientDAO = clientDAO;
+    this.groupDAO = groupDAO;
   }
 
   public void findAndAllowAccess(DSLContext dslContext, long secretId, long groupId) {
@@ -63,10 +65,9 @@ public class AclDAO {
 
     dslContext.transaction(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
-      GroupDAO groupDAO = new GroupDAO(innerDslContext);
       SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
 
-      Optional<Group> group = groupDAO.getGroupById(groupId);
+      Optional<Group> group = groupDAO.getGroupById(innerDslContext, groupId);
       if (!group.isPresent()) {
         logger.info("Failure to allow access groupId {}, secretId {}: groupId not found.", groupId,
             secretId);
@@ -89,10 +90,9 @@ public class AclDAO {
 
     dslContext.transaction(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
-      GroupDAO groupDAO = new GroupDAO(innerDslContext);
       SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
 
-      Optional<Group> group = groupDAO.getGroupById(groupId);
+      Optional<Group> group = groupDAO.getGroupById(innerDslContext, groupId);
       if (!group.isPresent()) {
         logger.info("Failure to revoke access groupId {}, secretId {}: groupId not found.", groupId,
             secretId);
@@ -115,7 +115,6 @@ public class AclDAO {
 
     dslContext.transaction(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
-      GroupDAO groupDAO = new GroupDAO(innerDslContext);
 
       Optional<Client> client = clientDAO.getClientById(innerDslContext, clientId);
       if (!client.isPresent()) {
@@ -124,7 +123,7 @@ public class AclDAO {
         throw new IllegalStateException(format("ClientId %d doesn't exist.", clientId));
       }
 
-      Optional<Group> group = groupDAO.getGroupById(groupId);
+      Optional<Group> group = groupDAO.getGroupById(innerDslContext, groupId);
       if (!group.isPresent()) {
         logger.info("Failure to enroll membership clientId {}, groupId {}: groupId not found.",
             clientId, groupId);
@@ -140,7 +139,6 @@ public class AclDAO {
 
     dslContext.transaction(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
-      GroupDAO groupDAO = new GroupDAO(innerDslContext);
 
       Optional<Client> client = clientDAO.getClientById(innerDslContext, clientId);
       if (!client.isPresent()) {
@@ -149,7 +147,7 @@ public class AclDAO {
         throw new IllegalStateException(format("ClientId %d doesn't exist.", clientId));
       }
 
-      Optional<Group> group = groupDAO.getGroupById(groupId);
+      Optional<Group> group = groupDAO.getGroupById(innerDslContext, groupId);
       if (!group.isPresent()) {
         logger.info("Failure to evict membership clientId {}, groupId {}: groupId not found.",
             clientId, groupId);
