@@ -21,16 +21,19 @@ import keywhiz.api.model.Secret;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
 import keywhiz.service.crypto.SecretTransformer;
+import org.jooq.DSLContext;
 
 /**
  * Helper methods to make secrets, reducing the amount of work for testing.
  */
 public class SecretFixtures {
+  private final DSLContext dslContext;
   private final SecretDAO secretDAO;
   private final ContentCryptographer cryptographer;
   private final SecretTransformer transformer;
 
-  private SecretFixtures(SecretDAO secretDAO) {
+  private SecretFixtures(DSLContext dslContext, SecretDAO secretDAO) {
+    this.dslContext = dslContext;
     this.secretDAO = secretDAO;
     this.cryptographer = CryptoFixtures.contentCryptographer();
     this.transformer = new SecretTransformer(cryptographer);
@@ -39,8 +42,8 @@ public class SecretFixtures {
   /**
    * @return builds a fixture-making object using the given {@link SecretDAO}
    */
-  public static SecretFixtures using(SecretDAO secretDAO) {
-    return new SecretFixtures(secretDAO);
+  public static SecretFixtures using(DSLContext dslContext, SecretDAO secretDAO) {
+    return new SecretFixtures(dslContext, secretDAO);
   }
 
   /**
@@ -64,9 +67,8 @@ public class SecretFixtures {
    */
   public Secret createSecret(String name, String content, String version) {
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    long id =
-        secretDAO.createSecret(name, encryptedContent, version, "creator", ImmutableMap.of(),
-            "", null, ImmutableMap.of());
-    return transformer.transform(secretDAO.getSecretByIdAndVersion(id, version).get());
+    long id = secretDAO.createSecret(dslContext, name, encryptedContent, version, "creator",
+        ImmutableMap.of(), "", null, ImmutableMap.of());
+    return transformer.transform(secretDAO.getSecretByIdAndVersion(dslContext, id, version).get());
   }
 }

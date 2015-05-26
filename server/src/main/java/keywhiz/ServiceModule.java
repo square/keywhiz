@@ -160,24 +160,18 @@ public class ServiceModule extends AbstractModule {
 
   @Provides @Singleton SecretDAO secretDAO(DSLContext jooqContext, ObjectMapper mapper,
       SecretContentDAO secretContentDAO) {
-    return new SecretDAO(jooqContext, mapper, secretContentDAO);
-  }
-
-  @Provides @Singleton
-  @Readonly SecretDAO readonlySecretDAO(@Readonly DSLContext jooqContext, ObjectMapper mapper,
-      SecretContentDAO secretContentDAO) {
-    return new SecretDAO(jooqContext, mapper, secretContentDAO);
+    return new SecretDAO(mapper, secretContentDAO);
   }
 
   @Provides @Singleton SecretController secretController(SecretTransformer transformer,
-      ContentCryptographer cryptographer, SecretDAO secretDAO) {
-    return new SecretController(transformer, cryptographer, secretDAO);
+      ContentCryptographer cryptographer, DSLContext jooqContext, SecretDAO secretDAO) {
+    return new SecretController(transformer, cryptographer, jooqContext, secretDAO);
   }
 
   @Provides @Singleton
   @Readonly SecretController readonlySecretController(SecretTransformer transformer,
-      ContentCryptographer cryptographer, @Readonly SecretDAO secretDAO) {
-    return new SecretController(transformer, cryptographer, secretDAO);
+      ContentCryptographer cryptographer, @Readonly DSLContext jooqContext, SecretDAO secretDAO) {
+    return new SecretController(transformer, cryptographer, jooqContext, secretDAO);
   }
 
   @Provides @Singleton

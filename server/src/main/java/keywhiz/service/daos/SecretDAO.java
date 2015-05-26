@@ -40,21 +40,21 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * {@link SecretContentDAO} to provide a more usable API.
  */
 public class SecretDAO {
-  private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretContentDAO secretContentDAO;
 
   @Inject
-  public SecretDAO(DSLContext dslContext, ObjectMapper mapper, SecretContentDAO secretContentDAO) {
-    this.dslContext = dslContext;
+  public SecretDAO(ObjectMapper mapper, SecretContentDAO secretContentDAO) {
     this.mapper = mapper;
     this.secretContentDAO = secretContentDAO;
   }
 
   @VisibleForTesting
-  public long createSecret(String name, String encryptedSecret, String version,
-      String creator, Map<String, String> metadata, String description, @Nullable String type,
-      @Nullable Map<String, String> generationOptions) {
+  public long createSecret(DSLContext dslContext, String name, String encryptedSecret,
+      String version, String creator, Map<String, String> metadata, String description,
+      @Nullable String type, @Nullable Map<String, String> generationOptions) {
+    checkNotNull(dslContext);
+
     // TODO(jlfwong): Should the description be updated...?
 
     return dslContext.transactionResult(configuration -> {
@@ -70,8 +70,8 @@ public class SecretDAO {
             generationOptions);
       }
 
-      secretContentDAO.createSecretContent(innerDslContext, secretId, encryptedSecret, version, creator,
-          metadata);
+      secretContentDAO.createSecretContent(innerDslContext, secretId, encryptedSecret, version,
+          creator, metadata);
       return secretId;
     });
   }
@@ -80,7 +80,10 @@ public class SecretDAO {
    * @param secretId external secret series id to look up secrets by.
    * @return all Secrets with given id. May be empty or include multiple versions.
    */
-  public ImmutableList<SecretSeriesAndContent> getSecretsById(long secretId) {
+  public ImmutableList<SecretSeriesAndContent> getSecretsById(DSLContext dslContext,
+      long secretId) {
+    checkNotNull(dslContext);
+
     return dslContext.transactionResult(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
       SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
@@ -105,7 +108,9 @@ public class SecretDAO {
    * @param version specific version of secret. May be empty.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<SecretSeriesAndContent> getSecretByIdAndVersion(long secretId, String version) {
+  public Optional<SecretSeriesAndContent> getSecretByIdAndVersion(DSLContext dslContext,
+      long secretId, String version) {
+    checkNotNull(dslContext);
     checkNotNull(version);
 
     return dslContext.<Optional<SecretSeriesAndContent>>transactionResult(configuration -> {
@@ -131,7 +136,8 @@ public class SecretDAO {
    * @param name external secret series name to look up versions by
    * @return List of versions tied to the parameter secret name.
    */
-  public ImmutableList<String> getVersionsForSecretName(String name) {
+  public ImmutableList<String> getVersionsForSecretName(DSLContext dslContext, String name) {
+    checkNotNull(dslContext);
     checkNotNull(name);
 
     return dslContext.<ImmutableList<String>>transactionResult(configuration -> {
@@ -152,7 +158,9 @@ public class SecretDAO {
    * @param version specific version of secret. May be empty.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<SecretSeriesAndContent> getSecretByNameAndVersion(String name, String version) {
+  public Optional<SecretSeriesAndContent> getSecretByNameAndVersion(DSLContext dslContext,
+      String name, String version) {
+    checkNotNull(dslContext);
     checkArgument(!name.isEmpty());
     checkNotNull(version);
 
@@ -177,7 +185,9 @@ public class SecretDAO {
   }
 
   /** @return all existing secrets. */
-  public ImmutableList<SecretSeriesAndContent> getSecrets() {
+  public ImmutableList<SecretSeriesAndContent> getSecrets(DSLContext dslContext) {
+    checkNotNull(dslContext);
+
     return dslContext.transactionResult(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
       SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
@@ -199,8 +209,10 @@ public class SecretDAO {
    *
    * @param name of secret series to delete.
    */
-  public void deleteSecretsByName(String name) {
+  public void deleteSecretsByName(DSLContext dslContext, String name) {
+    checkNotNull(dslContext);
     checkArgument(!name.isEmpty());
+
     SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(dslContext, mapper);
     secretSeriesDAO.deleteSecretSeriesByName(name);
   }
@@ -211,7 +223,8 @@ public class SecretDAO {
    * @param name of secret series to delete from.
    * @param version of secret to specifically delete.
    */
-  public void deleteSecretByNameAndVersion(String name, String version) {
+  public void deleteSecretByNameAndVersion(DSLContext dslContext, String name, String version) {
+    checkNotNull(dslContext);
     checkArgument(!name.isEmpty());
     checkNotNull(version);
 
