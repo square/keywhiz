@@ -50,6 +50,8 @@ import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static keywhiz.JooqHealthCheck.OnFailure.LOG_ONLY;
+import static keywhiz.JooqHealthCheck.OnFailure.RETURN_UNHEALTHY;
 
 public class ServiceModule extends AbstractModule {
   private final Environment environment;
@@ -88,17 +90,14 @@ public class ServiceModule extends AbstractModule {
 
   // ManagedDataSource
 
-  /**
-   * TODO: make sure that the read-write health check does not impact availability of
-   * the service.
-   * TODO: make sure that the readonly has a health check and marks the service as unhealthy if
-   * the connection is down. Optionally, fallback to read-write if that connection is healthy.
-   */
   @Provides @Singleton ManagedDataSource dataSource(Environment environment,
       KeywhizConfig config) {
     DataSourceFactory dataSourceFactory = config.getDataSourceFactory();
     ManagedDataSource dataSource = dataSourceFactory.build(environment.metrics(), "postgres-writable");
     environment.lifecycle().manage(dataSource);
+
+    environment.healthChecks().register("db-read-write-health",
+        new JooqHealthCheck(dataSource, LOG_ONLY));
 
     return dataSource;
   }
@@ -108,6 +107,9 @@ public class ServiceModule extends AbstractModule {
     DataSourceFactory dataSourceFactory = config.getReadonlyDataSourceFactory();
     ManagedDataSource dataSource = dataSourceFactory.build(environment.metrics(), "postgres-readonly");
     environment.lifecycle().manage(dataSource);
+
+    environment.healthChecks().register("db-readonly-health",
+        new JooqHealthCheck(dataSource, RETURN_UNHEALTHY));
 
     return dataSource;
   }
