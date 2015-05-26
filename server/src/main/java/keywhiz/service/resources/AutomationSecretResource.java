@@ -203,9 +203,9 @@ public class AutomationSecretResource {
   public Response deleteSecretSeries(@Auth AutomationClient automationClient,
       @PathParam("secretName") String secretName) {
 
-    secretSeriesDAO.getSecretSeriesByName(secretName)
+    secretSeriesDAO.getSecretSeriesByName(dslContext, secretName)
         .orElseThrow(() -> new NotFoundException("Secret series not found."));
-    secretSeriesDAO.deleteSecretSeriesByName(secretName);
+    secretSeriesDAO.deleteSecretSeriesByName(dslContext, secretName);
 
     return Response.ok().build();
   }

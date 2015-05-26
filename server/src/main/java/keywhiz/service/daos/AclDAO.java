@@ -53,14 +53,16 @@ public class AclDAO {
   private final ClientDAO clientDAO;
   private final GroupDAO groupDAO;
   private final SecretContentDAO secretContentDAO;
+  private final SecretSeriesDAO secretSeriesDAO;
 
   @Inject
   public AclDAO(ObjectMapper mapper, ClientDAO clientDAO, GroupDAO groupDAO,
-      SecretContentDAO secretContentDAO) {
+      SecretContentDAO secretContentDAO, SecretSeriesDAO secretSeriesDAO) {
     this.mapper = mapper;
     this.clientDAO = clientDAO;
     this.groupDAO = groupDAO;
     this.secretContentDAO = secretContentDAO;
+    this.secretSeriesDAO = secretSeriesDAO;
   }
 
   public void findAndAllowAccess(DSLContext dslContext, long secretId, long groupId) {
@@ -68,7 +70,6 @@ public class AclDAO {
 
     dslContext.transaction(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
 
       Optional<Group> group = groupDAO.getGroupById(innerDslContext, groupId);
       if (!group.isPresent()) {
@@ -77,7 +78,7 @@ public class AclDAO {
         throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
       }
 
-      Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
+      Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(innerDslContext, secretId);
       if (!secret.isPresent()) {
         logger.info("Failure to allow access groupId {}, secretId {}: secretId not found.", groupId,
             secretId);
@@ -93,7 +94,6 @@ public class AclDAO {
 
     dslContext.transaction(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = new SecretSeriesDAO(innerDslContext, mapper);
 
       Optional<Group> group = groupDAO.getGroupById(innerDslContext, groupId);
       if (!group.isPresent()) {
@@ -102,7 +102,8 @@ public class AclDAO {
         throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
       }
 
-      Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
+      Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(innerDslContext,
+          secretId);
       if (!secret.isPresent()) {
         logger.info("Failure to revoke access groupId {}, secretId {}: secretId not found.",
             groupId, secretId);

@@ -22,6 +22,7 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import keywhiz.TestDBRule;
 import keywhiz.api.model.SecretSeries;
+import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,12 +33,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SecretSeriesDAOTest {
   @Rule public final TestDBRule testDBRule = new TestDBRule();
 
+  DSLContext dslContext;
   SecretSeriesDAO secretSeriesDAO;
 
   @Before
   public void setUp() {
     ObjectMapper objectMapper = new ObjectMapper();
-    secretSeriesDAO = new SecretSeriesDAO(testDBRule.jooqContext(), objectMapper);
+    dslContext = testDBRule.jooqContext();
+    secretSeriesDAO = new SecretSeriesDAO(objectMapper);
   }
 
   @Test
@@ -45,19 +48,19 @@ public class SecretSeriesDAOTest {
     int before = tableSize();
     OffsetDateTime now = OffsetDateTime.now();
 
-    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
-        ImmutableMap.of("foo", "bar"));
+    long id = secretSeriesDAO.createSecretSeries(dslContext, "newSecretSeries", "creator", "desc",
+        null, ImmutableMap.of("foo", "bar"));
     SecretSeries expected = new SecretSeries(id, "newSecretSeries", "desc", now, "creator", now,
         "creator", null, ImmutableMap.of("foo", "bar"));
 
     assertThat(tableSize()).isEqualTo(before + 1);
 
-    SecretSeries actual = secretSeriesDAO.getSecretSeriesByName("newSecretSeries")
+    SecretSeries actual = secretSeriesDAO.getSecretSeriesByName(dslContext, "newSecretSeries")
         .orElseThrow(RuntimeException::new);
     assertThat(actual).isEqualToComparingOnlyGivenFields(expected,
         "name", "description", "type", "generationOptions");
 
-    actual = secretSeriesDAO.getSecretSeriesById(id)
+    actual = secretSeriesDAO.getSecretSeriesById(dslContext, id)
         .orElseThrow(RuntimeException::new);
     assertThat(actual).isEqualToComparingOnlyGivenFields(expected,
         "name", "description", "type", "generationOptions");
@@ -65,36 +68,39 @@ public class SecretSeriesDAOTest {
 
   @Test
   public void deleteSecretSeriesByName() {
-    secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", "creator", "", null, null);
+    secretSeriesDAO.createSecretSeries(dslContext, "toBeDeleted_deleteSecretSeriesByName",
+        "creator", "", null, null);
 
     int secretsBefore = tableSize();
 
-    secretSeriesDAO.deleteSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName");
+    secretSeriesDAO.deleteSecretSeriesByName(dslContext, "toBeDeleted_deleteSecretSeriesByName");
 
     assertThat(tableSize()).isEqualTo(secretsBefore - 1);
 
     Optional<SecretSeries> missingSecret =
-        secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName");
+        secretSeriesDAO.getSecretSeriesByName(dslContext, "toBeDeleted_deleteSecretSeriesByName");
     assertThat(missingSecret.isPresent()).isFalse();
   }
 
   @Test
   public void deleteSecretSeriesById() {
-    long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesById", "creator", "", null, null);
+    long id = secretSeriesDAO.createSecretSeries(dslContext, "toBeDeleted_deleteSecretSeriesById",
+        "creator", "", null, null);
 
     int secretsBefore = tableSize();
 
-    secretSeriesDAO.deleteSecretSeriesById(id);
+    secretSeriesDAO.deleteSecretSeriesById(dslContext, id);
 
     assertThat(tableSize()).isEqualTo(secretsBefore - 1);
-    Optional<SecretSeries> missingSecret = secretSeriesDAO.getSecretSeriesById(id);
+    Optional<SecretSeries> missingSecret = secretSeriesDAO.getSecretSeriesById(dslContext, id);
     assertThat(missingSecret.isPresent()).isFalse();
   }
 
   @Test
   public void getNonExistentSecretSeries() {
-    assertThat(secretSeriesDAO.getSecretSeriesByName("non-existent").isPresent()).isFalse();
-    assertThat(secretSeriesDAO.getSecretSeriesById(-2328).isPresent()).isFalse();
+    assertThat(secretSeriesDAO.getSecretSeriesByName(dslContext, "non-existent")
+        .isPresent()).isFalse();
+    assertThat(secretSeriesDAO.getSecretSeriesById(dslContext, -2328).isPresent()).isFalse();
   }
 
   private int tableSize() {

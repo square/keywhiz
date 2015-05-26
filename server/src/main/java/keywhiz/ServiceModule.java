@@ -131,8 +131,8 @@ public class ServiceModule extends AbstractModule {
   // DAOs
 
   @Provides @Singleton AclDAO aclDAO(ObjectMapper mapper, ClientDAO clientDAO, GroupDAO groupDAO,
-      SecretContentDAO secretContentDAO) {
-    return new AclDAO(mapper, clientDAO, groupDAO, secretContentDAO);
+      SecretContentDAO secretContentDAO, SecretSeriesDAO secretSeriesDAO) {
+    return new AclDAO(mapper, clientDAO, groupDAO, secretContentDAO, secretSeriesDAO);
   }
 
   @Provides @Singleton ClientDAO clientDAO() {
@@ -147,20 +147,13 @@ public class ServiceModule extends AbstractModule {
     return new SecretContentDAO(mapper);
   }
 
-  @Provides @Singleton SecretSeriesDAO secretSeriesDAO(DSLContext jooqContext,
-      ObjectMapper mapper) {
-    return new SecretSeriesDAO(jooqContext, mapper);
+  @Provides @Singleton SecretSeriesDAO secretSeriesDAO(ObjectMapper mapper) {
+    return new SecretSeriesDAO(mapper);
   }
 
-  @Provides @Singleton
-  @Readonly SecretSeriesDAO readonlySecretSeriesDAO(@Readonly DSLContext jooqContext,
-      ObjectMapper mapper) {
-    return new SecretSeriesDAO(jooqContext, mapper);
-  }
-
-  @Provides @Singleton SecretDAO secretDAO(DSLContext jooqContext, ObjectMapper mapper,
-      SecretContentDAO secretContentDAO) {
-    return new SecretDAO(mapper, secretContentDAO);
+  @Provides @Singleton SecretDAO secretDAO(SecretContentDAO secretContentDAO,
+  SecretSeriesDAO secretSeriesDAO) {
+    return new SecretDAO(secretContentDAO, secretSeriesDAO);
   }
 
   @Provides @Singleton SecretController secretController(SecretTransformer transformer,

@@ -113,11 +113,11 @@ public class AutomationSecretResourceTest {
         null,
         null);
 
-    when(secretSeriesDAO.getSecretSeriesByName(secretSeries.getName()))
+    when(secretSeriesDAO.getSecretSeriesByName(dslContext, secretSeries.getName()))
         .thenReturn(Optional.of(secretSeries));
 
     resource.deleteSecretSeries(automation, "mySecret");
-    verify(secretSeriesDAO).deleteSecretSeriesByName(secretSeries.getName());
+    verify(secretSeriesDAO).deleteSecretSeriesByName(dslContext, secretSeries.getName());
   }
 
   @Test(expected = ConflictException.class)

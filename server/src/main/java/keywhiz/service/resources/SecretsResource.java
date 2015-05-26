@@ -228,7 +228,7 @@ public class SecretsResource {
       throw new NotFoundException("Secret not found.");
     }
 
-    secretSeriesDAO.deleteSecretSeriesById(secretId.get());
+    secretSeriesDAO.deleteSecretSeriesById(dslContext, secretId.get());
     return Response.noContent().build();
   }
 

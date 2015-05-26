@@ -109,7 +109,7 @@ public class SecretsResourceTest {
     when(secretController.getSecretsById(0xdeadbeef)).thenReturn(ImmutableList.of(secret));
 
     Response response = resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)));
-    verify(secretSeriesDAO).deleteSecretSeriesById(0xdeadbeef);
+    verify(secretSeriesDAO).deleteSecretSeriesById(dslContext, 0xdeadbeef);
     assertThat(response.getStatus()).isEqualTo(204);
   }
 

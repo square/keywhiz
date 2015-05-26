@@ -31,23 +31,24 @@ import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import org.jooq.DSLContext;
 
+import static jersey.repackaged.com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 
 /**
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
  */
 public class SecretSeriesDAO {
-  private final DSLContext dslContext;
   private final ObjectMapper mapper;
 
   @Inject
-  public SecretSeriesDAO(DSLContext dslContext, ObjectMapper mapper) {
-    this.dslContext = dslContext;
+  public SecretSeriesDAO(ObjectMapper mapper) {
     this.mapper = mapper;
   }
 
-  long createSecretSeries(String name, String creator, String description, @Nullable String type,
-      @Nullable Map<String, String> generationOptions) {
+  long createSecretSeries(DSLContext dslContext, String name, String creator, String description,
+      @Nullable String type, @Nullable Map<String, String> generationOptions) {
+    checkNotNull(dslContext);
+
     SecretsRecord r =  dslContext.newRecord(SECRETS);
 
     r.setName(name);
@@ -70,19 +71,25 @@ public class SecretSeriesDAO {
     return r.getId();
   }
 
-  public Optional<SecretSeries> getSecretSeriesById(long id) {
+  public Optional<SecretSeries> getSecretSeriesById(DSLContext dslContext, long id) {
+    checkNotNull(dslContext);
+
     SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.ID.eq(Math.toIntExact(id)));
     return Optional.ofNullable(r).map(
         rec -> new SecretSeriesMapper(mapper).map(rec));
   }
 
-  public Optional<SecretSeries> getSecretSeriesByName(String name) {
+  public Optional<SecretSeries> getSecretSeriesByName(DSLContext dslContext, String name) {
+    checkNotNull(dslContext);
+
     SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.NAME.eq(name));
     return Optional.ofNullable(r).map(
         rec -> new SecretSeriesMapper(mapper).map(rec));
   }
 
-  public ImmutableList<SecretSeries> getSecretSeries() {
+  public ImmutableList<SecretSeries> getSecretSeries(DSLContext dslContext) {
+    checkNotNull(dslContext);
+
     List<SecretSeries> r = dslContext
         .selectFrom(SECRETS)
         .fetch()
@@ -91,14 +98,17 @@ public class SecretSeriesDAO {
     return ImmutableList.copyOf(r);
   }
 
-  public void deleteSecretSeriesByName(String name) {
-    dslContext
-        .delete(SECRETS)
+  public void deleteSecretSeriesByName(DSLContext dslContext, String name) {
+    checkNotNull(dslContext);
+
+    dslContext.delete(SECRETS)
         .where(SECRETS.NAME.eq(name))
         .execute();
   }
 
-  public void deleteSecretSeriesById(long id) {
+  public void deleteSecretSeriesById(DSLContext dslContext, long id) {
+    checkNotNull(dslContext);
+
     dslContext.delete(SECRETS)
         .where(SECRETS.ID.eq(Math.toIntExact(id)))
         .execute();
