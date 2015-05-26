@@ -23,14 +23,7 @@ import org.jooq.DSLContext;
 import static keywhiz.jooq.tables.Users.USERS;
 
 public class UserDAO {
-  private final DSLContext dslContext;
-
-  @Inject
-  public UserDAO(DSLContext dslContext) {
-    this.dslContext = dslContext;
-  }
-
-  public Optional<String> getHashedPassword(String name) {
+  public Optional<String> getHashedPassword(DSLContext dslContext, String name) {
     String r = dslContext
         .select(USERS.PASSWORD_HASH)
         .from(USERS)

@@ -22,6 +22,7 @@ import io.dropwizard.java8.auth.Authenticator;
 import java.util.Optional;
 import keywhiz.auth.User;
 import keywhiz.service.daos.UserDAO;
+import org.jooq.DSLContext;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,9 +31,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class BcryptAuthenticator implements Authenticator<BasicCredentials, User> {
   private static final Logger logger = LoggerFactory.getLogger(BcryptAuthenticator.class);
+
+  private final DSLContext dslContext;
   private final UserDAO userDAO;
 
-  public BcryptAuthenticator(UserDAO userDAO) {
+  public BcryptAuthenticator(DSLContext dslContext, UserDAO userDAO) {
+    this.dslContext = dslContext;
     this.userDAO = checkNotNull(userDAO);
   }
 
@@ -48,7 +52,7 @@ public class BcryptAuthenticator implements Authenticator<BasicCredentials, User
     String password = credentials.getPassword();
 
     // Get hashed password column from BCrypt table by username
-    Optional<String> optionalHashedPwForUser = userDAO.getHashedPassword(username);
+    Optional<String> optionalHashedPwForUser = userDAO.getHashedPassword(dslContext, username);
     if (!optionalHashedPwForUser.isPresent()) {
       return Optional.empty();
     }
