@@ -130,8 +130,9 @@ public class ServiceModule extends AbstractModule {
 
   // DAOs
 
-  @Provides @Singleton AclDAO aclDAO(ObjectMapper mapper, ClientDAO clientDAO, GroupDAO groupDAO) {
-    return new AclDAO(mapper, clientDAO, groupDAO);
+  @Provides @Singleton AclDAO aclDAO(ObjectMapper mapper, ClientDAO clientDAO, GroupDAO groupDAO,
+      SecretContentDAO secretContentDAO) {
+    return new AclDAO(mapper, clientDAO, groupDAO, secretContentDAO);
   }
 
   @Provides @Singleton ClientDAO clientDAO() {
@@ -142,15 +143,8 @@ public class ServiceModule extends AbstractModule {
     return new GroupDAO();
   }
 
-  @Provides @Singleton SecretContentDAO secretContentDAO(DSLContext jooqContext,
-      ObjectMapper mapper) {
-    return new SecretContentDAO(jooqContext, mapper);
-  }
-
-  @Provides @Singleton
-  @Readonly SecretContentDAO readonlySecretContentDAO(@Readonly DSLContext jooqContext,
-      ObjectMapper mapper) {
-    return new SecretContentDAO(jooqContext, mapper);
+  @Provides @Singleton SecretContentDAO secretContentDAO(ObjectMapper mapper) {
+    return new SecretContentDAO(mapper);
   }
 
   @Provides @Singleton SecretSeriesDAO secretSeriesDAO(DSLContext jooqContext,
@@ -164,13 +158,15 @@ public class ServiceModule extends AbstractModule {
     return new SecretSeriesDAO(jooqContext, mapper);
   }
 
-  @Provides @Singleton SecretDAO secretDAO(DSLContext jooqContext, ObjectMapper mapper) {
-    return new SecretDAO(jooqContext, mapper);
+  @Provides @Singleton SecretDAO secretDAO(DSLContext jooqContext, ObjectMapper mapper,
+      SecretContentDAO secretContentDAO) {
+    return new SecretDAO(jooqContext, mapper, secretContentDAO);
   }
 
   @Provides @Singleton
-  @Readonly SecretDAO readonlySecretDAO(@Readonly DSLContext jooqContext, ObjectMapper mapper) {
-    return new SecretDAO(jooqContext, mapper);
+  @Readonly SecretDAO readonlySecretDAO(@Readonly DSLContext jooqContext, ObjectMapper mapper,
+      SecretContentDAO secretContentDAO) {
+    return new SecretDAO(jooqContext, mapper, secretContentDAO);
   }
 
   @Provides @Singleton SecretController secretController(SecretTransformer transformer,

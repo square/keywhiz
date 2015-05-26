@@ -52,12 +52,15 @@ public class AclDAO {
   private final ObjectMapper mapper;
   private final ClientDAO clientDAO;
   private final GroupDAO groupDAO;
+  private final SecretContentDAO secretContentDAO;
 
   @Inject
-  public AclDAO(ObjectMapper mapper, ClientDAO clientDAO, GroupDAO groupDAO) {
+  public AclDAO(ObjectMapper mapper, ClientDAO clientDAO, GroupDAO groupDAO,
+      SecretContentDAO secretContentDAO) {
     this.mapper = mapper;
     this.clientDAO = clientDAO;
     this.groupDAO = groupDAO;
+    this.secretContentDAO = secretContentDAO;
   }
 
   public void findAndAllowAccess(DSLContext dslContext, long secretId, long groupId) {
@@ -164,10 +167,9 @@ public class AclDAO {
 
     ImmutableSet.Builder<SanitizedSecret> set = ImmutableSet.builder();
 
-    SecretContentDAO secretContentDAO = new SecretContentDAO(dslContext, mapper);
-
     for (SecretSeries series : getSecretSeriesFor(dslContext, group)) {
-      for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
+      for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(dslContext,
+          series.getId())) {
         SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
         set.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
       }
@@ -224,12 +226,12 @@ public class AclDAO {
 
     return dslContext.transactionResult(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
-      SecretContentDAO secretContentDAO = new SecretContentDAO(dslContext, mapper);
 
       ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
 
       for (SecretSeries series : getSecretSeriesFor(innerDslContext, client)) {
-        for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
+        for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(innerDslContext,
+            series.getId())) {
           SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
           sanitizedSet.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
         }
@@ -261,7 +263,6 @@ public class AclDAO {
 
     return dslContext.<Optional<SanitizedSecret>>transactionResult(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
-      SecretContentDAO secretContentDAO = new SecretContentDAO(innerDslContext, mapper);
 
       Optional<SecretSeries> secretSeries = getSecretSeriesFor(innerDslContext, client, name);
       if (!secretSeries.isPresent()) {
@@ -269,7 +270,7 @@ public class AclDAO {
       }
 
       Optional<SecretContent> secretContent =
-          secretContentDAO.getSecretContentBySecretIdAndVersion(
+          secretContentDAO.getSecretContentBySecretIdAndVersion(innerDslContext,
               secretSeries.get().getId(), version);
       if (!secretContent.isPresent()) {
         return Optional.empty();

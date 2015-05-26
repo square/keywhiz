@@ -81,12 +81,14 @@ public class AclDAOTest {
 
     secretSeriesDAO = new SecretSeriesDAO(jooqContext, objectMapper);
 
-    secretDAO = new SecretDAO(jooqContext, objectMapper);
+    SecretContentDAO secretContentDAO = new SecretContentDAO(objectMapper);
+
+    secretDAO = new SecretDAO(jooqContext, objectMapper, secretContentDAO);
     SecretFixtures secretFixtures = SecretFixtures.using(secretDAO);
     secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==", VersionGenerator.now().toHex());
     secret2 = secretFixtures.createSecret("secret2", "c2VjcmV0Mg==");
 
-    aclDAO = new AclDAO(objectMapper, clientDAO, groupDAO);
+    aclDAO = new AclDAO(objectMapper, clientDAO, groupDAO, secretContentDAO);
   }
 
   @Test
