@@ -18,13 +18,13 @@ package keywhiz.cli;
 import com.beust.jcommander.JCommander;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.StandardSystemProperty;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.name.Named;
 import com.squareup.okhttp.OkHttpClient;
 import java.io.IOException;
 import java.net.CookieManager;
 import java.net.HttpCookie;
-import java.net.InetAddress;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -91,8 +91,9 @@ public class CommandExecutor {
     }
 
     URL url;
-    if (config.url == null || config.url.isEmpty()) {
-      url = new URL("https", InetAddress.getLocalHost().getHostName(), 4444, "");
+    if (Strings.isNullOrEmpty(config.url)) {
+      url = new URL("https", "localhost", 4444, "");
+      System.out.println("Server URL not specified (--url flag), assuming " + url);
     } else {
       url = new URL(config.url);
     }
