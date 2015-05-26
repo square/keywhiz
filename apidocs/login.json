@@ -34,7 +34,7 @@
       "id" : "LoginRequest",
       "properties" : {
         "password" : {
-          "type" : "string"
+          "type" : "char[]"
         },
         "username" : {
           "type" : "string"
