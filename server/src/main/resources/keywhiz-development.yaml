@@ -82,7 +82,7 @@ userAuth:
 # alternateUiPath: ui/app/
 
 # Base64 of "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-cookieKey: QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE=
+cookieKey: external:server/src/main/resources/dev_and_test_cookiekey.base64
 
 sessionCookie:
   name: session
