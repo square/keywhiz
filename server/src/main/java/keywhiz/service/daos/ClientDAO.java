@@ -24,17 +24,13 @@ import keywhiz.api.model.Client;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import org.jooq.DSLContext;
 
+import static jersey.repackaged.com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 
 public class ClientDAO {
-  private final DSLContext dslContext;
+  public long createClient(DSLContext dslContext, String name, String user, Optional<String> description) {
+    checkNotNull(dslContext);
 
-  @Inject
-  public ClientDAO(DSLContext dslContext) {
-    this.dslContext = dslContext;
-  }
-
-  public long createClient(String name, String user, Optional<String> description) {
     ClientsRecord r = dslContext.newRecord(CLIENTS);
 
     r.setName(name);
@@ -48,26 +44,34 @@ public class ClientDAO {
     return r.getId();
   }
 
-  public void deleteClient(Client client) {
+  public void deleteClient(DSLContext dslContext, Client client) {
+    checkNotNull(dslContext);
+
     dslContext
         .delete(CLIENTS)
         .where(CLIENTS.ID.eq(Math.toIntExact(client.getId())))
         .execute();
   }
 
-  public Optional<Client> getClient(String name) {
+  public Optional<Client> getClient(DSLContext dslContext, String name) {
+    checkNotNull(dslContext);
+
     ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.NAME.eq(name));
     return Optional.ofNullable(r).map(
         rec -> new ClientMapper().map(rec));
   }
 
-  public Optional<Client> getClientById(long id) {
+  public Optional<Client> getClientById(DSLContext dslContext, long id) {
+    checkNotNull(dslContext);
+
     ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.ID.eq(Math.toIntExact(id)));
     return Optional.ofNullable(r).map(
         rec -> new ClientMapper().map(rec));
   }
 
-  public ImmutableSet<Client> getClients() {
+  public ImmutableSet<Client> getClients(DSLContext dslContext) {
+    checkNotNull(dslContext);
+
     List<Client> r = dslContext
         .selectFrom(CLIENTS)
         .fetch()

@@ -91,7 +91,7 @@ public class SecretDeliveryResourceTest {
   @Test(expected = NotFoundException.class)
   public void returnsNotFoundWhenClientDoesNotExist() throws Exception {
     when(aclDAO.getSanitizedSecretFor(dslContext, client, secret.getName(), "")).thenReturn(Optional.empty());
-    when(clientDAO.getClient(client.getName())).thenReturn(Optional.empty());
+    when(clientDAO.getClient(dslContext, client.getName())).thenReturn(Optional.empty());
     when(secretController.getSecretByNameAndVersion(secret.getName(), ""))
         .thenReturn(Optional.of(secret));
 
@@ -101,7 +101,7 @@ public class SecretDeliveryResourceTest {
   @Test(expected = NotFoundException.class)
   public void returnsNotFoundWhenSecretDoesNotExist() throws Exception {
     when(aclDAO.getSanitizedSecretFor(dslContext, client, "secret_name", "")).thenReturn(Optional.empty());
-    when(clientDAO.getClient(client.getName())).thenReturn(Optional.of(client));
+    when(clientDAO.getClient(dslContext, client.getName())).thenReturn(Optional.of(client));
     when(secretController.getSecretByNameAndVersion("secret_name", ""))
         .thenReturn(Optional.empty());
 
@@ -111,7 +111,7 @@ public class SecretDeliveryResourceTest {
   @Test(expected = ForbiddenException.class)
   public void returnsUnauthorizedWhenDenied() throws Exception {
     when(aclDAO.getSanitizedSecretFor(dslContext, client, secret.getName(), "")).thenReturn(Optional.empty());
-    when(clientDAO.getClient(client.getName())).thenReturn(Optional.of(client));
+    when(clientDAO.getClient(dslContext, client.getName())).thenReturn(Optional.of(client));
     when(secretController.getSecretByNameAndVersion(secret.getName(), ""))
         .thenReturn(Optional.of(secret));
 

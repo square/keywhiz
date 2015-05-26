@@ -95,7 +95,7 @@ public class ClientsResource {
 
   protected List<Client> listClients(@Auth User user) {
     logger.info("User '{}' listing clients.", user);
-    Set<Client> clients = clientDAO.getClients();
+    Set<Client> clients = clientDAO.getClients(dslContext);
     return ImmutableList.copyOf(clients);
   }
 
@@ -123,7 +123,8 @@ public class ClientsResource {
 
     long clientId;
     try {
-      clientId = clientDAO.createClient(createClientRequest.name, user.getName(), Optional.empty());
+      clientId = clientDAO.createClient(dslContext, createClientRequest.name, user.getName(),
+          Optional.empty());
     } catch (DataAccessException e) {
       logger.warn("Cannot create client {}: {}", createClientRequest.name, e);
       throw new ConflictException("Conflict creating client.");
@@ -169,18 +170,18 @@ public class ClientsResource {
   public Response deleteClient(@Auth User user, @PathParam("clientId") LongParam clientId) {
     logger.info("User '{}' deleting client id={}.", user, clientId);
 
-    Optional<Client> client = clientDAO.getClientById(clientId.get());
+    Optional<Client> client = clientDAO.getClientById(dslContext, clientId.get());
     if (!client.isPresent()) {
       throw new NotFoundException("Client not found.");
     }
 
-    clientDAO.deleteClient(client.get());
+    clientDAO.deleteClient(dslContext, client.get());
 
     return Response.noContent().build();
   }
 
   private ClientDetailResponse clientDetailResponseFromId(long clientId) {
-    Optional<Client> optionalClient = clientDAO.getClientById(clientId);
+    Optional<Client> optionalClient = clientDAO.getClientById(dslContext, clientId);
     if (!optionalClient.isPresent()) {
       throw new NotFoundException("Client not found.");
     }
@@ -194,7 +195,7 @@ public class ClientsResource {
   }
 
   private Client clientFromName(String clientName) {
-    Optional<Client> optionalClient = clientDAO.getClient(clientName);
+    Optional<Client> optionalClient = clientDAO.getClient(dslContext, clientName);
     if (!optionalClient.isPresent()) {
       throw new NotFoundException("Client not found.");
     }

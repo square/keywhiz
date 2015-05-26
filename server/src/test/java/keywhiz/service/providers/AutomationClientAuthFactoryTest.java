@@ -26,6 +26,7 @@ import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.SimplePrincipal;
 import keywhiz.service.daos.ClientDAO;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,15 +47,16 @@ public class AutomationClientAuthFactoryTest {
 
   @Mock ContainerRequest request;
   @Mock SecurityContext securityContext;
+  @Mock DSLContext dslContext;
   @Mock ClientDAO clientDAO;
 
   AutomationClientAuthFactory factory;
 
   @Before public void setUp() {
-    factory = new AutomationClientAuthFactory(clientDAO);
+    factory = new AutomationClientAuthFactory(dslContext, clientDAO);
 
     when(request.getSecurityContext()).thenReturn(securityContext);
-    when(clientDAO.getClient("principal")).thenReturn(Optional.of(client));
+    when(clientDAO.getClient(dslContext, "principal")).thenReturn(Optional.of(client));
   }
 
   @Test public void automationClientWhenClientPresent() {
@@ -69,7 +71,7 @@ public class AutomationClientAuthFactoryTest {
         new Client(3423, "clientWithoutAutomation", null, null, null, null, null, false, false);
 
     when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=clientWithoutAutomation"));
-    when(clientDAO.getClient("clientWithoutAutomation"))
+    when(clientDAO.getClient(dslContext, "clientWithoutAutomation"))
         .thenReturn(Optional.of(clientWithoutAutomation));
 
     factory.provide(request);
@@ -78,7 +80,7 @@ public class AutomationClientAuthFactoryTest {
   @Test(expected = ForbiddenException.class)
   public void automationClientRejectsClientsWithoutDBEntries() {
     when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=clientWithoutDBEntry"));
-    when(clientDAO.getClient("clientWithoutDBEntry")).thenReturn(Optional.empty());
+    when(clientDAO.getClient(dslContext, "clientWithoutDBEntry")).thenReturn(Optional.empty());
 
     factory.provide(request);
   }

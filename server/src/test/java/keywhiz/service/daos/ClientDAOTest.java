@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import keywhiz.TestDBRule;
 import keywhiz.api.model.Client;
+import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,11 +32,13 @@ public class ClientDAOTest {
   @Rule public final TestDBRule testDBRule = new TestDBRule();
 
   Client client1, client2;
+  DSLContext dslContext;
   ClientDAO clientDAO;
 
   @Before
   public void setUp() throws Exception {
-    clientDAO = new ClientDAO(testDBRule.jooqContext());
+    dslContext = testDBRule.jooqContext();
+    clientDAO = new ClientDAO();
 
     testDBRule.jooqContext().delete(CLIENTS).execute();
 
@@ -45,24 +48,24 @@ public class ClientDAOTest {
         .values("client2", "desc2", "creator", "updater", false)
         .execute();
 
-    client1 = clientDAO.getClient("client1").get();
-    client2 = clientDAO.getClient("client2").get();
+    client1 = clientDAO.getClient(dslContext, "client1").get();
+    client2 = clientDAO.getClient(dslContext, "client2").get();
   }
 
   @Test
   public void createClient() {
     int before = tableSize();
-    clientDAO.createClient("newClient", "creator", Optional.empty());
-    Client newClient = clientDAO.getClient("newClient").orElseThrow(RuntimeException::new);
+    clientDAO.createClient(dslContext, "newClient", "creator", Optional.empty());
+    Client newClient = clientDAO.getClient(dslContext, "newClient").orElseThrow(RuntimeException::new);
 
     assertThat(tableSize()).isEqualTo(before + 1);
-    assertThat(clientDAO.getClients()).containsOnly(client1, client2, newClient);
+    assertThat(clientDAO.getClients(dslContext)).containsOnly(client1, client2, newClient);
   }
 
   @Test
   public void createClientReturnsId() {
-    long id = clientDAO.createClient("newClientWithSameId", "creator2", Optional.empty());
-    Client clientById = clientDAO.getClient("newClientWithSameId")
+    long id = clientDAO.createClient(dslContext, "newClientWithSameId", "creator2", Optional.empty());
+    Client clientById = clientDAO.getClient(dslContext, "newClientWithSameId")
         .orElseThrow(RuntimeException::new);
     assertThat(clientById.getId()).isEqualTo(id);
   }
@@ -70,36 +73,36 @@ public class ClientDAOTest {
   @Test
   public void deleteClient() {
     int before = tableSize();
-    clientDAO.deleteClient(client1);
+    clientDAO.deleteClient(dslContext, client1);
     assertThat(tableSize()).isEqualTo(before - 1);
-    assertThat(clientDAO.getClients()).containsOnly(client2);
+    assertThat(clientDAO.getClients(dslContext)).containsOnly(client2);
   }
 
   @Test
   public void getClientByName() {
-    Client client = clientDAO.getClient("client1").orElseThrow(RuntimeException::new);
+    Client client = clientDAO.getClient(dslContext, "client1").orElseThrow(RuntimeException::new);
     assertThat(client).isEqualTo(client1);
   }
 
   @Test
   public void getNonExistentClientByName() {
-    assertThat(clientDAO.getClient("non-existent").isPresent()).isFalse();
+    assertThat(clientDAO.getClient(dslContext, "non-existent").isPresent()).isFalse();
   }
 
   @Test
   public void getClientById() {
-    Client client = clientDAO.getClientById(client1.getId()).orElseThrow(RuntimeException::new);
+    Client client = clientDAO.getClientById(dslContext, client1.getId()).orElseThrow(RuntimeException::new);
     assertThat(client).isEqualTo(client1);
   }
 
   @Test
   public void getNonExistentClientById() {
-    assertThat(clientDAO.getClientById(-1).isPresent()).isFalse();
+    assertThat(clientDAO.getClientById(dslContext, -1).isPresent()).isFalse();
   }
 
   @Test
   public void getsClients() {
-    Set<Client> clients = clientDAO.getClients();
+    Set<Client> clients = clientDAO.getClients(dslContext);
     assertThat(clients).containsOnly(client1, client2);
   }
 

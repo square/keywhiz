@@ -25,6 +25,7 @@ import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.SimplePrincipal;
 import keywhiz.service.daos.ClientDAO;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,15 +47,16 @@ public class ClientAuthFactoryTest {
 
   @Mock ContainerRequest request;
   @Mock SecurityContext securityContext;
+  @Mock DSLContext dslContext;
   @Mock ClientDAO clientDAO;
 
   ClientAuthFactory factory;
 
   @Before public void setUp() {
-    factory = new ClientAuthFactory(clientDAO);
+    factory = new ClientAuthFactory(dslContext, clientDAO);
 
     when(request.getSecurityContext()).thenReturn(securityContext);
-    when(clientDAO.getClient("principal")).thenReturn(Optional.of(client));
+    when(clientDAO.getClient(dslContext, "principal")).thenReturn(Optional.of(client));
   }
 
   @Test public void clientWhenClientPresent() {
@@ -76,7 +78,7 @@ public class ClientAuthFactoryTest {
         false /* disabled */, false);
 
     when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=disabled"));
-    when(clientDAO.getClient("disabled")).thenReturn(Optional.of(disabledClient));
+    when(clientDAO.getClient(dslContext, "disabled")).thenReturn(Optional.of(disabledClient));
 
     factory.provide(request);
   }
@@ -88,11 +90,11 @@ public class ClientAuthFactoryTest {
 
     // lookup doesn't find client
     when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=new-client"));
-    when(clientDAO.getClient("new-client")).thenReturn(Optional.empty());
+    when(clientDAO.getClient(dslContext, "new-client")).thenReturn(Optional.empty());
 
     // a new DB record is created
-    when(clientDAO.createClient(eq("new-client"), eq("automatic"), any())).thenReturn(2345L);
-    when(clientDAO.getClientById(2345L)).thenReturn(Optional.of(newClient));
+    when(clientDAO.createClient(eq(dslContext), eq("new-client"), eq("automatic"), any())).thenReturn(2345L);
+    when(clientDAO.getClientById(dslContext, 2345L)).thenReturn(Optional.of(newClient));
 
     assertThat(factory.provide(request)).isEqualTo(newClient);
   }

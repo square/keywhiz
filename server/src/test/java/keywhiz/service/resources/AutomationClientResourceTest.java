@@ -62,7 +62,7 @@ public class AutomationClientResourceTest {
     ClientDetailResponse expectedClient = ClientDetailResponse.fromClient(client,
         ImmutableList.of(firstGroup, secondGroup), ImmutableList.of());
 
-    when(clientDAO.getClient("client")).thenReturn(Optional.of(client));
+    when(clientDAO.getClient(dslContext, "client")).thenReturn(Optional.of(client));
     when(aclDAO.getGroupsFor(dslContext, client)).thenReturn(ImmutableSet.of(firstGroup, secondGroup));
 
     Response response = resource.findClient(automation, Optional.of("client"));
@@ -73,7 +73,7 @@ public class AutomationClientResourceTest {
 
   @Test(expected = NotFoundException.class)
   public void findClientByNameNotFound() {
-    when(clientDAO.getClient("client")).thenReturn(Optional.empty());
+    when(clientDAO.getClient(dslContext, "client")).thenReturn(Optional.empty());
     resource.findClient(automation, Optional.of("client"));
   }
 
@@ -82,9 +82,9 @@ public class AutomationClientResourceTest {
 
     CreateClientRequest request = new CreateClientRequest("client");
 
-    when(clientDAO.getClient("client")).thenReturn(Optional.empty());
-    when(clientDAO.createClient("client", automation.getName(), Optional.empty())).thenReturn(543L);
-    when(clientDAO.getClientById(543L)).thenReturn(Optional.of(client));
+    when(clientDAO.getClient(dslContext, "client")).thenReturn(Optional.empty());
+    when(clientDAO.createClient(dslContext, "client", automation.getName(), Optional.empty())).thenReturn(543L);
+    when(clientDAO.getClientById(dslContext, 543L)).thenReturn(Optional.of(client));
     when(aclDAO.getGroupsFor(dslContext, client)).thenReturn(ImmutableSet.of());
 
     ClientDetailResponse response = ClientDetailResponse.fromClient(client, ImmutableList.of(),
@@ -99,9 +99,9 @@ public class AutomationClientResourceTest {
 
     CreateClientRequest request = new CreateClientRequest("client");
 
-    when(clientDAO.getClient("client")).thenReturn(Optional.empty());
-    when(clientDAO.createClient("client", automation.getName(), Optional.empty())).thenReturn(543L);
-    when(clientDAO.getClientById(543L)).thenReturn(Optional.of(client));
+    when(clientDAO.getClient(dslContext, "client")).thenReturn(Optional.empty());
+    when(clientDAO.createClient(dslContext, "client", automation.getName(), Optional.empty())).thenReturn(543L);
+    when(clientDAO.getClientById(dslContext, 543L)).thenReturn(Optional.of(client));
 
     ClientDetailResponse response = ClientDetailResponse.fromClient(client, ImmutableList.of(),
         ImmutableList.of());

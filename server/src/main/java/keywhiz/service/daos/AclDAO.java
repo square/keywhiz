@@ -50,10 +50,12 @@ public class AclDAO {
   private static final Logger logger = LoggerFactory.getLogger(AclDAO.class);
 
   private final ObjectMapper mapper;
+  private final ClientDAO clientDAO;
 
   @Inject
-  public AclDAO(ObjectMapper mapper) {
+  public AclDAO(ObjectMapper mapper, ClientDAO clientDAO) {
     this.mapper = mapper;
+    this.clientDAO = clientDAO;
   }
 
   public void findAndAllowAccess(DSLContext dslContext, long secretId, long groupId) {
@@ -113,10 +115,9 @@ public class AclDAO {
 
     dslContext.transaction(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
-      ClientDAO clientDAO = new ClientDAO(innerDslContext);
       GroupDAO groupDAO = new GroupDAO(innerDslContext);
 
-      Optional<Client> client = clientDAO.getClientById(clientId);
+      Optional<Client> client = clientDAO.getClientById(innerDslContext, clientId);
       if (!client.isPresent()) {
         logger.info("Failure to enroll membership clientId {}, groupId {}: clientId not found.",
             clientId, groupId);
@@ -139,10 +140,9 @@ public class AclDAO {
 
     dslContext.transaction(configuration -> {
       DSLContext innerDslContext = DSL.using(configuration);
-      ClientDAO clientDAO = new ClientDAO(innerDslContext);
       GroupDAO groupDAO = new GroupDAO(innerDslContext);
 
-      Optional<Client> client = clientDAO.getClientById(clientId);
+      Optional<Client> client = clientDAO.getClientById(innerDslContext, clientId);
       if (!client.isPresent()) {
         logger.info("Failure to evict membership clientId {}, groupId {}: clientId not found.",
             clientId, groupId);

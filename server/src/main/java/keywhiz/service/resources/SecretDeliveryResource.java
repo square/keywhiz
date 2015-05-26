@@ -61,7 +61,7 @@ public class SecretDeliveryResource {
 
   @Inject
   public SecretDeliveryResource(@Readonly SecretController secretController,
-      @Readonly DSLContext dslContext, AclDAO aclDAO, @Readonly ClientDAO clientDAO) {
+      @Readonly DSLContext dslContext, AclDAO aclDAO, ClientDAO clientDAO) {
     this.secretController = secretController;
     this.dslContext = dslContext;
     this.aclDAO = aclDAO;
@@ -95,7 +95,7 @@ public class SecretDeliveryResource {
     Optional<Secret> secret = secretController.getSecretByNameAndVersion(name, version);
 
     if (!sanitizedSecret.isPresent()) {
-      boolean clientExists = clientDAO.getClient(client.getName()).isPresent();
+      boolean clientExists = clientDAO.getClient(dslContext, client.getName()).isPresent();
       boolean secretExists = secret.isPresent();
 
       if (clientExists && secretExists) {

@@ -30,6 +30,7 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,9 +47,11 @@ public class ClientAuthFactory {
   private static final Logger logger = LoggerFactory.getLogger(ClientAuthFactory.class);
 
   private final Authenticator<String, Client> authenticator;
+  private final DSLContext dslContext;
 
-  @Inject public ClientAuthFactory(ClientDAO clientDAO) {
-    this.authenticator = new MyAuthenticator(clientDAO);
+  @Inject public ClientAuthFactory(DSLContext dslContext, ClientDAO clientDAO) {
+    this.authenticator = new MyAuthenticator(dslContext, clientDAO);
+    this.dslContext = dslContext;
   }
 
   public Client provide(ContainerRequest request) {
@@ -83,15 +86,17 @@ public class ClientAuthFactory {
   }
 
   private static class MyAuthenticator implements Authenticator<String, Client> {
+    private final DSLContext dslContext;
     private final ClientDAO clientDAO;
 
-    private MyAuthenticator(ClientDAO clientDAO) {
+    private MyAuthenticator(DSLContext dslContext, ClientDAO clientDAO) {
+      this.dslContext = dslContext;
       this.clientDAO = clientDAO;
     }
 
     @Override public Optional<Client> authenticate(String name)
         throws AuthenticationException {
-      Optional<Client> optionalClient = clientDAO.getClient(name);
+      Optional<Client> optionalClient = clientDAO.getClient(dslContext, name);
       if (optionalClient.isPresent()) {
         Client client = optionalClient.get();
         if (client.isEnabled()) {
@@ -108,9 +113,9 @@ public class ClientAuthFactory {
        * 'enabled' field.
        */
       // TODO(justin): Consider making this behavior configurable.
-      long clientId = clientDAO.createClient(name, "automatic",
+      long clientId = clientDAO.createClient(dslContext, name, "automatic",
           Optional.of("Client created automatically from valid certificate authentication"));
-      return Optional.of(clientDAO.getClientById(clientId).get());
+      return Optional.of(clientDAO.getClientById(dslContext, clientId).get());
     }
   }
 }

@@ -86,7 +86,7 @@ public class AutomationClientResource {
       @PathParam("clientId") LongParam clientId) {
     logger.info("Automation ({}) - Looking up an ID {}", automationClient.getName(), clientId);
 
-    Client client = clientDAO.getClientById(clientId.get())
+    Client client = clientDAO.getClientById(dslContext, clientId.get())
         .orElseThrow(NotFoundException::new);
     ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(dslContext, client));
 
@@ -112,14 +112,14 @@ public class AutomationClientResource {
     logger.info("Automation ({}) - Looking up a name {}", automationClient.getName(), name);
 
     if (name.isPresent()) {
-      Client client = clientDAO.getClient(name.get()).orElseThrow(NotFoundException::new);
+      Client client = clientDAO.getClient(dslContext, name.get()).orElseThrow(NotFoundException::new);
       ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(dslContext, client));
       return Response.ok()
           .entity(ClientDetailResponse.fromClient(client, groups, ImmutableList.of()))
           .build();
     }
 
-    List<ClientDetailResponse> clients = clientDAO.getClients().stream()
+    List<ClientDetailResponse> clients = clientDAO.getClients(dslContext).stream()
         .map(c -> ClientDetailResponse.fromClient(c, ImmutableList.copyOf(aclDAO.getGroupsFor(dslContext, c)),
             ImmutableList.of()))
         .collect(toList());
@@ -141,15 +141,15 @@ public class AutomationClientResource {
       @Auth AutomationClient automationClient,
       @Valid CreateClientRequest clientRequest) {
 
-    Optional<Client> client = clientDAO.getClient(clientRequest.name);
+    Optional<Client> client = clientDAO.getClient(dslContext, clientRequest.name);
     if (client.isPresent()) {
       logger.info("Automation ({}) - Client {} already exists", automationClient.getName(), clientRequest.name);
       throw new ConflictException("Client name already exists.");
     }
 
-    long id = clientDAO.createClient(clientRequest.name, automationClient.getName(),
+    long id = clientDAO.createClient(dslContext, clientRequest.name, automationClient.getName(),
         Optional.empty());
-    client = clientDAO.getClientById(id);
+    client = clientDAO.getClientById(dslContext, id);
 
     return ClientDetailResponse.fromClient(client.get(), ImmutableList.of(), ImmutableList.of());
   }
@@ -167,8 +167,8 @@ public class AutomationClientResource {
   @Path("{clientId}")
   public Response deleteClient(@Auth AutomationClient automationClient,
       @PathParam("clientId") LongParam clientId) {
-    Client client = clientDAO.getClientById(clientId.get()).orElseThrow(NotFoundException::new);
-    clientDAO.deleteClient(client);
+    Client client = clientDAO.getClientById(dslContext, clientId.get()).orElseThrow(NotFoundException::new);
+    clientDAO.deleteClient(dslContext, client);
     return Response.ok().build();
   }
 }
