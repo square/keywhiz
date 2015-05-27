@@ -19,6 +19,7 @@ package keywhiz.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import com.squareup.okhttp.Call;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -26,7 +27,6 @@ import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.util.List;
-import javax.inject.Inject;
 import javax.ws.rs.core.HttpHeaders;
 import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.CreateClientRequest;
@@ -39,6 +39,8 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import org.apache.http.HttpStatus;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Client for interacting with the Keywhiz Server.
@@ -93,10 +95,9 @@ public class KeywhizClient {
     }
   }
 
-  @Inject
   public KeywhizClient(ObjectMapper mapper, OkHttpClient client) {
-    this.mapper = mapper;
-    this.client = client;
+    this.mapper = checkNotNull(mapper);
+    this.client = checkNotNull(client);
   }
 
   /**
@@ -220,8 +221,8 @@ public class KeywhizClient {
   }
 
   public boolean isLoggedIn() throws IOException{
-    return client.newCall(new Request.Builder().get().url("/admin/me").build()).execute().code()
-        != HttpStatus.SC_UNAUTHORIZED;
+    Call call = client.newCall(new Request.Builder().get().url("/admin/me").build());
+    return call.execute().code() != HttpStatus.SC_UNAUTHORIZED;
   }
 
   /**

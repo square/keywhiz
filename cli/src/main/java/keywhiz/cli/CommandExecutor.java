@@ -17,7 +17,6 @@ package keywhiz.cli;
 
 import com.beust.jcommander.JCommander;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.StandardSystemProperty;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.name.Named;
@@ -50,6 +49,7 @@ import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.UnauthorizedException;
 import org.apache.http.HttpHost;
 
+import static com.google.common.base.StandardSystemProperty.USER_HOME;
 import static com.google.common.base.StandardSystemProperty.USER_NAME;
 
 public class CommandExecutor {
@@ -57,14 +57,14 @@ public class CommandExecutor {
 
   public enum Command { LOGIN, LIST, DESCRIBE, ADD, DELETE, ASSIGN, UNASSIGN }
 
+  private final Path cookiePath = Paths.get(USER_HOME.value(), "/.keywhiz.cookies");
+
   private final String command;
   private final Map commands;
   private final JCommander parentCommander;
   private final JCommander commander;
   private final CliConfiguration config;
   private final ObjectMapper mapper;
-  private final Path COOKIE_PATH = Paths.get(StandardSystemProperty.USER_HOME.value(),
-      "/.keywhiz.cookies");
 
   @Inject
   public CommandExecutor(CliConfiguration config, @Named("Command") @Nullable String command,
@@ -103,7 +103,7 @@ public class CommandExecutor {
     OkHttpClient encapsulatedClient;
 
     try {
-      List<HttpCookie> cookieList = ClientUtils.loadCookies(COOKIE_PATH);
+      List<HttpCookie> cookieList = ClientUtils.loadCookies(cookiePath);
       encapsulatedClient = ClientUtils.sslOkHttpClient(cookieList);
       client = new KeywhizClient(mapper, ClientUtils.hostBoundWrappedHttpClient(host,
           encapsulatedClient));
@@ -122,7 +122,7 @@ public class CommandExecutor {
       Arrays.fill(password, '\0');
     }
     // Save/update the cookies if we logged in successfully
-    ClientUtils.saveCookies((CookieManager) encapsulatedClient.getCookieHandler(), COOKIE_PATH);
+    ClientUtils.saveCookies((CookieManager) encapsulatedClient.getCookieHandler(), cookiePath);
 
     Printing printing = new Printing(client);
 
