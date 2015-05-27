@@ -29,10 +29,9 @@ public abstract class JsonCookie {
       @JsonProperty("value") String value,
       @JsonProperty("domain") String domain,
       @JsonProperty("path") String path,
-      @JsonProperty("version") int version,
       @JsonProperty("secure") boolean isSecure,
       @JsonProperty("httpOnly") boolean isHttpOnly) {
-    return new AutoValue_JsonCookie(name, value, domain, path, version, isSecure, isHttpOnly);
+    return new AutoValue_JsonCookie(name, value, domain, path, isSecure, isHttpOnly);
   }
 
   public static JsonCookie fromHttpCookie(HttpCookie cookie) {
@@ -41,7 +40,6 @@ public abstract class JsonCookie {
         cookie.getValue(),
         cookie.getDomain(),
         cookie.getPath(),
-        cookie.getVersion(),
         cookie.getSecure(),
         cookie.isHttpOnly());
   }
@@ -50,9 +48,9 @@ public abstract class JsonCookie {
     HttpCookie cookie = new HttpCookie(cookieContents.name(), cookieContents.value());
     cookie.setDomain(cookieContents.domain());
     cookie.setPath(cookieContents.path());
-    cookie.setVersion(cookieContents.version());
     cookie.setSecure(cookieContents.isSecure());
     cookie.setHttpOnly(cookieContents.isHttpOnly());
+    cookie.setVersion(1); // Always set version to 1 or important fields will be dropped
     return cookie;
   }
 
@@ -60,7 +58,6 @@ public abstract class JsonCookie {
   @JsonProperty public abstract String value();
   @JsonProperty public abstract String domain();
   @JsonProperty public abstract String path();
-  @JsonProperty public abstract int version();
   @JsonProperty public abstract boolean isSecure();
   @JsonProperty public abstract boolean isHttpOnly();
 }

@@ -54,7 +54,7 @@ public class ClientUtilsTest {
 
     sessionCookie.setPath("/admin");
     sessionCookie.setDomain("localhost");
-    sessionCookie.setVersion(0);
+    sessionCookie.setVersion(1);
     sessionCookie.setHttpOnly(true);
     sessionCookie.setSecure(true);
   }
