@@ -132,78 +132,25 @@ public class ServiceModule extends AbstractModule {
 
   // DAOs
 
-  @Provides @Singleton AclDAO aclDAO(DSLContext jooqContext, ClientDAO clientDAO,
-      GroupDAO groupDAO, SecretContentDAO secretContentDAO,
-      SecretSeriesDAO secretSeriesDAO, ObjectMapper mapper) {
-    return new AclDAO(jooqContext, clientDAO, groupDAO, secretContentDAO, secretSeriesDAO, mapper);
-  }
-
-  @Provides @Singleton
-  @Readonly AclDAO readonlyAclDAO(@Readonly DSLContext jooqContext, @Readonly ClientDAO clientDAO,
-      @Readonly GroupDAO groupDAO, @Readonly SecretContentDAO secretContentDAO,
-      @Readonly SecretSeriesDAO secretSeriesDAO, ObjectMapper mapper) {
-    return new AclDAO(jooqContext, clientDAO, groupDAO, secretContentDAO, secretSeriesDAO, mapper);
-  }
-
-  @Provides @Singleton ClientDAO clientDAO(DSLContext jooqContext) {
-    return new ClientDAO(jooqContext);
-  }
-
-  @Provides @Singleton @Readonly ClientDAO readonlyClientDAO(@Readonly DSLContext jooqContext) {
-    return new ClientDAO(jooqContext);
-  }
-
-  @Provides @Singleton GroupDAO groupDAO(DSLContext jooqContext) {
-    return new GroupDAO(jooqContext);
-  }
-
-  @Provides @Singleton @Readonly GroupDAO readonlyGroupDAO(@Readonly DSLContext jooqContext) {
-    return new GroupDAO(jooqContext);
-  }
-
-  @Provides @Singleton SecretContentDAO secretContentDAO(DSLContext jooqContext,
-      ObjectMapper mapper) {
-    return new SecretContentDAO(jooqContext, mapper);
-  }
-
-  @Provides @Singleton
-  @Readonly SecretContentDAO readonlySecretContentDAO(@Readonly DSLContext jooqContext,
-      ObjectMapper mapper) {
-    return new SecretContentDAO(jooqContext, mapper);
-  }
-
-  @Provides @Singleton SecretSeriesDAO secretSeriesDAO(DSLContext jooqContext,
-      ObjectMapper mapper) {
-    return new SecretSeriesDAO(jooqContext, mapper);
-  }
-
-  @Provides @Singleton
-  @Readonly SecretSeriesDAO readonlySecretSeriesDAO(@Readonly DSLContext jooqContext,
-      ObjectMapper mapper) {
-    return new SecretSeriesDAO(jooqContext, mapper);
-  }
-
-  @Provides @Singleton SecretDAO secretDAO(DSLContext jooqContext,
+  @Provides @Singleton AclDAO aclDAO(ObjectMapper mapper, ClientDAO clientDAO, GroupDAO groupDAO,
       SecretContentDAO secretContentDAO, SecretSeriesDAO secretSeriesDAO) {
-    return new SecretDAO(jooqContext, secretContentDAO, secretSeriesDAO);
+    return new AclDAO(mapper, clientDAO, groupDAO, secretContentDAO, secretSeriesDAO);
   }
 
-  @Provides @Singleton
-  @Readonly SecretDAO readonlySecretDAO(@Readonly DSLContext jooqContext,
-      @Readonly SecretContentDAO secretContentDAO,
-      @Readonly SecretSeriesDAO secretSeriesDAO) {
-    return new SecretDAO(jooqContext, secretContentDAO, secretSeriesDAO);
+  @Provides @Singleton SecretDAO secretDAO(SecretContentDAO secretContentDAO,
+  SecretSeriesDAO secretSeriesDAO) {
+    return new SecretDAO(secretContentDAO, secretSeriesDAO);
   }
 
   @Provides @Singleton SecretController secretController(SecretTransformer transformer,
-      ContentCryptographer cryptographer, SecretDAO secretDAO) {
-    return new SecretController(transformer, cryptographer, secretDAO);
+      ContentCryptographer cryptographer, DSLContext jooqContext, SecretDAO secretDAO) {
+    return new SecretController(transformer, cryptographer, jooqContext, secretDAO);
   }
 
   @Provides @Singleton
   @Readonly SecretController readonlySecretController(SecretTransformer transformer,
-      ContentCryptographer cryptographer, @Readonly SecretDAO secretDAO) {
-    return new SecretController(transformer, cryptographer, secretDAO);
+      ContentCryptographer cryptographer, @Readonly DSLContext jooqContext, SecretDAO secretDAO) {
+    return new SecretController(transformer, cryptographer, jooqContext, secretDAO);
   }
 
   @Provides @Singleton

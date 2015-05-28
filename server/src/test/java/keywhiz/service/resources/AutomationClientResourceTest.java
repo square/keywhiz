@@ -28,6 +28,7 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
+import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,6 +42,7 @@ import static org.mockito.Mockito.when;
 public class AutomationClientResourceTest {
   @Rule public TestRule mockito = new MockitoJUnitRule(this);
 
+  @Mock DSLContext dslContext;
   @Mock ClientDAO clientDAO;
   @Mock AclDAO aclDAO;
   OffsetDateTime now = OffsetDateTime.now();
@@ -50,7 +52,7 @@ public class AutomationClientResourceTest {
   AutomationClientResource resource;
 
   @Before public void setUp() {
-    resource = new AutomationClientResource(clientDAO, aclDAO);
+    resource = new AutomationClientResource(dslContext, clientDAO, aclDAO);
   }
 
   @Test public void findClientByName() {
@@ -60,8 +62,8 @@ public class AutomationClientResourceTest {
     ClientDetailResponse expectedClient = ClientDetailResponse.fromClient(client,
         ImmutableList.of(firstGroup, secondGroup), ImmutableList.of());
 
-    when(clientDAO.getClient("client")).thenReturn(Optional.of(client));
-    when(aclDAO.getGroupsFor(client)).thenReturn(ImmutableSet.of(firstGroup, secondGroup));
+    when(clientDAO.getClient(dslContext, "client")).thenReturn(Optional.of(client));
+    when(aclDAO.getGroupsFor(dslContext, client)).thenReturn(ImmutableSet.of(firstGroup, secondGroup));
 
     Response response = resource.findClient(automation, Optional.of("client"));
     assertThat(response.getEntity()).hasSameClassAs(expectedClient);
@@ -71,7 +73,7 @@ public class AutomationClientResourceTest {
 
   @Test(expected = NotFoundException.class)
   public void findClientByNameNotFound() {
-    when(clientDAO.getClient("client")).thenReturn(Optional.empty());
+    when(clientDAO.getClient(dslContext, "client")).thenReturn(Optional.empty());
     resource.findClient(automation, Optional.of("client"));
   }
 
@@ -80,10 +82,10 @@ public class AutomationClientResourceTest {
 
     CreateClientRequest request = new CreateClientRequest("client");
 
-    when(clientDAO.getClient("client")).thenReturn(Optional.empty());
-    when(clientDAO.createClient("client", automation.getName(), Optional.empty())).thenReturn(543L);
-    when(clientDAO.getClientById(543L)).thenReturn(Optional.of(client));
-    when(aclDAO.getGroupsFor(client)).thenReturn(ImmutableSet.of());
+    when(clientDAO.getClient(dslContext, "client")).thenReturn(Optional.empty());
+    when(clientDAO.createClient(dslContext, "client", automation.getName(), Optional.empty())).thenReturn(543L);
+    when(clientDAO.getClientById(dslContext, 543L)).thenReturn(Optional.of(client));
+    when(aclDAO.getGroupsFor(dslContext, client)).thenReturn(ImmutableSet.of());
 
     ClientDetailResponse response = ClientDetailResponse.fromClient(client, ImmutableList.of(),
         ImmutableList.of());
@@ -97,9 +99,9 @@ public class AutomationClientResourceTest {
 
     CreateClientRequest request = new CreateClientRequest("client");
 
-    when(clientDAO.getClient("client")).thenReturn(Optional.empty());
-    when(clientDAO.createClient("client", automation.getName(), Optional.empty())).thenReturn(543L);
-    when(clientDAO.getClientById(543L)).thenReturn(Optional.of(client));
+    when(clientDAO.getClient(dslContext, "client")).thenReturn(Optional.empty());
+    when(clientDAO.createClient(dslContext, "client", automation.getName(), Optional.empty())).thenReturn(543L);
+    when(clientDAO.getClientById(dslContext, 543L)).thenReturn(Optional.of(client));
 
     ClientDetailResponse response = ClientDetailResponse.fromClient(client, ImmutableList.of(),
         ImmutableList.of());

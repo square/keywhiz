@@ -39,6 +39,7 @@ import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.exceptions.ConflictException;
+import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,9 +57,10 @@ import static org.mockito.Mockito.when;
 public class SecretsResourceTest {
   private static final OffsetDateTime NOW = OffsetDateTime.now();
 
+  @Mock SecretController secretController;
+  @Mock DSLContext dslContext;
   @Mock AclDAO aclDAO;
   @Mock SecretSeriesDAO secretSeriesDAO;
-  @Mock SecretController secretController;
 
   User user = User.named("user");
   ImmutableMap<String, String> emptyMap = ImmutableMap.of();
@@ -70,7 +72,7 @@ public class SecretsResourceTest {
 
   @Before
   public void setUp() {
-    resource = new SecretsResource(secretController, aclDAO, secretSeriesDAO);
+    resource = new SecretsResource(secretController, dslContext, aclDAO, secretSeriesDAO);
   }
 
   @Test
@@ -107,7 +109,7 @@ public class SecretsResourceTest {
     when(secretController.getSecretsById(0xdeadbeef)).thenReturn(ImmutableList.of(secret));
 
     Response response = resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)));
-    verify(secretSeriesDAO).deleteSecretSeriesById(0xdeadbeef);
+    verify(secretSeriesDAO).deleteSecretSeriesById(dslContext, 0xdeadbeef);
     assertThat(response.getStatus()).isEqualTo(204);
   }
 
@@ -125,8 +127,8 @@ public class SecretsResourceTest {
   @Test
   public void includesTheSecret() {
     when(secretController.getSecretsById(22)).thenReturn(ImmutableList.of(secret));
-    when(aclDAO.getGroupsFor(secret)).thenReturn(Collections.emptySet());
-    when(aclDAO.getClientsFor(secret)).thenReturn(Collections.emptySet());
+    when(aclDAO.getGroupsFor(dslContext, secret)).thenReturn(Collections.emptySet());
+    when(aclDAO.getClientsFor(dslContext, secret)).thenReturn(Collections.emptySet());
 
     SecretDetailResponse response = resource.retrieveSecret(user, new LongParam("22"));
 
@@ -144,8 +146,8 @@ public class SecretsResourceTest {
   @Test
   public void handlesNoAssociations() {
     when(secretController.getSecretsById(22)).thenReturn(ImmutableList.of(secret));
-    when(aclDAO.getGroupsFor(secret)).thenReturn(Collections.emptySet());
-    when(aclDAO.getClientsFor(secret)).thenReturn(Collections.emptySet());
+    when(aclDAO.getGroupsFor(dslContext, secret)).thenReturn(Collections.emptySet());
+    when(aclDAO.getClientsFor(dslContext, secret)).thenReturn(Collections.emptySet());
 
     SecretDetailResponse response = resource.retrieveSecret(user, new LongParam("22"));
     assertThat(response.groups).isEmpty();
@@ -159,8 +161,8 @@ public class SecretsResourceTest {
     Group group2 = new Group(0, "group2", null, null, null, null, null);
 
     when(secretController.getSecretsById(22)).thenReturn(ImmutableList.of(secret));
-    when(aclDAO.getGroupsFor(secret)).thenReturn(Sets.newHashSet(group1, group2));
-    when(aclDAO.getClientsFor(secret)).thenReturn(Sets.newHashSet(client));
+    when(aclDAO.getGroupsFor(dslContext, secret)).thenReturn(Sets.newHashSet(group1, group2));
+    when(aclDAO.getClientsFor(dslContext, secret)).thenReturn(Sets.newHashSet(client));
 
     SecretDetailResponse response = resource.retrieveSecret(user, new LongParam("22"));
     assertThat(response.groups).containsOnly(group1, group2);

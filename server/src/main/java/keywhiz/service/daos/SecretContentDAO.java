@@ -28,23 +28,23 @@ import keywhiz.api.model.SecretContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import org.jooq.DSLContext;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
 /**
  * Interacts with 'secrets_content' table and actions on {@link SecretContent} entities.
  */
 public class SecretContentDAO {
-  private final DSLContext dslContext;
   private final ObjectMapper mapper;
 
-  @Inject
-  public SecretContentDAO(DSLContext dslContext, ObjectMapper mapper) {
-    this.dslContext = dslContext;
+  @Inject public SecretContentDAO(ObjectMapper mapper) {
     this.mapper = mapper;
   }
 
-  public long createSecretContent(long secretId, String encryptedContent, String version,
+  public long createSecretContent(DSLContext dslContext, long secretId, String encryptedContent, String version,
       String creator, Map<String, String> metadata) {
+    checkNotNull(dslContext);
+
     SecretsContentRecord r = dslContext.newRecord(SECRETS_CONTENT);
 
     String jsonMetadata;
@@ -66,15 +66,19 @@ public class SecretContentDAO {
     return r.getId();
   }
 
-  public Optional<SecretContent> getSecretContentById(long id) {
+  public Optional<SecretContent> getSecretContentById(DSLContext dslContext, long id) {
+    checkNotNull(dslContext);
+
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
         SECRETS_CONTENT.ID.eq(Math.toIntExact(id)));
     return Optional.ofNullable(r).map(
         rec -> new SecretContentMapper(mapper).map(rec));
   }
 
-  public Optional<SecretContent> getSecretContentBySecretIdAndVersion(long secretId,
-      String version) {
+  public Optional<SecretContent> getSecretContentBySecretIdAndVersion(DSLContext dslContext,
+      long secretId, String version) {
+    checkNotNull(dslContext);
+
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
         SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId))
             .and(SECRETS_CONTENT.VERSION.eq(version)));
@@ -82,7 +86,10 @@ public class SecretContentDAO {
         rec -> new SecretContentMapper(mapper).map(rec));
   }
 
-  public ImmutableList<SecretContent> getSecretContentsBySecretId(long secretId) {
+  public ImmutableList<SecretContent> getSecretContentsBySecretId(DSLContext dslContext,
+      long secretId) {
+    checkNotNull(dslContext);
+
     List<SecretContent> r = dslContext
         .selectFrom(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId)))
@@ -92,7 +99,10 @@ public class SecretContentDAO {
     return ImmutableList.copyOf(r);
   }
 
-  public void deleteSecretContentBySecretIdAndVersion(long secretId, String version) {
+  public void deleteSecretContentBySecretIdAndVersion(DSLContext dslContext, long secretId,
+      String version) {
+    checkNotNull(dslContext);
+
     dslContext
         .delete(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId))
@@ -100,7 +110,9 @@ public class SecretContentDAO {
         .execute();
   }
 
-  public ImmutableList<String> getVersionFromSecretId(long secretId) {
+  public ImmutableList<String> getVersionFromSecretId(DSLContext dslContext, long secretId) {
+    checkNotNull(dslContext);
+
     List<String> r = dslContext
         .select(SECRETS_CONTENT.VERSION)
         .from(SECRETS_CONTENT)

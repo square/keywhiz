@@ -18,6 +18,7 @@ package keywhiz.service.daos;
 
 import java.time.OffsetDateTime;
 import keywhiz.TestDBRule;
+import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,11 +30,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class UserDAOTest {
   @Rule public final TestDBRule testDBRule = new TestDBRule();
 
+  DSLContext dslContext;
   UserDAO userDAO;
   String hashedPassword;
 
   @Before public void setUp() {
-    userDAO = new UserDAO(testDBRule.jooqContext());
+    dslContext = testDBRule.jooqContext();
+    userDAO = new UserDAO();
 
     hashedPassword = BCrypt.hashpw("password", BCrypt.gensalt());
 
@@ -47,13 +50,14 @@ public class UserDAOTest {
 
   @Test
   public void getExistingUser() {
-    String retrievedHash = userDAO.getHashedPassword("user").orElseThrow(RuntimeException::new);
+    String retrievedHash = userDAO.getHashedPassword(dslContext, "user")
+        .orElseThrow(RuntimeException::new);
     assertThat(retrievedHash).isEqualTo(hashedPassword);
   }
 
   @Test
   public void getNonexistentUser() {
-    assertThat(userDAO.getHashedPassword("non-user").isPresent()).isFalse();
+    assertThat(userDAO.getHashedPassword(dslContext, "non-user").isPresent()).isFalse();
   }
 
 }

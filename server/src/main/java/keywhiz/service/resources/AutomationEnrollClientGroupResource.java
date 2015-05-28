@@ -28,6 +28,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.service.daos.AclDAO;
+import org.jooq.DSLContext;
 
 /**
  * @parentEndpointName enroll-clients-automation
@@ -38,10 +39,12 @@ import keywhiz.service.daos.AclDAO;
 @Produces(MediaType.APPLICATION_JSON)
 public class AutomationEnrollClientGroupResource {
   private final AclDAO aclDAO;
+  private final DSLContext dslContext;
 
   @Inject
-  public AutomationEnrollClientGroupResource(AclDAO aclDAO) {
+  public AutomationEnrollClientGroupResource(AclDAO aclDAO, DSLContext dslContext) {
     this.aclDAO = aclDAO;
+    this.dslContext = dslContext;
   }
 
   /**
@@ -61,7 +64,7 @@ public class AutomationEnrollClientGroupResource {
       @PathParam("groupId") LongParam groupId) {
 
     try {
-      aclDAO.findAndEnrollClient(clientId.get(), groupId.get());
+      aclDAO.findAndEnrollClient(dslContext, clientId.get(), groupId.get());
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }
@@ -86,7 +89,7 @@ public class AutomationEnrollClientGroupResource {
       @PathParam("groupId") long groupId) {
 
     try {
-      aclDAO.findAndEvictClient(clientId, groupId);
+      aclDAO.findAndEvictClient(dslContext, clientId, groupId);
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }

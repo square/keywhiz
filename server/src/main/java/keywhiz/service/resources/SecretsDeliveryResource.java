@@ -27,6 +27,7 @@ import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.Client;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.AclDAO;
+import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,10 +42,12 @@ import static java.util.stream.Collectors.toList;
 @Produces(MediaType.APPLICATION_JSON)
 public class SecretsDeliveryResource {
   private final Logger logger = LoggerFactory.getLogger(SecretsDeliveryResource.class);
+  private final DSLContext dslContext;
   private final AclDAO aclDAO;
 
   @Inject
-  public SecretsDeliveryResource(@Readonly AclDAO aclDAO) {
+  public SecretsDeliveryResource(@Readonly DSLContext dslContext, AclDAO aclDAO) {
+    this.dslContext = dslContext;
     this.aclDAO = aclDAO;
   }
 
@@ -56,7 +59,7 @@ public class SecretsDeliveryResource {
   @GET
   public List<SecretDeliveryResponse> getSecrets(@Auth Client client) {
     logger.info("Client {} listed available secrets.", client.getName());
-    return aclDAO.getSanitizedSecretsFor(client).stream()
+    return aclDAO.getSanitizedSecretsFor(dslContext, client).stream()
         .map(SecretDeliveryResponse::fromSanitizedSecret)
         .collect(toList());
   }

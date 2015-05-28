@@ -26,6 +26,7 @@ import javax.ws.rs.NotAuthorizedException;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.service.daos.ClientDAO;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.jooq.DSLContext;
 
 import static java.lang.String.format;
 
@@ -39,8 +40,8 @@ import static java.lang.String.format;
 public class AutomationClientAuthFactory {
   private final Authenticator<String, AutomationClient> authenticator;
 
-  @Inject public AutomationClientAuthFactory(ClientDAO clientDAO) {
-    this.authenticator = new MyAuthenticator(clientDAO);
+  @Inject public AutomationClientAuthFactory(DSLContext dslContext, ClientDAO clientDAO) {
+    this.authenticator = new MyAuthenticator(dslContext, clientDAO);
   }
 
   public AutomationClient provide(ContainerRequest request) {
@@ -60,15 +61,17 @@ public class AutomationClientAuthFactory {
   }
 
   private static class MyAuthenticator implements Authenticator<String, AutomationClient> {
+    private final DSLContext dslContext;
     private final ClientDAO clientDAO;
 
-    private MyAuthenticator(ClientDAO clientDAO) {
+    private MyAuthenticator(DSLContext dslContext, ClientDAO clientDAO) {
+      this.dslContext = dslContext;
       this.clientDAO = clientDAO;
     }
 
     @Override public Optional<AutomationClient> authenticate(String name)
         throws AuthenticationException {
-      return clientDAO.getClient(name).map(AutomationClient::of);
+      return clientDAO.getClient(dslContext, name).map(AutomationClient::of);
     }
   }
 }

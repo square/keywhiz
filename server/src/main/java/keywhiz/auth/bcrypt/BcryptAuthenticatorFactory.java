@@ -36,7 +36,7 @@ public class BcryptAuthenticatorFactory implements UserAuthenticatorFactory {
 
   @Override public Authenticator<BasicCredentials, User> build(DSLContext dslContext) {
     logger.debug("Creating BCrypt authenticator");
-    UserDAO userDAO = new UserDAO(dslContext);
-    return new BcryptAuthenticator(userDAO);
+    UserDAO userDAO = new UserDAO();
+    return new BcryptAuthenticator(dslContext, userDAO);
   }
 }

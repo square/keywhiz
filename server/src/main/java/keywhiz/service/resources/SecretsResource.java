@@ -50,6 +50,7 @@ import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.exceptions.ConflictException;
+import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,15 +69,17 @@ public class SecretsResource {
   private static final Logger logger = LoggerFactory.getLogger(SecretsResource.class);
 
   private final SecretController secretController;
+  private final DSLContext dslContext;
   private final AclDAO aclDAO;
   private final SecretSeriesDAO secretSeriesDAO;
 
   @Inject
-  public SecretsResource(SecretController secretController, AclDAO aclDAO,
+  public SecretsResource(SecretController secretController, DSLContext dslContext, AclDAO aclDAO,
       SecretSeriesDAO secretSeriesDAO) {
     this.secretController = secretController;
     this.aclDAO = aclDAO;
     this.secretSeriesDAO = secretSeriesDAO;
+    this.dslContext = dslContext;
   }
 
   /**
@@ -225,7 +228,7 @@ public class SecretsResource {
       throw new NotFoundException("Secret not found.");
     }
 
-    secretSeriesDAO.deleteSecretSeriesById(secretId.get());
+    secretSeriesDAO.deleteSecretSeriesById(dslContext, secretId.get());
     return Response.noContent().build();
   }
 
@@ -237,8 +240,8 @@ public class SecretsResource {
 
     // TODO(justin): API change needed to return all versions.
     Secret secret = secrets.get(0);
-    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
-    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(secret));
+    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(dslContext, secret));
+    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(dslContext, secret));
     return SecretDetailResponse.fromSecret(secret, groups, clients);
   }
 

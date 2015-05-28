@@ -24,6 +24,7 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.service.daos.AclDAO;
+import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +39,7 @@ import static org.mockito.Mockito.when;
 public class SecretsDeliveryResourceTest {
   private static final OffsetDateTime NOW = OffsetDateTime.now();
 
+  @Mock DSLContext dslContext;
   @Mock AclDAO aclDAO;
   SecretsDeliveryResource secretsDeliveryResource;
 
@@ -52,18 +54,18 @@ public class SecretsDeliveryResourceTest {
   Client client;
 
   @Before public void setUp() {
-    secretsDeliveryResource = new SecretsDeliveryResource(aclDAO);
+    secretsDeliveryResource = new SecretsDeliveryResource(dslContext, aclDAO);
     client = new Client(0, "client_name", null, null, null, null, null, false, false);
   }
 
   @Test public void returnsEmptyJsonArrayWhenUserHasNoSecrets() throws Exception {
-    when(aclDAO.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of());
+    when(aclDAO.getSanitizedSecretsFor(dslContext, client)).thenReturn(ImmutableSet.of());
     List<SecretDeliveryResponse> secrets = secretsDeliveryResource.getSecrets(client);
     assertThat(secrets).isEmpty();
   }
 
   @Test public void returnsJsonArrayWhenUserHasOneSecret() throws Exception {
-    when(aclDAO.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of(sanitizedFirstSecret));
+    when(aclDAO.getSanitizedSecretsFor(dslContext, client)).thenReturn(ImmutableSet.of(sanitizedFirstSecret));
 
     List<SecretDeliveryResponse> secrets = secretsDeliveryResource.getSecrets(client);
     assertThat(secrets).containsOnly(SecretDeliveryResponse.fromSanitizedSecret(
@@ -71,7 +73,7 @@ public class SecretsDeliveryResourceTest {
   }
 
   @Test public void returnsJsonArrayWhenUserHasMultipleSecrets() throws Exception {
-    when(aclDAO.getSanitizedSecretsFor(client))
+    when(aclDAO.getSanitizedSecretsFor(dslContext, client))
         .thenReturn(ImmutableSet.of(sanitizedFirstSecret, sanitizedSecondSecret));
 
     List<SecretDeliveryResponse> secrets = secretsDeliveryResource.getSecrets(client);

@@ -43,6 +43,7 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.exceptions.ConflictException;
+import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,11 +60,13 @@ import static java.util.stream.Collectors.toList;
 public class AutomationGroupResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationGroupResource.class);
 
+  private final DSLContext dslContext;
   private final GroupDAO groupDAO;
   private final AclDAO aclDAO;
 
   @Inject
-  public AutomationGroupResource(GroupDAO groupDAO, AclDAO aclDAO) {
+  public AutomationGroupResource(DSLContext dslContext, GroupDAO groupDAO, AclDAO aclDAO) {
+    this.dslContext = dslContext;
     this.groupDAO = groupDAO;
     this.aclDAO = aclDAO;
   }
@@ -82,11 +85,11 @@ public class AutomationGroupResource {
   public GroupDetailResponse getGroupById(
       @Auth AutomationClient automationClient,
       @PathParam("groupId") LongParam groupId) {
-    Group group = groupDAO.getGroupById(groupId.get()).orElseThrow(NotFoundException::new);
+    Group group = groupDAO.getGroupById(dslContext, groupId.get()).orElseThrow(NotFoundException::new);
 
-    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(group));
+    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(dslContext, group));
     ImmutableList<SanitizedSecret> sanitizedSecrets =
-        ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(group));
+        ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(dslContext, group));
     return GroupDetailResponse.fromGroup(group, sanitizedSecrets, clients);
   }
 
@@ -103,10 +106,10 @@ public class AutomationGroupResource {
   @GET
   public Response getGroupByName(@QueryParam("name") Optional<String> name) {
     if (name.isPresent()) {
-      Group group = groupDAO.getGroup(name.get()).orElseThrow(NotFoundException::new);
+      Group group = groupDAO.getGroup(dslContext, name.get()).orElseThrow(NotFoundException::new);
 
-      ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(group));
-      ImmutableList<SanitizedSecret> sanitizedSecrets = ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(group));
+      ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(dslContext, group));
+      ImmutableList<SanitizedSecret> sanitizedSecrets = ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(dslContext, group));
       return Response.ok()
           .entity(GroupDetailResponse.fromGroup(group, sanitizedSecrets, clients))
           .build();
@@ -114,7 +117,7 @@ public class AutomationGroupResource {
 
     ImmutableList<SanitizedSecret> emptySecrets = ImmutableList.of();
     ImmutableList<Client> emptyClients = ImmutableList.of();
-    List<GroupDetailResponse> groups = groupDAO.getGroups().stream()
+    List<GroupDetailResponse> groups = groupDAO.getGroups(dslContext).stream()
         .map((g) -> GroupDetailResponse.fromGroup(g, emptySecrets, emptyClients))
         .collect(toList());
     return Response.ok()
@@ -137,15 +140,15 @@ public class AutomationGroupResource {
       @Auth AutomationClient automationClient,
       @Valid CreateGroupRequest groupRequest) {
 
-    Optional<Group> group = groupDAO.getGroup(groupRequest.name);
+    Optional<Group> group = groupDAO.getGroup(dslContext, groupRequest.name);
     if (group.isPresent()) {
       logger.info("Automation ({}) - Group {} already exists", automationClient.getName(), groupRequest.name);
       throw new ConflictException("Group name already exists.");
     }
 
-    long id = groupDAO.createGroup(groupRequest.name, automationClient.getName(),
+    long id = groupDAO.createGroup(dslContext, groupRequest.name, automationClient.getName(),
         Optional.ofNullable(groupRequest.description));
-    return groupDAO.getGroupById(id).get();
+    return groupDAO.getGroupById(dslContext, id).get();
   }
 
   /**
@@ -161,8 +164,8 @@ public class AutomationGroupResource {
   @Path("{groupId}")
   public Response deleteGroup(@Auth AutomationClient automationClient,
       @PathParam("groupId") LongParam groupId) {
-    Group group = groupDAO.getGroupById(groupId.get()).orElseThrow(NotFoundException::new);
-    groupDAO.deleteGroup(group);
+    Group group = groupDAO.getGroupById(dslContext, groupId.get()).orElseThrow(NotFoundException::new);
+    groupDAO.deleteGroup(dslContext, group);
     return Response.ok().build();
   }
 }

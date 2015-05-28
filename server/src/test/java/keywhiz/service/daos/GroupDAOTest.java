@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import keywhiz.TestDBRule;
 import keywhiz.api.model.Group;
+import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Rule;
@@ -34,11 +35,13 @@ public class GroupDAOTest {
 
   Group group1, group2;
 
+  DSLContext dslContext;
   GroupDAO groupDAO;
 
   @Before
   public void setUp() throws Exception {
-    groupDAO = new GroupDAO(testDBRule.jooqContext());
+    dslContext = testDBRule.jooqContext();
+    groupDAO = new GroupDAO();
 
     testDBRule.jooqContext().insertInto(GROUPS,
         GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDBY, GROUPS.UPDATEDBY)
@@ -46,17 +49,17 @@ public class GroupDAOTest {
         .values("group2", "desc2", "creator2", "updater2")
         .execute();
 
-    group1 = groupDAO.getGroup("group1").get();
-    group2 = groupDAO.getGroup("group2").get();
+    group1 = groupDAO.getGroup(dslContext, "group1").get();
+    group2 = groupDAO.getGroup(dslContext, "group2").get();
   }
 
   @Test
   public void createGroup() {
     int before = tableSize();
-    groupDAO.createGroup("newGroup", "creator3", Optional.empty());
+    groupDAO.createGroup(dslContext, "newGroup", "creator3", Optional.empty());
     assertThat(tableSize()).isEqualTo(before + 1);
 
-    List<String> names = groupDAO.getGroups()
+    List<String> names = groupDAO.getGroups(dslContext)
         .stream()
         .map(Group::getName)
         .collect(toList());
@@ -66,10 +69,10 @@ public class GroupDAOTest {
   @Test
   public void deleteGroup() {
     int before = tableSize();
-    groupDAO.deleteGroup(group1);
+    groupDAO.deleteGroup(dslContext, group1);
 
     assertThat(tableSize()).isEqualTo(before - 1);
-    assertThat(groupDAO.getGroups()).containsOnly(group2);
+    assertThat(groupDAO.getGroups(dslContext)).containsOnly(group2);
   }
 
   @Test
@@ -83,25 +86,25 @@ public class GroupDAOTest {
 
   @Test
   public void getGroupById() {
-    Group group = groupDAO.getGroupById(group1.getId())
+    Group group = groupDAO.getGroupById(dslContext, group1.getId())
         .orElseThrow(RuntimeException::new);
     assertThat(group).isEqualTo(group1);
   }
 
   @Test
   public void getNonExistentGroup() {
-    assertThat(groupDAO.getGroup("non-existent").isPresent()).isFalse();
-    assertThat(groupDAO.getGroupById(-1234).isPresent()).isFalse();
+    assertThat(groupDAO.getGroup(dslContext, "non-existent").isPresent()).isFalse();
+    assertThat(groupDAO.getGroupById(dslContext, -1234).isPresent()).isFalse();
   }
 
   @Test
   public void getGroups() {
-    assertThat(groupDAO.getGroups()).containsOnly(group1, group2);
+    assertThat(groupDAO.getGroups(dslContext)).containsOnly(group1, group2);
   }
 
   @Test(expected = DataAccessException.class)
   public void willNotCreateDuplicateGroup() throws Exception {
-    groupDAO.createGroup("group1", "creator1", Optional.empty());
+    groupDAO.createGroup(dslContext, "group1", "creator1", Optional.empty());
   }
 
   private int tableSize() {

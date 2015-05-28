@@ -24,6 +24,7 @@ import java.time.ZoneId;
 import java.util.List;
 import keywhiz.TestDBRule;
 import keywhiz.api.model.SecretContent;
+import org.jooq.DSLContext;
 import org.jooq.tools.json.JSONObject;
 import org.junit.Before;
 import org.junit.Rule;
@@ -44,11 +45,13 @@ public class SecretContentDAOTest {
       "creator", metadata);
 
   SecretContentDAO secretContentDAO;
+  DSLContext dslContext;
 
   @Before
   public void setUp() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
-    secretContentDAO = new SecretContentDAO(testDBRule.jooqContext(), objectMapper);
+    dslContext = testDBRule.jooqContext();
+    secretContentDAO = new SecretContentDAO(objectMapper);
 
     testDBRule.jooqContext().delete(SECRETS).execute();
     testDBRule.jooqContext().insertInto(SECRETS, SECRETS.ID, SECRETS.NAME)
@@ -69,30 +72,30 @@ public class SecretContentDAOTest {
 
   @Test public void createSecretContent() {
     int before = tableSize();
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
+    secretContentDAO.createSecretContent(dslContext, secretContent1.secretSeriesId(), "encrypted", "version", "creator",
         metadata);
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
+    secretContentDAO.createSecretContent(dslContext, secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
         metadata);
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
+    secretContentDAO.createSecretContent(dslContext, secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
         metadata);
     assertThat(tableSize()).isEqualTo(before + 3);
   }
 
   @Test public void getSecretContentById() {
-    SecretContent actualSecretContent = secretContentDAO.getSecretContentById(secretContent1.id())
+    SecretContent actualSecretContent = secretContentDAO.getSecretContentById(dslContext, secretContent1.id())
         .orElseThrow(RuntimeException::new);
     assertThat(actualSecretContent).isEqualTo(secretContent1);
   }
 
   @Test public void getSecretContentsBySecretId() {
-    long id1 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
+    long id1 = secretContentDAO.createSecretContent(dslContext, secretContent1.secretSeriesId(), "encrypted", "version", "creator",
         metadata);
-    long id2 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
+    long id2 = secretContentDAO.createSecretContent(dslContext, secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
         metadata);
-    long id3 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
+    long id3 = secretContentDAO.createSecretContent(dslContext, secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
         metadata);
 
-    List<Long> actualIds = secretContentDAO.getSecretContentsBySecretId(secretContent1.secretSeriesId())
+    List<Long> actualIds = secretContentDAO.getSecretContentsBySecretId(dslContext, secretContent1.secretSeriesId())
         .stream()
         .map((content) -> (content == null) ? 0 : content.id())
         .collect(toList());
@@ -101,15 +104,15 @@ public class SecretContentDAOTest {
   }
 
   @Test public void getVersionsBySecretId() {
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
+    secretContentDAO.createSecretContent(dslContext, secretContent1.secretSeriesId(), "encrypted", "version", "creator",
         metadata);
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
+    secretContentDAO.createSecretContent(dslContext, secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
         metadata);
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
+    secretContentDAO.createSecretContent(dslContext, secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
         metadata);
 
     // We have the empty string as a version from the setUp() call
-    assertThat(secretContentDAO.getVersionFromSecretId(secretContent1.secretSeriesId()))
+    assertThat(secretContentDAO.getVersionFromSecretId(dslContext, secretContent1.secretSeriesId()))
         .hasSameElementsAs(ImmutableList.of("", "version", "version2", "version3"));
   }
 

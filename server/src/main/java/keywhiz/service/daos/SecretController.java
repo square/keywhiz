@@ -24,6 +24,7 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.SecretTransformer;
+import org.jooq.DSLContext;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -33,11 +34,13 @@ public class SecretController {
   private final SecretTransformer transformer;
   private final ContentCryptographer cryptographer;
   private final SecretDAO secretDAO;
+  private final DSLContext dslContext;
 
   public SecretController(SecretTransformer transformer, ContentCryptographer cryptographer,
-      SecretDAO secretDAO) {
+      DSLContext dslContext, SecretDAO secretDAO) {
     this.transformer = transformer;
     this.cryptographer = cryptographer;
+    this.dslContext = dslContext;
     this.secretDAO = secretDAO;
   }
 
@@ -46,7 +49,7 @@ public class SecretController {
    * @return all Secrets with given id. May be empty or include multiple versions.
    */
   public List<Secret> getSecretsById(long secretId) {
-    return transformer.transform(secretDAO.getSecretsById(secretId));
+    return transformer.transform(secretDAO.getSecretsById(dslContext, secretId));
   }
 
   /**
@@ -55,7 +58,8 @@ public class SecretController {
    * @return Secret matching input parameters or Optional.absent().
    */
   public Optional<Secret> getSecretByIdAndVersion(long secretId, String version) {
-    return secretDAO.getSecretByIdAndVersion(secretId, version).map(transformer::transform);
+    return secretDAO.getSecretByIdAndVersion(dslContext, secretId, version)
+        .map(transformer::transform);
   }
 
   /**
@@ -64,12 +68,13 @@ public class SecretController {
    * @return Secret matching input parameters or Optional.absent().
    */
   public Optional<Secret> getSecretByNameAndVersion(String name, String version) {
-    return secretDAO.getSecretByNameAndVersion(name, version).map(transformer::transform);
+    return secretDAO.getSecretByNameAndVersion(dslContext, name, version)
+        .map(transformer::transform);
   }
 
   /** @return all existing sanitized secrets. */
   public List<SanitizedSecret> getSanitizedSecrets() {
-    return secretDAO.getSecrets().stream()
+    return secretDAO.getSecrets(dslContext).stream()
         .map(SanitizedSecret::fromSecretSeriesAndContent)
         .collect(toList());
   }
@@ -77,7 +82,7 @@ public class SecretController {
   /** @return all versions for this secret name. */
   public List<String> getVersionsForName(String name) {
     checkArgument(!name.isEmpty());
-    return secretDAO.getVersionsForSecretName(name);
+    return secretDAO.getVersionsForSecretName(dslContext, name);
   }
 
   public SecretBuilder builder(String name, String secret, String creator) {
@@ -85,12 +90,13 @@ public class SecretController {
     checkArgument(!secret.isEmpty());
     checkArgument(!creator.isEmpty());
     String encryptedSecret = cryptographer.encryptionKeyDerivedFrom(name).encrypt(secret);
-    return new SecretBuilder(transformer, secretDAO, name, encryptedSecret, creator);
+    return new SecretBuilder(transformer, dslContext, secretDAO, name, encryptedSecret, creator);
   }
 
   /** Builder to generate new secret series or versions with. */
   public static class SecretBuilder {
     private final SecretTransformer transformer;
+    private final DSLContext dslContext;
     private final SecretDAO secretDAO;
     private final String name;
     private final String encryptedSecret;
@@ -108,9 +114,10 @@ public class SecretController {
      * @param encryptedSecret encrypted content of secret version
      * @param creator username responsible for creating this secret version.
      */
-    private SecretBuilder(SecretTransformer transformer, SecretDAO secretDAO, String name, String encryptedSecret,
-        String creator) {
+    private SecretBuilder(SecretTransformer transformer, DSLContext dslContext, SecretDAO secretDAO,
+        String name, String encryptedSecret, String creator) {
       this.transformer = transformer;
+      this.dslContext = dslContext;
       this.secretDAO = secretDAO;
       this.name = name;
       this.encryptedSecret = encryptedSecret;
@@ -173,9 +180,10 @@ public class SecretController {
      * @return an instance of the newly created secret.
      */
     public Secret build() {
-        secretDAO.createSecret(name, encryptedSecret, version, creator, metadata, description, type,
-            generationOptions);
-        return transformer.transform(secretDAO.getSecretByNameAndVersion(name, version).get());
+        secretDAO.createSecret(dslContext, name, encryptedSecret, version, creator, metadata,
+            description, type, generationOptions);
+        return transformer.transform(secretDAO.getSecretByNameAndVersion(dslContext, name, version)
+            .get());
     }
   }
 }
