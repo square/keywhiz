@@ -46,7 +46,7 @@ public class AutomationClientAuthFactory {
   public AutomationClient provide(ContainerRequest request) {
     Optional<String> possibleClientName = ClientAuthFactory.getClientName(request);
     if (!possibleClientName.isPresent()) {
-      throw new NotAuthorizedException(format("Not authorized as a AutomationClient"));
+      throw new NotAuthorizedException("Not authorized as a AutomationClient");
     }
     String clientName = possibleClientName.get();
 
