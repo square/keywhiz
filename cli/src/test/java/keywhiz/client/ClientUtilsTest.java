@@ -123,7 +123,7 @@ public class ClientUtilsTest {
 
 
   @Test public void testLoadCookiesWithFile() throws Exception {
-    Path savedCookies = Paths.get(Resources.getResource("cookies.json").getPath());
+    Path savedCookies = Paths.get(Resources.getResource("fixtures/cookies.json").getPath());
     List<HttpCookie> loadedCookies = ClientUtils.loadCookies(savedCookies);
 
     assertThat(loadedCookies).hasSameElementsAs(cookieList);

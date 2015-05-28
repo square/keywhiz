@@ -17,12 +17,14 @@
 package keywhiz.cli;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import java.net.HttpCookie;
 
 /** JSON Serializable HttpCookie object */
 @AutoValue
+@JsonIgnoreProperties({"version"}) // ignore formerly serialized field
 public abstract class JsonCookie {
   @JsonCreator public static JsonCookie create(
       @JsonProperty("name") String name,
