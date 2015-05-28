@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
 public class AutomationSecretGeneratorsResourceTest {
   private static final OffsetDateTime NOW = OffsetDateTime.now();
 
-  AutomationClient automationClient = AutomationClient.of(
+  private static final AutomationClient automationClient = AutomationClient.of(
       new Client(1, "automation", "Automation client", NOW, "test", NOW, "test", true, true));
 
   private static final ImmutableMap<String, String> emptyMap = ImmutableMap.of();
