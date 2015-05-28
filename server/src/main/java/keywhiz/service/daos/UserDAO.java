@@ -17,7 +17,6 @@
 package keywhiz.service.daos;
 
 import java.util.Optional;
-import javax.inject.Inject;
 import org.jooq.DSLContext;
 
 import static keywhiz.jooq.tables.Users.USERS;

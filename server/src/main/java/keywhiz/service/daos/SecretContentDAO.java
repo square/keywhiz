@@ -28,7 +28,7 @@ import keywhiz.api.model.SecretContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import org.jooq.DSLContext;
 
-import static jersey.repackaged.com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
 /**

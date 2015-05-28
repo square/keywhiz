@@ -47,11 +47,9 @@ public class ClientAuthFactory {
   private static final Logger logger = LoggerFactory.getLogger(ClientAuthFactory.class);
 
   private final Authenticator<String, Client> authenticator;
-  private final DSLContext dslContext;
 
   @Inject public ClientAuthFactory(DSLContext dslContext, ClientDAO clientDAO) {
     this.authenticator = new MyAuthenticator(dslContext, clientDAO);
-    this.dslContext = dslContext;
   }
 
   public Client provide(ContainerRequest request) {

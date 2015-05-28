@@ -16,7 +16,6 @@
 
 package keywhiz.service.daos;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.util.Map;

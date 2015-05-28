@@ -19,12 +19,11 @@ package keywhiz.service.daos;
 import com.google.common.collect.ImmutableSet;
 import java.util.List;
 import java.util.Optional;
-import javax.inject.Inject;
 import keywhiz.api.model.Group;
 import keywhiz.jooq.tables.records.GroupsRecord;
 import org.jooq.DSLContext;
 
-import static jersey.repackaged.com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 
 public class GroupDAO {
