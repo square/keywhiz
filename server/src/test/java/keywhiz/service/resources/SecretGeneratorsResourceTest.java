@@ -26,16 +26,16 @@ import keywhiz.api.model.Secret;
 import keywhiz.auth.User;
 import keywhiz.generators.SecretGenerator;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
 public class SecretGeneratorsResourceTest {
   private static final OffsetDateTime NOW = OffsetDateTime.now();
 
@@ -48,6 +48,8 @@ public class SecretGeneratorsResourceTest {
   private static final Integer params = 321;
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
+
+  @Rule public TestRule mockito = new MockitoJUnitRule(this);
 
   @Mock SecretGenerator<Integer> generator;
 

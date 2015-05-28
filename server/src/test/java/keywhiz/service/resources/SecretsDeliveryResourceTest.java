@@ -25,18 +25,20 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.service.daos.AclDAO;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRule;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
 public class SecretsDeliveryResourceTest {
   private static final OffsetDateTime NOW = OffsetDateTime.now();
+
+  @Rule public TestRule mockito = new MockitoJUnitRule(this);
 
   @Mock AclDAO aclDAO;
   SecretsDeliveryResource secretsDeliveryResource;

@@ -25,18 +25,20 @@ import keywhiz.api.model.Secret;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
-@RunWith(MockitoJUnitRunner.class)
 public class MembershipResourceTest {
   private static final OffsetDateTime NOW = OffsetDateTime.now();
+
+  @Rule public TestRule mockito = new MockitoJUnitRule(this);
 
   @Mock AclDAO aclDAO;
 

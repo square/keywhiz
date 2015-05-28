@@ -25,20 +25,22 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import keywhiz.auth.cookie.CookieConfig;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRule;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
 public class XsrfServletFilterTest {
   private static final String COOKIE_NAME = "session";
   private static final String HEADER_NAME = "X-XSRF-TOKEN";
+
+  @Rule public TestRule mockito = new MockitoJUnitRule(this);
 
   @Mock HttpServletRequest mockRequest;
   @Mock HttpServletResponse mockResponse;
