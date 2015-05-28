@@ -37,8 +37,7 @@ import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 public class SecretContentDAO {
   private final ObjectMapper mapper;
 
-  @Inject
-  public SecretContentDAO(ObjectMapper mapper) {
+  @Inject public SecretContentDAO(ObjectMapper mapper) {
     this.mapper = mapper;
   }
 

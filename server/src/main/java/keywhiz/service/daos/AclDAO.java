@@ -55,8 +55,7 @@ public class AclDAO {
   private final SecretContentDAO secretContentDAO;
   private final SecretSeriesDAO secretSeriesDAO;
 
-  @Inject
-  public AclDAO(ObjectMapper mapper, ClientDAO clientDAO, GroupDAO groupDAO,
+  @Inject public AclDAO(ObjectMapper mapper, ClientDAO clientDAO, GroupDAO groupDAO,
       SecretContentDAO secretContentDAO, SecretSeriesDAO secretSeriesDAO) {
     this.mapper = mapper;
     this.clientDAO = clientDAO;
