@@ -49,7 +49,8 @@ import org.slf4j.LoggerFactory;
  */
 @Path("/admin/login")
 public class SessionLoginResource {
-  private final Logger logger = LoggerFactory.getLogger(SessionLoginResource.class);
+  private static final Logger logger = LoggerFactory.getLogger(SessionLoginResource.class);
+
   private final Authenticator<BasicCredentials, User> userAuthenticator;
   private final AuthenticatedEncryptedCookieFactory cookieFactory;
   private final XsrfProtection xsrfProtection;

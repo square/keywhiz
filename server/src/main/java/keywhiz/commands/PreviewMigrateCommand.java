@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PreviewMigrateCommand extends ConfiguredCommand<KeywhizConfig> {
-  private final Logger logger = LoggerFactory.getLogger(PreviewMigrateCommand.class);
+  private static final Logger logger = LoggerFactory.getLogger(PreviewMigrateCommand.class);
 
   public PreviewMigrateCommand() {
     super("preview-migrate", "Displays information on pending migrations without running them.");

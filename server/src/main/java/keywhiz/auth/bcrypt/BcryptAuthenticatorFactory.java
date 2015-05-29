@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 @JsonTypeName("bcrypt")
 @SuppressWarnings("unused")
 public class BcryptAuthenticatorFactory implements UserAuthenticatorFactory {
-  private final Logger logger = LoggerFactory.getLogger(BcryptAuthenticatorFactory.class);
+  private static final Logger logger = LoggerFactory.getLogger(BcryptAuthenticatorFactory.class);
 
   @Override public Authenticator<BasicCredentials, User> build(DSLContext dslContext) {
     logger.debug("Creating BCrypt authenticator");

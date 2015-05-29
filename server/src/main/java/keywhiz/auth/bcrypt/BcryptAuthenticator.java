@@ -30,6 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class BcryptAuthenticator implements Authenticator<BasicCredentials, User> {
   private static final Logger logger = LoggerFactory.getLogger(BcryptAuthenticator.class);
+
   private final UserDAO userDAO;
 
   public BcryptAuthenticator(UserDAO userDAO) {

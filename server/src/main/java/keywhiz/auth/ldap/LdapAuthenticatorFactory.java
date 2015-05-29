@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 @JsonTypeName("ldap")
 @SuppressWarnings("unused")
 public class LdapAuthenticatorFactory implements UserAuthenticatorFactory {
-  private final Logger logger = LoggerFactory.getLogger(LdapAuthenticatorFactory.class);
+  private static final Logger logger = LoggerFactory.getLogger(LdapAuthenticatorFactory.class);
 
   @NotEmpty
   private String server;
