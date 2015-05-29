@@ -35,16 +35,14 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
 public class ClientUtilsTest {
-  
   private HttpCookie xsrfCookie = new HttpCookie("XSRF-TOKEN", "xsrf-contents");
   private HttpCookie sessionCookie = new HttpCookie("session", "session-contents");
   {
@@ -67,6 +65,7 @@ public class ClientUtilsTest {
   @Mock CookieManager cookieManager;
   @Mock CookieStore cookieStore;
 
+  @Rule public TestRule mockito = new MockitoJUnitRule(this);
   @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
 
   private final String COOKIE_EXTENSION = "/.keywhiz.cookies";

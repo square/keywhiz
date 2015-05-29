@@ -27,20 +27,20 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.generators.SecretGenerator;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
 public class AutomationSecretGeneratorsResourceTest {
   private static final OffsetDateTime NOW = OffsetDateTime.now();
 
-  AutomationClient automationClient = AutomationClient.of(
+  private static final AutomationClient automationClient = AutomationClient.of(
       new Client(1, "automation", "Automation client", NOW, "test", NOW, "test", true, true));
 
   private static final ImmutableMap<String, String> emptyMap = ImmutableMap.of();
@@ -51,6 +51,8 @@ public class AutomationSecretGeneratorsResourceTest {
   private static final Integer params = 321;
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
+
+  @Rule public TestRule mockito = new MockitoJUnitRule(this);
 
   @Mock SecretGenerator<Integer> generator;
 

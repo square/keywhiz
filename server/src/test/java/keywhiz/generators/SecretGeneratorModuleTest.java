@@ -30,20 +30,22 @@ import java.util.List;
 import java.util.Map;
 import keywhiz.api.model.Secret;
 import keywhiz.service.daos.SecretController;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
-@RunWith(MockitoJUnitRunner.class)
 public class SecretGeneratorModuleTest {
   private static final Key<Map<String, SecretGenerator>> GENERATOR_MAP_KEY =
       Key.get(new TypeLiteral<Map<String, SecretGenerator>>(){});
   private static final DummySecretGeneratorFactory DUMMY_FACTORY = new DummySecretGeneratorFactory();
   private static final DummySecretGenerator DUMMY_GENERATOR = new DummySecretGenerator();
+
+  @Rule public TestRule mockito = new MockitoJUnitRule(this);
 
   @Mock private SecretController secretController;
 

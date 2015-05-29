@@ -41,10 +41,11 @@ import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.exceptions.ConflictException;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
@@ -52,9 +53,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
 public class SecretsResourceTest {
   private static final OffsetDateTime NOW = OffsetDateTime.now();
+
+  @Rule public TestRule mockito = new MockitoJUnitRule(this);
 
   @Mock AclDAO aclDAO;
   @Mock SecretSeriesDAO secretSeriesDAO;

@@ -32,10 +32,11 @@ import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyMapOf;
@@ -44,8 +45,9 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
 public class TemplatedSecretGeneratorTest {
+  @Rule public TestRule mockito = new MockitoJUnitRule(this);
+
   @Mock AclDAO aclDAO;
   @Mock SecretDAO secretDAO;
   @Mock SecretController secretController;

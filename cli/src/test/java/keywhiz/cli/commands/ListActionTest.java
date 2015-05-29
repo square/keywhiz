@@ -21,15 +21,16 @@ import keywhiz.cli.Printing;
 import keywhiz.cli.configs.ListActionConfig;
 import keywhiz.client.KeywhizClient;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRule;
 
 import static org.mockito.Mockito.verify;
 
-@RunWith(MockitoJUnitRunner.class)
 public class ListActionTest {
+  @Rule public TestRule mockito = new MockitoJUnitRule(this);
 
   @Mock KeywhizClient keywhizClient;
   @Mock Printing printing;
