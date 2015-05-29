@@ -43,8 +43,8 @@ public class SecretDeliveryResourceIntegrationTest {
   @Before public void setUp() throws Exception {
     client = TestClients.mutualSslClient();
     generalPassword = new Secret(0, "General_Password", null, null, "YXNkZGFz",
-        OffsetDateTime.parse("2011-09-29T15:46:00.312Z"), null,
-        OffsetDateTime.parse("2011-09-29T15:46:00.312Z"), null, null, "upload", null);
+        OffsetDateTime.parse("2011-09-29T15:46:00Z"), null,
+        OffsetDateTime.parse("2011-09-29T15:46:00Z"), null, null, "upload", null);
   }
 
   @Test public void returnsSecretWhenAllowed() throws Exception {
