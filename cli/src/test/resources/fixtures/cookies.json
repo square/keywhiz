@@ -3,7 +3,6 @@
     "name" : "session",
     "value" : "session-contents",
     "domain" : "localhost",
-    "version" : 0,
     "path" : "/admin",
     "secure" : true,
     "httpOnly" : true
@@ -12,7 +11,6 @@
     "name" : "XSRF-TOKEN",
     "value" : "xsrf-contents",
     "domain" : "localhost",
-    "version" : 1,
     "path" : "/",
     "secure" : true,
     "httpOnly" : false

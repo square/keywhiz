@@ -43,43 +43,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 public class ClientUtilsTest {
+  @Rule public TestRule mockito = new MockitoJUnitRule(this);
+  @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
+
+  @Mock CookieManager cookieManager;
+  @Mock CookieStore cookieStore;
+
   private HttpCookie xsrfCookie = new HttpCookie("XSRF-TOKEN", "xsrf-contents");
-  private HttpCookie sessionCookie = new HttpCookie("session", "session-contents");
   {
     xsrfCookie.setPath("/");
     xsrfCookie.setDomain("localhost");
     xsrfCookie.setVersion(1);
     xsrfCookie.setHttpOnly(false);
     xsrfCookie.setSecure(true);
+  }
 
+  private HttpCookie sessionCookie = new HttpCookie("session", "session-contents");
+  {
     sessionCookie.setPath("/admin");
     sessionCookie.setDomain("localhost");
-    sessionCookie.setVersion(0);
+    sessionCookie.setVersion(1);
     sessionCookie.setHttpOnly(true);
     sessionCookie.setSecure(true);
   }
 
   private ImmutableList<HttpCookie> cookieList = ImmutableList.of(sessionCookie, xsrfCookie);
 
+  private Path cookiePath;
 
-  @Mock CookieManager cookieManager;
-  @Mock CookieStore cookieStore;
-
-  @Rule public TestRule mockito = new MockitoJUnitRule(this);
-  @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
-
-  private final String COOKIE_EXTENSION = "/.keywhiz.cookies";
-  private Path COOKIE_PATH;
-
-  @Before
-  public void setup() throws IOException {
+  @Before public void setup() throws IOException {
     tempFolder.create();
-    COOKIE_PATH = Paths.get(tempFolder.getRoot().getPath(),
-        COOKIE_EXTENSION);
+    cookiePath = Paths.get(tempFolder.getRoot().getPath(), "/.keywhiz.cookies");
   }
 
-  @Test
-  public void testSslOkHttpClientCreation() throws Exception {
+  @Test public void testSslOkHttpClientCreation() throws Exception {
     OkHttpClient sslClient = ClientUtils.sslOkHttpClient(ImmutableList.of());
 
     assertThat(sslClient.getFollowSslRedirects()).isFalse();
@@ -92,8 +89,7 @@ public class ClientUtilsTest {
     assertThat(cookieList).isEmpty();
   }
 
-  @Test
-  public void testSslOkHttpClientCreationWithCookies() throws Exception {
+  @Test public void testSslOkHttpClientCreationWithCookies() throws Exception {
     OkHttpClient sslClient = ClientUtils.sslOkHttpClient(cookieList);
 
     assertThat(sslClient.getFollowSslRedirects()).isFalse();
@@ -107,14 +103,13 @@ public class ClientUtilsTest {
     assertThat(cookieList).contains(sessionCookie);
   }
 
-  @Test
-  public void testSaveCookies() throws Exception {
+  @Test public void testSaveCookies() throws Exception {
     when(cookieManager.getCookieStore()).thenReturn(cookieStore);
     when(cookieStore.getCookies()).thenReturn(ImmutableList.of(xsrfCookie, sessionCookie));
 
-    ClientUtils.saveCookies(cookieManager, COOKIE_PATH);
+    ClientUtils.saveCookies(cookieManager, cookiePath);
 
-    File cookieFile = COOKIE_PATH.toFile();
+    File cookieFile = cookiePath.toFile();
 
     assertThat(cookieFile.exists()).isTrue();
     assertThat(Files.getPosixFilePermissions(cookieFile.toPath())).containsOnly(
@@ -123,24 +118,22 @@ public class ClientUtilsTest {
 
   @Test(expected = NoSuchFileException.class)
   public void testLoadCookiesFailWithoutFile() throws Exception {
-    ClientUtils.loadCookies(COOKIE_PATH);
+    ClientUtils.loadCookies(cookiePath);
   }
 
 
-  @Test
-  public void testLoadCookiesWithFile() throws Exception {
-    Path savedCookies = Paths.get(Resources.getResource("cookies.json").getPath());
+  @Test public void testLoadCookiesWithFile() throws Exception {
+    Path savedCookies = Paths.get(Resources.getResource("fixtures/cookies.json").getPath());
     List<HttpCookie> loadedCookies = ClientUtils.loadCookies(savedCookies);
 
     assertThat(loadedCookies).hasSameElementsAs(cookieList);
   }
 
-  @Test
-  public void testSaveAndLoadCookies() throws Exception {
+  @Test public void testSaveAndLoadCookies() throws Exception {
     when(cookieManager.getCookieStore()).thenReturn(cookieStore);
     when(cookieStore.getCookies()).thenReturn(ImmutableList.of(xsrfCookie, sessionCookie));
-    ClientUtils.saveCookies(cookieManager, COOKIE_PATH);
+    ClientUtils.saveCookies(cookieManager, cookiePath);
 
-    assertThat(ClientUtils.loadCookies(COOKIE_PATH)).hasSameElementsAs(cookieList);
+    assertThat(ClientUtils.loadCookies(cookiePath)).hasSameElementsAs(cookieList);
   }
 }

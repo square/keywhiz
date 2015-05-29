@@ -17,6 +17,7 @@
 package keywhiz.cli;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HttpHeaders;
@@ -45,10 +46,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.servlet.http.Cookie;
 import org.apache.http.HttpHost;
@@ -60,12 +61,14 @@ import static com.google.common.base.StandardSystemProperty.USER_NAME;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Utility class for configuring KeywhizClients
  */
 
 public class ClientUtils {
+  private static final ObjectMapper mapper = Jackson.newObjectMapper();
 
   /**
    * Creates a {@link OkHttpClient} to start a TLS connection.
@@ -78,13 +81,13 @@ public class ClientUtils {
 
     SSLContext sslContext;
     try {
-      sslContext = SSLContext.getInstance("TLSv1.2");
-
       TrustManagerFactory trustManagerFactory = TrustManagerFactory
           .getInstance(TrustManagerFactory.getDefaultAlgorithm());
       trustManagerFactory.init((KeyStore) null);
+      TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
 
-      sslContext.init(new KeyManager[0], trustManagerFactory.getTrustManagers(), new SecureRandom());
+      sslContext = SSLContext.getInstance("TLSv1.2");
+      sslContext.init(new KeyManager[0], trustManagers, new SecureRandom());
     } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
       throw Throwables.propagate(e);
     }
@@ -99,9 +102,11 @@ public class ClientUtils {
     client.setRetryOnConnectionFailure(false);
     client.networkInterceptors()
         .add(new XsrfTokenInterceptor("XSRF-TOKEN", "X-XSRF-TOKEN"));
+
     CookieManager cookieManager = new CookieManager();
     cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
     cookies.forEach(c -> cookieManager.getCookieStore().add(null, c));
+
     client.setCookieHandler(cookieManager);
     return client;
   }
@@ -141,11 +146,13 @@ public class ClientUtils {
    */
   public static void saveCookies(CookieManager cookieManager, Path path) {
     List<HttpCookie> cookies = cookieManager.getCookieStore().getCookies();
+    List<JsonCookie> jsonCookies = cookies.stream()
+        .map(JsonCookie::fromHttpCookie)
+        .collect(toList());
+
     try (BufferedWriter writer = Files.newBufferedWriter(path, CREATE)) {
       Files.setPosixFilePermissions(path, ImmutableSet.of(OWNER_READ, OWNER_WRITE));
-      writer.write(Jackson.newObjectMapper().writeValueAsString(
-          cookies.stream().map(c -> JsonCookie.fromHttpCookie(c)).collect(
-              Collectors.toList())));
+      writer.write(mapper.writeValueAsString(jsonCookies));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -155,20 +162,17 @@ public class ClientUtils {
    * Load cookies from the specified file from JSON to a name to value mapping.
    *
    * @param path Location of serialized cookies to load.
-   * @return list of cookies that were read {@link JsonCookie}.
+   * @return list of cookies that were read
    * @throws IOException
    */
   public static List<HttpCookie> loadCookies(Path path) throws IOException {
-    List<HttpCookie> cookieList;
+    TypeReference cookiesType = new TypeReference<List<JsonCookie>>() {};
     try (BufferedReader reader = Files.newBufferedReader(path)) {
-      List<JsonCookie> jsonCookies = Jackson.newObjectMapper()
-          .readValue(reader, new TypeReference<List<JsonCookie>>() {
-          });
-      cookieList = jsonCookies.stream()
-          .map(c -> JsonCookie.toHttpCookie(c))
-          .collect(Collectors.toList());
+      List<JsonCookie> jsonCookies = mapper.readValue(reader, cookiesType);
+      return jsonCookies.stream()
+          .map(JsonCookie::toHttpCookie)
+          .collect(toList());
     }
-    return cookieList;
   }
 
   /**
@@ -215,7 +219,6 @@ public class ClientUtils {
     @Override public Response intercept(Chain chain) throws IOException {
       Request request = chain.request();
       for (String header : request.headers(HttpHeaders.COOKIE)) {
-
         CookieCutter cookieCutter = new CookieCutter();
         cookieCutter.addCookieField(header);
 
