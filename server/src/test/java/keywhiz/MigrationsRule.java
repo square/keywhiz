@@ -52,7 +52,7 @@ public class MigrationsRule implements TestRule {
         }
 
         DataSource dataSource = config.getDataSourceFactory()
-            .build(new MetricRegistry(), "postgres-migrations");
+            .build(new MetricRegistry(), "db-migrations");
 
         Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
