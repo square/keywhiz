@@ -43,7 +43,8 @@ import org.slf4j.LoggerFactory;
  */
 @Path("/admin/logout")
 public class SessionLogoutResource {
-  private final Logger logger = LoggerFactory.getLogger(SessionLogoutResource.class);
+  private static final Logger logger = LoggerFactory.getLogger(SessionLogoutResource.class);
+
   private final CookieAuthenticator cookieAuthenticator;
   private final AuthenticatedEncryptedCookieFactory cookieFactory;
 

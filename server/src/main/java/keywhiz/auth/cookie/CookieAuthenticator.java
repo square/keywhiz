@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class CookieAuthenticator implements Authenticator<Cookie, User> {
-  private final Logger logger = LoggerFactory.getLogger(CookieAuthenticator.class);
+  private static final Logger logger = LoggerFactory.getLogger(CookieAuthenticator.class);
 
   private final ObjectMapper mapper;
   private final GCMEncryptor encryptor;

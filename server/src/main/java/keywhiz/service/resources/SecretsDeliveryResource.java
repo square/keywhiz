@@ -40,7 +40,8 @@ import static java.util.stream.Collectors.toList;
 @Path("/secrets")
 @Produces(MediaType.APPLICATION_JSON)
 public class SecretsDeliveryResource {
-  private final Logger logger = LoggerFactory.getLogger(SecretsDeliveryResource.class);
+  private static final Logger logger = LoggerFactory.getLogger(SecretsDeliveryResource.class);
+
   private final AclDAO aclDAO;
 
   @Inject

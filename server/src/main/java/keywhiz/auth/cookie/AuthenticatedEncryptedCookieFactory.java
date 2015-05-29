@@ -36,7 +36,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 /** Produces tokens and cookies based on encrypted {@link UserCookieData} records. */
 public class AuthenticatedEncryptedCookieFactory {
-  private final Logger logger = LoggerFactory.getLogger(AuthenticatedEncryptedCookieFactory.class);
+  private static final Logger logger = LoggerFactory.getLogger(AuthenticatedEncryptedCookieFactory.class);
+
   private final Clock clock;
   private final ObjectMapper mapper;
   private final GCMEncryptor encryptor;

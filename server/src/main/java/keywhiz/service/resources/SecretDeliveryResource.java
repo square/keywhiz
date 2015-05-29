@@ -52,7 +52,8 @@ import static keywhiz.api.model.Secret.splitNameAndVersion;
 @Path("/secret/{secretName}")
 @Produces(MediaType.APPLICATION_JSON)
 public class SecretDeliveryResource {
-  private final Logger logger = LoggerFactory.getLogger(SecretDeliveryResource.class);
+  private static final Logger logger = LoggerFactory.getLogger(SecretDeliveryResource.class);
+
   private final SecretController secretController;
   private final AclDAO aclDAO;
   private final ClientDAO clientDAO;
