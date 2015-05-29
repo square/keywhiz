@@ -42,6 +42,7 @@
     <powermock.version>1.6.1</powermock.version>
     <slf4j.version>1.7.7</slf4j.version>
     <postgres.version>9.1-901-1.jdbc4</postgres.version>
+    <mysql.version>5.1.35</mysql.version>
   </properties>
 
   <scm>
@@ -291,6 +292,11 @@
         <groupId>com.h2database</groupId>
         <artifactId>h2</artifactId>
         <version>1.4.187</version>
+      </dependency>
+      <dependency>
+        <groupId>mysql</groupId>
+        <artifactId>mysql-connector-java</artifactId>
+        <version>${mysql.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -548,6 +554,11 @@ Place the jars in this directory: `/usr/libexec/java_home -v
               <groupId>postgresql</groupId>
               <artifactId>postgresql</artifactId>
               <version>${postgres.version}</version>
+            </dependency>
+            <dependency>
+              <groupId>mysql</groupId>
+              <artifactId>mysql-connector-java</artifactId>
+              <version>${mysql.version}</version>
             </dependency>
           </dependencies>
         </plugin>

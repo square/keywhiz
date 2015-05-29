@@ -143,21 +143,29 @@ public class SecretDAO {
     checkArgument(!name.isEmpty());
     checkNotNull(version);
 
-    return dslContext.<Optional<SecretSeriesAndContent>>transactionResult(configuration -> {
-      Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
-      if (!secretSeries.isPresent()) {
-        return Optional.empty();
-      }
+    // In the past, the two data fetches below were wrapped in a transaction. The transaction was
+    // removed because jOOQ transactions doesn't play well with MySQL readonly connections
+    // (see https://github.com/jOOQ/jOOQ/issues/3955).
+    //
+    // A possible work around is to write a transaction manager (see http://git.io/vkuFM)
+    //
+    // Removing the transaction however seems to be simpler and safe. The first data fetch's
+    // secret.id is used for the second data fetch.
+    //
+    // A third way to work around this issue is to write a SQL join. Jooq makes it relatively easy,
+    // but such joins hurt code re-use.
+    Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
+    if (!secretSeries.isPresent()) {
+      return Optional.empty();
+    }
 
-      Optional<SecretContent> secretContent =
-          secretContentDAO.getSecretContentBySecretIdAndVersion(secretSeries.get().getId(),
-              version);
-      if (!secretContent.isPresent()) {
-        return Optional.empty();
-      }
+    Optional<SecretContent> secretContent =
+        secretContentDAO.getSecretContentBySecretIdAndVersion(secretSeries.get().getId(), version);
+    if (!secretContent.isPresent()) {
+      return Optional.empty();
+    }
 
-      return Optional.of(SecretSeriesAndContent.of(secretSeries.get(), secretContent.get()));
-    });
+    return Optional.of(SecretSeriesAndContent.of(secretSeries.get(), secretContent.get()));
   }
 
   /** @return all existing secrets. */

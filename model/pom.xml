@@ -33,6 +33,10 @@
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
     </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -121,6 +125,10 @@
                   <type>java.time.OffsetDateTime</type>
                   <converter>keywhiz.model.OffsetDateTimeConverter</converter>
                 </customType>
+                <customType>
+                  <name>java.lang.Boolean</name>
+                  <converter>keywhiz.model.TinyIntConverter</converter>
+                </customType>
               </customTypes>
 
               <!-- Forces JOOQ to use custom types in generated code -->
@@ -128,6 +136,11 @@
                 <forcedType>
                   <name>OffsetDateTime</name>
                   <types>(?i:timestamp.*)</types>
+                </forcedType>
+                <forcedType>
+                  <name>java.lang.Boolean</name>
+                  <!-- mysql doesn't support booleans and uses tinyint instead. -->
+                  <types>(?i:tinyint.*)</types>
                 </forcedType>
               </forcedTypes>
             </database>
