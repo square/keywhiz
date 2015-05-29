@@ -20,13 +20,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import io.dropwizard.jackson.Jackson;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import keywhiz.KeywhizService;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import org.jooq.DSLContext;
@@ -50,10 +50,14 @@ public class SecretSeriesDAO {
       @Nullable Map<String, String> generationOptions) {
     SecretsRecord r =  dslContext.newRecord(SECRETS);
 
+    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+
     r.setName(name);
     r.setDescription(description);
     r.setCreatedby(creator);
+    r.setCreatedat(now);
     r.setUpdatedby(creator);
+    r.setUpdatedat(now);
     r.setType(type);
     if (generationOptions != null) {
       try {
