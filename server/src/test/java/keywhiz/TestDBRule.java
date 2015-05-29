@@ -15,15 +15,6 @@
  */
 package keywhiz;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.io.Resources;
-import io.dropwizard.configuration.ConfigurationException;
-import io.dropwizard.configuration.ConfigurationFactory;
-import io.dropwizard.jackson.Jackson;
-import java.io.File;
-import java.io.IOException;
-import javax.validation.Validation;
-import javax.validation.Validator;
 import org.flywaydb.core.Flyway;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.jooq.DSLContext;
@@ -48,20 +39,9 @@ public class TestDBRule extends ExternalResource {
     super.before();
     dataSource = JdbcConnectionPool.create("jdbc:h2:mem:test", "", "");
 
-    File yamlFile = new File(Resources.getResource("keywhiz-test.yaml").getFile());
-    Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-    ObjectMapper objectMapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
-    KeywhizConfig config;
-    try {
-      config = new ConfigurationFactory<>(KeywhizConfig.class, validator, objectMapper, "dw")
-          .build(yamlFile);
-    } catch (IOException | ConfigurationException e) {
-      throw new AssertionError(e);
-    }
-
     Flyway flyway = new Flyway();
     flyway.setDataSource(dataSource);
-    flyway.setLocations(config.getMigrationsDir());
+    flyway.setLocations("db/h2/migration");
     flyway.migrate();
 
     dslContext = DSL.using(dataSource, SQLDialect.H2,

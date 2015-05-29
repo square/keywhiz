@@ -29,6 +29,10 @@
       <groupId>postgresql</groupId>
       <artifactId>postgresql</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -123,8 +127,7 @@
               <forcedTypes>
                 <forcedType>
                   <name>OffsetDateTime</name>
-                  <expression>.*\.createdat|.*\.updatedat|.*\.created_at|.*\.updated_at</expression>
-                  <types>timestamp.*</types>
+                  <types>(?i:timestamp.*)</types>
                 </forcedType>
               </forcedTypes>
             </database>
