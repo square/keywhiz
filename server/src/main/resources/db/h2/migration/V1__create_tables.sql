@@ -1,6 +1,6 @@
 CREATE TABLE secrets (
   id SERIAL primary key,
-  name varchar(255),
+  name varchar(255), // Changed to varchar. H2 does not support text for indexed columns.
   secret text,
   version varchar(20),
   owner text,
@@ -11,14 +11,14 @@ CREATE TABLE secrets (
 
 CREATE TABLE groups (
   id SERIAL primary key,
-  name varchar(255) unique,
+  name varchar(255) unique, // Changed to varchar. H2 does not support text for indexed columns.
   createdAt timestamp,
   updatedAt timestamp
 );
 
 CREATE TABLE clients (
   id SERIAL primary key,
-  name varchar(255) unique,
+  name varchar(255) unique, // Changed to varchar. H2 does not support text for indexed columns.
   createdAt timestamp,
   updatedAt timestamp
 );
