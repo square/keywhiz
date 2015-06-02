@@ -18,6 +18,8 @@ package keywhiz.service.daos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -250,11 +252,14 @@ public class AclDAO {
   }
 
   protected void allowAccess(long secretId, long groupId) {
+    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+
     dslContext
         .insertInto(ACCESSGRANTS)
         .set(ACCESSGRANTS.SECRETID, Math.toIntExact(secretId))
         .set(ACCESSGRANTS.GROUPID, Math.toIntExact(groupId))
-        .execute();
+        .set(ACCESSGRANTS.CREATEDAT, now)
+        .set(ACCESSGRANTS.UPDATEDAT, now).execute();
   }
 
   protected void revokeAccess(long secretId, long groupId) {
@@ -266,10 +271,14 @@ public class AclDAO {
   }
 
   protected void enrollClient(long clientId, long groupId) {
+    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+
     dslContext
         .insertInto(MEMBERSHIPS)
         .set(MEMBERSHIPS.GROUPID, Math.toIntExact(groupId))
         .set(MEMBERSHIPS.CLIENTID, Math.toIntExact(clientId))
+        .set(MEMBERSHIPS.CREATEDAT, now)
+        .set(MEMBERSHIPS.UPDATEDAT, now)
         .execute();
   }
 
