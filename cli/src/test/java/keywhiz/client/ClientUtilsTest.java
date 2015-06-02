@@ -31,6 +31,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import keywhiz.cli.ClientUtils;
+import keywhiz.cli.configs.CliConfiguration;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,6 +49,7 @@ public class ClientUtilsTest {
 
   @Mock CookieManager cookieManager;
   @Mock CookieStore cookieStore;
+  @Mock CliConfiguration config;
 
   private HttpCookie xsrfCookie = new HttpCookie("XSRF-TOKEN", "xsrf-contents");
   {
@@ -77,7 +79,8 @@ public class ClientUtilsTest {
   }
 
   @Test public void testSslOkHttpClientCreation() throws Exception {
-    OkHttpClient sslClient = ClientUtils.sslOkHttpClient(ImmutableList.of());
+    OkHttpClient sslClient = ClientUtils.sslOkHttpClient(config.getDevTrustStore(),
+        ImmutableList.of());
 
     assertThat(sslClient.getFollowSslRedirects()).isFalse();
     assertThat(sslClient.getSslSocketFactory()).isNotNull();
@@ -90,7 +93,7 @@ public class ClientUtilsTest {
   }
 
   @Test public void testSslOkHttpClientCreationWithCookies() throws Exception {
-    OkHttpClient sslClient = ClientUtils.sslOkHttpClient(cookieList);
+    OkHttpClient sslClient = ClientUtils.sslOkHttpClient(config.getDevTrustStore(), cookieList);
 
     assertThat(sslClient.getFollowSslRedirects()).isFalse();
     assertThat(sslClient.getCookieHandler()).isNotNull();

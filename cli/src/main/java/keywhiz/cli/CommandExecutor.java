@@ -108,7 +108,7 @@ public class CommandExecutor {
 
     try {
       List<HttpCookie> cookieList = ClientUtils.loadCookies(cookiePath);
-      encapsulatedClient = ClientUtils.sslOkHttpClient(cookieList);
+      encapsulatedClient = ClientUtils.sslOkHttpClient(config.getDevTrustStore(), cookieList);
       client = new KeywhizClient(mapper, ClientUtils.hostBoundWrappedHttpClient(host,
           encapsulatedClient));
 
@@ -118,7 +118,7 @@ public class CommandExecutor {
       }
     } catch (IOException e) {
       // Either could not find the cookie file, or the cookies were expired -- must login manually.
-      encapsulatedClient = ClientUtils.sslOkHttpClient(ImmutableList.of());
+      encapsulatedClient = ClientUtils.sslOkHttpClient(config.getDevTrustStore(), ImmutableList.of());
       client = new KeywhizClient(mapper, ClientUtils.hostBoundWrappedHttpClient(host,
           encapsulatedClient));
 
