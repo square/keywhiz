@@ -1,5 +1,8 @@
 # Copyright 2013 Square, Inc.
 
+# ORIGINAL FILE IS keywhiz-development.yaml.mysql. IF MODIFYING keywhiz-development.yaml CHANGES
+# MAY BE OVERWRITTEN!
+
 # Passwords/secrets should not be checked into SCM. However, sprinkled below are some passwords and
 # keys that are NOT considered sensitive and only to be used in development and testing.
 ---
