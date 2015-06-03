@@ -73,7 +73,7 @@ public class SessionLoginResourceTest {
   public void badCredentialsThrowUnauthorized() throws Exception {
     when(ldapAuthenticator.authenticate(badCredentials)).thenReturn(Optional.empty());
 
-    sessionLoginResource.login(new LoginRequest("bad", "credentials".toCharArray()));
+    sessionLoginResource.login(LoginRequest.from("bad", "credentials".toCharArray()));
   }
 
   @Test
@@ -81,7 +81,7 @@ public class SessionLoginResourceTest {
     User user = User.named("goodUser");
     when(ldapAuthenticator.authenticate(goodCredentials)).thenReturn(Optional.of(user));
 
-    Response response = sessionLoginResource.login(new LoginRequest("good", "credentials".toCharArray()));
+    Response response = sessionLoginResource.login(LoginRequest.from("good", "credentials".toCharArray()));
     assertThat(response.getStatus()).isEqualTo(SEE_OTHER.getStatusCode());
 
     Map<String, NewCookie> responseCookies = response.getCookies();
@@ -94,11 +94,11 @@ public class SessionLoginResourceTest {
 
   @Test(expected = NullPointerException.class)
   public void missingUsernameThrowsException() throws Exception {
-    sessionLoginResource.login(new LoginRequest(null, "password".toCharArray()));
+    sessionLoginResource.login(LoginRequest.from(null, "password".toCharArray()));
   }
 
   @Test(expected = NullPointerException.class)
   public void missingPasswordThrowsException() throws Exception {
-    sessionLoginResource.login(new LoginRequest("username", null));
+    sessionLoginResource.login(LoginRequest.from("username", null));
   }
 }

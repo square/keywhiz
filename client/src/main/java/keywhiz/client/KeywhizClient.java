@@ -109,7 +109,7 @@ public class KeywhizClient {
    * @throws IOException if a network IO error occurs
    */
   public void login(String username, char[] password) throws IOException {
-    httpPost("/admin/login", new LoginRequest(username, password));
+    httpPost("/admin/login", LoginRequest.from(username, password));
   }
 
   public List<Group> allGroups() throws IOException {

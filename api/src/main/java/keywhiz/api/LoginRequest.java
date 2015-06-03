@@ -16,39 +16,28 @@
 
 package keywhiz.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Arrays;
-import java.util.Objects;
-import javax.validation.constraints.NotNull;
+import com.google.auto.value.AutoValue;
+import com.google.common.base.MoreObjects;
 
-public class LoginRequest {
-  @NotNull
-  @JsonProperty
-  public final String username;
+import static com.google.common.base.Strings.repeat;
 
-  @NotNull
-  @JsonProperty
-  public final char[] password;
-
-  public LoginRequest(@JsonProperty("username") String username,
-      @JsonProperty("password") char[] password) {
-    this.username = username;
-    this.password = password;
+@AutoValue
+public abstract class LoginRequest {
+  @JsonCreator public static LoginRequest from(
+      @JsonProperty("username") String username, @JsonProperty("password") char[] password) {
+    return new AutoValue_LoginRequest(username, password);
   }
 
-  @Override public int hashCode() {
-    return Objects.hash(username, password);
-  }
+  @JsonProperty public abstract String username();
 
-  @Override public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o instanceof LoginRequest) {
-      LoginRequest that = (LoginRequest) o;
-      if (Objects.equals(this.username, that.username) &&
-          Arrays.equals(this.password, that.password)) {
-        return true;
-      }
-    }
-    return false;
+  @JsonProperty public abstract char[] password();
+
+  @Override public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("username", username())
+        .add("password", repeat("*", password().length))
+        .toString();
   }
 }

@@ -101,7 +101,7 @@ public class SessionLoginResourceIntegrationTest {
     Request request = buildLoginPost(null, null);
 
     Response response = client.newCall(request).execute();
-    assertThat(response.code()).isEqualTo(422);
+    assertThat(response.code()).isEqualTo(400);
   }
 
   @Test
@@ -109,7 +109,7 @@ public class SessionLoginResourceIntegrationTest {
     Request request = buildLoginPost(null, "password");
 
     Response response = client.newCall(request).execute();
-    assertThat(response.code()).isEqualTo(422);
+    assertThat(response.code()).isEqualTo(400);
   }
 
   @Test
@@ -117,6 +117,6 @@ public class SessionLoginResourceIntegrationTest {
     Request request = buildLoginPost("username", null);
 
     Response response = client.newCall(request).execute();
-    assertThat(response.code()).isEqualTo(422);
+    assertThat(response.code()).isEqualTo(400);
   }
 }
