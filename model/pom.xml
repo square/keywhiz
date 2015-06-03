@@ -43,6 +43,7 @@
     <profile>
       <id>postgres</id>
       <activation>
+        <!-- If you change the default database, make sure to also update the server's pom.xml -->
         <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
