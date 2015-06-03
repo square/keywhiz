@@ -18,5 +18,7 @@ before_install:
   - grunt build && cd ..
 
 script:
-  - mvn test
+  - mvn test -P postgres
+  - mvn test -P mysql
+  - mvn test -P h2
   - cd $UI_DIR && grunt test

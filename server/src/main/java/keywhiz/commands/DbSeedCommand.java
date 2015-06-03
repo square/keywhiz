@@ -21,9 +21,9 @@ import io.dropwizard.setup.Bootstrap;
 import java.time.OffsetDateTime;
 import javax.sql.DataSource;
 import keywhiz.KeywhizConfig;
+import keywhiz.utility.DSLContexts;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
 import org.mindrot.jbcrypt.BCrypt;
 
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
@@ -67,7 +67,7 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
     DataSource dataSource = config.getDataSourceFactory()
         .build(new MetricRegistry(), "db-seed-datasource");
 
-    DSLContext dslContext = DSL.using(dataSource.getConnection());
+    DSLContext dslContext = DSLContexts.databaseAgnostic(dataSource);
     doImport(dslContext);
   }
 

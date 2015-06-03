@@ -201,17 +201,27 @@ public class AclDAO {
 
   public ImmutableSet<SanitizedSecret> getSanitizedSecretsFor(Client client) {
     checkNotNull(client);
-    return dslContext.transactionResult(configuration -> {
-      ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
 
-      for (SecretSeries series : getSecretSeriesFor(client)) {
-        for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
-          SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
-          sanitizedSet.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
-        }
+    // In the past, the two data fetches below were wrapped in a transaction. The transaction was
+    // removed because jOOQ transactions doesn't play well with MySQL readonly connections
+    // (see https://github.com/jOOQ/jOOQ/issues/3955).
+    //
+    // A possible work around is to write a transaction manager (see http://git.io/vkuFM)
+    //
+    // Removing the transaction however seems to be simpler and safe. The first data fetch's
+    // secret.id is used for the second data fetch.
+    //
+    // A third way to work around this issue is to write a SQL join. Jooq makes it relatively easy,
+    // but such joins hurt code re-use.
+    ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
+
+    for (SecretSeries series : getSecretSeriesFor(client)) {
+      for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
+        SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
+        sanitizedSet.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
       }
-      return sanitizedSet.build();
-    });
+    }
+    return sanitizedSet.build();
   }
 
   public Set<Client> getClientsFor(Secret secret) {
@@ -232,23 +242,32 @@ public class AclDAO {
     checkArgument(!name.isEmpty());
     checkNotNull(version);
 
-    return dslContext.<Optional<SanitizedSecret>>transactionResult(configuration -> {
-      Optional<SecretSeries> secretSeries = getSecretSeriesFor(client, name);
-      if (!secretSeries.isPresent()) {
-        return Optional.empty();
-      }
+    // In the past, the two data fetches below were wrapped in a transaction. The transaction was
+    // removed because jOOQ transactions doesn't play well with MySQL readonly connections
+    // (see https://github.com/jOOQ/jOOQ/issues/3955).
+    //
+    // A possible work around is to write a transaction manager (see http://git.io/vkuFM)
+    //
+    // Removing the transaction however seems to be simpler and safe. The first data fetch's
+    // secret.id is used for the second data fetch.
+    //
+    // A third way to work around this issue is to write a SQL join. Jooq makes it relatively easy,
+    // but such joins hurt code re-use.
+    Optional<SecretSeries> secretSeries = getSecretSeriesFor(client, name);
+    if (!secretSeries.isPresent()) {
+      return Optional.empty();
+    }
 
-      Optional<SecretContent> secretContent =
-          secretContentDAO.getSecretContentBySecretIdAndVersion(
-              secretSeries.get().getId(), version);
-      if (!secretContent.isPresent()) {
-        return Optional.empty();
-      }
+    Optional<SecretContent> secretContent =
+        secretContentDAO.getSecretContentBySecretIdAndVersion(
+            secretSeries.get().getId(), version);
+    if (!secretContent.isPresent()) {
+      return Optional.empty();
+    }
 
-      SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(
-          secretSeries.get(), secretContent.get());
-      return Optional.of(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
-    });
+    SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(
+        secretSeries.get(), secretContent.get());
+    return Optional.of(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
   }
 
   protected void allowAccess(long secretId, long groupId) {
@@ -259,7 +278,8 @@ public class AclDAO {
         .set(ACCESSGRANTS.SECRETID, Math.toIntExact(secretId))
         .set(ACCESSGRANTS.GROUPID, Math.toIntExact(groupId))
         .set(ACCESSGRANTS.CREATEDAT, now)
-        .set(ACCESSGRANTS.UPDATEDAT, now).execute();
+        .set(ACCESSGRANTS.UPDATEDAT, now)
+        .execute();
   }
 
   protected void revokeAccess(long secretId, long groupId) {

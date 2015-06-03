@@ -1,5 +1,8 @@
 # Copyright 2013 Square, Inc.
 
+# ORIGINAL FILE IS keywhiz-development.yaml.h2. IF MODIFYING keywhiz-development.yaml CHANGES
+# MAY BE OVERWRITTEN!
+
 # Passwords/secrets should not be checked into SCM. However, sprinkled below are some passwords and
 # keys that are NOT considered sensitive and only to be used in development and testing.
 ---
@@ -49,8 +52,9 @@ logging:
 environment: development
 
 database:
-  driverClass: org.postgresql.Driver
-  url: jdbc:postgresql://localhost/keywhizdb_development
+  driverClass: org.h2.Driver
+  url: jdbc:h2:/tmp/h2_data/keywhizdb_development
+  user: root
   properties:
     charSet: UTF-8
   initialSize: 10
@@ -60,8 +64,9 @@ database:
   # password:
 
 readonlyDatabase:
-  driverClass: org.postgresql.Driver
-  url: jdbc:postgresql://127.0.0.1/keywhizdb_development
+  driverClass: org.h2.Driver
+  url: jdbc:h2:/tmp/h2_data/keywhizdb_development
+  user: root
   properties:
     charSet: UTF-8
   readOnlyByDefault: true
@@ -72,7 +77,7 @@ readonlyDatabase:
   # password:
 
 migrationsDir:
-  db/postgres/migration
+  db/h2/migration
 
 userAuth:
   type: bcrypt
