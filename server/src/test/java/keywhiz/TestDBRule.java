@@ -15,13 +15,10 @@
  */
 package keywhiz;
 
+import keywhiz.utility.DSLContexts;
 import org.flywaydb.core.Flyway;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.conf.RenderNameStyle;
-import org.jooq.conf.Settings;
-import org.jooq.impl.DSL;
 import org.junit.rules.ExternalResource;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -44,10 +41,7 @@ public class TestDBRule extends ExternalResource {
     flyway.setLocations("db/h2/migration");
     flyway.migrate();
 
-    dslContext = DSL.using(dataSource, SQLDialect.H2,
-        new Settings()
-            .withRenderSchema(false)
-            .withRenderNameStyle(RenderNameStyle.AS_IS));
+    dslContext = DSLContexts.databaseAgnostic(dataSource);
   }
 
   @Override public void after() {

@@ -17,14 +17,19 @@ import static org.jooq.tools.jdbc.JDBCUtils.dialect;
  * In theory we shouldn't need to do this. Any suggestions to remove this code is welcome!
  */
 public class DSLContexts {
+  private DSLContexts() {}
+
   public static DSLContext databaseAgnostic(DataSource dataSource) throws SQLException {
-    Connection conn = dataSource.getConnection();
-    if (dialect(conn) == SQLDialect.H2) {
-      return DSL.using(dataSource, SQLDialect.H2,
-          new Settings()
-              .withRenderSchema(false)
-              .withRenderNameStyle(RenderNameStyle.AS_IS));
+    SQLDialect dialect;
+    try (Connection conn = dataSource.getConnection()) {
+      dialect = dialect(conn);
     }
-    return DSL.using(conn);
+    if (dialect == SQLDialect.H2) {
+      return DSL.using(dataSource, SQLDialect.H2,
+            new Settings()
+                .withRenderSchema(false)
+                .withRenderNameStyle(RenderNameStyle.AS_IS));
+    }
+    return DSL.using(dataSource, dialect);
   }
 }
