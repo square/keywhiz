@@ -46,9 +46,9 @@ database:
   url: jdbc:postgresql://localhost/keywhizdb_test
   properties:
     charSet: UTF-8
-  initialSize: 5
-  minSize: 5
-  maxSize: 5
+  initialSize: 2
+  minSize: 2
+  maxSize: 2
   # There is explicitly no password. Do not uncomment.
   # password:
 
@@ -58,9 +58,9 @@ readonlyDatabase:
   properties:
     charSet: UTF-8
   readOnlyByDefault: true
-  initialSize: 5
-  minSize: 5
-  maxSize: 5
+  initialSize: 1
+  minSize: 1
+  maxSize: 1
   # There is explicitly no password. Do not uncomment.
   # password:
 
