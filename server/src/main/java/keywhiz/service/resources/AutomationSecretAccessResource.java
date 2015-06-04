@@ -29,6 +29,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.service.daos.AclDAO;
+import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,11 +42,11 @@ import org.slf4j.LoggerFactory;
 @Produces(MediaType.APPLICATION_JSON)
 public class AutomationSecretAccessResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationSecretAccessResource.class);
+
   private final AclDAO aclDAO;
 
-  @Inject
-  public AutomationSecretAccessResource(AclDAO aclDAO) {
-    this.aclDAO = aclDAO;
+  @Inject public AutomationSecretAccessResource(AclDAOFactory aclDAOFactory) {
+    this.aclDAO = aclDAOFactory.readwrite();
   }
 
   /**

@@ -16,10 +16,17 @@
 
 package keywhiz.service.daos;
 
+import com.google.inject.Guice;
+import com.google.inject.testing.fieldbinder.Bind;
+import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Inject;
 import keywhiz.TestDBRule;
 import keywhiz.api.model.Group;
+import keywhiz.service.config.Readonly;
+import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
+import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Rule;
@@ -32,13 +39,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class GroupDAOTest {
   @Rule public final TestDBRule testDBRule = new TestDBRule();
 
+  @Bind DSLContext jooqContext;
+  @Bind @Readonly DSLContext jooqReadonlyContext;
+
+  @Inject GroupDAOFactory groupDAOFactory;
+
   Group group1, group2;
 
   GroupDAO groupDAO;
 
-  @Before
-  public void setUp() throws Exception {
-    groupDAO = new GroupDAO(testDBRule.jooqContext());
+  @Before public void setUp() throws Exception {
+    jooqContext = jooqReadonlyContext = testDBRule.jooqContext();
+    Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
+
+    groupDAO = groupDAOFactory.readwrite();
 
     testDBRule.jooqContext().insertInto(GROUPS,
         GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDBY, GROUPS.UPDATEDBY)
@@ -50,8 +64,7 @@ public class GroupDAOTest {
     group2 = groupDAO.getGroup("group2").get();
   }
 
-  @Test
-  public void createGroup() {
+  @Test public void createGroup() {
     int before = tableSize();
     groupDAO.createGroup("newGroup", "creator3", Optional.empty());
     assertThat(tableSize()).isEqualTo(before + 1);
@@ -63,8 +76,7 @@ public class GroupDAOTest {
     assertThat(names).contains("newGroup");
   }
 
-  @Test
-  public void deleteGroup() {
+  @Test public void deleteGroup() {
     int before = tableSize();
     groupDAO.deleteGroup(group1);
 
@@ -72,8 +84,7 @@ public class GroupDAOTest {
     assertThat(groupDAO.getGroups()).containsOnly(group2);
   }
 
-  @Test
-  public void getGroup() {
+  @Test public void getGroup() {
     // getGroup is performed in setup()
     assertThat(group1.getName()).isEqualTo("group1");
     assertThat(group1.getDescription()).isEqualTo("desc1");
@@ -81,21 +92,16 @@ public class GroupDAOTest {
     assertThat(group1.getUpdatedBy()).isEqualTo("updater1");
   }
 
-  @Test
-  public void getGroupById() {
-    Group group = groupDAO.getGroupById(group1.getId())
-        .orElseThrow(RuntimeException::new);
-    assertThat(group).isEqualTo(group1);
+  @Test public void getGroupById() {
+    assertThat(groupDAO.getGroupById(group1.getId())).contains(group1);
   }
 
-  @Test
-  public void getNonExistentGroup() {
-    assertThat(groupDAO.getGroup("non-existent").isPresent()).isFalse();
-    assertThat(groupDAO.getGroupById(-1234).isPresent()).isFalse();
+  @Test public void getNonExistentGroup() {
+    assertThat(groupDAO.getGroup("non-existent")).isEmpty();
+    assertThat(groupDAO.getGroupById(-1234)).isEmpty();
   }
 
-  @Test
-  public void getGroups() {
+  @Test public void getGroups() {
     assertThat(groupDAO.getGroups()).containsOnly(group1, group2);
   }
 
@@ -105,6 +111,6 @@ public class GroupDAOTest {
   }
 
   private int tableSize() {
-    return testDBRule.jooqContext().fetchCount(GROUPS);
+    return jooqContext.fetchCount(GROUPS);
   }
 }

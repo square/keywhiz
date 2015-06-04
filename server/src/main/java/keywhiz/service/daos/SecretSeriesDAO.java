@@ -29,8 +29,12 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
+import keywhiz.service.config.Readonly;
+import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 
 /**
@@ -39,11 +43,12 @@ import static keywhiz.jooq.tables.Secrets.SECRETS;
 public class SecretSeriesDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
+  private final SecretSeriesMapper secretSeriesMapper;
 
-  @Inject
-  public SecretSeriesDAO(DSLContext dslContext, ObjectMapper mapper) {
+  private SecretSeriesDAO(DSLContext dslContext, ObjectMapper mapper, SecretSeriesMapper secretSeriesMapper) {
     this.dslContext = dslContext;
     this.mapper = mapper;
+    this.secretSeriesMapper = secretSeriesMapper;
   }
 
   long createSecretSeries(String name, String creator, String description, @Nullable String type,
@@ -76,21 +81,19 @@ public class SecretSeriesDAO {
 
   public Optional<SecretSeries> getSecretSeriesById(long id) {
     SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.ID.eq(Math.toIntExact(id)));
-    return Optional.ofNullable(r).map(
-        rec -> new SecretSeriesMapper(mapper).map(rec));
+    return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
   public Optional<SecretSeries> getSecretSeriesByName(String name) {
     SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.NAME.eq(name));
-    return Optional.ofNullable(r).map(
-        rec -> new SecretSeriesMapper(mapper).map(rec));
+    return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
   public ImmutableList<SecretSeries> getSecretSeries() {
     List<SecretSeries> r = dslContext
         .selectFrom(SECRETS)
         .fetch()
-        .map(new SecretSeriesMapper(mapper));
+        .map(secretSeriesMapper);
 
     return ImmutableList.copyOf(r);
   }
@@ -106,5 +109,33 @@ public class SecretSeriesDAO {
     dslContext.delete(SECRETS)
         .where(SECRETS.ID.eq(Math.toIntExact(id)))
         .execute();
+  }
+
+  public static class SecretSeriesDAOFactory implements DAOFactory<SecretSeriesDAO> {
+    private final DSLContext jooq;
+    private final DSLContext readonlyJooq;
+    private final ObjectMapper objectMapper;
+    private final SecretSeriesMapper secretSeriesMapper;
+
+    @Inject public SecretSeriesDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
+        ObjectMapper objectMapper, SecretSeriesMapper secretSeriesMapper) {
+      this.jooq = jooq;
+      this.readonlyJooq = readonlyJooq;
+      this.objectMapper = objectMapper;
+      this.secretSeriesMapper = secretSeriesMapper;
+    }
+
+    @Override public SecretSeriesDAO readwrite() {
+      return new SecretSeriesDAO(jooq, objectMapper, secretSeriesMapper);
+    }
+
+    @Override public SecretSeriesDAO readonly() {
+      return new SecretSeriesDAO(readonlyJooq, objectMapper, secretSeriesMapper);
+    }
+
+    @Override public SecretSeriesDAO using(Configuration configuration) {
+      DSLContext dslContext = DSL.using(checkNotNull(configuration));
+      return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper);
+    }
   }
 }

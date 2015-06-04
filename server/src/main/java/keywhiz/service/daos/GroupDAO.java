@@ -24,15 +24,21 @@ import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.api.model.Group;
 import keywhiz.jooq.tables.records.GroupsRecord;
+import keywhiz.service.config.Readonly;
+import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 
 public class GroupDAO {
   private final DSLContext dslContext;
+  private final GroupMapper groupMapper;
 
-  @Inject public GroupDAO(DSLContext dslContext) {
+  private GroupDAO(DSLContext dslContext, GroupMapper groupMapper) {
     this.dslContext = dslContext;
+    this.groupMapper = groupMapper;
   }
 
   public long createGroup(String name, String creator, Optional<String> description) {
@@ -60,18 +66,42 @@ public class GroupDAO {
 
   public Optional<Group> getGroup(String name) {
     GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.NAME.eq(name));
-    return Optional.ofNullable(r).map(
-        rec -> new GroupMapper().map(rec));
+    return Optional.ofNullable(r).map(groupMapper::map);
   }
 
   public Optional<Group> getGroupById(long id) {
     GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq(Math.toIntExact(id)));
-    return Optional.ofNullable(r).map(
-        rec -> new GroupMapper().map(rec));
+    return Optional.ofNullable(r).map(groupMapper::map);
   }
 
   public ImmutableSet<Group> getGroups() {
-    List<Group> r = dslContext.selectFrom(GROUPS).fetch().map(new GroupMapper());
+    List<Group> r = dslContext.selectFrom(GROUPS).fetch().map(groupMapper);
     return ImmutableSet.copyOf(r);
+  }
+
+  public static class GroupDAOFactory implements DAOFactory<GroupDAO> {
+    private final DSLContext jooq;
+    private final DSLContext readonlyJooq;
+    private final GroupMapper groupMapper;
+
+    @Inject public GroupDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
+        GroupMapper groupMapper) {
+      this.jooq = jooq;
+      this.readonlyJooq = readonlyJooq;
+      this.groupMapper = groupMapper;
+    }
+
+    @Override public GroupDAO readwrite() {
+      return new GroupDAO(jooq, groupMapper);
+    }
+
+    @Override public GroupDAO readonly() {
+      return new GroupDAO(readonlyJooq, groupMapper);
+    }
+
+    @Override public GroupDAO using(Configuration configuration) {
+      DSLContext dslContext = DSL.using(checkNotNull(configuration));
+      return new GroupDAO(dslContext, groupMapper);
+    }
   }
 }

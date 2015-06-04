@@ -18,16 +18,21 @@ package keywhiz.service.daos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.Guice;
+import com.google.inject.testing.fieldbinder.Bind;
+import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Optional;
+import javax.inject.Inject;
 import keywhiz.TestDBRule;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.api.model.VersionGenerator;
+import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
+import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import org.jooq.DSLContext;
 import org.jooq.Table;
 import org.jooq.exception.DataAccessException;
@@ -41,6 +46,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SecretDAOTest {
   @Rule public final TestDBRule testDBRule = new TestDBRule();
+
+  @Bind @SuppressWarnings("unused") ObjectMapper objectMapper = new ObjectMapper();
+  @Bind DSLContext jooqContext;
+  @Bind @Readonly DSLContext jooqReadonlyContext;
+
+  @Inject SecretDAOFactory secretDAOFactory;
 
   final static ContentCryptographer cryptographer = CryptoFixtures.contentCryptographer();
   final static OffsetDateTime date = OffsetDateTime.now();
@@ -62,12 +73,12 @@ public class SecretDAOTest {
 
   @Before
   public void setUp() throws Exception {
-    ObjectMapper objectMapper = new ObjectMapper();
-    DSLContext dslContext = testDBRule.jooqContext();
+    jooqContext = jooqReadonlyContext = testDBRule.jooqContext();
+    Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
 
-    dslContext.delete(SECRETS).execute();
+    jooqContext.delete(SECRETS).execute();
 
-    dslContext.insertInto(SECRETS)
+    jooqContext.insertInto(SECRETS)
         .set(SECRETS.ID, Math.toIntExact(secret1.series().getId()))
         .set(SECRETS.NAME, secret1.series().getName())
         .set(SECRETS.DESCRIPTION, secret1.series().getDescription().orElse(null))
@@ -76,7 +87,7 @@ public class SecretDAOTest {
         .set(SECRETS.UPDATEDBY, secret1.series().getUpdatedBy())
         .execute();
 
-    dslContext.insertInto(SECRETS_CONTENT)
+    jooqContext.insertInto(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.SECRETID, Math.toIntExact(secret1.series().getId()))
         .set(SECRETS_CONTENT.VERSION, secret1.content().version().orElse(null))
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret1.content().encryptedContent())
@@ -86,7 +97,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret1.content().metadata()))
         .execute();
 
-    dslContext.insertInto(SECRETS)
+    jooqContext.insertInto(SECRETS)
         .set(SECRETS.ID, Math.toIntExact(secret2.series().getId()))
         .set(SECRETS.NAME, secret2.series().getName())
         .set(SECRETS.DESCRIPTION, secret2.series().getDescription().orElse(null))
@@ -95,7 +106,7 @@ public class SecretDAOTest {
         .set(SECRETS.UPDATEDBY, secret2.series().getUpdatedBy())
         .execute();
 
-    dslContext.insertInto(SECRETS_CONTENT)
+    jooqContext.insertInto(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.SECRETID, Math.toIntExact(secret2.series().getId()))
         .set(SECRETS_CONTENT.VERSION, secret2.content().version().orElse(null))
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret2.content().encryptedContent())
@@ -105,8 +116,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret2.content().metadata()))
         .execute();
 
-    secretDAO = new SecretDAO(dslContext, new SecretContentDAO(dslContext, objectMapper),
-        new SecretSeriesDAO(dslContext, objectMapper));
+    secretDAO = secretDAOFactory.readwrite();
 
     // Secrets created in the DB will have different id, updatedAt values.
     secret1 = secretDAO.getSecretByNameAndVersion(
@@ -115,8 +125,7 @@ public class SecretDAOTest {
         secret2.series().getName(), secret2.content().version().get()).get();
   }
 
-  @Test
-  public void createSecret() {
+  @Test public void createSecret() {
     int secretsBefore = tableSize(SECRETS);
     int secretContentsBefore = tableSize(SECRETS_CONTENT);
 
@@ -136,8 +145,7 @@ public class SecretDAOTest {
     assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2, newSecret);
   }
 
-  @Test
-  public void createTwoVersionsOfASecret() {
+  @Test public void createTwoVersionsOfASecret() {
     int secretsBefore = tableSize(SECRETS);
     int secretContentsBefore = tableSize(SECRETS_CONTENT);
 
@@ -166,24 +174,18 @@ public class SecretDAOTest {
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore + 2);
   }
 
-  @Test
-  public void getSecretByNameAndVersion() {
-    SecretSeriesAndContent seriesAndContent = secretDAO.getSecretByNameAndVersion(
-        secret1.series().getName(), secret1.content().version().orElse(""))
-        .orElseThrow(RuntimeException::new);
-    assertThat(seriesAndContent).isEqualTo(secret1);
+  @Test public void getSecretByNameAndVersion() {
+    String name = secret1.series().getName();
+    String version = secret1.content().version().orElse("");
+    assertThat(secretDAO.getSecretByNameAndVersion(name, version)).contains(secret1);
   }
 
-  @Test
-  public void getSecretByNameAndVersionWithoutVersion() {
-    SecretSeriesAndContent seriesAndContent =
-        secretDAO.getSecretByNameAndVersion(secret2.series().getName(), "")
-        .orElseThrow(RuntimeException::new);
-    assertThat(seriesAndContent).isEqualTo(secret2);
+  @Test public void getSecretByNameAndVersionWithoutVersion() {
+    String name = secret2.series().getName();
+    assertThat(secretDAO.getSecretByNameAndVersion(name, "")).contains(secret2);
   }
 
-  @Test
-  public void getSecretByNameAndVersionWithVersion() {
+  @Test public void getSecretByNameAndVersionWithVersion() {
     String futureStamp = new VersionGenerator(System.currentTimeMillis() + 100000).toHex();
     String name = secret1.series().getName();
     String content = "bmV3ZXJTZWNyZXQy";
@@ -192,26 +194,17 @@ public class SecretDAOTest {
     SecretSeriesAndContent newerSecret = secretDAO.getSecretByIdAndVersion(newId, futureStamp)
         .orElseThrow(RuntimeException::new);
 
-    SecretSeriesAndContent seriesAndContent = secretDAO.getSecretByNameAndVersion(
-        secret1.series().getName(), secret1.content().version().orElse(""))
-        .orElseThrow(RuntimeException::new);
-    assertThat(seriesAndContent).isEqualTo(secret1);
+    String version = secret1.content().version().orElse("");
+    assertThat(secretDAO.getSecretByNameAndVersion(name, version)).contains(secret1);
 
-    seriesAndContent = secretDAO.getSecretByNameAndVersion(secret1.series().getName(), futureStamp)
-        .orElseThrow(RuntimeException::new);
-    assertThat(seriesAndContent).isEqualTo(newerSecret);
+    assertThat(secretDAO.getSecretByNameAndVersion(name, futureStamp)).contains(newerSecret);
   }
 
-  @Test
-  public void getSecretByIdAndVersionWithoutVersion() {
-    SecretSeriesAndContent seriesAndContent =
-        secretDAO.getSecretByIdAndVersion(secret2.series().getId(), "")
-        .orElseThrow(RuntimeException::new);
-    assertThat(seriesAndContent).isEqualTo(secret2);
+  @Test public void getSecretByIdAndVersionWithoutVersion() {
+    assertThat(secretDAO.getSecretByIdAndVersion(secret2.series().getId(), "")).contains(secret2);
   }
 
-  @Test
-  public void getSecretByIdAndVersionWithVersion() {
+  @Test public void getSecretByIdAndVersionWithVersion() {
     String futureStamp = new VersionGenerator(System.currentTimeMillis() + 222222).toHex();
     String name = secret1.series().getName();
     String content = "bmV3ZXJTZWNyZXQy";
@@ -220,19 +213,15 @@ public class SecretDAOTest {
     SecretSeriesAndContent newerSecret = secretDAO.getSecretByNameAndVersion(name, futureStamp)
         .orElseThrow(RuntimeException::new);
 
-    SecretSeriesAndContent seriesAndContent = secretDAO.getSecretByIdAndVersion(
-        secret1.series().getId(), secret1.content().version().orElse(""))
-        .orElseThrow(RuntimeException::new);
-    assertThat(seriesAndContent).isEqualTo(secret1);
+    long id = secret1.series().getId();
+    String secret1Version = secret1.content().version().orElse("");
+    assertThat(secretDAO.getSecretByIdAndVersion(id, secret1Version)).contains(secret1);
 
-    seriesAndContent = secretDAO.getSecretByIdAndVersion(
-        secret1.series().getId(), newerSecret.content().version().orElse(""))
-        .orElseThrow(RuntimeException::new);
-    assertThat(seriesAndContent).isEqualTo(newerSecret);
+    String newerSecretVersion = newerSecret.content().version().orElse("");
+    assertThat(secretDAO.getSecretByIdAndVersion(id, newerSecretVersion)).contains(newerSecret);
   }
 
-  @Test
-  public void getSecretById() {
+  @Test public void getSecretById() {
     SecretSeriesAndContent expected = secretDAO.getSecretByNameAndVersion(
         secret1.series().getName(), secret1.content().version().orElse(""))
         .orElseThrow(RuntimeException::new);
@@ -240,19 +229,16 @@ public class SecretDAOTest {
     assertThat(actual).containsExactly(expected);
   }
 
-  @Test
-  public void getNonExistentSecret() {
-    assertThat(secretDAO.getSecretByNameAndVersion("non-existent", "").isPresent()).isFalse();
+  @Test public void getNonExistentSecret() {
+    assertThat(secretDAO.getSecretByNameAndVersion("non-existent", "")).isEmpty();
     assertThat(secretDAO.getSecretsById(-1231)).isEmpty();
   }
 
-  @Test
-  public void getSecrets() {
+  @Test public void getSecrets() {
     assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2);
   }
 
-  @Test
-  public void deleteSecretsByName() {
+  @Test public void deleteSecretsByName() {
     secretDAO.createSecret("toBeDeleted_deleteSecretsByName", "encryptedShhh", "first", "creator",
         ImmutableMap.of(), "", null, null);
 
@@ -263,13 +249,11 @@ public class SecretDAOTest {
 
     assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore - 1);
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore - 1);
-    Optional<SecretSeriesAndContent> missingSecret =
-        secretDAO.getSecretByNameAndVersion("toBeDeleted_deleteSecretsByName", "first");
-    assertThat(missingSecret.isPresent()).isFalse();
+    assertThat(secretDAO.getSecretByNameAndVersion("toBeDeleted_deleteSecretsByName", "first"))
+        .isEmpty();
   }
 
-  @Test
-  public void deleteSecretByNameAndVersion() {
+  @Test public void deleteSecretByNameAndVersion() {
     secretDAO.createSecret("shadow_deleteSecretByNameAndVersion", "encrypted1", "no1", "creator",
         ImmutableMap.of(), "desc", null, null);
     secretDAO.createSecret("shadow_deleteSecretByNameAndVersion", "encrypted2", "no2", "creator",
@@ -281,13 +265,11 @@ public class SecretDAOTest {
 
     assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore);
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore - 1);
-    Optional<SecretSeriesAndContent> missingSecret =
-        secretDAO.getSecretByNameAndVersion("shadow_deleteSecretByNameAndVersion", "no1");
-    assertThat(missingSecret.isPresent()).isFalse();
+    assertThat(secretDAO.getSecretByNameAndVersion("shadow_deleteSecretByNameAndVersion", "no1"))
+        .isEmpty();
   }
 
-  @Test
-  public void deleteSecretSeriesWhenEmpty() {
+  @Test public void deleteSecretSeriesWhenEmpty() {
     secretDAO.createSecret("toBeDeleted_deleteSecretSeriesWhenEmpty", "encryptedOvaltine", "v22",
         "creator", ImmutableMap.of(), "desc", null, null);
 
@@ -298,9 +280,8 @@ public class SecretDAOTest {
 
     assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore - 1);
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore - 1);
-    Optional<SecretSeriesAndContent> missingSecret =
-        secretDAO.getSecretByNameAndVersion("toBeDeleted_deleteSecretSeriesWhenEmpty", "v22");
-    assertThat(missingSecret.isPresent()).isFalse();
+    assertThat(secretDAO.getSecretByNameAndVersion("toBeDeleted_deleteSecretSeriesWhenEmpty", "v22"))
+        .isEmpty();
   }
 
   @Test(expected = DataAccessException.class)
@@ -318,6 +299,6 @@ public class SecretDAOTest {
   }
 
   private int tableSize(Table table) {
-    return testDBRule.jooqContext().fetchCount(table);
+    return jooqContext.fetchCount(table);
   }
 }

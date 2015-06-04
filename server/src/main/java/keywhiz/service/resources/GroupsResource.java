@@ -16,6 +16,7 @@
 
 package keywhiz.service.resources;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
@@ -46,7 +47,9 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
+import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.GroupDAO;
+import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,8 +66,12 @@ public class GroupsResource {
   private final AclDAO aclDAO;
   private final GroupDAO groupDAO;
 
-  @Inject
-  public GroupsResource(AclDAO aclDAO, GroupDAO groupDAO) {
+  @Inject public GroupsResource(AclDAOFactory aclDAOFactory, GroupDAOFactory groupDAOFactory) {
+    this.aclDAO = aclDAOFactory.readwrite();
+    this.groupDAO = groupDAOFactory.readwrite();
+  }
+
+  @VisibleForTesting GroupsResource(AclDAO aclDAO, GroupDAO groupDAO) {
     this.aclDAO = aclDAO;
     this.groupDAO = groupDAO;
   }

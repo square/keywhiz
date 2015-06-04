@@ -16,6 +16,7 @@
 
 package keywhiz.service.resources;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
@@ -45,7 +46,9 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
+import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.ClientDAO;
+import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
@@ -65,8 +68,12 @@ public class ClientsResource {
   private final AclDAO aclDAO;
   private final ClientDAO clientDAO;
 
-  @Inject
-  public ClientsResource(AclDAO aclDAO, ClientDAO clientDAO) {
+  @Inject public ClientsResource(AclDAOFactory aclDAOFactory, ClientDAOFactory clientDAOFactory) {
+    this.aclDAO = aclDAOFactory.readwrite();
+    this.clientDAO = clientDAOFactory.readwrite();
+  }
+
+  @VisibleForTesting ClientsResource(AclDAO aclDAO, ClientDAO clientDAO) {
     this.aclDAO = aclDAO;
     this.clientDAO = clientDAO;
   }

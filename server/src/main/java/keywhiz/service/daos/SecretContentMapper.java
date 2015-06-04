@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Map;
+import javax.inject.Inject;
 import keywhiz.api.model.SecretContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import org.jooq.RecordMapper;
@@ -30,7 +31,7 @@ class SecretContentMapper implements RecordMapper<SecretsContentRecord, SecretCo
       new TypeReference<Map<String, String>>() {};
   private final ObjectMapper mapper;
 
-  SecretContentMapper(ObjectMapper mapper) {
+  @Inject SecretContentMapper(ObjectMapper mapper) {
     this.mapper = mapper;
   }
 

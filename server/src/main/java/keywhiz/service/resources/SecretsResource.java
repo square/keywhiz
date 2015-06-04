@@ -16,6 +16,7 @@
 
 package keywhiz.service.resources;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
@@ -47,8 +48,10 @@ import keywhiz.api.model.Secret;
 import keywhiz.api.model.VersionGenerator;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
+import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretSeriesDAO;
+import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
@@ -71,8 +74,14 @@ public class SecretsResource {
   private final AclDAO aclDAO;
   private final SecretSeriesDAO secretSeriesDAO;
 
-  @Inject
-  public SecretsResource(SecretController secretController, AclDAO aclDAO,
+  @Inject public SecretsResource(SecretController secretController, AclDAOFactory aclDAOFactory,
+      SecretSeriesDAOFactory secretSeriesDAOFactory) {
+    this.secretController = secretController;
+    this.aclDAO = aclDAOFactory.readwrite();
+    this.secretSeriesDAO = secretSeriesDAOFactory.readwrite();
+  }
+
+  @VisibleForTesting SecretsResource(SecretController secretController, AclDAO aclDAO,
       SecretSeriesDAO secretSeriesDAO) {
     this.secretController = secretController;
     this.aclDAO = aclDAO;

@@ -18,10 +18,16 @@ package keywhiz.service.daos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.Guice;
+import com.google.inject.testing.fieldbinder.Bind;
+import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.time.OffsetDateTime;
-import java.util.Optional;
+import javax.inject.Inject;
 import keywhiz.TestDBRule;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.service.config.Readonly;
+import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
+import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,16 +38,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SecretSeriesDAOTest {
   @Rule public final TestDBRule testDBRule = new TestDBRule();
 
+  @Bind @SuppressWarnings("unused") ObjectMapper objectMapper = new ObjectMapper();
+  @Bind DSLContext jooqContext;
+  @Bind @Readonly DSLContext jooqReadonlyContext;
+
+  @Inject SecretSeriesDAOFactory secretSeriesDAOFactory;
+
   SecretSeriesDAO secretSeriesDAO;
 
-  @Before
-  public void setUp() {
-    ObjectMapper objectMapper = new ObjectMapper();
-    secretSeriesDAO = new SecretSeriesDAO(testDBRule.jooqContext(), objectMapper);
+  @Before public void setUp() {
+    jooqContext = jooqReadonlyContext = testDBRule.jooqContext();
+    Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
+
+    secretSeriesDAO = secretSeriesDAOFactory.readwrite();
   }
 
-  @Test
-  public void createAndLookupSecretSeries() {
+  @Test public void createAndLookupSecretSeries() {
     int before = tableSize();
     OffsetDateTime now = OffsetDateTime.now();
 
@@ -63,8 +75,7 @@ public class SecretSeriesDAOTest {
         "name", "description", "type", "generationOptions");
   }
 
-  @Test
-  public void deleteSecretSeriesByName() {
+  @Test public void deleteSecretSeriesByName() {
     secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", "creator", "", null, null);
 
     int secretsBefore = tableSize();
@@ -72,14 +83,11 @@ public class SecretSeriesDAOTest {
     secretSeriesDAO.deleteSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName");
 
     assertThat(tableSize()).isEqualTo(secretsBefore - 1);
-
-    Optional<SecretSeries> missingSecret =
-        secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName");
-    assertThat(missingSecret.isPresent()).isFalse();
+    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName"))
+        .isEmpty();
   }
 
-  @Test
-  public void deleteSecretSeriesById() {
+  @Test public void deleteSecretSeriesById() {
     long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesById", "creator", "", null, null);
 
     int secretsBefore = tableSize();
@@ -87,17 +95,15 @@ public class SecretSeriesDAOTest {
     secretSeriesDAO.deleteSecretSeriesById(id);
 
     assertThat(tableSize()).isEqualTo(secretsBefore - 1);
-    Optional<SecretSeries> missingSecret = secretSeriesDAO.getSecretSeriesById(id);
-    assertThat(missingSecret.isPresent()).isFalse();
+    assertThat(secretSeriesDAO.getSecretSeriesById(id)).isEmpty();
   }
 
-  @Test
-  public void getNonExistentSecretSeries() {
-    assertThat(secretSeriesDAO.getSecretSeriesByName("non-existent").isPresent()).isFalse();
-    assertThat(secretSeriesDAO.getSecretSeriesById(-2328).isPresent()).isFalse();
+  @Test public void getNonExistentSecretSeries() {
+    assertThat(secretSeriesDAO.getSecretSeriesByName("non-existent")).isEmpty();
+    assertThat(secretSeriesDAO.getSecretSeriesById(-2328)).isEmpty();
   }
 
   private int tableSize() {
-    return testDBRule.jooqContext().fetchCount(SECRETS);
+    return jooqContext.fetchCount(SECRETS);
   }
 }

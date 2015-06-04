@@ -15,6 +15,7 @@
  */
 package keywhiz.service.resources;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
 import javax.inject.Inject;
@@ -28,6 +29,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
+import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +46,11 @@ public class MembershipResource {
 
   private final AclDAO aclDAO;
 
-  @Inject
-  public MembershipResource(AclDAO aclDAO) {
+  @Inject public MembershipResource(AclDAOFactory aclDAOFactory) {
+    this.aclDAO = aclDAOFactory.readwrite();
+  }
+
+  @VisibleForTesting MembershipResource(AclDAO aclDAO) {
     this.aclDAO = aclDAO;
   }
 

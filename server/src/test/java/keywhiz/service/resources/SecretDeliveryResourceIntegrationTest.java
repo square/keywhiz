@@ -60,7 +60,6 @@ public class SecretDeliveryResourceIntegrationTest {
   }
 
   @Test public void returnsNotFoundWhenSecretUnspecified() throws Exception {
-
     Request get = new Request.Builder()
         .get()
         .url("/secret/")

@@ -16,6 +16,7 @@
 
 package keywhiz.service.resources;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.dropwizard.auth.Auth;
 import java.util.List;
 import javax.inject.Inject;
@@ -25,8 +26,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.Client;
-import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.AclDAO;
+import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +45,11 @@ public class SecretsDeliveryResource {
 
   private final AclDAO aclDAO;
 
-  @Inject
-  public SecretsDeliveryResource(@Readonly AclDAO aclDAO) {
+  @Inject public SecretsDeliveryResource(AclDAOFactory aclDAOFactory) {
+    this.aclDAO = aclDAOFactory.readonly();
+  }
+
+  @VisibleForTesting SecretsDeliveryResource(AclDAO aclDAO) {
     this.aclDAO = aclDAO;
   }
 

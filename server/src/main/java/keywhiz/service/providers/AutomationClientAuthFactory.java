@@ -16,6 +16,7 @@
 
 package keywhiz.service.providers;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.java8.auth.Authenticator;
@@ -25,6 +26,7 @@ import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.service.daos.ClientDAO;
+import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import org.glassfish.jersey.server.ContainerRequest;
 
 import static java.lang.String.format;
@@ -39,7 +41,11 @@ import static java.lang.String.format;
 public class AutomationClientAuthFactory {
   private final Authenticator<String, AutomationClient> authenticator;
 
-  @Inject public AutomationClientAuthFactory(ClientDAO clientDAO) {
+  @Inject public AutomationClientAuthFactory(ClientDAOFactory clientDAOFactory) {
+    this.authenticator = new MyAuthenticator(clientDAOFactory.readwrite());
+  }
+
+  @VisibleForTesting AutomationClientAuthFactory(ClientDAO clientDAO) {
     this.authenticator = new MyAuthenticator(clientDAO);
   }
 
