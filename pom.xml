@@ -36,9 +36,9 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <dropwizard.version>0.8.1</dropwizard.version>
-    <guice.version>4.0-beta5</guice.version>
+    <guice.version>4.0</guice.version>
     <jackson.version>2.5.0</jackson.version>
-    <jooq.version>3.5.1</jooq.version>
+    <jooq.version>3.6.2</jooq.version>
     <powermock.version>1.6.1</powermock.version>
     <slf4j.version>1.7.7</slf4j.version>
     <postgres.version>9.1-901-1.jdbc4</postgres.version>
@@ -119,6 +119,11 @@
       <dependency>
         <groupId>com.google.inject.extensions</groupId>
         <artifactId>guice-multibindings</artifactId>
+        <version>${guice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.inject.extensions</groupId>
+        <artifactId>guice-testlib</artifactId>
         <version>${guice.version}</version>
       </dependency>
       <dependency>
