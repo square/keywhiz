@@ -21,4 +21,5 @@ script:
   - mvn test -P postgres
   - mvn test -P mysql
   - mvn test -P h2
+  - "mvn compile findbugs:check"
   - cd $UI_DIR && grunt test

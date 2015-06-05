@@ -41,6 +41,7 @@
     <jooq.version>3.5.1</jooq.version>
     <powermock.version>1.6.1</powermock.version>
     <slf4j.version>1.7.7</slf4j.version>
+    <findbugs.version>3.0.0</findbugs.version>
     <postgres.version>9.1-901-1.jdbc4</postgres.version>
     <mysql.version>5.1.35</mysql.version>
   </properties>
@@ -108,8 +109,13 @@
       </dependency>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
+        <artifactId>annotations</artifactId>
+        <version>${findbugs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
-        <version>3.0.0</version>
+        <version>${findbugs.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.inject</groupId>
@@ -411,7 +417,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>findbugs-maven-plugin</artifactId>
-          <version>3.0.0</version>
+          <version>3.0.1</version>
           <configuration>
             <effort>Max</effort>
             <threshold>Default</threshold>

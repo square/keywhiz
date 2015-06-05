@@ -77,8 +77,8 @@ public class SessionLoginResource {
   @Produces(MediaType.APPLICATION_JSON)
   public Response login(@Valid LoginRequest request) {
 
-    String username = request.username;
-    String password = String.copyValueOf(request.password);
+    String username = request.username();
+    String password = String.copyValueOf(request.password());
 
     Optional<User> optionalUser = Optional.empty();
     try {

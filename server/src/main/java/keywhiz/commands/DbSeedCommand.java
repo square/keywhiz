@@ -50,8 +50,8 @@ import static keywhiz.jooq.tables.Users.USERS;
  */
 public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
   // Didn't we say not to keep passwords in code? ;)
-  public static String defaultUser = "keywhizAdmin";
-  public static String defaultPassword = "adminPass";
+  public static final String defaultUser = "keywhizAdmin";
+  public static final String defaultPassword = "adminPass";
 
   public DbSeedCommand() {
     super("db-seed", "Populates database with development data.");

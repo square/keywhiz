@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class LoginRequestTest {
   @Test public void deserializesCorrectly() throws Exception {
-    LoginRequest loginRequest = new LoginRequest("keywhizAdmin", "adminPass".toCharArray());
+    LoginRequest loginRequest = LoginRequest.from("keywhizAdmin", "adminPass".toCharArray());
     assertThat(fromJson(jsonFixture("fixtures/loginRequest.json"), LoginRequest.class))
         .isEqualTo(loginRequest);
   }
