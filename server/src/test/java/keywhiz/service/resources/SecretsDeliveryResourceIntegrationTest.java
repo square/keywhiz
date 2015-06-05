@@ -30,6 +30,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SecretsDeliveryResourceIntegrationTest {
@@ -79,7 +80,7 @@ public class SecretsDeliveryResourceIntegrationTest {
   public void returnsJsonArrayWhenUserHasMultipleSecrets() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/secrets")
+        .url(testUrl("/secrets"))
         .build();
 
     Response response = client.newCall(get).execute();
@@ -97,7 +98,7 @@ public class SecretsDeliveryResourceIntegrationTest {
   public void returnsJsonArray() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/secrets")
+        .url(testUrl("/secrets"))
         .build();
 
     Response response = client.newCall(get).execute();
@@ -109,7 +110,7 @@ public class SecretsDeliveryResourceIntegrationTest {
   public void returnsUnauthorizedWhenUnauthenticated() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/secrets")
+        .url(testUrl("/secrets"))
         .build();
 
     Response response = clientNoClientCert.newCall(get).execute();
@@ -120,7 +121,7 @@ public class SecretsDeliveryResourceIntegrationTest {
   public void returnsEmptyJsonArrayWhenUserHasNoSecrets() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/secrets")
+        .url(testUrl("/secrets"))
         .build();
 
     Response response = noSecretsClient.newCall(get).execute();

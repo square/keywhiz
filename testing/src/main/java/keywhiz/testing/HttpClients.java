@@ -18,6 +18,7 @@ package keywhiz.testing;
 
 import com.google.common.base.Throwables;
 import com.squareup.okhttp.ConnectionSpec;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
 import java.net.CookieManager;
@@ -32,10 +33,10 @@ import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
-import org.apache.http.HttpHost;
 import org.apache.http.conn.ssl.SSLContextBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Helper methods for creating {@link OkHttpClient}s for testing.
@@ -46,28 +47,24 @@ public class HttpClients {
   private HttpClients() {}
 
   /**
-   * Bind a HttpClient to a specific destination host.
-   *
-   * @param boundHost host which all requests will be made against.
-   * @param wrappedClient existing http client to wrap.
-   * @return wrapped HttpClient.
+   * Builds a localhost URL for testing given a path.
    */
-  public static OkHttpClient boundToHost(final HttpHost boundHost, final OkHttpClient wrappedClient) {
-    checkNotNull(boundHost);
-    checkNotNull(wrappedClient);
-    return new HostBoundWrappedHttpClient(boundHost, wrappedClient);
+  public static HttpUrl testUrl(String path) {
+    String urlString = "https://localhost:4445" + path;
+    HttpUrl url = HttpUrl.parse(urlString);
+    checkState(url != null, "URL %s invalid", urlString);
+    return url;
   }
 
   /**
-   * Create a {@link OkHttpClient} which can only connect to localhost.
+   * Create a {@link OkHttpClient} for tests.
    *
-   * @param port SSL port
    * @param keyStore Use a client certificate from keystore if present. Client certs disabled if null.
    * @param keyStorePassword keyStore password. Client certs disabled if null.
    * @param requestInterceptors Any request interceptors to register with client.
    * @return new http client
    */
-  private static OkHttpClient localhostSslClient(int port,
+  private static OkHttpClient testSslClient(
       @Nullable KeyStore keyStore,
       @Nullable String keyStorePassword,
       KeyStore trustStore,
@@ -109,36 +106,35 @@ public class HttpClients {
       client.networkInterceptors().add(interceptor);
     }
 
-    // Only connects to localhost.
-    return boundToHost(new HttpHost("localhost", port, "https"), client);
+    return client;
   }
 
-  public static LocalhostClientBuilder builder() {
-    return new LocalhostClientBuilder();
+  public static TestClientBuilder builder() {
+    return new TestClientBuilder();
   }
 
-  public static class LocalhostClientBuilder {
+  public static class TestClientBuilder {
     private KeyStore keyStore;
     private String password;
     private List<Interceptor> requestInterceptors = new ArrayList<>();
 
-    private LocalhostClientBuilder() {}
+    private TestClientBuilder() {}
 
-    public LocalhostClientBuilder withClientCert(KeyStore keyStore, String password) {
+    public TestClientBuilder withClientCert(KeyStore keyStore, String password) {
       this.keyStore = keyStore;
       this.password = password;
       return this;
     }
 
-    public LocalhostClientBuilder addRequestInterceptors(Interceptor first, Interceptor... others) {
+    public TestClientBuilder addRequestInterceptors(Interceptor first, Interceptor... others) {
       checkNotNull(first);
       requestInterceptors.add(first);
       requestInterceptors.addAll(Arrays.asList(others));
       return this;
     }
 
-    public OkHttpClient build(KeyStore trustStore, int port) {
-      return localhostSslClient(port, keyStore, password, trustStore, requestInterceptors);
+    public OkHttpClient build(KeyStore trustStore) {
+      return testSslClient(keyStore, password, trustStore, requestInterceptors);
     }
   }
 }

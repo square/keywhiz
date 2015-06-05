@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
 import com.google.common.collect.Maps;
 import com.google.inject.Guice;
@@ -64,7 +65,6 @@ import keywhiz.service.resources.SessionLogoutResource;
 import keywhiz.service.resources.SessionMeResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zapodot.jackson.java8.JavaOptionalModule;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -207,7 +207,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
    * @return customized input factory
    */
   public static ObjectMapper customizeObjectMapper(ObjectMapper objectMapper) {
-    objectMapper.registerModules(new JavaOptionalModule());
+    objectMapper.registerModules(new Jdk8Module());
     objectMapper.registerModules(new JSR310Module());
     objectMapper.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     objectMapper.setDateFormat(StdDateFormat.getISO8601Format(TimeZone.getTimeZone("UTC"), Locale.ENGLISH));

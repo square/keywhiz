@@ -16,8 +16,10 @@
 
 package keywhiz.service.resources;
 
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import keywhiz.IntegrationTestRule;
 import keywhiz.TestClients;
@@ -26,6 +28,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AutomationSecretAccessResourceIntegrationTest {
@@ -40,8 +43,8 @@ public class AutomationSecretAccessResourceIntegrationTest {
   @Test public void allowAccess() throws Exception {
     //Allow "Web" to access "Hacking_Password"
     Request put = new Request.Builder()
-        .put(null)
-        .url("/automation/secrets/738/groups/918")
+        .put(RequestBody.create(MediaType.parse("text/plain"), ""))
+        .url(testUrl("/automation/secrets/738/groups/918"))
         .build();
 
     Response response = mutualSslClient.newCall(put).execute();
@@ -52,7 +55,7 @@ public class AutomationSecretAccessResourceIntegrationTest {
     //Revoke "Database_password" from "Web"
     Request delete = new Request.Builder()
         .delete()
-        .url("/automation/secrets/739/groups/918")
+        .url(testUrl("/automation/secrets/739/groups/918"))
         .build();
 
     Response response = mutualSslClient.newCall(delete).execute();

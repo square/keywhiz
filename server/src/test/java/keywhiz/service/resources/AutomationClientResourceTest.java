@@ -31,15 +31,15 @@ import keywhiz.service.daos.ClientDAO;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 public class AutomationClientResourceTest {
-  @Rule public TestRule mockito = new MockitoJUnitRule(this);
+  @Rule public MockitoRule mockito = MockitoJUnit.rule();
 
   @Mock ClientDAO clientDAO;
   @Mock AclDAO aclDAO;

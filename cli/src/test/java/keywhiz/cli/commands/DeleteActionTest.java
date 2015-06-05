@@ -31,9 +31,9 @@ import keywhiz.client.KeywhizClient.NotFoundException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.Matchers.anyInt;
@@ -44,7 +44,7 @@ import static org.mockito.Mockito.when;
 public class DeleteActionTest {
   private static final OffsetDateTime NOW = OffsetDateTime.now();
 
-  @Rule public TestRule mockito = new MockitoJUnitRule(this);
+  @Rule public MockitoRule mockito = MockitoJUnit.rule();
 
   @Mock KeywhizClient keywhizClient;
 

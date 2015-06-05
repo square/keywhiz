@@ -18,6 +18,7 @@ package keywhiz;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
 import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
@@ -33,6 +34,8 @@ import keywhiz.testing.HttpClients;
 public class TestClients {
   private TestClients() {}
 
+  private static final HttpUrl TEST_URL = HttpUrl.parse("https://localhost:4445/");
+
   public static OkHttpClient unauthenticatedClient() {
     String password = "ponies";
     KeyStore trustStore = keyStoreFromResource("dev_and_test_truststore.p12", password);
@@ -41,7 +44,7 @@ public class TestClients {
         .addRequestInterceptors(
             new AuthHelper.XsrfRequestInterceptor("XSRF-TOKEN", "X-XSRF-TOKEN"),
             new AuthHelper.AcceptRequestInterceptor(MediaType.APPLICATION_JSON))
-        .build(trustStore, 4445);
+        .build(trustStore);
   }
 
   public static OkHttpClient mutualSslClient() {
@@ -52,7 +55,7 @@ public class TestClients {
     return HttpClients.builder()
         .withClientCert(keyStore, password)
         .addRequestInterceptors(new AuthHelper.AcceptRequestInterceptor(MediaType.APPLICATION_JSON))
-        .build(trustStore, 4445);
+        .build(trustStore);
   }
 
   /** Provides a client certificate authenticated client which has no assigned secrets. */
@@ -64,7 +67,7 @@ public class TestClients {
     return HttpClients.builder()
         .withClientCert(keyStore, password)
         .addRequestInterceptors(new AuthHelper.AcceptRequestInterceptor(MediaType.APPLICATION_JSON))
-        .build(trustStore, 4445);
+        .build(trustStore);
   }
 
   public static OkHttpClient noCertNoXsrfClient() {
@@ -73,7 +76,7 @@ public class TestClients {
 
     return HttpClients.builder()
         .addRequestInterceptors(new AuthHelper.AcceptRequestInterceptor(MediaType.APPLICATION_JSON))
-        .build(trustStore, 4445);
+        .build(trustStore);
   }
 
   public static KeywhizClient keywhizClient() {
@@ -84,10 +87,10 @@ public class TestClients {
         .addRequestInterceptors(
             new AuthHelper.XsrfRequestInterceptor("XSRF-TOKEN", "X-XSRF-TOKEN"),
             new AuthHelper.AcceptRequestInterceptor(MediaType.APPLICATION_JSON))
-        .build(trustStore, 4445);
+        .build(trustStore);
 
     ObjectMapper mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
-    return new KeywhizClient(mapper, httpClient);
+    return new KeywhizClient(mapper, httpClient, TEST_URL);
   }
 
   private static KeyStore keyStoreFromResource(String path, String password) {

@@ -20,11 +20,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.name.Named;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
 import java.io.IOException;
 import java.net.CookieManager;
 import java.net.HttpCookie;
-import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -47,7 +47,6 @@ import keywhiz.cli.configs.ListActionConfig;
 import keywhiz.cli.configs.UnassignActionConfig;
 import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.UnauthorizedException;
-import org.apache.http.HttpHost;
 
 import static com.google.common.base.StandardSystemProperty.USER_HOME;
 import static com.google.common.base.StandardSystemProperty.USER_NAME;
@@ -91,26 +90,28 @@ public class CommandExecutor {
       return;
     }
 
-    URL url;
+    HttpUrl url;
     if (Strings.isNullOrEmpty(config.url)) {
-      url = new URL("https", "localhost", 4444, "");
+      url = HttpUrl.parse("https://localhost:4444");
       System.out.println("Server URL not specified (--url flag), assuming " + url);
     } else {
-      url = new URL(config.url);
+      url = HttpUrl.parse(config.url);
+      if (url == null) {
+        System.err.print("Invalid URL " + config.url);
+        return;
+      }
     }
 
-    HttpHost host = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
     KeywhizClient client;
-    OkHttpClient encapsulatedClient;
+    OkHttpClient httpClient;
 
     String user = config.getUser().orElse(USER_NAME.value());
     Path cookiePath = cookieDir.resolve(format(".keywhiz.%s.cookie", user));
 
     try {
       List<HttpCookie> cookieList = ClientUtils.loadCookies(cookiePath);
-      encapsulatedClient = ClientUtils.sslOkHttpClient(config.getDevTrustStore(), cookieList);
-      client = new KeywhizClient(mapper, ClientUtils.hostBoundWrappedHttpClient(host,
-          encapsulatedClient));
+      httpClient = ClientUtils.sslOkHttpClient(config.getDevTrustStore(), cookieList);
+      client = new KeywhizClient(mapper, httpClient, url);
 
       // Try a simple get request to determine whether or not the cookies are still valid
       if(!client.isLoggedIn()) {
@@ -118,16 +119,15 @@ public class CommandExecutor {
       }
     } catch (IOException e) {
       // Either could not find the cookie file, or the cookies were expired -- must login manually.
-      encapsulatedClient = ClientUtils.sslOkHttpClient(config.getDevTrustStore(), ImmutableList.of());
-      client = new KeywhizClient(mapper, ClientUtils.hostBoundWrappedHttpClient(host,
-          encapsulatedClient));
+      httpClient = ClientUtils.sslOkHttpClient(config.getDevTrustStore(), ImmutableList.of());
+      client = new KeywhizClient(mapper, httpClient, url);
 
       char[] password = ClientUtils.readPassword(user);
       client.login(user, password);
       Arrays.fill(password, '\0');
     }
     // Save/update the cookies if we logged in successfully
-    ClientUtils.saveCookies((CookieManager) encapsulatedClient.getCookieHandler(), cookiePath);
+    ClientUtils.saveCookies((CookieManager) httpClient.getCookieHandler(), cookiePath);
 
     Printing printing = new Printing(client);
 

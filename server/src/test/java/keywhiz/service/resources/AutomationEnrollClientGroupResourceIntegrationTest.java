@@ -16,8 +16,10 @@
 
 package keywhiz.service.resources;
 
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import keywhiz.IntegrationTestRule;
 import keywhiz.TestClients;
@@ -26,6 +28,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AutomationEnrollClientGroupResourceIntegrationTest {
@@ -40,8 +43,8 @@ public class AutomationEnrollClientGroupResourceIntegrationTest {
   @Test public void enrollClient() throws Exception {
     //Enroll "CN=User4" in "Blackops"
     Request post = new Request.Builder()
-        .put(null)
-        .url("/automation/clients/772/groups/916")
+        .put(RequestBody.create(MediaType.parse("text/plain"), ""))
+        .url(testUrl("/automation/clients/772/groups/916"))
         .build();
 
     Response httpResponse = mutualSslClient.newCall(post).execute();
@@ -52,7 +55,7 @@ public class AutomationEnrollClientGroupResourceIntegrationTest {
     //Evict "CN=User4" from "Web"
     Request delete = new Request.Builder()
         .delete()
-        .url("/automation/clients/772/groups/918")
+        .url(testUrl("/automation/clients/772/groups/918"))
         .build();
 
     Response httpResponse = mutualSslClient.newCall(delete).execute();
@@ -63,7 +66,7 @@ public class AutomationEnrollClientGroupResourceIntegrationTest {
     //Evict non-existent client from "Web"
     Request delete = new Request.Builder()
         .delete()
-        .url("/automation/clients/2/groups/918")
+        .url(testUrl("/automation/clients/2/groups/918"))
         .build();
 
     Response httpResponse = mutualSslClient.newCall(delete).execute();
@@ -74,7 +77,7 @@ public class AutomationEnrollClientGroupResourceIntegrationTest {
     //Evict non-existent client from "Web"
     Request delete = new Request.Builder()
         .delete()
-        .url("/automation/clients/772/groups/5")
+        .url(testUrl("/automation/clients/772/groups/5"))
         .build();
 
     Response httpResponse = mutualSslClient.newCall(delete).execute();

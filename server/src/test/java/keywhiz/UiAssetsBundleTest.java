@@ -25,6 +25,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class UiAssetsBundleTest {
@@ -38,7 +39,7 @@ public class UiAssetsBundleTest {
 
   @Test public void uiContentAccessible() throws Exception {
     Request request = new Request.Builder()
-        .url("/ui/")
+        .url(testUrl("/ui/"))
         .get()
         .build();
 
@@ -48,7 +49,7 @@ public class UiAssetsBundleTest {
 
   @Test public void rootRedirects() throws Exception {
     Request request = new Request.Builder()
-        .url("/")
+        .url(testUrl("/"))
         .get()
         .build();
 
@@ -60,7 +61,7 @@ public class UiAssetsBundleTest {
 
   @Test public void incompleteUiRedirects() throws Exception {
     Request request = new Request.Builder()
-        .url("/ui")
+        .url(testUrl("/ui"))
         .get()
         .build();
 

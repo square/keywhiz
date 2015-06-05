@@ -21,9 +21,9 @@ import io.dropwizard.db.ManagedDataSource;
 import java.sql.Connection;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import static keywhiz.JooqHealthCheck.OnFailure.LOG_ONLY;
 import static keywhiz.JooqHealthCheck.OnFailure.RETURN_UNHEALTHY;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 
 public class JooqHealthCheckTest {
   @Rule public final TestDBRule testDBRule = new TestDBRule();
-  @Rule public TestRule mockito = new MockitoJUnitRule(this);
+  @Rule public MockitoRule mockito = MockitoJUnit.rule();
 
   @Mock ManagedDataSource managedDataSource;
 

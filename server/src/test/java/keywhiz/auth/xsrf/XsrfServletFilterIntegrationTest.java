@@ -15,8 +15,10 @@
  */
 package keywhiz.auth.xsrf;
 
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import keywhiz.IntegrationTestRule;
 import keywhiz.TestClients;
@@ -27,6 +29,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 
 import static keywhiz.AuthHelper.buildLoginPost;
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class XsrfServletFilterIntegrationTest {
@@ -47,8 +50,8 @@ public class XsrfServletFilterIntegrationTest {
 
   @Test public void xsrfNotRequiredForLogout() throws Exception {
     Request request = new Request.Builder()
-        .url("/admin/logout")
-        .post(null)
+        .post(RequestBody.create(MediaType.parse("text/plain"), ""))
+        .url(testUrl("/admin/logout"))
         .build();
 
     Response response = client.newCall(request).execute();
@@ -58,7 +61,7 @@ public class XsrfServletFilterIntegrationTest {
   @Test public void rejectsForAdminUrlWithoutXsrf() throws Exception {
     noXsrfClient.newCall(buildLoginPost(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword)).execute();
     Request request = new Request.Builder()
-        .url("/admin/clients/")
+        .url(testUrl("/admin/clients"))
         .get()
         .build();
 
@@ -69,7 +72,7 @@ public class XsrfServletFilterIntegrationTest {
   @Test public void allowsForAdminUrlWithXsrf() throws Exception {
     client.newCall(buildLoginPost(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword)).execute();
     Request request = new Request.Builder()
-        .url("/admin/clients/")
+        .url(testUrl("/admin/clients"))
         .get()
         .build();
 

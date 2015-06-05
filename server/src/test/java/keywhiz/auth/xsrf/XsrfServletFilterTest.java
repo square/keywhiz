@@ -27,9 +27,9 @@ import keywhiz.auth.cookie.CookieConfig;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
@@ -40,7 +40,7 @@ public class XsrfServletFilterTest {
   private static final String COOKIE_NAME = "session";
   private static final String HEADER_NAME = "X-XSRF-TOKEN";
 
-  @Rule public TestRule mockito = new MockitoJUnitRule(this);
+  @Rule public MockitoRule mockito = MockitoJUnit.rule();
 
   @Mock HttpServletRequest mockRequest;
   @Mock HttpServletResponse mockResponse;
