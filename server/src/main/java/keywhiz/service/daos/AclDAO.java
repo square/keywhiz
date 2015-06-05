@@ -179,18 +179,7 @@ public class AclDAO {
     return dslContext.transactionResult(configuration -> {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
 
-      List<SecretSeries> serieses = DSL.using(configuration)
-          .select()
-          .from(SECRETS)
-          .join(ACCESSGRANTS)
-          .on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
-          .join(GROUPS)
-          .on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
-          .where(GROUPS.NAME.eq(group.getName()))
-          .fetchInto(SECRETS)
-          .map(secretSeriesMapper);
-
-      for (SecretSeries series : serieses) {
+      for (SecretSeries series : getSecretSeriesFor(configuration, group)) {
         for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
           SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
           set.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
