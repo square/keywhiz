@@ -42,7 +42,7 @@ public class AutomationClientAuthFactory {
   private final Authenticator<String, AutomationClient> authenticator;
 
   @Inject public AutomationClientAuthFactory(ClientDAOFactory clientDAOFactory) {
-    this.authenticator = new MyAuthenticator(clientDAOFactory.readwrite());
+    this.authenticator = new MyAuthenticator(clientDAOFactory.readonly());
   }
 
   @VisibleForTesting AutomationClientAuthFactory(ClientDAO clientDAO) {
