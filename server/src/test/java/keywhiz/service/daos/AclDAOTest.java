@@ -110,6 +110,13 @@ public class AclDAOTest {
     assertThat(accessGrantsTableSize()).isEqualTo(before + 1);
   }
 
+  @Test public void allowsAccessOnlyOnce() {
+    int before = accessGrantsTableSize();
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId()); // no effect
+    assertThat(accessGrantsTableSize()).isEqualTo(before + 1);
+  }
+
   @Test public void revokesAccess() {
     aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId());
     int before = accessGrantsTableSize();

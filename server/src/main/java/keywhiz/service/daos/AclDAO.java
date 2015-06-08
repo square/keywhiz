@@ -303,10 +303,21 @@ public class AclDAO {
   protected void allowAccess(Configuration configuration, long secretId, long groupId) {
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
 
+    int secretIdInt = Math.toIntExact(secretId);
+    int groupIdInt = Math.toIntExact(groupId);
+
+    boolean assigned = 0 < DSL.using(configuration)
+        .fetchCount(ACCESSGRANTS,
+            ACCESSGRANTS.SECRETID.eq(secretIdInt).and(
+            ACCESSGRANTS.GROUPID.eq(groupIdInt)));
+    if (assigned) {
+      return;
+    }
+
     DSL.using(configuration)
         .insertInto(ACCESSGRANTS)
-        .set(ACCESSGRANTS.SECRETID, Math.toIntExact(secretId))
-        .set(ACCESSGRANTS.GROUPID, Math.toIntExact(groupId))
+        .set(ACCESSGRANTS.SECRETID, secretIdInt)
+        .set(ACCESSGRANTS.GROUPID, groupIdInt)
         .set(ACCESSGRANTS.CREATEDAT, now)
         .set(ACCESSGRANTS.UPDATEDAT, now)
         .execute();
