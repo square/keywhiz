@@ -7,7 +7,6 @@ keywhiz.auth.mutualssl
 keywhiz.auth.xsrf
 keywhiz.commands
 keywhiz.generators
-keywhiz.jdbi
 keywhiz.service.config
 keywhiz.service.crypto
 keywhiz.service.daos

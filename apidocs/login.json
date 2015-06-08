@@ -28,19 +28,5 @@
       "consumes" : [ "application/json" ],
       "produces" : [ "application/json" ]
     } ]
-  } ],
-  "models" : {
-    "LoginRequest" : {
-      "id" : "LoginRequest",
-      "properties" : {
-        "password" : {
-          "type" : "char[]"
-        },
-        "username" : {
-          "type" : "string"
-        }
-      },
-      "required" : [ "password", "username" ]
-    }
-  }
+  } ]
 }
