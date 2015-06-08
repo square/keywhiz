@@ -334,10 +334,21 @@ public class AclDAO {
   protected void enrollClient(Configuration configuration, long clientId, long groupId) {
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
 
+    int groupIdInt = Math.toIntExact(groupId);
+    int clientIdInt = Math.toIntExact(clientId);
+
+    boolean enrolled = 0 < DSL.using(configuration)
+        .fetchCount(MEMBERSHIPS,
+            MEMBERSHIPS.GROUPID.eq(groupIdInt).and(
+            MEMBERSHIPS.CLIENTID.eq(clientIdInt)));
+    if (enrolled) {
+      return;
+    }
+
     DSL.using(configuration)
         .insertInto(MEMBERSHIPS)
-        .set(MEMBERSHIPS.GROUPID, Math.toIntExact(groupId))
-        .set(MEMBERSHIPS.CLIENTID, Math.toIntExact(clientId))
+        .set(MEMBERSHIPS.GROUPID, groupIdInt)
+        .set(MEMBERSHIPS.CLIENTID, clientIdInt)
         .set(MEMBERSHIPS.CREATEDAT, now)
         .set(MEMBERSHIPS.UPDATEDAT, now)
         .execute();

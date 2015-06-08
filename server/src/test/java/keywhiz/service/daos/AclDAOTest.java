@@ -146,6 +146,13 @@ public class AclDAOTest {
     assertThat(membershipsTableSize()).isEqualTo(before + 1);
   }
 
+  @Test public void enrollsClientsOnlyOnce() {
+    int before = membershipsTableSize();
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId());
+    assertThat(membershipsTableSize()).isEqualTo(before + 1);
+  }
+
   @Test public void evictsClient() {
     aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId());
     int before = membershipsTableSize();
