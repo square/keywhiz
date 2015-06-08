@@ -34,7 +34,7 @@ public class CliConfiguration {
   private String user;
 
   public Optional<String> getUser() {
-    return Optional.of(user);
+    return Optional.ofNullable(user);
   }
 
   @Parameter(names = "--devTrustStore", description = "Use development trust store")
