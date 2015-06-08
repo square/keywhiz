@@ -35,7 +35,7 @@ class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSeries> {
   }
 
   public SecretSeries map(SecretsRecord r) {
-    return new SecretSeries(
+    return SecretSeries.of(
         r.getId(),
         r.getName(),
         r.getDescription(),

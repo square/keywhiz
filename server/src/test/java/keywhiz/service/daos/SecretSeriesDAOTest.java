@@ -59,7 +59,7 @@ public class SecretSeriesDAOTest {
 
     long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
         ImmutableMap.of("foo", "bar"));
-    SecretSeries expected = new SecretSeries(id, "newSecretSeries", "desc", now, "creator", now,
+    SecretSeries expected = SecretSeries.of(id, "newSecretSeries", "desc", now, "creator", now,
         "creator", null, ImmutableMap.of("foo", "bar"));
 
     assertThat(tableSize()).isEqualTo(before + 1);

@@ -103,17 +103,17 @@ public class AssignAction implements Runnable {
       case "secret":
 
         try {
+          int groupId = Math.toIntExact(group.getId());
           String[] parts = splitNameAndVersion(assignActionConfig.name);
           SanitizedSecret sanitizedSecret =
                 keywhizClient.getSanitizedSecretByNameAndVersion(parts[0], parts[1]);
-          if (keywhizClient.groupDetailsForId(Math.toIntExact(group.getId())).getSecrets().contains(
-              sanitizedSecret)) {
+          if (keywhizClient.groupDetailsForId(groupId).getSecrets().contains(sanitizedSecret)) {
             throw new AssertionError(
                 format("Secret '%s' already assigned to group '%s'", assignActionConfig.name,
                     group.getName()));
           }
           logger.info("Allowing group '{}' access to secret '{}'.", group.getName(), sanitizedSecret.name());
-          keywhizClient.grantSecretToGroupByIds(Math.toIntExact(sanitizedSecret.id()), Math.toIntExact(group.getId()));
+          keywhizClient.grantSecretToGroupByIds(Math.toIntExact(sanitizedSecret.id()), groupId);
         } catch (KeywhizClient.NotFoundException e) {
           throw new AssertionError("Secret doesn't exist.");
         } catch (ParseException e) {

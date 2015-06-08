@@ -19,8 +19,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import java.time.OffsetDateTime;
+import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Strings.nullToEmpty;
 
 /**
  * Groups entry for collecting a set of {@link Client}s, via membership, and/or {@link Secret}s, via
@@ -50,18 +52,18 @@ public class Group {
 
   public Group(@JsonProperty("id") long id,
       @JsonProperty("name") String name,
-      @JsonProperty("description") String description,
+      @JsonProperty("description") @Nullable String description,
       @JsonProperty("createdAt") OffsetDateTime createdAt,
-      @JsonProperty("createdBy") String createdBy,
+      @JsonProperty("createdBy") @Nullable String createdBy,
       @JsonProperty("updatedAt") OffsetDateTime updatedAt,
-      @JsonProperty("updatedBy") String updatedBy) {
+      @JsonProperty("updatedBy") @Nullable String updatedBy) {
     this.id = id;
     this.name = checkNotNull(name);
-    this.description = description;
+    this.description = nullToEmpty(description);
     this.createdAt = createdAt;
-    this.createdBy = createdBy;
+    this.createdBy = nullToEmpty(createdBy);
     this.updatedAt = updatedAt;
-    this.updatedBy = updatedBy;
+    this.updatedBy = nullToEmpty(updatedBy);
   }
 
   public long getId() {

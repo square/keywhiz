@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
-import java.util.Optional;
 import keywhiz.IntegrationTestRule;
 import keywhiz.TestClients;
 import keywhiz.api.SecretDetailResponse;
@@ -93,7 +92,7 @@ public class SecretsResourceIntegrationTest {
     boolean found1 = false;
     for (SanitizedSecret secret : sanitizedSecrets1) {
       if (secret.name().equals("trapdoor")) {
-        assertThat(secret.description().equals(Optional.of("v1")));
+        assertThat(secret.description().equals("v1"));
         found1 = true;
         break;
       }
@@ -107,7 +106,7 @@ public class SecretsResourceIntegrationTest {
     boolean found2 = false;
     for (SanitizedSecret secret : sanitizedSecrets2) {
       if (secret.name().equals("trapdoor")) {
-        assertThat(secret.description().equals(Optional.of("v2")));
+        assertThat(secret.description().equals("v2"));
         found2 = true;
         break;
       }

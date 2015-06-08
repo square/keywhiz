@@ -180,7 +180,7 @@ public class AclDAO {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
 
       for (SecretSeries series : getSecretSeriesFor(configuration, group)) {
-        for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
+        for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.id())) {
           SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
           set.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
         }
@@ -245,7 +245,7 @@ public class AclDAO {
     ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
 
     for (SecretSeries series : getSecretSeriesFor(dslContext.configuration(), client)) {
-      for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
+      for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.id())) {
         SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
         sanitizedSet.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
       }
@@ -290,7 +290,7 @@ public class AclDAO {
     }
 
     Optional<SecretContent> secretContent =
-        secretContentDAO.getSecretContentBySecretIdAndVersion(secretSeries.get().getId(), version);
+        secretContentDAO.getSecretContentBySecretIdAndVersion(secretSeries.get().id(), version);
     if (!secretContent.isPresent()) {
       return Optional.empty();
     }
@@ -303,10 +303,21 @@ public class AclDAO {
   protected void allowAccess(Configuration configuration, long secretId, long groupId) {
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
 
+    int secretIdInt = Math.toIntExact(secretId);
+    int groupIdInt = Math.toIntExact(groupId);
+
+    boolean assigned = 0 < DSL.using(configuration)
+        .fetchCount(ACCESSGRANTS,
+            ACCESSGRANTS.SECRETID.eq(secretIdInt).and(
+            ACCESSGRANTS.GROUPID.eq(groupIdInt)));
+    if (assigned) {
+      return;
+    }
+
     DSL.using(configuration)
         .insertInto(ACCESSGRANTS)
-        .set(ACCESSGRANTS.SECRETID, Math.toIntExact(secretId))
-        .set(ACCESSGRANTS.GROUPID, Math.toIntExact(groupId))
+        .set(ACCESSGRANTS.SECRETID, secretIdInt)
+        .set(ACCESSGRANTS.GROUPID, groupIdInt)
         .set(ACCESSGRANTS.CREATEDAT, now)
         .set(ACCESSGRANTS.UPDATEDAT, now)
         .execute();
@@ -323,10 +334,21 @@ public class AclDAO {
   protected void enrollClient(Configuration configuration, long clientId, long groupId) {
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
 
+    int groupIdInt = Math.toIntExact(groupId);
+    int clientIdInt = Math.toIntExact(clientId);
+
+    boolean enrolled = 0 < DSL.using(configuration)
+        .fetchCount(MEMBERSHIPS,
+            MEMBERSHIPS.GROUPID.eq(groupIdInt).and(
+            MEMBERSHIPS.CLIENTID.eq(clientIdInt)));
+    if (enrolled) {
+      return;
+    }
+
     DSL.using(configuration)
         .insertInto(MEMBERSHIPS)
-        .set(MEMBERSHIPS.GROUPID, Math.toIntExact(groupId))
-        .set(MEMBERSHIPS.CLIENTID, Math.toIntExact(clientId))
+        .set(MEMBERSHIPS.GROUPID, groupIdInt)
+        .set(MEMBERSHIPS.CLIENTID, clientIdInt)
         .set(MEMBERSHIPS.CREATEDAT, now)
         .set(MEMBERSHIPS.UPDATEDAT, now)
         .execute();

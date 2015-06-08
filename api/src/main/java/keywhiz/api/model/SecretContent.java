@@ -24,6 +24,8 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
+import static com.google.common.base.Strings.nullToEmpty;
+
 /**
  * Maps to entity from secrets_content table. Contains content and related information on a specific
  * version of a secret. Many-to-one mapping with a {@link SecretSeries}.
@@ -34,7 +36,8 @@ public abstract class SecretContent {
       @Nullable String version, OffsetDateTime createdAt, @Nullable String createdBy,
       OffsetDateTime updatedAt, @Nullable String updatedBy, ImmutableMap<String, String> metadata) {
     return new AutoValue_SecretContent(id, secretSeriesId, encryptedContent,
-        Optional.ofNullable(version), createdAt, createdBy, updatedAt, updatedBy, metadata);
+        Optional.ofNullable(version), createdAt, nullToEmpty(createdBy), updatedAt,
+        nullToEmpty(updatedBy), metadata);
   }
 
   public abstract long id();
@@ -42,9 +45,9 @@ public abstract class SecretContent {
   public abstract String encryptedContent();
   public abstract Optional<String> version();
   public abstract OffsetDateTime createdAt();
-  @Nullable public abstract String createdBy();
+  public abstract String createdBy();
   public abstract OffsetDateTime updatedAt();
-  @Nullable public abstract String updatedBy();
+  public abstract String updatedBy();
   @JsonAnyGetter public abstract  ImmutableMap<String, String> metadata();
 
   @Override public String toString() {

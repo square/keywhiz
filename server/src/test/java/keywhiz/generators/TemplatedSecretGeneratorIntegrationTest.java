@@ -21,7 +21,6 @@ import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import keywhiz.IntegrationTestRule;
 import keywhiz.TestClients;
 import keywhiz.api.TemplatedSecretsGeneratorRequest;
@@ -136,7 +135,7 @@ public class TemplatedSecretGeneratorIntegrationTest {
     boolean found1 = false;
     for (SanitizedSecret secret : sanitizedSecrets1) {
       if (secret.name().equals("newTemplatedSecret")) {
-        assertThat(secret.description().equals(Optional.of("desc1")));
+        assertThat(secret.description().equals("desc1"));
         found1 = true;
         break;
       }
@@ -156,7 +155,7 @@ public class TemplatedSecretGeneratorIntegrationTest {
     boolean found2 = false;
     for (SanitizedSecret secret : sanitizedSecrets2) {
       if (secret.name().equals("newTemplatedSecret")) {
-        assertThat(secret.description().equals(Optional.of("desc2")));
+        assertThat(secret.description().equals("desc2"));
         found2 = true;
         break;
       }

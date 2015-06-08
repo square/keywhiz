@@ -110,6 +110,13 @@ public class AclDAOTest {
     assertThat(accessGrantsTableSize()).isEqualTo(before + 1);
   }
 
+  @Test public void allowsAccessOnlyOnce() {
+    int before = accessGrantsTableSize();
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId()); // no effect
+    assertThat(accessGrantsTableSize()).isEqualTo(before + 1);
+  }
+
   @Test public void revokesAccess() {
     aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId());
     int before = accessGrantsTableSize();
@@ -135,6 +142,13 @@ public class AclDAOTest {
 
   @Test public void enrollsClients() {
     int before = membershipsTableSize();
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId());
+    assertThat(membershipsTableSize()).isEqualTo(before + 1);
+  }
+
+  @Test public void enrollsClientsOnlyOnce() {
+    int before = membershipsTableSize();
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId());
     aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId());
     assertThat(membershipsTableSize()).isEqualTo(before + 1);
   }
@@ -247,11 +261,13 @@ public class AclDAOTest {
   }
 
   @Test public void getSecretSeriesForWhenUnauthorized() throws Exception {
-    assertThat(aclDAO.getSecretSeriesFor(jooqContext.configuration(), client1, secret1.getName())).isEmpty();
+    assertThat(aclDAO.getSecretSeriesFor(jooqContext.configuration(), client1, secret1.getName()))
+        .isEmpty();
   }
 
   @Test public void getSecretSeriesForWhenMissing() throws Exception {
-    assertThat(aclDAO.getSecretSeriesFor(jooqContext.configuration(), client1, "non-existent")).isEmpty();
+    assertThat(aclDAO.getSecretSeriesFor(jooqContext.configuration(), client1, "non-existent"))
+        .isEmpty();
   }
 
   @Test public void getSecretSeriesFor() throws Exception {
@@ -266,7 +282,8 @@ public class AclDAOTest {
     assertThat(secretSeries).isEqualToIgnoringGivenFields(secretSeries1, "id");
 
     aclDAO.evictClient(jooqContext.configuration(), client2.getId(), group1.getId());
-    assertThat(aclDAO.getSecretSeriesFor(jooqContext.configuration(), client2, secret1.getName())).isEmpty();
+    assertThat(aclDAO.getSecretSeriesFor(jooqContext.configuration(), client2, secret1.getName()))
+        .isEmpty();
 
     aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group3.getId());
 
@@ -276,7 +293,8 @@ public class AclDAOTest {
   }
 
   @Test public void getSecretForWhenUnauthorized() throws Exception {
-    assertThat(aclDAO.getSanitizedSecretFor(client1, secret1.getName(), secret1.getVersion())).isEmpty();
+    assertThat(aclDAO.getSanitizedSecretFor(client1, secret1.getName(), secret1.getVersion()))
+        .isEmpty();
   }
 
   @Test public void getSecretForWhenMissing() throws Exception {

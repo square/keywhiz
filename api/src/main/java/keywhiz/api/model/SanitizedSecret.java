@@ -28,14 +28,15 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Strings.nullToEmpty;
 
 /**
  * {@link Secret} object, but without the secret content.
  */
-// TODO(justin): would love to backfill and make createdBy and updatedBy no longer nullable.
 @AutoValue
 public abstract class SanitizedSecret {
-  @JsonCreator public static SanitizedSecret of(@JsonProperty("id") long id,
+  @JsonCreator public static SanitizedSecret of(
+      @JsonProperty("id") long id,
       @JsonProperty("name") String name,
       @JsonProperty("version") String version,
       @JsonProperty("description") @Nullable String description,
@@ -50,25 +51,26 @@ public abstract class SanitizedSecret {
         (metadata == null) ? ImmutableMap.of() : ImmutableMap.copyOf(metadata);
     ImmutableMap<String, String> genOptions =
         (generationOptions == null) ? ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
-    return new AutoValue_SanitizedSecret(id, name, version, Optional.ofNullable(description),
-        createdAt, createdBy, updatedAt, updatedBy, meta, Optional.ofNullable(type), genOptions);
+    return new AutoValue_SanitizedSecret(id, name, version, nullToEmpty(description), createdAt,
+        nullToEmpty(createdBy), updatedAt, nullToEmpty(updatedBy), meta, Optional.ofNullable(type),
+        genOptions);
   }
 
   public static SanitizedSecret fromSecretSeriesAndContent(SecretSeriesAndContent seriesAndContent) {
     SecretSeries series = seriesAndContent.series();
     SecretContent content = seriesAndContent.content();
     return SanitizedSecret.of(
-        series.getId(),
-        series.getName(),
+        series.id(),
+        series.name(),
         content.version().orElse(""),
-        series.getDescription().orElse(null),
+        series.description(),
         content.createdAt(),
         content.createdBy(),
         content.updatedAt(),
         content.updatedBy(),
         content.metadata(),
-        series.getType().orElse(null),
-        series.getGenerationOptions());
+        series.type().orElse(null),
+        series.generationOptions());
   }
 
   /**
@@ -83,7 +85,7 @@ public abstract class SanitizedSecret {
         secret.getId(),
         secret.getName(),
         secret.getVersion(),
-        secret.getDescription().orElse(""),
+        secret.getDescription(),
         secret.getCreatedAt(),
         secret.getCreatedBy(),
         secret.getUpdatedAt(),
@@ -108,11 +110,11 @@ public abstract class SanitizedSecret {
   @JsonProperty public abstract long id();
   @JsonProperty public abstract String name();
   @JsonProperty public abstract String version();
-  @JsonProperty public abstract Optional<String> description();
+  @JsonProperty public abstract String description();
   @JsonProperty public abstract OffsetDateTime createdAt();
-  @JsonProperty @Nullable public abstract String createdBy();
+  @JsonProperty public abstract String createdBy();
   @JsonProperty public abstract OffsetDateTime updatedAt();
-  @JsonProperty @Nullable public abstract String updatedBy();
+  @JsonProperty public abstract String updatedBy();
   @JsonProperty public abstract ImmutableMap<String, String> metadata();
   @JsonProperty public abstract Optional<String> type();
   @JsonProperty public abstract ImmutableMap<String, String> generationOptions();
