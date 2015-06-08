@@ -46,6 +46,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -57,7 +58,6 @@ import org.eclipse.jetty.server.CookieCutter;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.StandardSystemProperty.USER_NAME;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
@@ -73,17 +73,24 @@ public class ClientUtils {
   /**
    * Creates a {@link OkHttpClient} to start a TLS connection.
    *
+   * @param devTrustStore if not null, uses the provided TrustStore instead of whatever is
+   *                      configured in the JVM. This is a convenient way to allow developers to
+   *                      start playing with Keywhiz right away. This option should not be used in
+   *                      production systems.
    * @param cookies list of cookies to include in the client.
    * @return new http client.
    */
-  public static OkHttpClient sslOkHttpClient(List<HttpCookie> cookies) {
+  public static OkHttpClient sslOkHttpClient(@Nullable KeyStore devTrustStore,
+      List<HttpCookie> cookies) {
     checkNotNull(cookies);
 
     SSLContext sslContext;
     try {
       TrustManagerFactory trustManagerFactory = TrustManagerFactory
           .getInstance(TrustManagerFactory.getDefaultAlgorithm());
-      trustManagerFactory.init((KeyStore) null);
+
+      trustManagerFactory.init(devTrustStore);
+
       TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
 
       sslContext = SSLContext.getInstance("TLSv1.2");
@@ -184,12 +191,13 @@ public class ClientUtils {
    * For this reason, it is suggested that the user login prior to using functionality such as
    * input redirection since this could result in a null console.
    *
+   * @param user who we are prompting a password for
    * @return user-inputted password
    */
-  public static char[] readPassword() {
+  public static char[] readPassword(String user) {
     Console console = System.console();
     if (console != null) {
-      System.out.format("password for '%s': ", USER_NAME.value());
+      System.out.format("password for '%s': ", user);
       return System.console().readPassword();
     } else {
       throw new RuntimeException("Please login by running a command without piping.\n"

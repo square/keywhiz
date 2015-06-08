@@ -51,13 +51,14 @@ import org.apache.http.HttpHost;
 
 import static com.google.common.base.StandardSystemProperty.USER_HOME;
 import static com.google.common.base.StandardSystemProperty.USER_NAME;
+import static java.lang.String.format;
 
 public class CommandExecutor {
   public static final String APP_VERSION = "2.0";
 
   public enum Command { LOGIN, LIST, DESCRIBE, ADD, DELETE, ASSIGN, UNASSIGN }
 
-  private final Path cookiePath = Paths.get(USER_HOME.value(), "/.keywhiz.cookies");
+  private final Path cookieDir = Paths.get(USER_HOME.value());
 
   private final String command;
   private final Map commands;
@@ -102,9 +103,12 @@ public class CommandExecutor {
     KeywhizClient client;
     OkHttpClient encapsulatedClient;
 
+    String user = config.getUser().orElse(USER_NAME.value());
+    Path cookiePath = cookieDir.resolve(format(".keywhiz.%s.cookie", user));
+
     try {
       List<HttpCookie> cookieList = ClientUtils.loadCookies(cookiePath);
-      encapsulatedClient = ClientUtils.sslOkHttpClient(cookieList);
+      encapsulatedClient = ClientUtils.sslOkHttpClient(config.getDevTrustStore(), cookieList);
       client = new KeywhizClient(mapper, ClientUtils.hostBoundWrappedHttpClient(host,
           encapsulatedClient));
 
@@ -114,11 +118,12 @@ public class CommandExecutor {
       }
     } catch (IOException e) {
       // Either could not find the cookie file, or the cookies were expired -- must login manually.
-      encapsulatedClient = ClientUtils.sslOkHttpClient(ImmutableList.of());
+      encapsulatedClient = ClientUtils.sslOkHttpClient(config.getDevTrustStore(), ImmutableList.of());
       client = new KeywhizClient(mapper, ClientUtils.hostBoundWrappedHttpClient(host,
           encapsulatedClient));
-      char[] password = ClientUtils.readPassword();
-      client.login(USER_NAME.value(), password);
+
+      char[] password = ClientUtils.readPassword(user);
+      client.login(user, password);
       Arrays.fill(password, '\0');
     }
     // Save/update the cookies if we logged in successfully

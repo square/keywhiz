@@ -16,6 +16,10 @@
 package keywhiz.cli.configs;
 
 import com.beust.jcommander.Parameter;
+import java.security.KeyStore;
+import java.util.Optional;
+import javax.annotation.Nullable;
+import keywhiz.cli.DevTrustStore;
 
 /** Global command line configuration. */
 public class CliConfiguration {
@@ -25,5 +29,21 @@ public class CliConfiguration {
 
   @Parameter(names = { "-U", "--url" }, description = "Base URL of server")
   public String url;
-}
 
+  @Parameter(names = "--user", description = "User to login as")
+  private String user;
+
+  public Optional<String> getUser() {
+    return Optional.of(user);
+  }
+
+  @Parameter(names = "--devTrustStore", description = "Use development trust store")
+  private boolean devTrustStore = false;
+
+  public @Nullable KeyStore getDevTrustStore() {
+    if (devTrustStore) {
+      return new DevTrustStore().getTrustStore();
+    }
+    return null;
+  }
+}
