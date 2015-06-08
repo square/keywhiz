@@ -140,26 +140,13 @@
             <pre class="prettyprint">$ git clone https://github.com/square/keywhiz.git &amp;&amp; cd keywhiz</pre>
 
             <h4>Starting the Server</h4>
-            <p>The default configuration assumes PostgreSQL, so first install that (or change the
-                config).</p>
-
-            <p>Assuming the default configuration, create a database
-                <code>keywhizdb_development</code>. For PostgreSQL, use:</p>
-            <pre class="prettyprint">$ createdb keywhizdb_development</pre>
-
-            <p>Create a <code>keywhiz</code> database user. For a development system,
-                a PostgreSQL user can be added using:</p>
-            <pre class="prettyprint">$ createuser keywhiz</pre>
-
-            <p>Test that it works:</p>
-            <pre class="prettyprint">$ psql keywhizdb_development keywhiz
-psql (9.2.2, server 9.2.4)
-Type "help" for help.
-
-keywhizdb_development=#</pre>
+            <p>Keywhiz can store data in PostgreSQL, MySQL or H2. H2 is the
+              simplest database for development purpose and all the data
+              is stored in <code>/tmp/h2_data/keywhizdb_development</code>. For
+              production systems you should use PostgreSQL or MySQL.</p>
 
             <p>From the base of the keywhiz repository, build the server:</p>
-            <pre class="prettyprint">$ mvn package -am -pl server</pre>
+            <pre class="prettyprint">$ mvn package -am -pl server -P h2</pre>
 
             <p>Run any migrations:</p>
             <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar preview-migrate server/src/main/resources/keywhiz-development.yaml
@@ -182,6 +169,9 @@ $ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar migrate server/sr
             <p>Run the CLI and get a usage statement:</p>
             <pre class="prettyprint">$ ./cli/target/keywhiz-cli-*-SNAPSHOT-shaded.jar</pre>
 
+            <p>In development, you can use <code>--devTrustStore</code>, e.g.:</p>
+            <pre class="prettyprint">$ ./cli/target/keywhiz-cli-*-SNAPSHOT-shaded.jar --devTrustStore --user keywhizAdmin list groups</pre>
+
             <p>You may want to alias this command for convenience:</p>
             <pre class="prettyprint">$ alias keywhiz.cli="/path/to/keywhiz-cli-*-SNAPSHOT-shaded.jar"</pre>
 
@@ -190,11 +180,15 @@ $ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar migrate server/sr
 
             <h3 id="examples">Examples</h3>
             <p>More examples are available in the
-                <a href="https://github.com/square/keywhiz/wiki">Wiki</a>, but here are a few:</p>
+                <a href="https://github.com/square/keywhiz/wiki">Wiki</a>, but here are a few.</p>
+            <p>In development, you can use <code>--devTrustStore</code> and these examples
+              assume that you want to use the default <code>keywhizAdmin</code> user.</p>
+            <p>In production, you will want to create your own users and make sure
+              that your certificates are properly signed and trusted.</p>
 
             <h4>Adding a Secret</h4>
             <h5>Using Keywhiz CLI</h5>
-            <pre class="prettyprint">$ keywhiz.cli login
+            <pre class="prettyprint">$ keywhiz.cli --devTrustStore --user keywhizAdmin login
 $ keywhiz.cli add secret --name mySecretName < mySecretFile</pre>
 
             <h5>Using Keywhiz automation API</h5>
@@ -213,7 +207,7 @@ $ curl --cert client.pem -H "Content-Type:application/json" -d @request.json htt
 
             <h4>Assigning a Secret to a Group</h4>
             <h5>Using Keywhiz CLI</h5>
-            <pre class="prettyprint">$ keywhiz.cli assign secret --name example.keytab --group kerberos</pre>
+            <pre class="prettyprint">$ keywhiz.cli --devTrustStore --user keywhizAdmin assign secret --name example.keytab --group kerberos</pre>
 
             <h5>Using Keywhiz automation API</h5>
             <pre class="prettyprint">$ curl --cert client.pem -X PUT "https://localhost:4444/automation/secrets/$SECRET_ID/groups/$GROUP_ID"</pre>
@@ -229,8 +223,8 @@ $ curl --cert client.pem -H "Content-Type:application/json" -d @request.json htt
             <ul>
               <li>Expose secret versions in KeywhizFs</li>
               <li>New client API for secret versions</li>
-              <li>Migrate from JDBI to JOOQ</li>
-              <li>Support MySQL in addition to PostgreSQL</li>
+              <li><del>Migrate from JDBI to JOOQ</del></li>
+              <li><del>Support MySQL in addition to PostgreSQL</del></li>
             </ul>
 
             <h3 id="contributing">Contributing</h3>
