@@ -1,4 +1,4 @@
-v0.7.4:
+v0.7.4: 2015-06-08
 
   * Added support for H2 and MySQL. H2 should make development easier since it's
     an embedded database. This was achieved by switching the SQL layer from
@@ -15,7 +15,28 @@ v0.7.4:
       generate certs.
     - Added the ability to specify the username on the command line (`--user`).
     - Removed a bunch of old & unused openssl files.
+    - Fixed bug where assign would mistakenly work multiple times and
+      unassign would mistakenly fail thinking no assignment was present.
 
-v0.7.3:
+  * Updated dependencies
+    - guice updated to 4.0
+    - jooq updated to 3.6.2
+    - logback updated to 1.1.3
+    - jcommander updated to 1.48
+    - jackson updated to 2.5.3
+    - auto-value updated to 1.1
+    - okhttp updated to 2.4.0
+    - dropwizard-java8 modules updated to 0.8.0-2
+    - commons-lang3 updated to 3.4
+    - assertj-guava updated to 1.3.1
+    - easymock updated to 3.3.1
+    - flyway updated to 3.2.1
+    - powermock updated to 1.6.2
+    - mockito updated to 1.10.19
+    - slf4j updated to 1.7.12
+    - h2 updated to 1.4.187
+    - mysql added
+
+v0.7.3: 2015-04-08
 
   * First open source release
