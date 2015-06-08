@@ -34,6 +34,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AutomationSecretResourceIntegrationTest {
@@ -54,7 +55,7 @@ public class AutomationSecretResourceIntegrationTest {
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
-        .url("/automation/secrets")
+        .url(testUrl("/automation/secrets"))
         .addHeader("Content-Type", MediaType.APPLICATION_JSON)
         .build();
 
@@ -68,7 +69,7 @@ public class AutomationSecretResourceIntegrationTest {
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
-        .url("/automation/secrets")
+        .url(testUrl("/automation/secrets"))
         .addHeader("Content-Type", MediaType.APPLICATION_JSON)
         .build();
 
@@ -84,7 +85,7 @@ public class AutomationSecretResourceIntegrationTest {
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
-        .url("/automation/secrets")
+        .url(testUrl("/automation/secrets"))
         .addHeader("Content-Type", MediaType.APPLICATION_JSON)
         .build();
 
@@ -98,7 +99,7 @@ public class AutomationSecretResourceIntegrationTest {
   public void readAllSecrets() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/automation/secrets")
+        .url(testUrl("/automation/secrets"))
         .build();
 
     Response response = mutualSslClient.newCall(get).execute();
@@ -112,7 +113,7 @@ public class AutomationSecretResourceIntegrationTest {
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
-        .url("/automation/secrets")
+        .url(testUrl("/automation/secrets"))
         .addHeader("Content-Type", MediaType.APPLICATION_JSON)
         .build();
 
@@ -121,7 +122,7 @@ public class AutomationSecretResourceIntegrationTest {
 
     Request get = new Request.Builder()
         .get()
-        .url("/automation/secrets?name=readable")
+        .url(testUrl("/automation/secrets?name=readable"))
         .build();
     response = mutualSslClient.newCall(get).execute();
     assertThat(response.code()).isEqualTo(200);
@@ -131,7 +132,7 @@ public class AutomationSecretResourceIntegrationTest {
   public void readInvalidSecret() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/automation/secrets?name=invalid")
+        .url(testUrl("/automation/secrets?name=invalid"))
         .build();
     Response response = mutualSslClient.newCall(get).execute();
     assertThat(response.code()).isEqualTo(404);
@@ -144,7 +145,7 @@ public class AutomationSecretResourceIntegrationTest {
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
-        .url("/automation/secrets")
+        .url(testUrl("/automation/secrets"))
         .addHeader("Content-Type", MediaType.APPLICATION_JSON)
         .build();
 
@@ -153,7 +154,7 @@ public class AutomationSecretResourceIntegrationTest {
 
     Request delete = new Request.Builder()
         .delete()
-        .url("/automation/secrets/deletable")
+        .url(testUrl("/automation/secrets/deletable"))
         .build();
 
     response = mutualSslClient.newCall(delete).execute();

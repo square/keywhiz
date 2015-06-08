@@ -26,6 +26,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SecurityHeadersFilterTest {
@@ -39,7 +40,7 @@ public class SecurityHeadersFilterTest {
 
   @Test public void checkSecurityHeaders() throws Exception {
     Request request = new Request.Builder()
-        .url("/ui/")
+        .url(testUrl("/ui/"))
         .get()
         .build();
 

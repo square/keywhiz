@@ -32,9 +32,9 @@ import keywhiz.api.model.Secret;
 import keywhiz.service.daos.SecretController;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
@@ -45,7 +45,7 @@ public class SecretGeneratorModuleTest {
   private static final DummySecretGeneratorFactory DUMMY_FACTORY = new DummySecretGeneratorFactory();
   private static final DummySecretGenerator DUMMY_GENERATOR = new DummySecretGenerator();
 
-  @Rule public TestRule mockito = new MockitoJUnitRule(this);
+  @Rule public MockitoRule mockito = MockitoJUnit.rule();
 
   @Mock private SecretController secretController;
 

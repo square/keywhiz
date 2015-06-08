@@ -30,6 +30,7 @@ import javax.annotation.Nullable;
 import javax.servlet.http.Cookie;
 import javax.ws.rs.core.MediaType;
 import keywhiz.client.KeywhizClient;
+import keywhiz.testing.HttpClients;
 import org.eclipse.jetty.server.CookieCutter;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -64,7 +65,7 @@ public class AuthHelper {
     }
 
     return new Request.Builder()
-        .url("/admin/login")
+        .url(HttpClients.testUrl("/admin/login"))
         .post(body)
         .addHeader("Content-Type", MediaType.APPLICATION_JSON)
         .build();

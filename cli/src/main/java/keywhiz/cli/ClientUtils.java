@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HttpHeaders;
-import com.squareup.okhttp.Call;
 import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
@@ -35,8 +34,6 @@ import java.io.IOException;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.HttpCookie;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyManagementException;
@@ -53,7 +50,6 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.servlet.http.Cookie;
-import org.apache.http.HttpHost;
 import org.eclipse.jetty.server.CookieCutter;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -116,32 +112,6 @@ public class ClientUtils {
 
     client.setCookieHandler(cookieManager);
     return client;
-  }
-
-  /**
-   * Wraps a {@link OkHttpClient} to only connect to URLs bound to the given host
-   *
-   * @param host domain and port to direct requests to.
-   * @param wrappedClient {@link OkHttpClient} that will send requests.
-   * @return new http client.
-   */
-  public static OkHttpClient hostBoundWrappedHttpClient(HttpHost host, OkHttpClient wrappedClient) {
-    return new OkHttpClient() {
-      @Override public Call newCall(Request request) {
-        URL boundUrl;
-
-        try {
-          boundUrl = new URL("https", host.getHostName(), host.getPort(), request.urlString());
-        } catch (MalformedURLException e) {
-          throw Throwables.propagate(e);
-        }
-        Request newRequest = request.newBuilder()
-            .url(boundUrl)
-            .build();
-
-        return wrappedClient.newCall(newRequest);
-      }
-    };
   }
 
   /**

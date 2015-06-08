@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 
 import static keywhiz.AuthHelper.buildLoginPost;
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SessionMeResourceIntegrationTest {
@@ -50,7 +51,7 @@ public class SessionMeResourceIntegrationTest {
 
     Request get = new Request.Builder()
         .get()
-        .url("/admin/me/")
+        .url(testUrl("/admin/me/"))
         .build();
 
     Response response = client.newCall(get).execute();
@@ -65,7 +66,7 @@ public class SessionMeResourceIntegrationTest {
 
     Request get = new Request.Builder()
         .get()
-        .url("/admin/me/")
+        .url(testUrl("/admin/me/"))
         .build();
 
     int status = client.newCall(get).execute().code();

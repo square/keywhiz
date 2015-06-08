@@ -16,8 +16,10 @@
 
 package keywhiz.service.resources;
 
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import java.util.Date;
 import java.util.List;
@@ -30,6 +32,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SessionLogoutResourceIntegrationTest {
@@ -43,8 +46,8 @@ public class SessionLogoutResourceIntegrationTest {
 
   @Test public void sendsExpiredCookie() throws Exception {
     Request request = new Request.Builder()
-        .post(null)
-        .url("/admin/logout")
+        .post(RequestBody.create(MediaType.parse("text/plain"), ""))
+        .url(testUrl("/admin/logout"))
         .build();
 
     Response response = client.newCall(request).execute();

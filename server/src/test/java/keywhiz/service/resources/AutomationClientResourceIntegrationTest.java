@@ -35,6 +35,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AutomationClientResourceIntegrationTest {
@@ -50,7 +51,7 @@ public class AutomationClientResourceIntegrationTest {
   @Test public void listClients() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/automation/clients")
+        .url(testUrl("/automation/clients"))
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
         .build();
 
@@ -64,7 +65,7 @@ public class AutomationClientResourceIntegrationTest {
     RequestBody body = RequestBody.create(KeywhizClient.JSON, requestJSON);
     Request post = new Request.Builder()
         .post(body)
-        .url("/automation/clients")
+        .url(testUrl("/automation/clients"))
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
         .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .build();
@@ -78,7 +79,7 @@ public class AutomationClientResourceIntegrationTest {
     String json = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, json))
-        .url("/automation/clients")
+        .url(testUrl("/automation/clients"))
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
         .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .build();
@@ -91,7 +92,7 @@ public class AutomationClientResourceIntegrationTest {
     String json = mapper.writeValueAsString(new CreateClientRequest("ShortLived"));
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, json))
-        .url("/automation/clients")
+        .url(testUrl("/automation/clients"))
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
         .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .build();
@@ -101,14 +102,14 @@ public class AutomationClientResourceIntegrationTest {
     long clientId = mapper.readValue(response.body().string(), ClientDetailResponse.class).id;
     Request delete = new Request.Builder()
         .delete()
-        .url("/automation/clients/" + clientId)
+        .url(testUrl("/automation/clients/" + clientId))
         .build();
     response = mutualSslClient.newCall(delete).execute();
     assertThat(response.code()).isEqualTo(200);
 
     Request lookup = new Request.Builder()
         .get()
-        .url("/automation/clients/" + clientId)
+        .url(testUrl("/automation/clients/" + clientId))
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
         .build();
     response = mutualSslClient.newCall(lookup).execute();

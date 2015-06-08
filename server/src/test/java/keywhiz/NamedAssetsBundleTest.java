@@ -24,6 +24,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class NamedAssetsBundleTest {
@@ -37,7 +38,7 @@ public class NamedAssetsBundleTest {
 
   @Test public void faviconAccessible() throws Exception {
     Request request = new Request.Builder()
-          .url("/favicon.ico")
+          .url(testUrl("/favicon.ico"))
           .get()
           .build();
 
@@ -47,7 +48,7 @@ public class NamedAssetsBundleTest {
 
   @Test public void robotsAccessible() throws Exception {
     Request request = new Request.Builder()
-        .url("/robots.txt")
+        .url(testUrl("/robots.txt"))
         .get()
         .build();
 
@@ -57,7 +58,7 @@ public class NamedAssetsBundleTest {
 
   @Test public void crossdomainAccessible() throws Exception {
     Request request = new Request.Builder()
-        .url("/crossdomain.xml")
+        .url(testUrl("/crossdomain.xml"))
         .get()
         .build();
 

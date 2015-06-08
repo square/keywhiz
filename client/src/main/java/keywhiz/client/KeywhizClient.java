@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.squareup.okhttp.Call;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -41,6 +42,7 @@ import keywhiz.api.model.SanitizedSecret;
 import org.apache.http.HttpStatus;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 /**
  * Client for interacting with the Keywhiz Server.
@@ -48,56 +50,59 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Facilitates the manipulation of Clients, Groups, Secrets and the connections between them.
  */
 public class KeywhizClient {
-  private final ObjectMapper mapper;
-  private final OkHttpClient client;
-  public static final MediaType JSON
-      = MediaType.parse("application/json");
+  public static final MediaType JSON = MediaType.parse("application/json");
 
   public static class MalformedRequestException extends IOException {
+
     @Override public String getMessage() {
       return "Malformed request syntax from client (400)";
     }
   }
-
   public static class UnauthorizedException extends IOException {
+
     @Override public String getMessage() {
       return "Not allowed to login, password may be incorrect (401)";
     }
   }
-
   public static class ForbiddenException extends IOException {
+
     @Override public String getMessage() {
       return "Resource forbidden (403)";
     }
   }
-
   public static class NotFoundException extends IOException {
+
     @Override public String getMessage() {
       return "Resource not found (404)";
     }
   }
-
   public static class UnsupportedMediaTypeException extends IOException {
+
     @Override public String getMessage() {
       return "Resource media type is incorrect or incompatible (415)";
     }
   }
-
   public static class ConflictException extends IOException {
+
     @Override public String getMessage() {
       return "Conflicting resource (409)";
     }
   }
-
   public static class ValidationException extends IOException {
+
     @Override public String getMessage() {
       return "Malformed request semantics from client (422)";
     }
   }
 
-  public KeywhizClient(ObjectMapper mapper, OkHttpClient client) {
+  private final ObjectMapper mapper;
+  private final OkHttpClient client;
+  private final HttpUrl baseUrl;
+
+  public KeywhizClient(ObjectMapper mapper, OkHttpClient client, HttpUrl baseUrl) {
     this.mapper = checkNotNull(mapper);
     this.client = checkNotNull(client);
+    this.baseUrl = checkNotNull(baseUrl);
   }
 
   /**
@@ -109,30 +114,30 @@ public class KeywhizClient {
    * @throws IOException if a network IO error occurs
    */
   public void login(String username, char[] password) throws IOException {
-    httpPost("/admin/login", LoginRequest.from(username, password));
+    httpPost(baseUrl.resolve("/admin/login"), LoginRequest.from(username, password));
   }
 
   public List<Group> allGroups() throws IOException {
-    String response = httpGet("/admin/groups/");
+    String response = httpGet(baseUrl.resolve("/admin/groups/"));
     return mapper.readValue(response, new TypeReference<List<Group>>() {});
   }
 
   public GroupDetailResponse createGroup(String name, String description) throws IOException {
-    String response = httpPost("/admin/groups", new CreateGroupRequest(name, description));
+    String response = httpPost(baseUrl.resolve("/admin/groups"), new CreateGroupRequest(name, description));
     return mapper.readValue(response, GroupDetailResponse.class);
   }
 
   public GroupDetailResponse groupDetailsForId(int groupId) throws IOException {
-    String response = httpGet(String.format("/admin/groups/%d", groupId));
+    String response = httpGet(baseUrl.resolve(format("/admin/groups/%d", groupId)));
     return mapper.readValue(response, GroupDetailResponse.class);
   }
 
   public void deleteGroupWithId(int groupId) throws IOException {
-    httpDelete("/admin/groups/" + Integer.toString(groupId));
+    httpDelete(baseUrl.resolve(format("/admin/groups/%d", groupId)));
   }
 
   public List<SanitizedSecret> allSecrets() throws IOException {
-    String response = httpGet("/admin/secrets");
+    String response = httpGet(baseUrl.resolve("/admin/secrets"));
     return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
   }
 
@@ -140,88 +145,89 @@ public class KeywhizClient {
       ImmutableMap<String, String> metadata) throws IOException {
     CreateSecretRequest request = new CreateSecretRequest(name, description, content,
         withVersion, metadata);
-    String response = httpPost("/admin/secrets", request);
+    String response = httpPost(baseUrl.resolve("/admin/secrets"), request);
     return mapper.readValue(response, SecretDetailResponse.class);
   }
 
   public SecretDetailResponse secretDetailsForId(int secretId) throws IOException {
-    String response = httpGet(String.format("/admin/secrets/%d", secretId));
+    String response = httpGet(baseUrl.resolve(format("/admin/secrets/%d", secretId)));
     return mapper.readValue(response, SecretDetailResponse.class);
   }
 
   public void deleteSecretWithId(int secretId) throws IOException {
-    httpDelete(String.format("/admin/secrets/%d", secretId));
+    httpDelete(baseUrl.resolve(format("/admin/secrets/%d", secretId)));
   }
 
   public <T> List<SanitizedSecret> generateSecrets(String generatorName, T params) throws IOException {
-    String response = httpPost(String.format("/admin/secrets/generators/%s", generatorName),
+    String response = httpPost(baseUrl.resolve(format("/admin/secrets/generators/%s", generatorName)),
         params);
     return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
   }
 
   public <T> List<SanitizedSecret> batchGenerateSecrets(String generatorName, List<T> params) throws IOException {
-    String response = httpPost(String.format("/admin/secrets/generators/%s/batch", generatorName),
+    String response = httpPost(baseUrl.resolve(format("/admin/secrets/generators/%s/batch", generatorName)),
         params);
     return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
   }
 
   public List<Client> allClients() throws IOException {
-    String httpResponse = httpGet("/admin/clients/");
+    String httpResponse = httpGet(baseUrl.resolve("/admin/clients/"));
     return mapper.readValue(httpResponse, new TypeReference<List<Client>>() {});
   }
 
   public ClientDetailResponse createClient(String name) throws IOException {
-    String response = httpPost("/admin/clients", new CreateClientRequest(name));
+    String response = httpPost(baseUrl.resolve("/admin/clients"), new CreateClientRequest(name));
     return mapper.readValue(response, ClientDetailResponse.class);
   }
 
   public ClientDetailResponse clientDetailsForId(int clientId) throws IOException {
-    String response = httpGet(String.format("/admin/clients/%d", clientId));
+    String response = httpGet(baseUrl.resolve(format("/admin/clients/%d", clientId)));
     return mapper.readValue(response, ClientDetailResponse.class);
   }
 
   public void deleteClientWithId(int clientId) throws IOException {
-    httpDelete(String.format("/admin/clients/%d", clientId));
+    httpDelete(baseUrl.resolve(format("/admin/clients/%d", clientId)));
   }
 
   public void enrollClientInGroupByIds(int clientId, int groupId) throws IOException {
-    httpPut(String.format("/admin/memberships/clients/%d/groups/%d", clientId, groupId));
+    httpPut(baseUrl.resolve(format("/admin/memberships/clients/%d/groups/%d", clientId, groupId)));
   }
 
   public void evictClientFromGroupByIds(int clientId, int groupId) throws IOException {
-    httpDelete(String.format("/admin/memberships/clients/%d/groups/%d", clientId, groupId));
+    httpDelete(baseUrl.resolve(format("/admin/memberships/clients/%d/groups/%d", clientId, groupId)));
   }
 
   public void grantSecretToGroupByIds(int secretId, int groupId) throws IOException {
-    httpPut(String.format("/admin/memberships/secrets/%d/groups/%d", secretId, groupId));
+    httpPut(baseUrl.resolve(format("/admin/memberships/secrets/%d/groups/%d", secretId, groupId)));
   }
 
   public void revokeSecretFromGroupByIds(int secretId, int groupId) throws IOException {
-    httpDelete(String.format("/admin/memberships/secrets/%d/groups/%d", secretId, groupId));
+    httpDelete(baseUrl.resolve(format("/admin/memberships/secrets/%d/groups/%d", secretId, groupId)));
   }
 
   public Client getClientByName(String name) throws IOException {
-    String response = httpGet(String.format("/admin/clients?name=%s", name));
+    String response = httpGet(baseUrl.resolve(format("/admin/clients?name=%s", name)));
     return mapper.readValue(response, Client.class);
   }
 
-  public  Group getGroupByName(String name) throws IOException {
-    String response = httpGet(String.format("/admin/groups?name=%s", name));
+  public Group getGroupByName(String name) throws IOException {
+    String response = httpGet(baseUrl.resolve(format("/admin/groups?name=%s", name)));
     return mapper.readValue(response, Group.class);
   }
 
   public SanitizedSecret getSanitizedSecretByNameAndVersion(String name, String version) throws IOException {
-    String response = httpGet(String.format("/admin/secrets?name=%s&version=%s", name, version));
+    String response = httpGet(baseUrl.resolve(format("/admin/secrets?name=%s&version=%s", name, version)));
     return mapper.readValue(response, SanitizedSecret.class);
   }
 
   public List<String> getVersionsForSecretName(String name) throws IOException {
-    String response = httpGet(String.format("/admin/secrets/versions?name=%s", name));
+    String response = httpGet(baseUrl.resolve(format("/admin/secrets/versions?name=%s", name)));
     return mapper.readValue(response, new TypeReference<List<String>>() {});
   }
 
   public boolean isLoggedIn() throws IOException{
-    Call call = client.newCall(new Request.Builder().get().url("/admin/me").build());
+    HttpUrl url = baseUrl.resolve("/admin/me");
+    Call call = client.newCall(new Request.Builder().get().url(url).build());
     return call.execute().code() != HttpStatus.SC_UNAUTHORIZED;
   }
 
@@ -251,9 +257,9 @@ public class KeywhizClient {
     }
   }
 
-  private String httpGet(String path) throws IOException {
+  private String httpGet(HttpUrl url) throws IOException {
     Request request = new Request.Builder()
-        .url(path)
+        .url(url)
         .get()
         .build();
 
@@ -262,10 +268,10 @@ public class KeywhizClient {
     return response.body().string();
   }
 
-  private String httpPost(String path, Object content) throws IOException {
+  private String httpPost(HttpUrl url, Object content) throws IOException {
     RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(content));
     Request request = new Request.Builder()
-        .url(path)
+        .url(url)
         .post(body)
         .addHeader(HttpHeaders.CONTENT_TYPE, JSON.toString())
         .build();
@@ -275,10 +281,10 @@ public class KeywhizClient {
     return response.body().string();
   }
 
-  private String httpPut(String path) throws IOException {
+  private String httpPut(HttpUrl url) throws IOException {
     Request request = new Request.Builder()
-        .url(path)
-        .put(null)
+        .url(url)
+        .put(RequestBody.create(MediaType.parse("text/plain"), ""))
         .build();
 
     Response response = client.newCall(request).execute();
@@ -286,9 +292,9 @@ public class KeywhizClient {
     return response.body().string();
   }
 
-  private String httpDelete(String path) throws IOException {
+  private String httpDelete(HttpUrl url) throws IOException {
     Request request = new Request.Builder()
-        .url(path)
+        .url(url)
         .delete()
         .build();
 

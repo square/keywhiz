@@ -31,6 +31,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SecretDeliveryResourceIntegrationTest {
@@ -50,7 +51,7 @@ public class SecretDeliveryResourceIntegrationTest {
   @Test public void returnsSecretWhenAllowed() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/secret/General_Password")
+        .url(testUrl("/secret/General_Password"))
         .build();
 
     Response response = client.newCall(get).execute();
@@ -62,7 +63,7 @@ public class SecretDeliveryResourceIntegrationTest {
   @Test public void returnsNotFoundWhenSecretUnspecified() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/secret/")
+        .url(testUrl("/secret/"))
         .build();
 
     Response response = client.newCall(get).execute();
@@ -72,7 +73,7 @@ public class SecretDeliveryResourceIntegrationTest {
   @Test public void returnsNotFoundWhenSecretDoesNotExist() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/secret/nonexistent")
+        .url(testUrl("/secret/nonexistent"))
         .build();
 
     Response response = client.newCall(get).execute();
@@ -82,7 +83,7 @@ public class SecretDeliveryResourceIntegrationTest {
   @Test public void returnsUnauthorizedWhenDenied() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/secret/Hacking_Password")
+        .url(testUrl("/secret/Hacking_Password"))
         .build();
 
     Response response = client.newCall(get).execute();

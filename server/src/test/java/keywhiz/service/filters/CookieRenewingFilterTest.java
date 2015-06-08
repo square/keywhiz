@@ -34,9 +34,9 @@ import org.eclipse.jetty.server.CookieCutter;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import static com.google.common.net.HttpHeaders.SET_COOKIE;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,7 +46,7 @@ import static org.mockito.Mockito.when;
 public class CookieRenewingFilterTest {
   private static final String SESSION_COOKIE = "session";
 
-  @Rule public TestRule mockito = new MockitoJUnitRule(this);
+  @Rule public MockitoRule mockito = MockitoJUnit.rule();
 
   @Mock CookieAuthenticator authenticator;
   @Mock SessionLoginResource sessionLoginResource;

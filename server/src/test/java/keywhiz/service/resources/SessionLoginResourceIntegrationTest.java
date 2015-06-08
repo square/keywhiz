@@ -17,8 +17,10 @@
 package keywhiz.service.resources;
 
 import com.google.common.collect.Lists;
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -32,6 +34,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 
 import static keywhiz.AuthHelper.buildLoginPost;
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SessionLoginResourceIntegrationTest {
@@ -46,8 +49,8 @@ public class SessionLoginResourceIntegrationTest {
   @Test
   public void respondsToLogin() throws Exception {
     Request post = new Request.Builder()
-        .post(null)
-        .url("/admin/login")
+        .post(RequestBody.create(MediaType.parse("text/plain"), ""))
+        .url(testUrl("/admin/login"))
         .build();
 
     Response response = client.newCall(post).execute();

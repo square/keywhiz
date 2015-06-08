@@ -38,6 +38,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AutomationGroupResourceIntegrationTest {
@@ -53,7 +54,7 @@ public class AutomationGroupResourceIntegrationTest {
   @Test public void findGroup() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/automation/groups?name=Web")
+        .url(testUrl("/automation/groups?name=Web"))
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
         .build();
 
@@ -67,7 +68,7 @@ public class AutomationGroupResourceIntegrationTest {
   @Test public void findAllGroups() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/automation/groups")
+        .url(testUrl("/automation/groups"))
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
         .build();
 
@@ -82,7 +83,7 @@ public class AutomationGroupResourceIntegrationTest {
   @Test public void findGroupNotFound() throws Exception {
     Request get = new Request.Builder()
         .get()
-        .url("/automation/groups?name=non-existent-group")
+        .url(testUrl("/automation/groups?name=non-existent-group"))
         .build();
 
     Response response = mutualSslClient.newCall(get).execute();
@@ -94,7 +95,7 @@ public class AutomationGroupResourceIntegrationTest {
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
-        .url("/automation/groups")
+        .url(testUrl("/automation/groups"))
         .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
         .build();
@@ -108,7 +109,7 @@ public class AutomationGroupResourceIntegrationTest {
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
-        .url("/automation/groups")
+        .url(testUrl("/automation/groups"))
         .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
         .build();
@@ -122,7 +123,7 @@ public class AutomationGroupResourceIntegrationTest {
         new CreateGroupRequest("short-lived", "group-description"));
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
-        .url("/automation/groups")
+        .url(testUrl("/automation/groups"))
         .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
         .build();
@@ -132,14 +133,14 @@ public class AutomationGroupResourceIntegrationTest {
 
     Request delete = new Request.Builder()
         .delete()
-        .url("/automation/groups/" + groupId)
+        .url(testUrl("/automation/groups/" + groupId))
         .build();
     response = mutualSslClient.newCall(delete).execute();
     assertThat(response.code()).isEqualTo(200);
 
     Request lookup = new Request.Builder()
         .get()
-        .url("/automation/groups/" + groupId)
+        .url(testUrl("/automation/groups/" + groupId))
         .addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
         .build();
     response = mutualSslClient.newCall(lookup).execute();
