@@ -180,7 +180,7 @@ public class AclDAO {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
 
       for (SecretSeries series : getSecretSeriesFor(configuration, group)) {
-        for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
+        for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.id())) {
           SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
           set.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
         }
@@ -245,7 +245,7 @@ public class AclDAO {
     ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
 
     for (SecretSeries series : getSecretSeriesFor(dslContext.configuration(), client)) {
-      for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.getId())) {
+      for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.id())) {
         SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
         sanitizedSet.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
       }
@@ -290,7 +290,7 @@ public class AclDAO {
     }
 
     Optional<SecretContent> secretContent =
-        secretContentDAO.getSecretContentBySecretIdAndVersion(secretSeries.get().getId(), version);
+        secretContentDAO.getSecretContentBySecretIdAndVersion(secretSeries.get().id(), version);
     if (!secretContent.isPresent()) {
       return Optional.empty();
     }

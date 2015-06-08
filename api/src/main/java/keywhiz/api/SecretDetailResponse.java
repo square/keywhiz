@@ -92,7 +92,7 @@ public class SecretDetailResponse {
       ImmutableList<Client> clients) {
     return new SecretDetailResponse(secret.getId(),
         secret.getName(),
-        secret.getDescription().orElse(""),
+        secret.getDescription(),
         secret.getCreatedAt(),
         secret.getCreatedBy(),
         secret.getUpdatedAt(),

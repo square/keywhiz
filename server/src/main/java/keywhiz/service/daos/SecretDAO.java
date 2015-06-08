@@ -67,7 +67,7 @@ public class SecretDAO {
       Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
       long secretId;
       if (secretSeries.isPresent()) {
-        secretId = secretSeries.get().getId();
+        secretId = secretSeries.get().id();
       } else {
         secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type,
             generationOptions);
@@ -146,7 +146,7 @@ public class SecretDAO {
         return ImmutableList.of();
       }
 
-      return secretContentDAO.getVersionFromSecretId(series.get().getId());
+      return secretContentDAO.getVersionFromSecretId(series.get().id());
     });
   }
 
@@ -179,7 +179,7 @@ public class SecretDAO {
     }
 
     Optional<SecretContent> secretContent =
-        secretContentDAO.getSecretContentBySecretIdAndVersion(secretSeries.get().getId(), version);
+        secretContentDAO.getSecretContentBySecretIdAndVersion(secretSeries.get().id(), version);
     if (!secretContent.isPresent()) {
       return Optional.empty();
     }
@@ -196,7 +196,7 @@ public class SecretDAO {
       ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
 
       secretSeriesDAO.getSecretSeries()
-          .forEach((series) -> secretContentDAO.getSecretContentsBySecretId(series.getId())
+          .forEach((series) -> secretContentDAO.getSecretContentsBySecretId(series.id())
               .forEach(
                   (content) -> secretsBuilder.add(SecretSeriesAndContent.of(series, content))));
 
@@ -237,10 +237,9 @@ public class SecretDAO {
         return;
       }
 
-      secretContentDAO.deleteSecretContentBySecretIdAndVersion(secretSeries.get().getId(),
-          version);
+      long seriesId = secretSeries.get().id();
+      secretContentDAO.deleteSecretContentBySecretIdAndVersion(seriesId, version);
 
-      long seriesId = secretSeries.get().getId();
       if (secretContentDAO.getSecretContentsBySecretId(seriesId).isEmpty()) {
         secretSeriesDAO.deleteSecretSeriesById(seriesId);
       }

@@ -47,18 +47,18 @@ public class SecretTransformer {
     final String secretContent = cryptographer.decrypt(content.encryptedContent());
 
     return new Secret(
-        series.getId(),
-        series.getName(),
+        series.id(),
+        series.name(),
         content.version().orElse(""),
-        series.getDescription().orElse(null),
+        series.description(),
         secretContent,
         content.createdAt(),
         content.createdBy(),
         content.updatedAt(),
         content.updatedBy(),
         content.metadata(),
-        series.getType().orElse(null),
-        series.getGenerationOptions());
+        series.type().orElse(null),
+        series.generationOptions());
   }
 
   /**

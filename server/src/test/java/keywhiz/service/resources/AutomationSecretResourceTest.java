@@ -103,7 +103,7 @@ public class AutomationSecretResourceTest {
 
   @Test
   public void deleteSecret() throws Exception {
-    SecretSeries secretSeries = new SecretSeries(0, /* Set by DB */
+    SecretSeries secretSeries = SecretSeries.of(0, /* Set by DB */
         "mySecret",
         null,
         NOW,
@@ -113,11 +113,11 @@ public class AutomationSecretResourceTest {
         null,
         null);
 
-    when(secretSeriesDAO.getSecretSeriesByName(secretSeries.getName()))
+    when(secretSeriesDAO.getSecretSeriesByName(secretSeries.name()))
         .thenReturn(Optional.of(secretSeries));
 
     resource.deleteSecretSeries(automation, "mySecret");
-    verify(secretSeriesDAO).deleteSecretSeriesByName(secretSeries.getName());
+    verify(secretSeriesDAO).deleteSecretSeriesByName(secretSeries.name());
   }
 
   @Test(expected = ConflictException.class)

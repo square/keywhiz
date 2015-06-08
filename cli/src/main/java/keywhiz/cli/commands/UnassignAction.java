@@ -90,19 +90,17 @@ public class UnassignAction implements Runnable {
 
       case "secret":
         try {
+          int groupId = Math.toIntExact(group.getId());
           String[] parts = splitNameAndVersion(unassignActionConfig.name);
           SanitizedSecret sanitizedSecret =
               keywhizClient.getSanitizedSecretByNameAndVersion(parts[0], parts[1]);
-
-          if (!keywhizClient.groupDetailsForId(Math.toIntExact(group.getId()))
-              .getSecrets()
-              .contains(sanitizedSecret)) {
+          if (!keywhizClient.groupDetailsForId(groupId).getSecrets().contains(sanitizedSecret)) {
             throw new AssertionError(
                 format("Secret '%s' not assigned to group '%s'", unassignActionConfig.name, group));
           }
           logger.info("Revoke group '{}' access to secret '{}'.", group.getName(),
               SanitizedSecret.displayName(sanitizedSecret));
-          keywhizClient.revokeSecretFromGroupByIds(Math.toIntExact(sanitizedSecret.id()), Math.toIntExact(group.getId()));
+          keywhizClient.revokeSecretFromGroupByIds(Math.toIntExact(sanitizedSecret.id()), groupId);
         } catch (NotFoundException e) {
           throw new AssertionError("Secret or group doesn't exist.");
         } catch (ParseException e) {

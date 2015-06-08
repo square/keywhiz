@@ -17,7 +17,6 @@ package keywhiz.api.model;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.text.ParseException;
 import java.time.OffsetDateTime;
@@ -27,6 +26,7 @@ import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Strings.nullToEmpty;
 import static java.util.regex.Pattern.quote;
 
 /**
@@ -79,13 +79,13 @@ public class Secret {
     checkArgument(!name.isEmpty());
     this.id = id;
     this.name = name;
-    this.version = Strings.nullToEmpty(version);
-    this.description = description;
+    this.version = nullToEmpty(version);
+    this.description = nullToEmpty(description);
     this.secret = checkNotNull(secret); /* Expected empty when sanitized. */
     this.createdAt = checkNotNull(createdAt);
-    this.createdBy = Strings.nullToEmpty(createdBy);
+    this.createdBy = nullToEmpty(createdBy);
     this.updatedAt = checkNotNull(updatedAt);
-    this.updatedBy = Strings.nullToEmpty(updatedBy);
+    this.updatedBy = nullToEmpty(updatedBy);
     this.metadata = (metadata == null) ?
         ImmutableMap.of() : ImmutableMap.copyOf(metadata);
     this.type = type;
@@ -114,8 +114,8 @@ public class Secret {
     return version;
   }
 
-  public Optional<String> getDescription() {
-    return Optional.ofNullable(description);
+  public String getDescription() {
+    return description;
   }
 
   public String getSecret() {

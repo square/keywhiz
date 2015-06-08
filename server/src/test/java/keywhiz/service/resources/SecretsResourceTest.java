@@ -97,7 +97,7 @@ public class SecretsResourceTest {
     when(secretBuilder.build()).thenReturn(secret);
 
     CreateSecretRequest req = new CreateSecretRequest(secret.getName(),
-        secret.getDescription().get(), secret.getSecret(), true, emptyMap);
+        secret.getDescription(), secret.getSecret(), true, emptyMap);
     Response response = resource.createSecret(user, req);
 
     assertThat(response.getStatus()).isEqualTo(201);
@@ -134,7 +134,7 @@ public class SecretsResourceTest {
 
     assertThat(response.id).isEqualTo(secret.getId());
     assertThat(response.name).isEqualTo(secret.getName());
-    assertThat(response.description).isEqualTo(secret.getDescription().get());
+    assertThat(response.description).isEqualTo(secret.getDescription());
     assertThat(response.isVersioned).isTrue();
     assertThat(response.createdAt).isEqualTo(secret.getCreatedAt());
     assertThat(response.createdBy).isEqualTo(secret.getCreatedBy());
