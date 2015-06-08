@@ -15,6 +15,7 @@
  */
 package keywhiz.service.resources;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
@@ -41,8 +42,10 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.daos.AclDAO;
+import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretSeriesDAO;
+import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
@@ -61,15 +64,21 @@ import static java.lang.String.format;
 public class AutomationSecretResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationSecretResource.class);
   private final SecretController secretController;
-  private final AclDAO aclDAO;
   private final SecretSeriesDAO secretSeriesDAO;
+  private final AclDAO aclDAO;
 
-  @Inject
-  public AutomationSecretResource(SecretController secretController, AclDAO aclDAO,
-      SecretSeriesDAO secretSeriesDAO) {
+  @Inject public AutomationSecretResource(SecretController secretController,
+      SecretSeriesDAOFactory secretSeriesDAOFactory, AclDAOFactory aclDAOFactory) {
     this.secretController = secretController;
-    this.aclDAO = aclDAO;
+    this.secretSeriesDAO = secretSeriesDAOFactory.readwrite();
+    this.aclDAO = aclDAOFactory.readwrite();
+  }
+
+  @VisibleForTesting AutomationSecretResource(SecretController secretController,
+      SecretSeriesDAO secretSeriesDAO, AclDAO aclDAO) {
+    this.secretController = secretController;
     this.secretSeriesDAO = secretSeriesDAO;
+    this.aclDAO = aclDAO;
   }
 
   /**

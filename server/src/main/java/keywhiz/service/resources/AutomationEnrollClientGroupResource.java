@@ -28,6 +28,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.service.daos.AclDAO;
+import keywhiz.service.daos.AclDAO.AclDAOFactory;
 
 /**
  * @parentEndpointName enroll-clients-automation
@@ -39,9 +40,8 @@ import keywhiz.service.daos.AclDAO;
 public class AutomationEnrollClientGroupResource {
   private final AclDAO aclDAO;
 
-  @Inject
-  public AutomationEnrollClientGroupResource(AclDAO aclDAO) {
-    this.aclDAO = aclDAO;
+  @Inject public AutomationEnrollClientGroupResource(AclDAOFactory aclDAOFactory) {
+    this.aclDAO = aclDAOFactory.readwrite();
   }
 
   /**

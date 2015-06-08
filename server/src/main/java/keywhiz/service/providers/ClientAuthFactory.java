@@ -16,6 +16,7 @@
 
 package keywhiz.service.providers;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.java8.auth.Authenticator;
@@ -25,6 +26,7 @@ import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import keywhiz.api.model.Client;
 import keywhiz.service.daos.ClientDAO;
+import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -47,7 +49,11 @@ public class ClientAuthFactory {
 
   private final Authenticator<String, Client> authenticator;
 
-  @Inject public ClientAuthFactory(ClientDAO clientDAO) {
+  @Inject public ClientAuthFactory(ClientDAOFactory clientDAOFactory) {
+    this.authenticator = new MyAuthenticator(clientDAOFactory.readwrite());
+  }
+
+  @VisibleForTesting ClientAuthFactory(ClientDAO clientDAO) {
     this.authenticator = new MyAuthenticator(clientDAO);
   }
 

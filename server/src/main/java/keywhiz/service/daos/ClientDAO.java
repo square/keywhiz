@@ -24,16 +24,21 @@ import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.api.model.Client;
 import keywhiz.jooq.tables.records.ClientsRecord;
+import keywhiz.service.config.Readonly;
+import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 
 public class ClientDAO {
   private final DSLContext dslContext;
+  private final ClientMapper clientMapper;
 
-  @Inject
-  public ClientDAO(DSLContext dslContext) {
+  private ClientDAO(DSLContext dslContext, ClientMapper clientMapper) {
     this.dslContext = dslContext;
+    this.clientMapper = clientMapper;
   }
 
   public long createClient(String name, String user, Optional<String> description) {
@@ -63,21 +68,45 @@ public class ClientDAO {
 
   public Optional<Client> getClient(String name) {
     ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.NAME.eq(name));
-    return Optional.ofNullable(r).map(
-        rec -> new ClientMapper().map(rec));
+    return Optional.ofNullable(r).map(clientMapper::map);
   }
 
   public Optional<Client> getClientById(long id) {
     ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.ID.eq(Math.toIntExact(id)));
-    return Optional.ofNullable(r).map(
-        rec -> new ClientMapper().map(rec));
+    return Optional.ofNullable(r).map(clientMapper::map);
   }
 
   public ImmutableSet<Client> getClients() {
     List<Client> r = dslContext
         .selectFrom(CLIENTS)
         .fetch()
-        .map(new ClientMapper());
+        .map(clientMapper);
     return ImmutableSet.copyOf(r);
+  }
+
+  public static class ClientDAOFactory implements DAOFactory<ClientDAO> {
+    private final DSLContext jooq;
+    private final DSLContext readonlyJooq;
+    private final ClientMapper clientMapper;
+
+    @Inject public ClientDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
+        ClientMapper clientMapper) {
+      this.jooq = jooq;
+      this.readonlyJooq = readonlyJooq;
+      this.clientMapper = clientMapper;
+    }
+
+    @Override public ClientDAO readwrite() {
+      return new ClientDAO(jooq, clientMapper);
+    }
+
+    @Override public ClientDAO readonly() {
+      return new ClientDAO(readonlyJooq, clientMapper);
+    }
+
+    @Override public ClientDAO using(Configuration configuration) {
+      DSLContext dslContext = DSL.using(checkNotNull(configuration));
+      return new ClientDAO(dslContext, clientMapper);
+    }
   }
 }

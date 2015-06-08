@@ -63,7 +63,7 @@ public class AutomationSecretResourceTest {
 
   @Before
   public void setUp() {
-    resource = new AutomationSecretResource(secretController, aclDAO, secretSeriesDAO);
+    resource = new AutomationSecretResource(secretController, secretSeriesDAO, aclDAO);
 
     when(secretController.builder(anyString(), anyString(), anyString())).thenReturn(secretBuilder);
   }

@@ -12,29 +12,33 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package keywhiz.service.daos;
 
-import java.util.Optional;
-import org.jooq.DSLContext;
+import org.jooq.Configuration;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static keywhiz.jooq.tables.Users.USERS;
+/**
+ * DAO factory implement this interface to provide instances using different underlying database
+ * connections.
+ *
+ * @param <T> DAO type produced by the factory
+ */
+public interface DAOFactory<T> {
+  /**
+   * Returns DAO using a read/write database connection.
+   */
+  T readwrite();
 
-public class UserDAO {
-  private final DSLContext dslContext;
+  /**
+   * Returns DAO using a read-only database connection.
+   */
+  T readonly();
 
-  public UserDAO(DSLContext dslContext) {
-    this.dslContext = checkNotNull(dslContext);
-  }
-
-  public Optional<String> getHashedPassword(String name) {
-    String r = dslContext
-        .select(USERS.PASSWORD_HASH)
-        .from(USERS)
-        .where(USERS.USERNAME.eq(name))
-        .fetchOne(USERS.PASSWORD_HASH);
-    return Optional.ofNullable(r);
-  }
+  /**
+   * Returns DAO using a supplied jOOQ configuration. Useful for issuing queries on the same
+   * underlying transaction from a different DAO.
+   */
+  T using(Configuration configuration);
 }

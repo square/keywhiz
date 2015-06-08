@@ -28,8 +28,12 @@ import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.api.model.SecretContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
+import keywhiz.service.config.Readonly;
+import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
 /**
@@ -38,11 +42,13 @@ import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 public class SecretContentDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
+  private final SecretContentMapper secretContentMapper;
 
-  @Inject
-  public SecretContentDAO(DSLContext dslContext, ObjectMapper mapper) {
+  private SecretContentDAO(DSLContext dslContext, ObjectMapper mapper,
+      SecretContentMapper secretContentMapper) {
     this.dslContext = dslContext;
     this.mapper = mapper;
+    this.secretContentMapper = secretContentMapper;
   }
 
   public long createSecretContent(long secretId, String encryptedContent, String version,
@@ -75,8 +81,7 @@ public class SecretContentDAO {
   public Optional<SecretContent> getSecretContentById(long id) {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
         SECRETS_CONTENT.ID.eq(Math.toIntExact(id)));
-    return Optional.ofNullable(r).map(
-        rec -> new SecretContentMapper(mapper).map(rec));
+    return Optional.ofNullable(r).map(secretContentMapper::map);
   }
 
   public Optional<SecretContent> getSecretContentBySecretIdAndVersion(long secretId,
@@ -84,8 +89,7 @@ public class SecretContentDAO {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
         SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId))
             .and(SECRETS_CONTENT.VERSION.eq(version)));
-    return Optional.ofNullable(r).map(
-        rec -> new SecretContentMapper(mapper).map(rec));
+    return Optional.ofNullable(r).map(secretContentMapper::map);
   }
 
   public ImmutableList<SecretContent> getSecretContentsBySecretId(long secretId) {
@@ -93,7 +97,7 @@ public class SecretContentDAO {
         .selectFrom(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId)))
         .fetch()
-        .map(new SecretContentMapper(mapper));
+        .map(secretContentMapper);
 
     return ImmutableList.copyOf(r);
   }
@@ -114,5 +118,33 @@ public class SecretContentDAO {
         .fetch(SECRETS_CONTENT.VERSION);
 
     return ImmutableList.copyOf(r);
+  }
+
+  public static class SecretContentDAOFactory implements DAOFactory<SecretContentDAO> {
+    private final DSLContext jooq;
+    private final DSLContext readonlyJooq;
+    private final ObjectMapper objectMapper;
+    private final SecretContentMapper secretContentMapper;
+
+    @Inject public SecretContentDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
+        ObjectMapper objectMapper, SecretContentMapper secretContentMapper) {
+      this.jooq = jooq;
+      this.readonlyJooq = readonlyJooq;
+      this.objectMapper = objectMapper;
+      this.secretContentMapper = secretContentMapper;
+    }
+
+    @Override public SecretContentDAO readwrite() {
+      return new SecretContentDAO(jooq, objectMapper, secretContentMapper);
+    }
+
+    @Override public SecretContentDAO readonly() {
+      return new SecretContentDAO(readonlyJooq, objectMapper, secretContentMapper);
+    }
+
+    @Override public SecretContentDAO using(Configuration configuration) {
+      DSLContext dslContext = DSL.using(checkNotNull(configuration));
+      return new SecretContentDAO(dslContext, objectMapper, secretContentMapper);
+    }
   }
 }

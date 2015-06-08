@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Map;
+import javax.inject.Inject;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import org.jooq.RecordMapper;
@@ -29,7 +30,7 @@ class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSeries> {
       new TypeReference<Map<String, String>>() {};
   private final ObjectMapper mapper;
 
-  SecretSeriesMapper(ObjectMapper mapper) {
+  @Inject SecretSeriesMapper(ObjectMapper mapper) {
     this.mapper = mapper;
   }
 

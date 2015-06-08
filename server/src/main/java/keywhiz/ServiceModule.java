@@ -39,14 +39,9 @@ import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoModule;
 import keywhiz.service.crypto.SecretTransformer;
-import keywhiz.service.daos.AclDAO;
-import keywhiz.service.daos.ClientDAO;
-import keywhiz.service.daos.GroupDAO;
-import keywhiz.service.daos.SecretContentDAO;
 import keywhiz.service.daos.SecretController;
-import keywhiz.service.daos.SecretDAO;
-import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.utility.DSLContexts;
+import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import org.jooq.DSLContext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -130,80 +125,15 @@ public class ServiceModule extends AbstractModule {
     return DSLContexts.databaseAgnostic(dataSource);
   }
 
-  // DAOs
-
-  @Provides @Singleton AclDAO aclDAO(DSLContext jooqContext, ClientDAO clientDAO,
-      GroupDAO groupDAO, SecretContentDAO secretContentDAO,
-      SecretSeriesDAO secretSeriesDAO, ObjectMapper mapper) {
-    return new AclDAO(jooqContext, clientDAO, groupDAO, secretContentDAO, secretSeriesDAO, mapper);
-  }
-
-  @Provides @Singleton
-  @Readonly AclDAO readonlyAclDAO(@Readonly DSLContext jooqContext, @Readonly ClientDAO clientDAO,
-      @Readonly GroupDAO groupDAO, @Readonly SecretContentDAO secretContentDAO,
-      @Readonly SecretSeriesDAO secretSeriesDAO, ObjectMapper mapper) {
-    return new AclDAO(jooqContext, clientDAO, groupDAO, secretContentDAO, secretSeriesDAO, mapper);
-  }
-
-  @Provides @Singleton ClientDAO clientDAO(DSLContext jooqContext) {
-    return new ClientDAO(jooqContext);
-  }
-
-  @Provides @Singleton @Readonly ClientDAO readonlyClientDAO(@Readonly DSLContext jooqContext) {
-    return new ClientDAO(jooqContext);
-  }
-
-  @Provides @Singleton GroupDAO groupDAO(DSLContext jooqContext) {
-    return new GroupDAO(jooqContext);
-  }
-
-  @Provides @Singleton @Readonly GroupDAO readonlyGroupDAO(@Readonly DSLContext jooqContext) {
-    return new GroupDAO(jooqContext);
-  }
-
-  @Provides @Singleton SecretContentDAO secretContentDAO(DSLContext jooqContext,
-      ObjectMapper mapper) {
-    return new SecretContentDAO(jooqContext, mapper);
-  }
-
-  @Provides @Singleton
-  @Readonly SecretContentDAO readonlySecretContentDAO(@Readonly DSLContext jooqContext,
-      ObjectMapper mapper) {
-    return new SecretContentDAO(jooqContext, mapper);
-  }
-
-  @Provides @Singleton SecretSeriesDAO secretSeriesDAO(DSLContext jooqContext,
-      ObjectMapper mapper) {
-    return new SecretSeriesDAO(jooqContext, mapper);
-  }
-
-  @Provides @Singleton
-  @Readonly SecretSeriesDAO readonlySecretSeriesDAO(@Readonly DSLContext jooqContext,
-      ObjectMapper mapper) {
-    return new SecretSeriesDAO(jooqContext, mapper);
-  }
-
-  @Provides @Singleton SecretDAO secretDAO(DSLContext jooqContext,
-      SecretContentDAO secretContentDAO, SecretSeriesDAO secretSeriesDAO) {
-    return new SecretDAO(jooqContext, secretContentDAO, secretSeriesDAO);
-  }
-
-  @Provides @Singleton
-  @Readonly SecretDAO readonlySecretDAO(@Readonly DSLContext jooqContext,
-      @Readonly SecretContentDAO secretContentDAO,
-      @Readonly SecretSeriesDAO secretSeriesDAO) {
-    return new SecretDAO(jooqContext, secretContentDAO, secretSeriesDAO);
-  }
-
   @Provides @Singleton SecretController secretController(SecretTransformer transformer,
-      ContentCryptographer cryptographer, SecretDAO secretDAO) {
-    return new SecretController(transformer, cryptographer, secretDAO);
+      ContentCryptographer cryptographer, SecretDAOFactory secretDAOFactory) {
+    return new SecretController(transformer, cryptographer, secretDAOFactory.readwrite());
   }
 
   @Provides @Singleton
   @Readonly SecretController readonlySecretController(SecretTransformer transformer,
-      ContentCryptographer cryptographer, @Readonly SecretDAO secretDAO) {
-    return new SecretController(transformer, cryptographer, secretDAO);
+      ContentCryptographer cryptographer, SecretDAOFactory secretDAOFactory) {
+    return new SecretController(transformer, cryptographer, secretDAOFactory.readonly());
   }
 
   @Provides @Singleton

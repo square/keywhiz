@@ -200,6 +200,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-testlib</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>com.squareup.keywhiz</groupId>
       <artifactId>keywhiz-client</artifactId>
       <version>${project.version}</version>

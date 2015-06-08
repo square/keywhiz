@@ -19,11 +19,18 @@ package keywhiz.service.daos;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.Guice;
+import com.google.inject.testing.fieldbinder.Bind;
+import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import javax.inject.Inject;
 import keywhiz.TestDBRule;
 import keywhiz.api.model.SecretContent;
+import keywhiz.service.config.Readonly;
+import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
+import org.jooq.DSLContext;
 import org.jooq.tools.json.JSONObject;
 import org.junit.Before;
 import org.junit.Rule;
@@ -37,6 +44,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SecretContentDAOTest {
   @Rule public final TestDBRule testDBRule = new TestDBRule();
 
+  @Bind @SuppressWarnings("unused") ObjectMapper objectMapper = new ObjectMapper();
+  @Bind DSLContext jooqContext;
+  @Bind @Readonly DSLContext jooqReadonlyContext;
+
+  @Inject SecretContentDAOFactory secretContentDAOFactory;
+
   final static OffsetDateTime date = OffsetDateTime.now(ZoneId.of("UTC"));
   ImmutableMap<String, String> metadata = ImmutableMap.of("foo", "bar");
 
@@ -47,8 +60,10 @@ public class SecretContentDAOTest {
 
   @Before
   public void setUp() throws Exception {
-    ObjectMapper objectMapper = new ObjectMapper();
-    secretContentDAO = new SecretContentDAO(testDBRule.jooqContext(), objectMapper);
+    jooqContext = jooqReadonlyContext = testDBRule.jooqContext();
+    Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
+
+    secretContentDAO = secretContentDAOFactory.readwrite();
 
     testDBRule.jooqContext().delete(SECRETS).execute();
     testDBRule.jooqContext().insertInto(SECRETS, SECRETS.ID, SECRETS.NAME)
@@ -79,9 +94,7 @@ public class SecretContentDAOTest {
   }
 
   @Test public void getSecretContentById() {
-    SecretContent actualSecretContent = secretContentDAO.getSecretContentById(secretContent1.id())
-        .orElseThrow(RuntimeException::new);
-    assertThat(actualSecretContent).isEqualTo(secretContent1);
+    assertThat(secretContentDAO.getSecretContentById(secretContent1.id())).contains(secretContent1);
   }
 
   @Test public void getSecretContentsBySecretId() {
@@ -114,6 +127,6 @@ public class SecretContentDAOTest {
   }
 
   private int tableSize() {
-    return testDBRule.jooqContext().fetchCount(SECRETS_CONTENT);
+    return jooqContext.fetchCount(SECRETS_CONTENT);
   }
 }

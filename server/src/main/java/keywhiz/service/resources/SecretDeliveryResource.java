@@ -16,6 +16,7 @@
 
 package keywhiz.service.resources;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.dropwizard.auth.Auth;
 import java.text.ParseException;
 import java.util.Optional;
@@ -35,7 +36,9 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.AclDAO;
+import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.ClientDAO;
+import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.daos.SecretController;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
@@ -58,9 +61,15 @@ public class SecretDeliveryResource {
   private final AclDAO aclDAO;
   private final ClientDAO clientDAO;
 
-  @Inject
-  public SecretDeliveryResource(@Readonly SecretController secretController,
-      @Readonly AclDAO aclDAO, @Readonly ClientDAO clientDAO) {
+  @Inject public SecretDeliveryResource(@Readonly SecretController secretController,
+      AclDAOFactory aclDAOFactory, ClientDAOFactory clientDAOFactory) {
+    this.secretController = secretController;
+    this.aclDAO = aclDAOFactory.readonly();
+    this.clientDAO = clientDAOFactory.readonly();
+  }
+
+  @VisibleForTesting SecretDeliveryResource(SecretController secretController, AclDAO aclDAO,
+      ClientDAO clientDAO) {
     this.secretController = secretController;
     this.aclDAO = aclDAO;
     this.clientDAO = clientDAO;
