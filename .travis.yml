@@ -1,5 +1,8 @@
 language: java
 
+# Experimental group for MySQL 5.6
+group: dev
+
 jdk:
   - oraclejdk8
 
