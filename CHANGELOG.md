@@ -1,3 +1,8 @@
+v0.7.5: 2015-06-08
+
+  * Fixes a bug which would cause the server to throw an exception in some
+    cases instead of returning a secret.
+
 v0.7.4: 2015-06-08
 
   * Added support for H2 and MySQL. H2 should make development easier since it's

@@ -403,6 +403,7 @@ public class AclDAO {
         .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
         .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .where(SECRETS.NAME.eq(name).and(CLIENTS.NAME.eq(client.getName())))
+        .limit(1)
         .fetchOneInto(SECRETS);
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
