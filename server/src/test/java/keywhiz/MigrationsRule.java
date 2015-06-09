@@ -19,11 +19,9 @@ package keywhiz;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
-import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.jackson.Jackson;
 import java.io.File;
-import java.io.IOException;
 import javax.sql.DataSource;
 import javax.validation.Validation;
 import javax.validation.Validator;
@@ -42,13 +40,8 @@ public class MigrationsRule implements TestRule {
         File yamlFile = new File(Resources.getResource("keywhiz-test.yaml").getFile());
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         ObjectMapper objectMapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
-        KeywhizConfig config;
-        try {
-          config = new ConfigurationFactory<>(KeywhizConfig.class, validator, objectMapper, "dw")
-              .build(yamlFile);
-        } catch (IOException | ConfigurationException e) {
-          throw new AssertionError(e);
-        }
+        KeywhizConfig config = new ConfigurationFactory<>(KeywhizConfig.class, validator, objectMapper, "dw")
+            .build(yamlFile);
 
         DataSource dataSource = config.getDataSourceFactory()
             .build(new MetricRegistry(), "db-migrations");
