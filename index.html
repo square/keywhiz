@@ -148,15 +148,70 @@
             <p>From the base of the keywhiz repository, build the server:</p>
             <pre class="prettyprint">$ mvn package -am -pl server -P h2</pre>
 
+            <p>Create your own configuration files:</p>
+            <pre class="prettyprint">$ cp server/src/main/resources/keywhiz-development.yaml server/src/main/resources/keywhiz-local.yaml
+$ sed -i 's/dev_and_test_keystore/local_keystore/' server/src/main/resources/keywhiz-local.yaml
+$ sed -i 's/dev_and_test_truststore/truststore/' server/src/main/resources/keywhiz-local.yaml
+$ sed -i 's/ponies/password/' server/src/main/resources/keywhiz-local.yaml
+            </pre>
+
+            <p>Create local keystore and truststore (replace your-host)</p>
+            <pre class="prettyprint">
+$ cd server/src/main/resources/
+$ keytool -genkey -alias server-alias -keyalg RSA -storetype JCEKS -keypass password -storepass password -keystore local_keystore.jceks
+What is your first and last name?
+  [Unknown]:  your-host
+What is the name of your organizational unit?
+  [Unknown]:  local
+What is the name of your organization?
+  [Unknown]:  local
+What is the name of your City or Locality?
+  [Unknown]:  local
+What is the name of your State or Province?
+  [Unknown]:  lo
+What is the two-letter country code for this unit?
+  [Unknown]:  US
+Is CN=your-host, OU=l, O=l, L=l, ST=l, C=US correct?
+  [no]:  yes
+
+$ keytool -export -alias server-alias -storetype JCEKS -storepass password -file server.cer -keystore local_keystore.jceks
+Certificate stored in file &lt;server.cer&gt;
+$ keytool -import -v -trustcacerts -alias server-alias -file server.cer -keystore truststore.jceks -keypass password -storepass password
+Owner: CN=spencerherzberg-mbp, OU=l, O=l, L=l, ST=l, C=US
+Issuer: CN=spencerherzberg-mbp, OU=l, O=l, L=l, ST=l, C=US
+Serial number: 7c8b3c1c
+Valid from: Fri Apr 17 14:43:42 CDT 2015 until: Thu Jul 16 14:43:42 CDT 2015
+Certificate fingerprints:
+         MD5:  03:95:57:00:24:92:89:F4:04:74:70:83:19:35:73:55
+         SHA1: 5B:C1:7B:E5:5F:48:4B:FB:ED:AD:64:4F:0C:0C:7C:C4:72:3B:B7:A6
+         SHA256: F2:04:50:64:3A:9D:BE:74:EB:69:06:B2:C9:57:0D:01:F2:5F:E7:8C:BC:CA:61:8D:5A:BA:72:B4:C8:2B:E3:55
+         Signature algorithm name: SHA256withRSA
+         Version: 3
+
+Extensions:
+
+#1: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: 54 F9 C0 48 33 01 DF CC   3C B0 A2 8A 86 FC 0E 76  T..H3...&lt;......v
+0010: 8D 54 BB 2A                                        .T.*
+]
+]
+
+Trust this certificate? [no]:  yes
+Certificate was added to keystore
+[Storing cacerts.jceks]
+</pre>
+
             <p>Run any migrations:</p>
-            <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar preview-migrate server/src/main/resources/keywhiz-development.yaml
-$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar migrate server/src/main/resources/keywhiz-development.yaml</pre>
+            <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar preview-migrate server/src/main/resources/keywhiz-local.yaml
+$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar migrate server/src/main/resources/keywhiz-local.yaml</pre>
 
             <p>(Optional) Import some development data:</p>
-            <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar db-seed server/src/main/resources/keywhiz-development.yaml</pre>
+            <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar db-seed server/src/main/resources/keywhiz-local.yaml</pre>
 
             <p>Start the server:</p>
-            <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar server server/src/main/resources/keywhiz-development.yaml</pre>
+            <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar server server/src/main/resources/keywhiz-local.yaml</pre>
 
             <p>Access the UI by opening
                 <a href="https://localhost:4444/">https://localhost:4444/</a> in a browser. The development
@@ -173,7 +228,7 @@ $ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar migrate server/sr
             <pre class="prettyprint">$ ./cli/target/keywhiz-cli-*-SNAPSHOT-shaded.jar --devTrustStore --user keywhizAdmin list groups</pre>
 
             <p>You may want to alias this command for convenience:</p>
-            <pre class="prettyprint">$ alias keywhiz.cli="/path/to/keywhiz-cli-*-SNAPSHOT-shaded.jar"</pre>
+            <pre class="prettyprint">$ alias keywhiz.cli="java -Djavax.net.ssl.trustStore=$(pwd)/server/src/main/resources/truststore.jceks -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.trustStoreType=JCEKS -jar $(pwd)/cli/target/keywhiz-cli-*-SNAPSHOT-shaded.jar"</pre>
 
             <h4>Mounting KeywhizFs</h4>
             <p>Refer to the KeywhizFs <a href="https://github.com/square/keywhiz-fs/blob/master/README.md">README</a>.</p>
