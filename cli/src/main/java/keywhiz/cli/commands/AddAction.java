@@ -18,14 +18,12 @@ package keywhiz.cli.commands;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
-import java.util.Base64;
 import java.util.List;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.model.Group;
@@ -104,7 +102,7 @@ public class AddAction implements Runnable {
           throw Throwables.propagate(e);
         }
         String secretName = parts[0];
-        String content = readSecretContent();
+        byte[] content = readSecretContent();
         ImmutableMap<String, String> metadata = getMetadata();
 
         String version = getVersion(parts);
@@ -135,7 +133,7 @@ public class AddAction implements Runnable {
     }
   }
 
-  private void createAndAssignSecret(String secretName, String content, boolean useVersion,
+  private void createAndAssignSecret(String secretName, byte[] content, boolean useVersion,
       String version, ImmutableMap<String, String> metadata) {
     try {
       SecretDetailResponse secretResponse = keywhizClient.createSecret(secretName, "", content,
@@ -178,11 +176,15 @@ public class AddAction implements Runnable {
     return version;
   }
 
-  @VisibleForTesting String readSecretContent() {
+  private byte[] readSecretContent() {
     try {
-      return Base64.getEncoder().encodeToString(ByteStreams.toByteArray(stream));
+      byte[] content = ByteStreams.toByteArray(stream);
+      if (content.length == 0) {
+        throw new RuntimeException("Secret content empty!");
+      }
+      return content;
     } catch (IOException e) {
-      throw new AssertionError(e);
+      throw Throwables.propagate(e);
     }
   }
 
