@@ -147,8 +147,8 @@
 
     <!-- Support for BCrypt -->
     <dependency>
-      <groupId>org.mindrot</groupId>
-      <artifactId>jbcrypt</artifactId>
+      <groupId>de.svenkubiak</groupId>
+      <artifactId>jBCrypt</artifactId>
     </dependency>
 
     <!-- Authentication support -->

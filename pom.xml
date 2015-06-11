@@ -260,9 +260,9 @@
         <version>${jooq.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.mindrot</groupId>
-        <artifactId>jbcrypt</artifactId>
-        <version>0.3m</version>
+        <groupId>de.svenkubiak</groupId>
+        <artifactId>jBCrypt</artifactId>
+        <version>0.4</version>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
