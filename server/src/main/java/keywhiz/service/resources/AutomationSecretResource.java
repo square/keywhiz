@@ -124,7 +124,7 @@ public class AutomationSecretResource {
     return AutomationSecretResponse.fromSecret(secret, groups);
   }
 
-/**
+  /**
    * Retrieve secret by a specified name, or all secrets if no name given
    * Note that retrieving all secrets could be an expensive query
    *
