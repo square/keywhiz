@@ -27,6 +27,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import javax.ws.rs.core.HttpHeaders;
 import keywhiz.api.ClientDetailResponse;
@@ -41,6 +42,7 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import org.apache.http.HttpStatus;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 
@@ -123,6 +125,7 @@ public class KeywhizClient {
   }
 
   public GroupDetailResponse createGroup(String name, String description) throws IOException {
+    checkArgument(!name.isEmpty());
     String response = httpPost(baseUrl.resolve("/admin/groups"), new CreateGroupRequest(name, description));
     return mapper.readValue(response, GroupDetailResponse.class);
   }
@@ -141,9 +144,13 @@ public class KeywhizClient {
     return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
   }
 
-  public SecretDetailResponse createSecret(String name, String description, String content, boolean withVersion,
+  public SecretDetailResponse createSecret(String name, String description, byte[] content, boolean withVersion,
       ImmutableMap<String, String> metadata) throws IOException {
-    CreateSecretRequest request = new CreateSecretRequest(name, description, content,
+    checkArgument(!name.isEmpty());
+    checkArgument(content.length > 0, "Content must not be empty");
+
+    String b64Content = Base64.getEncoder().encodeToString(content);
+    CreateSecretRequest request = new CreateSecretRequest(name, description, b64Content,
         withVersion, metadata);
     String response = httpPost(baseUrl.resolve("/admin/secrets"), request);
     return mapper.readValue(response, SecretDetailResponse.class);
@@ -159,13 +166,17 @@ public class KeywhizClient {
   }
 
   public <T> List<SanitizedSecret> generateSecrets(String generatorName, T params) throws IOException {
-    String response = httpPost(baseUrl.resolve(format("/admin/secrets/generators/%s", generatorName)),
+    checkArgument(!generatorName.isEmpty());
+    String response = httpPost(baseUrl.resolve(
+        format("/admin/secrets/generators/%s", generatorName)),
         params);
     return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
   }
 
   public <T> List<SanitizedSecret> batchGenerateSecrets(String generatorName, List<T> params) throws IOException {
-    String response = httpPost(baseUrl.resolve(format("/admin/secrets/generators/%s/batch", generatorName)),
+    checkArgument(!generatorName.isEmpty());
+    String response = httpPost(baseUrl.resolve(
+        format("/admin/secrets/generators/%s/batch", generatorName)),
         params);
     return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
   }
@@ -176,6 +187,7 @@ public class KeywhizClient {
   }
 
   public ClientDetailResponse createClient(String name) throws IOException {
+    checkArgument(!name.isEmpty());
     String response = httpPost(baseUrl.resolve("/admin/clients"), new CreateClientRequest(name));
     return mapper.readValue(response, ClientDetailResponse.class);
   }
@@ -206,21 +218,26 @@ public class KeywhizClient {
   }
 
   public Client getClientByName(String name) throws IOException {
+    checkArgument(!name.isEmpty());
     String response = httpGet(baseUrl.resolve(format("/admin/clients?name=%s", name)));
     return mapper.readValue(response, Client.class);
   }
 
   public Group getGroupByName(String name) throws IOException {
+    checkArgument(!name.isEmpty());
     String response = httpGet(baseUrl.resolve(format("/admin/groups?name=%s", name)));
     return mapper.readValue(response, Group.class);
   }
 
   public SanitizedSecret getSanitizedSecretByNameAndVersion(String name, String version) throws IOException {
-    String response = httpGet(baseUrl.resolve(format("/admin/secrets?name=%s&version=%s", name, version)));
+    checkArgument(!name.isEmpty());
+    String response = httpGet(baseUrl.resolve(
+        format("/admin/secrets?name=%s&version=%s", name, version)));
     return mapper.readValue(response, SanitizedSecret.class);
   }
 
   public List<String> getVersionsForSecretName(String name) throws IOException {
+    checkNotNull(name);
     String response = httpGet(baseUrl.resolve(format("/admin/secrets/versions?name=%s", name)));
     return mapper.readValue(response, new TypeReference<List<String>>() {});
   }

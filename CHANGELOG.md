@@ -1,3 +1,8 @@
+v0.7.6: unreleased
+
+  * #116: Early precondition checks in KeywhizClient. Moves base64'ing
+    of request from CLI -> KeywhizClient.
+
 v0.7.5: 2015-06-08
 
   * Fixes a bug which would cause the server to throw an exception in some

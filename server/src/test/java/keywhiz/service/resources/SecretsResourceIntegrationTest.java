@@ -74,8 +74,8 @@ public class SecretsResourceIntegrationTest {
 
   @Test public void createsSecret() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-    SecretDetailResponse secretDetails = keywhizClient.createSecret("newSecret", "", "content",
-        false, ImmutableMap.of());
+    SecretDetailResponse secretDetails = keywhizClient.createSecret("newSecret", "",
+        "content".getBytes(), false, ImmutableMap.of());
     assertThat(secretDetails.name).isEqualTo("newSecret");
 
     assertThat(keywhizClient.allSecrets().stream().map(SanitizedSecret::name).toArray())
@@ -85,7 +85,7 @@ public class SecretsResourceIntegrationTest {
   @Test public void createsDuplicateSecretWithVersion() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
-    keywhizClient.createSecret("trapdoor", "v1", "content", true, ImmutableMap.of());
+    keywhizClient.createSecret("trapdoor", "v1", "content".getBytes(), true, ImmutableMap.of());
 
     List<SanitizedSecret> sanitizedSecrets1 = keywhizClient.allSecrets();
 
@@ -99,7 +99,7 @@ public class SecretsResourceIntegrationTest {
     }
     assertThat(found1).isTrue();
 
-    keywhizClient.createSecret("trapdoor", "v2", "content", true, ImmutableMap.of());
+    keywhizClient.createSecret("trapdoor", "v2", "content".getBytes(), true, ImmutableMap.of());
 
     List<SanitizedSecret> sanitizedSecrets2 = keywhizClient.allSecrets();
 
@@ -118,8 +118,8 @@ public class SecretsResourceIntegrationTest {
   public void rejectsCreatingDuplicateSecretWithoutVersion() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
-    keywhizClient.createSecret("passage", "v1", "content", false, ImmutableMap.of());
-    keywhizClient.createSecret("passage", "v2", "content", false, ImmutableMap.of());
+    keywhizClient.createSecret("passage", "v1", "content".getBytes(), false, ImmutableMap.of());
+    keywhizClient.createSecret("passage", "v2", "content".getBytes(), false, ImmutableMap.of());
   }
 
   @Test public void deletesSecret() throws IOException {

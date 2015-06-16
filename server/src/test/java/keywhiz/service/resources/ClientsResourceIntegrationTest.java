@@ -99,12 +99,6 @@ public class ClientsResourceIntegrationTest {
     keywhizClient.createClient("varys");
   }
 
-  @Test(expected = KeywhizClient.ValidationException.class)
-  public void creatingClientWithEmptyNameFailsOnValidation() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-    keywhizClient.createClient("");
-  }
-
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void notFoundOnMissingId() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
