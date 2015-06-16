@@ -156,8 +156,8 @@ public class AutomationSecretResource {
 
       for (SanitizedSecret sanitizedSecret : secrets) {
         Secret secret = secretController.getSecretByIdAndVersion(
-            sanitizedSecret.id(), sanitizedSecret.version()).orElseThrow(
-            () -> new IllegalStateException("Cannot find record related to " + sanitizedSecret));
+            sanitizedSecret.id(), sanitizedSecret.version()).orElseThrow(() ->
+            new IllegalStateException(format("Cannot find record related to %s", sanitizedSecret)));
 
         ImmutableList<Group> groups =
             ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
