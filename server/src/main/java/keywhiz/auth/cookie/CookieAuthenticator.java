@@ -27,8 +27,6 @@ import keywhiz.auth.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 public class CookieAuthenticator implements Authenticator<Cookie, User> {
   private static final Logger logger = LoggerFactory.getLogger(CookieAuthenticator.class);
 
@@ -58,8 +56,7 @@ public class CookieAuthenticator implements Authenticator<Cookie, User> {
     UserCookieData cookieData = null;
 
     try {
-      String cookie = new String(encryptor.decrypt(ciphertext), UTF_8);
-      cookieData = mapper.readValue(cookie, UserCookieData.class);
+      cookieData = mapper.readValue(encryptor.decrypt(ciphertext), UserCookieData.class);
       if (cookieData.getExpiration().isBefore(ZonedDateTime.now())) {
         cookieData = null;
       }
