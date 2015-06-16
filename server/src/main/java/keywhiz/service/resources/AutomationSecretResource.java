@@ -124,7 +124,7 @@ public class AutomationSecretResource {
     return AutomationSecretResponse.fromSecret(secret, groups);
   }
 
-/**
+  /**
    * Retrieve secret by a specified name, or all secrets if no name given
    * Note that retrieving all secrets could be an expensive query
    *
@@ -156,8 +156,8 @@ public class AutomationSecretResource {
 
       for (SanitizedSecret sanitizedSecret : secrets) {
         Secret secret = secretController.getSecretByIdAndVersion(
-            sanitizedSecret.id(), sanitizedSecret.version()).orElseThrow(
-            () -> new IllegalStateException("Cannot find record related to " + sanitizedSecret));
+            sanitizedSecret.id(), sanitizedSecret.version()).orElseThrow(() ->
+            new IllegalStateException(format("Cannot find record related to %s", sanitizedSecret)));
 
         ImmutableList<Group> groups =
             ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
