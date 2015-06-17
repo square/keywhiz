@@ -65,7 +65,7 @@ public class ContentCryptographer {
   private static final String ENCRYPTION_ALGORITHM = "AES/GCM/NoPadding";
   private static final String KEY_ALGORITHM = "AES";
   private static final int TAG_BITS = 128;
-  private static final int IV_BYTES = 16;
+  private static final int NONCE_BYTES = 12;
   private static final ObjectMapper MAPPER = Jackson.newObjectMapper();
 
   private final SecretKey key;
@@ -99,11 +99,11 @@ public class ContentCryptographer {
       Base64.Decoder decoder = getDecoder();
       final byte[] plaintext = decoder.decode(plaintextBase64);
 
-      byte[] iv = new byte[IV_BYTES];
-      random.nextBytes(iv);
+      byte[] nonce = new byte[NONCE_BYTES];
+      random.nextBytes(nonce);
 
-      byte[] ciphertext = gcm(Mode.ENCRYPT, derivationInfo, iv, plaintext);
-      Crypted crypted = Crypted.of(derivationInfo, ciphertext, iv);
+      byte[] ciphertext = gcm(Mode.ENCRYPT, derivationInfo, nonce, plaintext);
+      Crypted crypted = Crypted.of(derivationInfo, ciphertext, nonce);
       String encryptedJson;
       try {
         encryptedJson = MAPPER.writeValueAsString(crypted);
@@ -156,11 +156,11 @@ public class ContentCryptographer {
     return new SecretKeySpec(derivedKeyBytes, KEY_ALGORITHM);
   }
 
-  private byte[] gcm(Mode mode, String info, byte[] iv, byte[] data) {
+  private byte[] gcm(Mode mode, String info, byte[] nonce, byte[] data) {
     try {
       Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM, encryptionProvider);
       SecretKey derivedKey = deriveKey(cipher.getBlockSize(), info);
-      GCMParameterSpec gcmParameters = new GCMParameterSpec(TAG_BITS, iv);
+      GCMParameterSpec gcmParameters = new GCMParameterSpec(TAG_BITS, nonce);
       cipher.init(mode.cipherMode, derivedKey, gcmParameters);
       return cipher.doFinal(data);
     } catch (IllegalBlockSizeException | InvalidAlgorithmParameterException | NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException | BadPaddingException e) {
