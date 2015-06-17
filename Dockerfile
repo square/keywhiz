@@ -7,7 +7,7 @@
 #   docker build --rm --force-rm -t square/keywhiz .
 #
 # Example usage:
-#   docker run square/keywhiz java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar server server/src/main/resources/keywhiz-development.yaml
+#   docker run square/keywhiz sh -c "java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar server server/src/main/resources/keywhiz-development.yaml"
 #
 FROM maven:3.3-jdk-8
 
