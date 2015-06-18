@@ -58,7 +58,8 @@ public class PreviewMigrateCommand extends ConfiguredCommand<KeywhizConfig> {
       for (MigrationInfo migration : info.pending()) {
         logger.info("* {} - {}", migration.getVersion(), migration.getDescription());
       }
+    } else {
+      logger.info("No pending migrations");
     }
-
   }
 }
