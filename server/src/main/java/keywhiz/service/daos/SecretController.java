@@ -74,6 +74,14 @@ public class SecretController {
         .collect(toList());
   }
 
+  /** @return all existing sanitized secrets. */
+  public List<SanitizedSecret> getSecretsNameOnly() {
+    return secretDAO.getSecretsNameOnly()
+        .stream()
+        .map(s -> SanitizedSecret.of(s.getKey(), s.getValue()))
+        .collect(toList());
+  }
+
   /** @return all versions for this secret name. */
   public List<String> getVersionsForName(String name) {
     checkArgument(!name.isEmpty());

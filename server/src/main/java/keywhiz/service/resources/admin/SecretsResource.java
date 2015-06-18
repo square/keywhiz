@@ -89,13 +89,14 @@ public class SecretsResource {
   }
 
   /**
-   * Retrieve Secret by a specified name and version, or all Secrets name not given
+   * Retrieve Secret by a specified name and version, or all Secrets if name is not given
    *
    * @excludeParams user
    * @optionalParams name
    * @param name the name of the Secret to retrieve, if provided
    * @optionalParams version
    * @param version the version of the Secret to retrieve, if provided
+   * @param nameOnly if set, the result only contains the id and name for the secrets.
    *
    * @description Returns a single Secret or a set of all Secrets for this user.
    * Used by Keywhiz CLI and the web ui.
@@ -104,9 +105,14 @@ public class SecretsResource {
    */
   @GET
   public Response findSecrets(@Auth User user, @DefaultValue("") @QueryParam("name") String name,
-      @DefaultValue("") @QueryParam("version") String version) {
+      @DefaultValue("") @QueryParam("version") String version,
+      @DefaultValue("") @QueryParam("nameOnly") String nameOnly) {
     if (name.isEmpty()) {
-      return Response.ok().entity(listSecrets(user)).build();
+      if (nameOnly.isEmpty()) {
+        return Response.ok().entity(listSecrets(user)).build();
+      } else {
+        return Response.ok().entity(listSecretsNameOnly(user)).build();
+      }
     }
     return Response.ok().entity(retrieveSecret(user, name, version)).build();
   }
@@ -114,6 +120,11 @@ public class SecretsResource {
   protected List<SanitizedSecret> listSecrets(@Auth User user) {
     logger.info("User '{}' listing secrets.", user);
     return secretController.getSanitizedSecrets();
+  }
+
+  protected List<SanitizedSecret> listSecretsNameOnly(@Auth User user) {
+    logger.info("User '{}' listing secrets.", user);
+    return secretController.getSecretsNameOnly();
   }
 
   protected SanitizedSecret retrieveSecret(@Auth User user, String name, String version) {
