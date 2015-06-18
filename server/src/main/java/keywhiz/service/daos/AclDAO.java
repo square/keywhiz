@@ -192,7 +192,7 @@ public class AclDAO {
 
   public Set<Group> getGroupsFor(Secret secret) {
     List<Group> r = dslContext
-        .select()
+        .select(GROUPS.fields())
         .from(GROUPS)
         .join(ACCESSGRANTS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
         .join(SECRETS).on(ACCESSGRANTS.SECRETID.eq(SECRETS.ID))
@@ -204,7 +204,7 @@ public class AclDAO {
 
   public Set<Group> getGroupsFor(Client client) {
     List<Group> r = dslContext
-        .select()
+        .select(GROUPS.fields())
         .from(GROUPS)
         .join(MEMBERSHIPS).on(GROUPS.ID.eq(MEMBERSHIPS.GROUPID))
         .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
@@ -216,7 +216,7 @@ public class AclDAO {
 
   public Set<Client> getClientsFor(Group group) {
     List<Client> r = dslContext
-        .select()
+        .select(CLIENTS.fields())
         .from(CLIENTS)
         .join(MEMBERSHIPS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .join(GROUPS).on(GROUPS.ID.eq(MEMBERSHIPS.GROUPID))
@@ -255,7 +255,7 @@ public class AclDAO {
 
   public Set<Client> getClientsFor(Secret secret) {
     List<Client> r = dslContext
-        .select()
+        .select(CLIENTS.fields())
         .from(CLIENTS)
         .join(MEMBERSHIPS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
         .join(ACCESSGRANTS).on(MEMBERSHIPS.GROUPID.eq(ACCESSGRANTS.GROUPID))
@@ -364,7 +364,7 @@ public class AclDAO {
 
   protected ImmutableSet<SecretSeries> getSecretSeriesFor(Configuration configuration, Group group) {
     List<SecretSeries> r = DSL.using(configuration)
-        .select()
+        .select(SECRETS.fields())
         .from(SECRETS)
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .join(GROUPS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
@@ -376,7 +376,7 @@ public class AclDAO {
 
   protected ImmutableSet<SecretSeries> getSecretSeriesFor(Configuration configuration, Client client) {
     List<SecretSeries> r = DSL.using(configuration)
-        .select()
+        .select(SECRETS.fields())
         .from(SECRETS)
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
@@ -396,7 +396,7 @@ public class AclDAO {
    */
   protected Optional<SecretSeries> getSecretSeriesFor(Configuration configuration, Client client, String name) {
     SecretsRecord r = DSL.using(configuration)
-        .select()
+        .select(SECRETS.fields())
         .from(SECRETS)
         .join(SECRETS_CONTENT).on(SECRETS.ID.eq(SECRETS_CONTENT.SECRETID))
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
