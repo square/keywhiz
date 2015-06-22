@@ -66,7 +66,7 @@ public class JooqHealthCheckTest {
   }
 
   @Test
-  public void reportsUnhealthyWhenLogOnlyIsEnabled() throws Exception {
+  public void reportsHealthyWhenLogOnlyIsEnabled() throws Exception {
     Connection connection;
     try (Connection c = testDBRule.dataSource().getConnection()) {
       connection = c;

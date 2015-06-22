@@ -1,7 +1,15 @@
-v0.7.6: unreleased
+v0.7.6: 2015-06-22
+
+  * Updates bcrypt version to fix potential integer overflow issue,
+    see CVE-2015-0886.
+
+  * Improves SQL queries by not fetching data which is subsequently not used.
 
   * #116: Early precondition checks in KeywhizClient. Moves base64'ing
     of request from CLI -> KeywhizClient.
+
+  * Switches AES-GCM's IV to be 12 bytes instead of 16. Potentially helps with
+    interoperability with other libraries.
 
 v0.7.5: 2015-06-08
 
