@@ -1,4 +1,4 @@
-v0.7.6: 2015-06-19
+v0.7.6: 2015-06-22
 
   * Updates bcrypt version to fix potential integer overflow issue,
     see CVE-2015-0886.
