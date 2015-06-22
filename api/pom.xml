@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.squareup.keywhiz</groupId>
     <artifactId>keywhiz-parent</artifactId>
-    <version>0.7.6</version>
+    <version>0.7.7-SNAPSHOT</version>
   </parent>
 
   <artifactId>keywhiz-api</artifactId>
