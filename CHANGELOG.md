@@ -5,7 +5,7 @@ v0.7.6: 2015-06-22
 
   * Improves SQL queries by not fetching data which is subsequently not used.
 
-  * #116: Early precondition checks in KeywhizClient. Moves base64'ing
+  * `#116`: Early precondition checks in KeywhizClient. Moves base64'ing
     of request from CLI -> KeywhizClient.
 
   * Switches AES-GCM's IV to be 12 bytes instead of 16. Potentially helps with
