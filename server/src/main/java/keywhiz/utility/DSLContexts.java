@@ -40,8 +40,9 @@ public class DSLContexts {
     try (Connection conn = dataSource.getConnection()) {
       dialect = dialect(conn);
     }
-    return DSL.using(dataSource, dialect, new Settings()
-                                          .withRenderSchema(false)
-                                          .withRenderNameStyle(RenderNameStyle.AS_IS));
+    return DSL.using(dataSource, dialect,
+            new Settings()
+                .withRenderSchema(false)
+                .withRenderNameStyle(RenderNameStyle.AS_IS));
     }
 }
