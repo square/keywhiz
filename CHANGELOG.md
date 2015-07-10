@@ -1,3 +1,8 @@
+v0.7.7: unreleased
+
+  * Replace postgres JDBC driver with pgjdbc-ng
+    (https://github.com/impossibl/pgjdbc-ng).
+
 v0.7.6: 2015-06-22
 
   * Updates bcrypt version to fix potential integer overflow issue,

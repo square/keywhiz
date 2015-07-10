@@ -31,8 +31,8 @@
     </dependency>
 
     <dependency>
-      <groupId>postgresql</groupId>
-      <artifactId>postgresql</artifactId>
+      <groupId>com.impossibl.pgjdbc-ng</groupId>
+      <artifactId>pgjdbc-ng</artifactId>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
@@ -53,9 +53,9 @@
       </activation>
       <properties>
         <skipResetDatabase>false</skipResetDatabase>
-        <db.driver>org.postgresql.Driver</db.driver>
-        <db.create-url>jdbc:postgresql:postgres</db.create-url>
-        <db.migrate-url>jdbc:postgresql:keywhizdb_test</db.migrate-url>
+        <db.driver>com.impossibl.postgres.jdbc.PGDriver</db.driver>
+        <db.create-url>jdbc:pgsql:postgres</db.create-url>
+        <db.migrate-url>jdbc:pgsql:keywhizdb_test</db.migrate-url>
         <db.username>${user.name}</db.username>
         <db.migrations-path>postgres/migration</db.migrations-path>
         <jooq.dialect>org.jooq.util.postgres.PostgresDatabase</jooq.dialect>
@@ -137,6 +137,7 @@
         </executions>
 
         <configuration>
+          <driver>${db.driver}</driver>
           <url>${db.migrate-url}</url>
           <user>${db.username}</user>
           <locations>
