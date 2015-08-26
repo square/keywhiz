@@ -189,11 +189,15 @@ $ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar migrate server/sr
             <h4>Adding a Secret</h4>
             <h5>Using Keywhiz CLI</h5>
             <pre class="prettyprint">$ keywhiz.cli --devTrustStore --user keywhizAdmin login
-$ keywhiz.cli add secret --name mySecretName < mySecretFile</pre>
+$ keywhiz.cli add secret --name mySecretName &lt; mySecretFile</pre>
 
             <h5>Using Keywhiz automation API</h5>
-            <p>The automation API requires a client certificate and
-                <code>automationAllowed=true</code> in the clients DB table.</p>
+            <p>
+              The automation API requires a client certificate and
+              <code>automationAllowed=true</code> in the clients DB table. For
+              development purpose, you can use the pre-generated <code>client.p12</code>
+              keystore:
+            </p>
 
             <pre class="prettyprint">$ cat request.json
 {
@@ -203,14 +207,14 @@ $ keywhiz.cli add secret --name mySecretName < mySecretFile</pre>
   "withVersion":true,
   "metadata":{"owner":"root","group":"root","mode":"0400"}
 }
-$ curl --cert client.pem -H "Content-Type:application/json" -d @request.json https://localhost:4444/automation/secrets/</pre>
+$ curl --cert ./server/src/test/resources/clients/client.p12:ponies -H "Content-Type:application/json" -d @request.json https://localhost:4444/automation/secrets/</pre>
 
             <h4>Assigning a Secret to a Group</h4>
             <h5>Using Keywhiz CLI</h5>
             <pre class="prettyprint">$ keywhiz.cli --devTrustStore --user keywhizAdmin assign secret --name example.keytab --group kerberos</pre>
 
             <h5>Using Keywhiz automation API</h5>
-            <pre class="prettyprint">$ curl --cert client.pem -X PUT "https://localhost:4444/automation/secrets/$SECRET_ID/groups/$GROUP_ID"</pre>
+            <pre class="prettyprint">$ curl --cert ./server/src/test/resources/clients/client.p12:ponies -X PUT "https://localhost:4444/automation/secrets/$SECRET_ID/groups/$GROUP_ID"</pre>
 
             <h3 id="download">Download</h3>
             <p><a href="https://search.maven.org/#search|ga|1|g:com.squareup.keywhiz" class="dl version-href">&darr; <span class="version-tag">Latest</span> JARs</a></p>
