@@ -29,7 +29,6 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.SanitizedSecret;
@@ -45,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static keywhiz.api.model.Secret.splitNameAndVersion;
 
 /**
@@ -53,7 +53,7 @@ import static keywhiz.api.model.Secret.splitNameAndVersion;
  * @resourceDescription Retrieve Secret by name
  */
 @Path("/secret/{secretName}")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class SecretDeliveryResource {
   private static final Logger logger = LoggerFactory.getLogger(SecretDeliveryResource.class);
 

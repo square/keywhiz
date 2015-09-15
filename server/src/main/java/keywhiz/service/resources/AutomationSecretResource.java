@@ -32,7 +32,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.api.AutomationSecretResponse;
 import keywhiz.api.CreateSecretRequest;
@@ -52,6 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName secrets-automation
@@ -60,7 +60,7 @@ import static java.lang.String.format;
  * @resourceDescription Create, retrieve, and remove secrets
  */
 @Path("/automation/secrets")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class AutomationSecretResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationSecretResource.class);
   private final SecretController secretController;
@@ -91,7 +91,7 @@ public class AutomationSecretResource {
    * @responseMessage 409 Secret with given name already exists
    */
   @POST
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
   public AutomationSecretResponse createSecret(
       @Auth AutomationClient automationClient,
       @Valid CreateSecretRequest request) {

@@ -31,7 +31,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.CacheControl;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import keywhiz.api.LoginRequest;
@@ -41,6 +40,8 @@ import keywhiz.auth.xsrf.XsrfProtection;
 import keywhiz.service.config.Readonly;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName login
@@ -73,8 +74,8 @@ public class SessionLoginResource {
    * @responseMessage 401 Incorrect credentials or not authorized
    */
   @POST
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
+  @Produces(APPLICATION_JSON)
   public Response login(@Valid LoginRequest request) {
 
     String username = request.username();

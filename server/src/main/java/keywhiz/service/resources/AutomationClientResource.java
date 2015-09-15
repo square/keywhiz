@@ -33,7 +33,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.CreateClientRequest;
@@ -49,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName clients-automation
@@ -57,7 +57,7 @@ import static java.util.stream.Collectors.toList;
  * @resourceDescription Create and retrieve clients
  */
 @Path("/automation/clients")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class AutomationClientResource {
   private static final Logger logger = LoggerFactory.getLogger(ClientsResource.class);
 
@@ -141,7 +141,7 @@ public class AutomationClientResource {
    * @responseMessage 409 Client with given name already exists
    */
   @POST
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
   public ClientDetailResponse createClient(
       @Auth AutomationClient automationClient,
       @Valid CreateClientRequest clientRequest) {

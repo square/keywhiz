@@ -23,7 +23,6 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.Client;
 import keywhiz.service.daos.AclDAO;
@@ -32,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName secrets
@@ -39,7 +39,7 @@ import static java.util.stream.Collectors.toList;
  * @resourceDescription Retrieve a collection of Secrets
  */
 @Path("/secrets")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class SecretsDeliveryResource {
   private static final Logger logger = LoggerFactory.getLogger(SecretsDeliveryResource.class);
 

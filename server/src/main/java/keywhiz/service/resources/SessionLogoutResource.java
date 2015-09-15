@@ -27,7 +27,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import keywhiz.auth.User;
@@ -35,6 +34,8 @@ import keywhiz.auth.cookie.AuthenticatedEncryptedCookieFactory;
 import keywhiz.auth.cookie.CookieAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName logout
@@ -62,7 +63,7 @@ public class SessionLogoutResource {
    * @responseMessage 200 Logged out successfully
    */
   @POST
-  @Produces(MediaType.APPLICATION_JSON)
+  @Produces(APPLICATION_JSON)
   public Response logout(@Nullable @CookieParam(value = "session") Cookie sessionCookie) {
     if (sessionCookie != null) {
       Optional<User> user = cookieAuthenticator.authenticate(sessionCookie);

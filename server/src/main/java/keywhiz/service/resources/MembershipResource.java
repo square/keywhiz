@@ -25,13 +25,14 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName memberships-admin
@@ -40,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * @resourceDescription Manage group assignments
  */
 @Path("/admin/memberships")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class MembershipResource {
   private static final Logger logger = LoggerFactory.getLogger(MembershipResource.class);
 

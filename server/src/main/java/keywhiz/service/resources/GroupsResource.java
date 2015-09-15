@@ -37,7 +37,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import keywhiz.api.CreateGroupRequest;
@@ -53,6 +52,8 @@ import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+
 /**
  * @parentEndpointName groups-admin
  *
@@ -60,7 +61,7 @@ import org.slf4j.LoggerFactory;
  * @resourceDescription Create, retrieve, and delete groups
  */
 @Path("/admin/groups")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class GroupsResource {
   private static final Logger logger = LoggerFactory.getLogger(GroupsResource.class);
   private final AclDAO aclDAO;
@@ -117,7 +118,7 @@ public class GroupsResource {
    * @responseMessage 400 Group with given name already exists
    */
   @POST
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
   public Response createGroup(@Auth User user, @Valid CreateGroupRequest request) {
 
     logger.info("User '{}' creating group.", user);

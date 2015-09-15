@@ -33,7 +33,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.api.CreateGroupRequest;
 import keywhiz.api.GroupDetailResponse;
@@ -50,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName groups-automation
@@ -58,7 +58,7 @@ import static java.util.stream.Collectors.toList;
  * @resourceDescription Create and retrieve groups
  */
 @Path("/automation/groups")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class AutomationGroupResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationGroupResource.class);
 
@@ -139,7 +139,7 @@ public class AutomationGroupResource {
    * @responseMessage 409 Group with given name already exists
    */
   @POST
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
   public Group createGroup(
       @Auth AutomationClient automationClient,
       @Valid CreateGroupRequest groupRequest) {
