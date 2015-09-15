@@ -285,7 +285,8 @@
               <doclet>com.carma.swagger.doclet.ServiceDoclet</doclet>
               <reportOutputDirectory>${project.parent.basedir}/website/</reportOutputDirectory>
               <useStandardDocletOptions>false</useStandardDocletOptions>
-              <additionalparam>-apiVersion 1 -docBasePath https://square.github.io/keywhiz/apidocs -apiBasePath https://square.github.io/keywhiz/apidocs -resourceTags -fieldDescriptionTags</additionalparam>
+              <!--<additionalparam>-apiVersion 1 -docBasePath https://square.github.io/keywhiz/apidocs -apiBasePath https://square.github.io/keywhiz/apidocs -resourceTags -fieldDescriptionTags</additionalparam>-->
+              <additionalparam>-logDebug -apiVersion 1 -docBasePath http://localhost:8000/apidocs -apiBasePath http://localhost:8000/apidocs -resourceTags -fieldDescriptionTags</additionalparam>
             </configuration>
             <goals>
               <goal>javadoc</goal>

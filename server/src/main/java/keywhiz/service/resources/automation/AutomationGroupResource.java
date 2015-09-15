@@ -45,6 +45,7 @@ import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
+import keywhiz.service.resources.automation.v2.GroupResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,10 +55,10 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName groups-automation
- *
- * @resourcePath /automation/groups
  * @resourceDescription Create and retrieve groups
+ * @deprecated Will be removed in a future release. Migrate to {@link GroupResource}.
  */
+@Deprecated
 @Path("/automation/groups")
 @Produces(APPLICATION_JSON)
 public class AutomationGroupResource {

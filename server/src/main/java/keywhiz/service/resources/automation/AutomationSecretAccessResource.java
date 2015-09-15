@@ -29,6 +29,7 @@ import javax.ws.rs.core.Response;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
+import keywhiz.service.resources.automation.v2.SecretResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,9 +37,10 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName enroll-secrets-automation
- *
  * @resourceDescription Assign or unassign secrets to groups
+ * @deprecated Will be removed in a future release. Migrate to {@link SecretResource}.
  */
+@Deprecated
 @Path("/automation/secrets/{secretId}/groups/{groupId}")
 @Produces(APPLICATION_JSON)
 public class AutomationSecretAccessResource {

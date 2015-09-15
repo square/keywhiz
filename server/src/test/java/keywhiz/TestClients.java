@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
 import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,6 +31,12 @@ import java.security.cert.CertificateException;
 import javax.ws.rs.core.MediaType;
 import keywhiz.client.KeywhizClient;
 import keywhiz.testing.HttpClients;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static keywhiz.testing.HttpClients.testUrl;
 
 public class TestClients {
   private TestClients() {}
@@ -91,6 +98,14 @@ public class TestClients {
 
     ObjectMapper mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
     return new KeywhizClient(mapper, httpClient, TEST_URL);
+  }
+
+  public static Request.Builder clientRequest(String url) {
+    checkNotNull(url);
+    return new Request.Builder()
+        .url(testUrl(url))
+        .addHeader(CONTENT_TYPE, APPLICATION_JSON)
+        .addHeader(ACCEPT, APPLICATION_JSON);
   }
 
   private static KeyStore keyStoreFromResource(String path, String password) {

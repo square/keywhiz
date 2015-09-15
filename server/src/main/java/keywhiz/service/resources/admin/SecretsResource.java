@@ -191,7 +191,6 @@ public class SecretsResource {
     }
 
     URI uri = UriBuilder.fromResource(SecretsResource.class).path("{secretId}").build(secret.getId());
-
     return Response
         .created(uri)
         .entity(secretDetailResponseFromId(secret.getId()))

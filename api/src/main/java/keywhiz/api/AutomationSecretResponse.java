@@ -27,7 +27,7 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.Secret;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static keywhiz.api.SecretDeliveryResponse.decodedLength;
+import static keywhiz.api.model.Secret.decodedLength;
 
 /**
  * JSON Serialization class for a REST response {@link Secret}.

@@ -45,6 +45,7 @@ import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
 import keywhiz.service.resources.admin.ClientsResource;
+import keywhiz.service.resources.automation.v2.ClientResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,10 +54,10 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName clients-automation
- *
- * @resourcePath /automation/clients
  * @resourceDescription Create and retrieve clients
+ * @deprecated Will be removed in a future release. Migrate to {@link ClientResource}.
  */
+@Deprecated
 @Path("/automation/clients")
 @Produces(APPLICATION_JSON)
 public class AutomationClientResource {

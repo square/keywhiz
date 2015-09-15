@@ -57,8 +57,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName clients-admin
- *
- * @resourcePath /admin/clients
  * @resourceDescription Create, retrieve, and delete clients
  */
 @Path("/admin/clients")

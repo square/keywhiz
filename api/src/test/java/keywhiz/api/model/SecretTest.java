@@ -16,8 +16,11 @@
 package keywhiz.api.model;
 
 import java.text.ParseException;
+import java.util.Base64;
 import org.junit.Test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static keywhiz.api.model.Secret.decodedLength;
 import static keywhiz.api.model.Secret.splitNameAndVersion;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,5 +42,22 @@ public class SecretTest {
   @Test(expected = ParseException.class)
   public void splitRejectsBadSecretName() throws Exception {
     splitNameAndVersion("secretName..notAVersion..version");
+  }
+
+  @Test public void decodedLengthCalculates() {
+    Base64.Encoder encoder = Base64.getEncoder();
+    String base64 = encoder.encodeToString("31337".getBytes(UTF_8));
+    assertThat(decodedLength(base64)).isEqualTo(5);
+
+    base64 = encoder.withoutPadding().encodeToString("31337".getBytes(UTF_8));
+    assertThat(decodedLength(base64)).isEqualTo(5);
+
+    String longerBase64 = encoder.encodeToString("313373133731337".getBytes(UTF_8));
+    assertThat(decodedLength(longerBase64)).isEqualTo(15);
+
+    longerBase64 = encoder.withoutPadding().encodeToString("313373133731337".getBytes(UTF_8));
+    assertThat(decodedLength(longerBase64)).isEqualTo(15);
+
+    assertThat(decodedLength("")).isZero();
   }
 }

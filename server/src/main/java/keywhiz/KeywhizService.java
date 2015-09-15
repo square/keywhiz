@@ -63,6 +63,9 @@ import keywhiz.service.resources.automation.AutomationGroupResource;
 import keywhiz.service.resources.automation.AutomationSecretAccessResource;
 import keywhiz.service.resources.automation.AutomationSecretGeneratorsResource;
 import keywhiz.service.resources.automation.AutomationSecretResource;
+import keywhiz.service.resources.automation.v2.ClientResource;
+import keywhiz.service.resources.automation.v2.GroupResource;
+import keywhiz.service.resources.automation.v2.SecretResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -163,16 +166,12 @@ public class KeywhizService extends Application<KeywhizConfig> {
 
     logger.debug("Registering servlet filters");
     environment.servlets().addFilter("security-headers-filter", injector.getInstance(SecurityHeadersFilter.class))
-        .addMappingForUrlPatterns(
-            null, /* Default is for requests */
-            false /* Can be after other filters */,
-            "/*" /* Every request */);
+        .addMappingForUrlPatterns(null, /* Default is for requests */
+            false /* Can be after other filters */, "/*" /* Every request */);
     jersey.register(injector.getInstance(CookieRenewingFilter.class));
 
     environment.servlets().addFilter("xsrf-filter", injector.getInstance(XsrfServletFilter.class))
-        .addMappingForUrlPatterns(
-            null /* Default is for requests */,
-            false /* Can be after other filters */,
+        .addMappingForUrlPatterns(null /* Default is for requests */, false /* Can be after other filters */,
             "/admin/*" /* Path to filter on */);
 
     logger.debug("Registering providers");
@@ -181,10 +180,13 @@ public class KeywhizService extends Application<KeywhizConfig> {
         injector.getInstance(UserAuthFactory.class)));
 
     logger.debug("Registering resources");
+    jersey.register(injector.getInstance(ClientResource.class));
     jersey.register(injector.getInstance(ClientsResource.class));
+    jersey.register(injector.getInstance(GroupResource.class));
     jersey.register(injector.getInstance(GroupsResource.class));
     jersey.register(injector.getInstance(MembershipResource.class));
     jersey.register(injector.getInstance(SecretsDeliveryResource.class));
+    jersey.register(injector.getInstance(SecretResource.class));
     jersey.register(injector.getInstance(SecretsResource.class));
     jersey.register(injector.getInstance(SecretGeneratorsResource.class));
     jersey.register(injector.getInstance(SecretDeliveryResource.class));

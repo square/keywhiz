@@ -28,14 +28,16 @@ import javax.ws.rs.core.Response;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
+import keywhiz.service.resources.automation.v2.ClientResource;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName enroll-clients-automation
- *
  * @resourceDescription Assign or unassign clients to groups
+ * @deprecated Will be removed in a future release. Migrate to {@link ClientResource}.
  */
+@Deprecated
 @Path("/automation/clients/{clientId}/groups/{groupId}")
 @Produces(APPLICATION_JSON)
 public class AutomationEnrollClientGroupResource {

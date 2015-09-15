@@ -46,6 +46,7 @@ import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
+import keywhiz.service.resources.automation.v2.SecretResource;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,10 +57,10 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName secrets-automation
- *
- * @resourcePath /automation/secrets
  * @resourceDescription Create, retrieve, and remove secrets
+ * @deprecated Will be removed in a future release. Migrate to {@link SecretResource}.
  */
+@Deprecated
 @Path("/automation/secrets")
 @Produces(APPLICATION_JSON)
 public class AutomationSecretResource {
@@ -86,7 +87,7 @@ public class AutomationSecretResource {
    * Create secret
    *
    * @excludeParams automationClient
-   * @param request the JSON secret request used to formulate the secret
+   * @param request JSON request to formulate the secret
    *
    * @description Creates a secret with the name, content, and metadata from a valid secret request
    * @responseMessage 200 Successfully created secret

@@ -18,7 +18,6 @@ package keywhiz.api;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -28,8 +27,7 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.commons.lang3.StringUtils.chomp;
-import static org.apache.commons.lang3.StringUtils.removeEnd;
+import static keywhiz.api.model.Secret.decodedLength;
 
 /** JSON Serialization class for a REST response {@link Secret}. API View. */
 public class SecretDeliveryResponse {
@@ -73,13 +71,6 @@ public class SecretDeliveryResponse {
         sanitizedSecret.createdAt(),
         !sanitizedSecret.version().isEmpty(),
         sanitizedSecret.metadata());
-  }
-
-  /** Slightly hokey way of calculating the decoded-length without bothering to decode. */
-  @VisibleForTesting static int decodedLength(String secret) {
-    // Remove newlines and padding from the end of our secret string.
-    secret = removeEnd(removeEnd(chomp(secret), "="), "=");
-    return (secret.length() * 3) / 4;
   }
 
   /** @return External name of the secret. */
