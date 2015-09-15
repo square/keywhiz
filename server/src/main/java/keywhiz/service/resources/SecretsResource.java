@@ -36,7 +36,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import keywhiz.api.CreateSecretRequest;
@@ -58,6 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName secrets-admin
@@ -66,7 +66,7 @@ import static java.lang.String.format;
  * @resourceDescription Create, retrieve, and delete secrets
  */
 @Path("/admin/secrets")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class SecretsResource {
   private static final Logger logger = LoggerFactory.getLogger(SecretsResource.class);
 
@@ -91,6 +91,7 @@ public class SecretsResource {
   /**
    * Retrieve Secret by a specified name and version, or all Secrets name not given
    *
+   * @excludeParams user
    * @optionalParams name
    * @param name the name of the Secret to retrieve, if provided
    * @optionalParams version
@@ -123,6 +124,7 @@ public class SecretsResource {
   /**
    * Retrieve all versions for a Secret name
    *
+   * @excludeParams user
    * @param name the name of the Secret to find all versions for
    *
    * @description Returns a list of all versions for the given secret.
@@ -150,6 +152,7 @@ public class SecretsResource {
   /**
    * Create Secret
    *
+   * @excludeParams user
    * @param request the JSON client request used to formulate the Secret
    *
    * @description Creates a Secret with the name from a valid secret request.
@@ -158,7 +161,7 @@ public class SecretsResource {
    * @responseMessage 400 Secret with given name already exists
    */
   @POST
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
   public Response createSecret(@Auth User user, @Valid CreateSecretRequest request) {
 
     logger.info("User '{}' creating secret '{}' {} versioning.",
@@ -198,6 +201,7 @@ public class SecretsResource {
   /**
    * Retrieve Secret by ID
    *
+   * @excludeParams user
    * @param secretId the ID of the secret to retrieve
    *
    * @description Returns a single Secret if found.
@@ -217,6 +221,7 @@ public class SecretsResource {
   /**
    * Delete Secret by ID
    *
+   * @excludeParams user
    * @param secretId the ID of the Secret to be deleted
    *
    * @description Deletes a single Secret if found.

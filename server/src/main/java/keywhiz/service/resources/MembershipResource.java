@@ -25,13 +25,14 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName memberships-admin
@@ -40,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * @resourceDescription Manage group assignments
  */
 @Path("/admin/memberships")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class MembershipResource {
   private static final Logger logger = LoggerFactory.getLogger(MembershipResource.class);
 
@@ -57,9 +58,9 @@ public class MembershipResource {
   /**
    * Allow a Group to access this Secret
    *
+   * @excludeParams user
    * @param secretId ID value of a Secret
    * @param groupId ID value of a Group
-   * @return HTTP response
    *
    * @description Assigns the Secret specified by the secretID to the Group specified by the groupID
    * Used by Keywhiz CLI and the web ui.
@@ -87,9 +88,9 @@ public class MembershipResource {
   /**
    * Disallow a Group to access this Secret
    *
+   * @excludeParams user
    * @param secretId ID value of a Secret
    * @param groupId ID value of a Group
-   * @return HTTP response
    *
    * @description Unassigns the Secret specified by the secretID from the Group specified by the groupID
    * Used by Keywhiz CLI and the web ui.
@@ -117,9 +118,9 @@ public class MembershipResource {
   /**
    * Enroll a Client into a Group
    *
+   * @excludeParams user
    * @param clientId ID value of a Client
    * @param groupId ID value of a Group
-   * @return HTTP response
    *
    * @description Assigns the Client specified by the clientID to the Group specified by the groupID
    * @responseMessage 200 Successfully enrolled Client in Group
@@ -146,9 +147,9 @@ public class MembershipResource {
   /**
    * Remove a Client from a Group
    *
+   * @excludeParams user
    * @param clientId ID value of a Client
    * @param groupId ID value of a Group
-   * @return HTTP response
    *
    * @description Unassigns the Client specified by the clientID from the Group specified by the groupID
    * @responseMessage 200 Successfully removed Client from Group

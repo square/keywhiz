@@ -36,7 +36,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import keywhiz.api.ClientDetailResponse;
@@ -54,6 +53,8 @@ import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+
 /**
  * @parentEndpointName clients-admin
  *
@@ -61,7 +62,7 @@ import org.slf4j.LoggerFactory;
  * @resourceDescription Create, retrieve, and delete clients
  */
 @Path("/admin/clients")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class ClientsResource {
   private static final Logger logger = LoggerFactory.getLogger(ClientsResource.class);
 
@@ -81,6 +82,7 @@ public class ClientsResource {
   /**
    * Retrieve Client by a specified name, or all Clients if no name given
    *
+   * @excludeParams user
    * @optionalParams name
    * @param name the name of the Client to retrieve, if provided
    *
@@ -111,6 +113,7 @@ public class ClientsResource {
   /**
    * Create Client
    *
+   * @excludeParams user
    * @param createClientRequest the JSON client request used to formulate the Client
    *
    * @description Creates a Client with the name from a valid client request.
@@ -119,7 +122,7 @@ public class ClientsResource {
    * @responseMessage 409 Client with given name already exists
    */
   @POST
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
   public Response createClient(@Auth User user,
       @Valid CreateClientRequest createClientRequest) {
 
@@ -143,6 +146,7 @@ public class ClientsResource {
   /**
    * Retrieve Client by ID
    *
+   * @excludeParams user
    * @param clientId the ID of the Client to retrieve
    *
    * @description Returns a single Client if found.
@@ -161,6 +165,7 @@ public class ClientsResource {
   /**
    * Delete Client by ID
    *
+   * @excludeParams user
    * @param clientId the ID of the Client to be deleted
    *
    * @description Deletes a single Client if found.

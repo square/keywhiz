@@ -29,7 +29,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.auth.User;
 import keywhiz.generators.SecretGenerator;
@@ -37,13 +36,15 @@ import keywhiz.service.exceptions.UnprocessableEntityException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+
 /**
  * @parentEndpointName secrets-generator-admin
  *
  * @resourceDescription Create secrets with a generator
  */
 @Path("/admin/secrets/generators")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class SecretGeneratorsResource {
   private static final Logger logger = LoggerFactory.getLogger(SecretGeneratorsResource.class);
   private final ObjectMapper mapper;
@@ -58,6 +59,7 @@ public class SecretGeneratorsResource {
   /**
    * Generate Secrets from a single generator request
    *
+   * @excludeParams user
    * @param generatorName the name of the generator to use for creating secrets
    *
    * @description Creates Secrets from a single generator request, using the specified generator.
@@ -68,7 +70,7 @@ public class SecretGeneratorsResource {
    */
   @Path("{generatorName}")
   @POST
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
   public List<SanitizedSecret> generate(@Auth User user,
       @PathParam("generatorName") String generatorName, String requestBody) {
     SecretGenerator generator = getGeneratorOrThrow(generatorName);
@@ -87,6 +89,7 @@ public class SecretGeneratorsResource {
   /**
    * Generate Secrets from a batch of generator requests
    *
+   * @excludeParams user
    * @param generatorName the name of the generator to use for creating secrets
    *
    * @description Creates Secrets from a batch of generator requests, using the specified generator.
@@ -97,7 +100,7 @@ public class SecretGeneratorsResource {
    */
   @Path("{generatorName}/batch")
   @POST
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
   public List<SanitizedSecret> batchGenerate(@Auth User user,
       @PathParam("generatorName") String generatorName, String requestBody) {
     SecretGenerator generator = getGeneratorOrThrow(generatorName);

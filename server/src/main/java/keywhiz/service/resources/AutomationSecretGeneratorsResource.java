@@ -29,11 +29,12 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.generators.SecretGenerator;
 import keywhiz.service.exceptions.UnprocessableEntityException;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName secrets-generator-automation
@@ -41,7 +42,7 @@ import keywhiz.service.exceptions.UnprocessableEntityException;
  * @resourceDescription Create secrets with a generator
  */
 @Path("/automation/secrets/generators")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class AutomationSecretGeneratorsResource {
   private final ObjectMapper mapper;
   private final Map<String, SecretGenerator> generatorMap;
@@ -55,6 +56,7 @@ public class AutomationSecretGeneratorsResource {
   /**
    * Generate Secrets from a single generator request
    *
+   * @excludeParams client
    * @param generatorName the name of the generator to use for creating secrets
    *
    * @description Creates Secrets from a single generator request, using the specified generator
@@ -64,7 +66,7 @@ public class AutomationSecretGeneratorsResource {
    */
   @Path("{generatorName}")
   @POST
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
   public List<SanitizedSecret> generate(@Auth AutomationClient client,
       @PathParam("generatorName") String generatorName, String requestBody) {
     SecretGenerator generator = getGeneratorOrThrow(generatorName);
@@ -82,6 +84,7 @@ public class AutomationSecretGeneratorsResource {
   /**
    * Generate Secrets from a batch of generator requests
    *
+   * @excludeParams client
    * @param generatorName the name of the generator to use for creating secrets
    *
    * @description Creates Secrets from a batch of generator requests, using the specified generator
@@ -91,7 +94,7 @@ public class AutomationSecretGeneratorsResource {
    */
   @Path("{generatorName}/batch")
   @POST
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
   public List<SanitizedSecret> batchGenerate(@Auth AutomationClient client,
       @PathParam("generatorName") String generatorName, String requestBody) {
     SecretGenerator generator = getGeneratorOrThrow(generatorName);

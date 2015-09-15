@@ -20,10 +20,11 @@ import io.dropwizard.auth.Auth;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import keywhiz.auth.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName me
@@ -37,11 +38,12 @@ public class SessionMeResource {
   /**
    * Retrieve own user information
    *
+   * @excludeParams user
    * @description Returns JSON information about the current Keywhiz user
    * @responseMessage 200 Found and retrieved User information
    */
   @GET
-  @Produces(MediaType.APPLICATION_JSON)
+  @Produces(APPLICATION_JSON)
   public User getInformation(@Auth User user) {
     logger.info("User '{}' accessing me.", user);
     return user;

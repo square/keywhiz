@@ -24,11 +24,12 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName enroll-clients-automation
@@ -36,7 +37,7 @@ import keywhiz.service.daos.AclDAO.AclDAOFactory;
  * @resourceDescription Assign or unassign clients to groups
  */
 @Path("/automation/clients/{clientId}/groups/{groupId}")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class AutomationEnrollClientGroupResource {
   private final AclDAO aclDAO;
 
@@ -47,6 +48,7 @@ public class AutomationEnrollClientGroupResource {
   /**
    * Enroll Client in Group
    *
+   * @excludeParams automationClient
    * @param clientId the ID of the Client to assign
    * @param groupId the ID of the Group to be assigned to
    *
@@ -72,6 +74,7 @@ public class AutomationEnrollClientGroupResource {
   /**
    * Remove Client from Group
    *
+   * @excludeParams automationClient
    * @param clientId the ID of the Client to unassign
    * @param groupId the ID of the Group to be removed from
    *

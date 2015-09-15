@@ -33,7 +33,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.api.CreateGroupRequest;
 import keywhiz.api.GroupDetailResponse;
@@ -50,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName groups-automation
@@ -58,7 +58,7 @@ import static java.util.stream.Collectors.toList;
  * @resourceDescription Create and retrieve groups
  */
 @Path("/automation/groups")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class AutomationGroupResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationGroupResource.class);
 
@@ -78,6 +78,7 @@ public class AutomationGroupResource {
   /**
    * Retrieve Group by ID
    *
+   * @excludeParams automationClient
    * @param groupId the ID of the group to retrieve
    *
    * @description Returns a single Group if found
@@ -100,6 +101,7 @@ public class AutomationGroupResource {
   /**
    * Retrieve Group by a specified name, or all Groups if no name given
    *
+   * @excludeParams automationClient
    * @optionalParams name
    * @param name the name of the Group to retrieve, if provided
    *
@@ -108,7 +110,9 @@ public class AutomationGroupResource {
    * @responseMessage 404 Group with given name not found (if name provided)
    */
   @GET
-  public Response getGroupByName(@QueryParam("name") Optional<String> name) {
+  public Response getGroupByName(
+      @Auth AutomationClient automationClient,
+      @QueryParam("name") Optional<String> name) {
     if (name.isPresent()) {
       Group group = groupDAO.getGroup(name.get()).orElseThrow(NotFoundException::new);
 
@@ -132,6 +136,7 @@ public class AutomationGroupResource {
   /**
    * Create Group
    *
+   * @excludeParams automationClient
    * @param groupRequest the JSON group request used to formulate the Group
    *
    * @description Creates a Group with the name from a valid group request
@@ -139,7 +144,7 @@ public class AutomationGroupResource {
    * @responseMessage 409 Group with given name already exists
    */
   @POST
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
   public Group createGroup(
       @Auth AutomationClient automationClient,
       @Valid CreateGroupRequest groupRequest) {
@@ -158,6 +163,7 @@ public class AutomationGroupResource {
   /**
    * Deletes a group
    *
+   * @excludeParams automationClient
    * @param groupId the ID of the group to delete
    *
    * @description Deletes a single group by id
@@ -166,7 +172,8 @@ public class AutomationGroupResource {
    */
   @DELETE
   @Path("{groupId}")
-  public Response deleteGroup(@Auth AutomationClient automationClient,
+  public Response deleteGroup(
+      @Auth AutomationClient automationClient,
       @PathParam("groupId") LongParam groupId) {
     Group group = groupDAO.getGroupById(groupId.get()).orElseThrow(NotFoundException::new);
     groupDAO.deleteGroup(group);

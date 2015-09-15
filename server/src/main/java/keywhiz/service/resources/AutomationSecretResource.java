@@ -32,7 +32,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import keywhiz.api.AutomationSecretResponse;
 import keywhiz.api.CreateSecretRequest;
@@ -52,6 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * @parentEndpointName secrets-automation
@@ -60,7 +60,7 @@ import static java.lang.String.format;
  * @resourceDescription Create, retrieve, and remove secrets
  */
 @Path("/automation/secrets")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(APPLICATION_JSON)
 public class AutomationSecretResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationSecretResource.class);
   private final SecretController secretController;
@@ -84,6 +84,7 @@ public class AutomationSecretResource {
   /**
    * Create secret
    *
+   * @excludeParams automationClient
    * @param request the JSON secret request used to formulate the secret
    *
    * @description Creates a secret with the name, content, and metadata from a valid secret request
@@ -91,7 +92,7 @@ public class AutomationSecretResource {
    * @responseMessage 409 Secret with given name already exists
    */
   @POST
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
   public AutomationSecretResponse createSecret(
       @Auth AutomationClient automationClient,
       @Valid CreateSecretRequest request) {
@@ -128,6 +129,7 @@ public class AutomationSecretResource {
    * Retrieve secret by a specified name, or all secrets if no name given
    * Note that retrieving all secrets could be an expensive query
    *
+   * @excludeParams automationClient
    * @optionalParams name
    * @param name the name of the secret to retrieve, if provided
    *
@@ -171,6 +173,7 @@ public class AutomationSecretResource {
   /**
    * Retrieve secret by ID
    *
+   * @excludeParams automationClient
    * @param secretId the ID of the secret to retrieve
    *
    * @description Returns a single secret if found
@@ -179,7 +182,8 @@ public class AutomationSecretResource {
    */
   @Path("{secretId}")
   @GET
-  public AutomationSecretResponse readSecretById(@Auth AutomationClient automationClient,
+  public AutomationSecretResponse readSecretById(
+      @Auth AutomationClient automationClient,
       @PathParam("secretId") LongParam secretId) {
 
     List<Secret> secrets = secretController.getSecretsById(secretId.get());
@@ -197,6 +201,7 @@ public class AutomationSecretResource {
   /**
    * Deletes all versions of a secret series
    *
+   * @excludeParams automationClient
    * @param secretName the name of the secret series to delete
    *
    * @description Deletes all versions of a secret series.  This will delete a single secret ID.
@@ -205,7 +210,8 @@ public class AutomationSecretResource {
    */
   @Path("{secretName}")
   @DELETE
-  public Response deleteSecretSeries(@Auth AutomationClient automationClient,
+  public Response deleteSecretSeries(
+      @Auth AutomationClient automationClient,
       @PathParam("secretName") String secretName) {
 
     secretSeriesDAO.getSecretSeriesByName(secretName)
