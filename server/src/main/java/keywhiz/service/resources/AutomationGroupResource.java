@@ -172,7 +172,8 @@ public class AutomationGroupResource {
    */
   @DELETE
   @Path("{groupId}")
-  public Response deleteGroup(@Auth AutomationClient automationClient,
+  public Response deleteGroup(
+      @Auth AutomationClient automationClient,
       @PathParam("groupId") LongParam groupId) {
     Group group = groupDAO.getGroupById(groupId.get()).orElseThrow(NotFoundException::new);
     groupDAO.deleteGroup(group);

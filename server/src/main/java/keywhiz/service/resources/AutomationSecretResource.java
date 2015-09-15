@@ -182,7 +182,8 @@ public class AutomationSecretResource {
    */
   @Path("{secretId}")
   @GET
-  public AutomationSecretResponse readSecretById(@Auth AutomationClient automationClient,
+  public AutomationSecretResponse readSecretById(
+      @Auth AutomationClient automationClient,
       @PathParam("secretId") LongParam secretId) {
 
     List<Secret> secrets = secretController.getSecretsById(secretId.get());
@@ -209,7 +210,8 @@ public class AutomationSecretResource {
    */
   @Path("{secretName}")
   @DELETE
-  public Response deleteSecretSeries(@Auth AutomationClient automationClient,
+  public Response deleteSecretSeries(
+      @Auth AutomationClient automationClient,
       @PathParam("secretName") String secretName) {
 
     secretSeriesDAO.getSecretSeriesByName(secretName)
