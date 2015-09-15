@@ -38,6 +38,7 @@ public class SessionMeResource {
   /**
    * Retrieve own user information
    *
+   * @excludeParams user
    * @description Returns JSON information about the current Keywhiz user
    * @responseMessage 200 Found and retrieved User information
    */

@@ -48,6 +48,7 @@ public class AutomationEnrollClientGroupResource {
   /**
    * Enroll Client in Group
    *
+   * @excludeParams automationClient
    * @param clientId the ID of the Client to assign
    * @param groupId the ID of the Group to be assigned to
    *
@@ -73,6 +74,7 @@ public class AutomationEnrollClientGroupResource {
   /**
    * Remove Client from Group
    *
+   * @excludeParams automationClient
    * @param clientId the ID of the Client to unassign
    * @param groupId the ID of the Group to be removed from
    *

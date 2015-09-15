@@ -78,6 +78,7 @@ public class AutomationClientResource {
   /**
    * Retrieve Client by ID
    *
+   * @excludeParams automationClient
    * @param clientId the ID of the Client to retrieve
    *
    * @description Returns a single Client if found
@@ -103,6 +104,7 @@ public class AutomationClientResource {
   /**
    * Retrieve Client by a specified name, or all Clients if no name given
    *
+   * @excludeParams automationClient
    * @optionalParams name
    * @param name the name of the Client to retrieve, if provided
    *
@@ -134,6 +136,7 @@ public class AutomationClientResource {
   /**
    * Create Client
    *
+   * @excludeParams automationClient
    * @param clientRequest the JSON client request used to formulate the Client
    *
    * @description Creates a Client with the name from a valid client request
@@ -162,6 +165,7 @@ public class AutomationClientResource {
   /**
    * Deletes a client
    *
+   * @excludeParams automationClient
    * @param clientId the ID of the client to delete
    *
    * @description Deletes a single client by id

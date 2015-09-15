@@ -82,6 +82,7 @@ public class ClientsResource {
   /**
    * Retrieve Client by a specified name, or all Clients if no name given
    *
+   * @excludeParams user
    * @optionalParams name
    * @param name the name of the Client to retrieve, if provided
    *
@@ -112,6 +113,7 @@ public class ClientsResource {
   /**
    * Create Client
    *
+   * @excludeParams user
    * @param createClientRequest the JSON client request used to formulate the Client
    *
    * @description Creates a Client with the name from a valid client request.
@@ -144,6 +146,7 @@ public class ClientsResource {
   /**
    * Retrieve Client by ID
    *
+   * @excludeParams user
    * @param clientId the ID of the Client to retrieve
    *
    * @description Returns a single Client if found.
@@ -162,6 +165,7 @@ public class ClientsResource {
   /**
    * Delete Client by ID
    *
+   * @excludeParams user
    * @param clientId the ID of the Client to be deleted
    *
    * @description Deletes a single Client if found.

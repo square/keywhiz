@@ -91,6 +91,7 @@ public class SecretsResource {
   /**
    * Retrieve Secret by a specified name and version, or all Secrets name not given
    *
+   * @excludeParams user
    * @optionalParams name
    * @param name the name of the Secret to retrieve, if provided
    * @optionalParams version
@@ -123,6 +124,7 @@ public class SecretsResource {
   /**
    * Retrieve all versions for a Secret name
    *
+   * @excludeParams user
    * @param name the name of the Secret to find all versions for
    *
    * @description Returns a list of all versions for the given secret.
@@ -150,6 +152,7 @@ public class SecretsResource {
   /**
    * Create Secret
    *
+   * @excludeParams user
    * @param request the JSON client request used to formulate the Secret
    *
    * @description Creates a Secret with the name from a valid secret request.
@@ -198,6 +201,7 @@ public class SecretsResource {
   /**
    * Retrieve Secret by ID
    *
+   * @excludeParams user
    * @param secretId the ID of the secret to retrieve
    *
    * @description Returns a single Secret if found.
@@ -217,6 +221,7 @@ public class SecretsResource {
   /**
    * Delete Secret by ID
    *
+   * @excludeParams user
    * @param secretId the ID of the Secret to be deleted
    *
    * @description Deletes a single Secret if found.

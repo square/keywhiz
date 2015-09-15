@@ -59,6 +59,7 @@ public class SecretGeneratorsResource {
   /**
    * Generate Secrets from a single generator request
    *
+   * @excludeParams user
    * @param generatorName the name of the generator to use for creating secrets
    *
    * @description Creates Secrets from a single generator request, using the specified generator.
@@ -88,6 +89,7 @@ public class SecretGeneratorsResource {
   /**
    * Generate Secrets from a batch of generator requests
    *
+   * @excludeParams user
    * @param generatorName the name of the generator to use for creating secrets
    *
    * @description Creates Secrets from a batch of generator requests, using the specified generator.

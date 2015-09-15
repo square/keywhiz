@@ -78,6 +78,7 @@ public class AutomationGroupResource {
   /**
    * Retrieve Group by ID
    *
+   * @excludeParams automationClient
    * @param groupId the ID of the group to retrieve
    *
    * @description Returns a single Group if found
@@ -100,6 +101,7 @@ public class AutomationGroupResource {
   /**
    * Retrieve Group by a specified name, or all Groups if no name given
    *
+   * @excludeParams automationClient
    * @optionalParams name
    * @param name the name of the Group to retrieve, if provided
    *
@@ -132,6 +134,7 @@ public class AutomationGroupResource {
   /**
    * Create Group
    *
+   * @excludeParams automationClient
    * @param groupRequest the JSON group request used to formulate the Group
    *
    * @description Creates a Group with the name from a valid group request
@@ -158,6 +161,7 @@ public class AutomationGroupResource {
   /**
    * Deletes a group
    *
+   * @excludeParams automationClient
    * @param groupId the ID of the group to delete
    *
    * @description Deletes a single group by id

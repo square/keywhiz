@@ -58,6 +58,7 @@ public class MembershipResource {
   /**
    * Allow a Group to access this Secret
    *
+   * @excludeParams user
    * @param secretId ID value of a Secret
    * @param groupId ID value of a Group
    * @return HTTP response
@@ -88,6 +89,7 @@ public class MembershipResource {
   /**
    * Disallow a Group to access this Secret
    *
+   * @excludeParams user
    * @param secretId ID value of a Secret
    * @param groupId ID value of a Group
    * @return HTTP response
@@ -118,6 +120,7 @@ public class MembershipResource {
   /**
    * Enroll a Client into a Group
    *
+   * @excludeParams user
    * @param clientId ID value of a Client
    * @param groupId ID value of a Group
    * @return HTTP response
@@ -147,6 +150,7 @@ public class MembershipResource {
   /**
    * Remove a Client from a Group
    *
+   * @excludeParams user
    * @param clientId ID value of a Client
    * @param groupId ID value of a Group
    * @return HTTP response

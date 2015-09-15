@@ -84,6 +84,7 @@ public class AutomationSecretResource {
   /**
    * Create secret
    *
+   * @excludeParams automationClient
    * @param request the JSON secret request used to formulate the secret
    *
    * @description Creates a secret with the name, content, and metadata from a valid secret request
@@ -128,6 +129,7 @@ public class AutomationSecretResource {
    * Retrieve secret by a specified name, or all secrets if no name given
    * Note that retrieving all secrets could be an expensive query
    *
+   * @excludeParams automationClient
    * @optionalParams name
    * @param name the name of the secret to retrieve, if provided
    *
@@ -171,6 +173,7 @@ public class AutomationSecretResource {
   /**
    * Retrieve secret by ID
    *
+   * @excludeParams automationClient
    * @param secretId the ID of the secret to retrieve
    *
    * @description Returns a single secret if found
@@ -197,6 +200,7 @@ public class AutomationSecretResource {
   /**
    * Deletes all versions of a secret series
    *
+   * @excludeParams automationClient
    * @param secretName the name of the secret series to delete
    *
    * @description Deletes all versions of a secret series.  This will delete a single secret ID.

@@ -80,6 +80,7 @@ public class GroupsResource {
   /**
    * Retrieve Group by a specified name, or all Groups if no name given
    *
+   * @excludeParams user
    * @optionalParams name
    * @param name the name of the Group to retrieve, if provided
    *
@@ -110,6 +111,7 @@ public class GroupsResource {
   /**
    * Create Group
    *
+   * @excludeParams user
    * @param request the JSON client request used to formulate the Group
    *
    * @description Creates a Group with the name from a valid group request.
@@ -138,6 +140,7 @@ public class GroupsResource {
   /**
    * Retrieve Group by ID
    *
+   * @excludeParams user
    * @param groupId the ID of the Group to retrieve
    *
    * @description Returns a single Group if found.
@@ -155,6 +158,7 @@ public class GroupsResource {
   /**
    * Delete Group by ID
    *
+   * @excludeParams user
    * @param groupId the ID of the Group to be deleted
    *
    * @description Deletes a single Group if found.

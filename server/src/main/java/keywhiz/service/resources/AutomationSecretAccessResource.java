@@ -53,6 +53,7 @@ public class AutomationSecretAccessResource {
   /**
    * Assign Secret to Group
    *
+   * @excludeParams automationClient
    * @param secretId the ID of the Secret to assign
    * @param groupId the ID of the Group to be assigned to
    *
@@ -80,6 +81,7 @@ public class AutomationSecretAccessResource {
   /**
    * Remove Secret from Group
    *
+   * @excludeParams automationClient
    * @param secretId the ID of the Secret to unassign
    * @param groupId the ID of the Group to be removed from
    *

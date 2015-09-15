@@ -78,6 +78,7 @@ public class SecretDeliveryResource {
   /**
    * Retrieve Secret by name
    *
+   * @excludeParams client
    * @param secretName the name of the Secret to retrieve
    *
    * @description Returns a single Secret if found

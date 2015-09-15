@@ -56,6 +56,7 @@ public class SecretsDeliveryResource {
   /**
    * Retrieve Secret by name
    *
+   * @excludeParams client
    * @description Returns all Secrets for the current Client
    */
   @GET
