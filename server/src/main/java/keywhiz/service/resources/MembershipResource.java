@@ -61,7 +61,6 @@ public class MembershipResource {
    * @excludeParams user
    * @param secretId ID value of a Secret
    * @param groupId ID value of a Group
-   * @return HTTP response
    *
    * @description Assigns the Secret specified by the secretID to the Group specified by the groupID
    * Used by Keywhiz CLI and the web ui.
@@ -92,7 +91,6 @@ public class MembershipResource {
    * @excludeParams user
    * @param secretId ID value of a Secret
    * @param groupId ID value of a Group
-   * @return HTTP response
    *
    * @description Unassigns the Secret specified by the secretID from the Group specified by the groupID
    * Used by Keywhiz CLI and the web ui.
@@ -123,7 +121,6 @@ public class MembershipResource {
    * @excludeParams user
    * @param clientId ID value of a Client
    * @param groupId ID value of a Group
-   * @return HTTP response
    *
    * @description Assigns the Client specified by the clientID to the Group specified by the groupID
    * @responseMessage 200 Successfully enrolled Client in Group
@@ -153,7 +150,6 @@ public class MembershipResource {
    * @excludeParams user
    * @param clientId ID value of a Client
    * @param groupId ID value of a Group
-   * @return HTTP response
    *
    * @description Unassigns the Client specified by the clientID from the Group specified by the groupID
    * @responseMessage 200 Successfully removed Client from Group
