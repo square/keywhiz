@@ -52,8 +52,8 @@ logging:
 environment: development
 
 database:
-  driverClass: org.postgresql.Driver
-  url: jdbc:postgresql://localhost/keywhizdb_development
+  driverClass: com.impossibl.postgres.jdbc.PGDriver
+  url: jdbc:pgsql://localhost/keywhizdb_development
   properties:
     charSet: UTF-8
   initialSize: 10
@@ -63,8 +63,8 @@ database:
   # password:
 
 readonlyDatabase:
-  driverClass: org.postgresql.Driver
-  url: jdbc:postgresql://localhost/keywhizdb_development
+  driverClass: com.impossibl.postgres.jdbc.PGDriver
+  url: jdbc:pgsql://localhost/keywhizdb_development
   properties:
     charSet: UTF-8
   readOnlyByDefault: true

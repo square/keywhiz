@@ -42,7 +42,7 @@
     <powermock.version>1.6.2</powermock.version>
     <slf4j.version>1.7.12</slf4j.version>
     <findbugs.version>3.0.0</findbugs.version>
-    <postgres.version>9.1-901-1.jdbc4</postgres.version>
+    <pgjdbc-ng.version>0.5</pgjdbc-ng.version>
     <mysql.version>5.1.35</mysql.version>
   </properties>
 
@@ -295,9 +295,9 @@
         <version>${slf4j.version}</version>
       </dependency>
       <dependency>
-        <groupId>postgresql</groupId>
-        <artifactId>postgresql</artifactId>
-        <version>${postgres.version}</version>
+        <groupId>com.impossibl.pgjdbc-ng</groupId>
+        <artifactId>pgjdbc-ng</artifactId>
+        <version>${pgjdbc-ng.version}</version>
       </dependency>
       <dependency>
         <groupId>com.h2database</groupId>
@@ -562,9 +562,9 @@ Place the jars in this directory: `/usr/libexec/java_home -v
           <version>1.5</version>
           <dependencies>
             <dependency>
-              <groupId>postgresql</groupId>
-              <artifactId>postgresql</artifactId>
-              <version>${postgres.version}</version>
+              <groupId>com.impossibl.pgjdbc-ng</groupId>
+              <artifactId>pgjdbc-ng</artifactId>
+              <version>${pgjdbc-ng.version}</version>
             </dependency>
             <dependency>
               <groupId>mysql</groupId>
