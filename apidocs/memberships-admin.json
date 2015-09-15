@@ -10,11 +10,6 @@
       "nickname" : "enrollClient",
       "type" : "Response",
       "parameters" : [ {
-        "type" : "User",
-        "paramType" : "body",
-        "name" : "user",
-        "required" : true
-      }, {
         "type" : "LongParam",
         "description" : "ID value of a Client",
         "paramType" : "path",
@@ -72,11 +67,6 @@
       "nickname" : "allowAccess",
       "type" : "Response",
       "parameters" : [ {
-        "type" : "User",
-        "paramType" : "body",
-        "name" : "user",
-        "required" : true
-      }, {
         "type" : "LongParam",
         "description" : "ID value of a Secret",
         "paramType" : "path",
@@ -132,20 +122,12 @@
     "LongParam" : {
       "id" : "LongParam",
       "properties" : {
+        "value" : {
+          "type" : "T"
+        },
         "errorStatus" : {
           "type" : "string",
           "enum" : [ "OK", "CREATED", "ACCEPTED", "NO_CONTENT", "RESET_CONTENT", "PARTIAL_CONTENT", "MOVED_PERMANENTLY", "FOUND", "SEE_OTHER", "NOT_MODIFIED", "USE_PROXY", "TEMPORARY_REDIRECT", "BAD_REQUEST", "UNAUTHORIZED", "PAYMENT_REQUIRED", "FORBIDDEN", "NOT_FOUND", "METHOD_NOT_ALLOWED", "NOT_ACCEPTABLE", "PROXY_AUTHENTICATION_REQUIRED", "REQUEST_TIMEOUT", "CONFLICT", "GONE", "LENGTH_REQUIRED", "PRECONDITION_FAILED", "REQUEST_ENTITY_TOO_LARGE", "REQUEST_URI_TOO_LONG", "UNSUPPORTED_MEDIA_TYPE", "REQUESTED_RANGE_NOT_SATISFIABLE", "EXPECTATION_FAILED", "INTERNAL_SERVER_ERROR", "NOT_IMPLEMENTED", "BAD_GATEWAY", "SERVICE_UNAVAILABLE", "GATEWAY_TIMEOUT", "HTTP_VERSION_NOT_SUPPORTED" ]
-        },
-        "value" : {
-          "type" : "T"
-        }
-      }
-    },
-    "User" : {
-      "id" : "User",
-      "properties" : {
-        "name" : {
-          "type" : "string"
         }
       }
     }

@@ -28,5 +28,11 @@
       "consumes" : [ "application/json" ],
       "produces" : [ "application/json" ]
     } ]
-  } ]
+  } ],
+  "models" : {
+    "LoginRequest" : {
+      "id" : "LoginRequest",
+      "properties" : { }
+    }
+  }
 }

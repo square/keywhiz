@@ -9,12 +9,6 @@
       "method" : "POST",
       "nickname" : "logout",
       "type" : "Response",
-      "parameters" : [ {
-        "type" : "Cookie",
-        "paramType" : "body",
-        "name" : "sessionCookie",
-        "required" : true
-      } ],
       "summary" : "Logout and remove any session cookies",
       "notes" : "Log out and remove any session cookies",
       "responseMessages" : [ {
