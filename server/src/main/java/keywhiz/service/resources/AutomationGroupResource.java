@@ -110,7 +110,9 @@ public class AutomationGroupResource {
    * @responseMessage 404 Group with given name not found (if name provided)
    */
   @GET
-  public Response getGroupByName(@QueryParam("name") Optional<String> name) {
+  public Response getGroupByName(
+      @Auth AutomationClient automationClient,
+      @QueryParam("name") Optional<String> name) {
     if (name.isPresent()) {
       Group group = groupDAO.getGroup(name.get()).orElseThrow(NotFoundException::new);
 

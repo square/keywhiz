@@ -75,7 +75,7 @@ public class AutomationGroupResourceTest {
 
     GroupDetailResponse expectedResponse = GroupDetailResponse.fromGroup(group,
         ImmutableList.of(), ImmutableList.of());
-    Response response = resource.getGroupByName(Optional.of("testGroup"));
+    Response response = resource.getGroupByName(automation, Optional.of("testGroup"));
     assertThat(response.getEntity()).isEqualTo(expectedResponse);
   }
 
@@ -95,7 +95,7 @@ public class AutomationGroupResourceTest {
 
     GroupDetailResponse expectedResponse = GroupDetailResponse.fromGroup(group,
         ImmutableList.of(firstGroupSecret, secondGroupSecret), ImmutableList.of(groupClient));
-    Response response = resource.getGroupByName(Optional.of("testGroup"));
+    Response response = resource.getGroupByName(automation, Optional.of("testGroup"));
     assertThat(response.getEntity()).isEqualTo(expectedResponse);
   }
 
