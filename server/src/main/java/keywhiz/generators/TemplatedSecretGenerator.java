@@ -69,7 +69,7 @@ public class TemplatedSecretGenerator extends SecretGenerator<TemplatedSecretsGe
 
     SecretController.SecretBuilder builder =
         secretController.builder(secretName, secretContent, creatorName)
-        .withDescription(request.getDescription().orElse(""))
+        .withDescription(request.getDescription())
         .withMetadata(request.getMetadata())
         .withType("templated")
         .withGenerationOptions(ImmutableMap.of("template", request.getTemplate()));

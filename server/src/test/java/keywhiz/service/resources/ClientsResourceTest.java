@@ -73,7 +73,7 @@ public class ClientsResourceTest {
 
   @Test public void createsClient() {
     CreateClientRequest request = new CreateClientRequest("new-client-name");
-    when(clientDAO.createClient("new-client-name", "user", Optional.empty())).thenReturn(42L);
+    when(clientDAO.createClient("new-client-name", "user", "")).thenReturn(42L);
     when(clientDAO.getClientById(42L)).thenReturn(Optional.of(client));
     when(aclDAO.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of());
 

@@ -48,6 +48,7 @@ import keywhiz.service.exceptions.ConflictException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Strings.nullToEmpty;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -156,7 +157,7 @@ public class AutomationGroupResource {
     }
 
     long id = groupDAO.createGroup(groupRequest.name, automationClient.getName(),
-        Optional.ofNullable(groupRequest.description));
+        nullToEmpty(groupRequest.description));
     return groupDAO.getGroupById(id).get();
   }
 

@@ -19,7 +19,6 @@ package keywhiz.service.daos;
 import com.google.inject.Guice;
 import com.google.inject.testing.fieldbinder.Bind;
 import com.google.inject.testing.fieldbinder.BoundFieldModule;
-import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import keywhiz.TestDBRule;
@@ -65,7 +64,7 @@ public class ClientDAOTest {
 
   @Test public void createClient() {
     int before = tableSize();
-    clientDAO.createClient("newClient", "creator", Optional.empty());
+    clientDAO.createClient("newClient", "creator", "");
     Client newClient = clientDAO.getClient("newClient").orElseThrow(RuntimeException::new);
 
     assertThat(tableSize()).isEqualTo(before + 1);
@@ -73,7 +72,7 @@ public class ClientDAOTest {
   }
 
   @Test public void createClientReturnsId() {
-    long id = clientDAO.createClient("newClientWithSameId", "creator2", Optional.empty());
+    long id = clientDAO.createClient("newClientWithSameId", "creator2", "");
     Client clientById = clientDAO.getClient("newClientWithSameId")
         .orElseThrow(RuntimeException::new);
     assertThat(clientById.getId()).isEqualTo(id);

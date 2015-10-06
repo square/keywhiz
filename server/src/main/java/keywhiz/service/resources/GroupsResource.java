@@ -52,6 +52,7 @@ import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Strings.nullToEmpty;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
@@ -129,7 +130,7 @@ public class GroupsResource {
     }
 
     long groupId = groupDAO.createGroup(request.name, user.getName(),
-        Optional.ofNullable(request.description));
+        nullToEmpty(request.description));
     URI uri = UriBuilder.fromResource(GroupsResource.class).build(groupId);
     return Response
         .created(uri)

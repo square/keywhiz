@@ -66,6 +66,7 @@ public class AutomationSecretResourceTest {
     resource = new AutomationSecretResource(secretController, secretSeriesDAO, aclDAO);
 
     when(secretController.builder(anyString(), anyString(), anyString())).thenReturn(secretBuilder);
+    when(secretBuilder.withDescription(anyString())).thenReturn(secretBuilder);
   }
 
   @Test

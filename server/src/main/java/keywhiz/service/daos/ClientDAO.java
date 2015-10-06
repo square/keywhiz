@@ -41,7 +41,7 @@ public class ClientDAO {
     this.clientMapper = clientMapper;
   }
 
-  public long createClient(String name, String user, Optional<String> description) {
+  public long createClient(String name, String user, String description) {
     ClientsRecord r = dslContext.newRecord(CLIENTS);
 
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
@@ -51,7 +51,7 @@ public class ClientDAO {
     r.setCreatedat(now);
     r.setUpdatedby(user);
     r.setUpdatedat(now);
-    r.setDescription(description.orElse(null));
+    r.setDescription(description);
     r.setEnabled(true);
     r.setAutomationallowed(false);
     r.store();

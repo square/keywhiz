@@ -19,9 +19,10 @@ package keywhiz.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import org.hibernate.validator.constraints.NotEmpty;
+
+import static com.google.common.base.Strings.nullToEmpty;
 
 /**
  * Request message to create a templated secret.
@@ -33,7 +34,6 @@ public class TemplatedSecretsGeneratorRequest {
   @NotEmpty
   private final String template;
 
-  @Nullable
   private final String description;
 
   private final boolean withVersion;
@@ -49,7 +49,7 @@ public class TemplatedSecretsGeneratorRequest {
       @JsonProperty("metadata") @Nullable ImmutableMap<String, String> metadata) {
     this.template = template;
     this.name = name;
-    this.description = description;
+    this.description = nullToEmpty(description);
     this.withVersion = withVersion;
     this.metadata = metadata;
   }
@@ -81,8 +81,8 @@ public class TemplatedSecretsGeneratorRequest {
     return template;
   }
 
-  public Optional<String> getDescription() {
-    return Optional.ofNullable(description);
+  public String getDescription() {
+    return description;
   }
 
   public boolean isWithVersion() {
