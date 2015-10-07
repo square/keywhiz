@@ -81,7 +81,7 @@ public class AutomationClientResourceTest {
     CreateClientRequest request = new CreateClientRequest("client");
 
     when(clientDAO.getClient("client")).thenReturn(Optional.empty());
-    when(clientDAO.createClient("client", automation.getName(), Optional.empty())).thenReturn(543L);
+    when(clientDAO.createClient("client", automation.getName(), "")).thenReturn(543L);
     when(clientDAO.getClientById(543L)).thenReturn(Optional.of(client));
     when(aclDAO.getGroupsFor(client)).thenReturn(ImmutableSet.of());
 
@@ -98,7 +98,7 @@ public class AutomationClientResourceTest {
     CreateClientRequest request = new CreateClientRequest("client");
 
     when(clientDAO.getClient("client")).thenReturn(Optional.empty());
-    when(clientDAO.createClient("client", automation.getName(), Optional.empty())).thenReturn(543L);
+    when(clientDAO.createClient("client", automation.getName(), "")).thenReturn(543L);
     when(clientDAO.getClientById(543L)).thenReturn(Optional.of(client));
 
     ClientDetailResponse response = ClientDetailResponse.fromClient(client, ImmutableList.of(),

@@ -20,7 +20,6 @@ import com.google.inject.Guice;
 import com.google.inject.testing.fieldbinder.Bind;
 import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.util.List;
-import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.TestDBRule;
 import keywhiz.api.model.Group;
@@ -66,7 +65,7 @@ public class GroupDAOTest {
 
   @Test public void createGroup() {
     int before = tableSize();
-    groupDAO.createGroup("newGroup", "creator3", Optional.empty());
+    groupDAO.createGroup("newGroup", "creator3", "");
     assertThat(tableSize()).isEqualTo(before + 1);
 
     List<String> names = groupDAO.getGroups()
@@ -107,7 +106,7 @@ public class GroupDAOTest {
 
   @Test(expected = DataAccessException.class)
   public void willNotCreateDuplicateGroup() throws Exception {
-    groupDAO.createGroup("group1", "creator1", Optional.empty());
+    groupDAO.createGroup("group1", "creator1", "");
   }
 
   private int tableSize() {

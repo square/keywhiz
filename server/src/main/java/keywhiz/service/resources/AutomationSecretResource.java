@@ -50,6 +50,7 @@ import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Strings.nullToEmpty;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -98,11 +99,8 @@ public class AutomationSecretResource {
       @Valid CreateSecretRequest request) {
 
     SecretController.SecretBuilder builder = secretController.builder(request.name, request.content,
-        automationClient.getName());
-
-    if (request.description != null) {
-      builder.withDescription(request.description);
-    }
+        automationClient.getName())
+        .withDescription(nullToEmpty(request.description));
 
     if (request.withVersion) {
       builder.withVersion(VersionGenerator.now().toHex());

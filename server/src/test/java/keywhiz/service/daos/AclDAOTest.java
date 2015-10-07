@@ -84,19 +84,19 @@ public class AclDAOTest {
     jooqContext.delete(SECRETS).execute();
     jooqContext.delete(SECRETS_CONTENT).execute();
 
-    long id = clientDAO.createClient("client1", "creator", Optional.empty());
+    long id = clientDAO.createClient("client1", "creator", "");
     client1 = clientDAO.getClientById(id).get();
 
-    id = clientDAO.createClient("client2", "creator", Optional.empty());
+    id = clientDAO.createClient("client2", "creator", "");
     client2 = clientDAO.getClientById(id).get();
 
-    id = groupDAO.createGroup("group1", "creator", Optional.empty());
+    id = groupDAO.createGroup("group1", "creator", "");
     group1 = groupDAO.getGroupById(id).get();
 
-    id = groupDAO.createGroup("group2", "creator", Optional.empty());
+    id = groupDAO.createGroup("group2", "creator", "");
     group2 = groupDAO.getGroupById(id).get();
 
-    id = groupDAO.createGroup("group3", "creator", Optional.empty());
+    id = groupDAO.createGroup("group3", "creator", "");
     group3 = groupDAO.getGroupById(id).get();
 
     SecretFixtures secretFixtures = SecretFixtures.using(secretDAOFactory.readwrite());

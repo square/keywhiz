@@ -41,7 +41,7 @@ public class GroupDAO {
     this.groupMapper = groupMapper;
   }
 
-  public long createGroup(String name, String creator, Optional<String> description) {
+  public long createGroup(String name, String creator, String description) {
     GroupsRecord r = dslContext.newRecord(GROUPS);
 
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
@@ -51,7 +51,7 @@ public class GroupDAO {
     r.setCreatedat(now);
     r.setUpdatedby(creator);
     r.setUpdatedat(now);
-    r.setDescription(description.orElse(null));
+    r.setDescription(description);
     r.store();
 
     return r.getId();

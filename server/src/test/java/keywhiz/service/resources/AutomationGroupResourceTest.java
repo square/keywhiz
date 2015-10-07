@@ -105,7 +105,7 @@ public class AutomationGroupResourceTest {
     CreateGroupRequest request = new CreateGroupRequest("testGroup", null);
 
     when(groupDAO.getGroup("testGroup")).thenReturn(Optional.empty());
-    when(groupDAO.createGroup(group.getName(), automation.getName(), Optional.empty())).thenReturn(500L);
+    when(groupDAO.createGroup(group.getName(), automation.getName(), "")).thenReturn(500L);
     when(groupDAO.getGroupById(500L)).thenReturn(Optional.of(group));
     Group responseGroup = resource.createGroup(automation, request);
 

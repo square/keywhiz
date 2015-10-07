@@ -70,7 +70,7 @@ public class GroupsResourceTest {
   @Test public void createsGroup() {
     CreateGroupRequest request = new CreateGroupRequest("newGroup", "description");
     when(groupDAO.getGroup("newGroup")).thenReturn(Optional.empty());
-    when(groupDAO.createGroup("newGroup", "user", Optional.of("description"))).thenReturn(55L);
+    when(groupDAO.createGroup("newGroup", "user", "description")).thenReturn(55L);
     when(groupDAO.getGroupById(55L)).thenReturn(Optional.of(group));
     when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of());
 
