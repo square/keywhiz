@@ -16,6 +16,7 @@
 
 package keywhiz.service.daos;
 
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import org.jooq.RecordMapper;
@@ -32,9 +33,9 @@ class ClientMapper implements RecordMapper<ClientsRecord, Client> {
         r.getId(),
         r.getName(),
         r.getDescription(),
-        r.getCreatedat(),
+        new ApiDate(r.getCreatedat()),
         r.getCreatedby(),
-        r.getUpdatedat(),
+        new ApiDate(r.getUpdatedat()),
         r.getUpdatedby(),
         r.getEnabled(),
         r.getAutomationallowed());

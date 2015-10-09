@@ -22,6 +22,7 @@ import com.squareup.okhttp.Response;
 import java.time.OffsetDateTime;
 import keywhiz.IntegrationTestRule;
 import keywhiz.TestClients;
+import keywhiz.api.ApiDate;
 import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
@@ -54,25 +55,25 @@ public class SecretsDeliveryResourceIntegrationTest {
     generalPassword = SecretDeliveryResponse.fromSanitizedSecret(
         SanitizedSecret.fromSecret(
             new Secret(0, "General_Password", null, null, "YXNkZGFz",
-                OffsetDateTime.parse("2011-09-29T15:46:00.312Z"), null,
-                OffsetDateTime.parse("2011-09-29T15:46:00.312Z"), null, null, null, null)));
+                ApiDate.parse("2011-09-29T15:46:00.312Z"), null,
+                ApiDate.parse("2011-09-29T15:46:00.312Z"), null, null, null, null)));
     databasePassword = SecretDeliveryResponse.fromSanitizedSecret(
         SanitizedSecret.fromSecret(
             new Secret(1, "Database_Password", null, null, "MTIzNDU=",
-                OffsetDateTime.parse("2011-09-29T15:46:00.232Z"), null,
-                OffsetDateTime.parse("2011-09-29T15:46:00.232Z"), null, null, null, null)));
+                ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
+                ApiDate.parse("2011-09-29T15:46:00.232Z"), null, null, null, null)));
     nobodyPgPassPassword = SecretDeliveryResponse.fromSanitizedSecret(
         SanitizedSecret.fromSecret(
             new Secret(2, "Nobody_PgPass", null, null,
                 "c29tZWhvc3Quc29tZXBsYWNlLmNvbTo1NDMyOnNvbWVkYXRhYmFzZTptaXN0ZXJhd2Vzb21lOmhlbGwwTWNGbHkK",
-                OffsetDateTime.parse("2011-09-29T15:46:00.232Z"), null,
-                OffsetDateTime.parse("2011-09-29T15:46:00.232Z"), null,
+                ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
+                ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
                 ImmutableMap.of("owner", "nobody", "mode", "0400"), null, null)));
     nonExistentOwnerPass = SecretDeliveryResponse.fromSanitizedSecret(
         SanitizedSecret.fromSecret(
             new Secret(3, "NonexistentOwner_Pass", null, null, "MTIzNDU=",
-                OffsetDateTime.parse("2011-09-29T15:46:00.232Z"), null,
-                OffsetDateTime.parse("2011-09-29T15:46:00.232Z"), null,
+                ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
+                ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
                 ImmutableMap.of("owner", "NonExistent", "mode", "0400"), null, null)));
   }
 

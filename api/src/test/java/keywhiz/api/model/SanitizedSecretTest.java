@@ -18,6 +18,8 @@ package keywhiz.api.model;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
+
+import keywhiz.api.ApiDate;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
@@ -27,17 +29,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SanitizedSecretTest {
   @Test public void serializesCorrectly() throws Exception {
     SanitizedSecret sanitizedSecret = SanitizedSecret.of(
-        767,
-        "trapdoor",
-        "0be6a2fc049ee349",
-        "v1",
-        OffsetDateTime.parse("2013-03-28T21:42:42.573Z"),
-        "keywhizAdmin",
-        OffsetDateTime.parse("2013-03-28T21:42:42.573Z"),
-        "keywhizAdmin",
-        ImmutableMap.of("owner", "the king"),
-        "password",
-        ImmutableMap.of("favoriteFood", "PB&J sandwich"));
+      767,
+      "trapdoor",
+      "0be6a2fc049ee349",
+      "v1",
+      ApiDate.parse("2013-03-28T21:42:42.573Z"),
+      "keywhizAdmin",
+      ApiDate.parse("2013-03-28T21:42:42.573Z"),
+      "keywhizAdmin",
+      ImmutableMap.of("owner", "the king"),
+      "password",
+      ImmutableMap.of("favoriteFood", "PB&J sandwich"));
 
     assertThat(asJson(sanitizedSecret))
         .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));

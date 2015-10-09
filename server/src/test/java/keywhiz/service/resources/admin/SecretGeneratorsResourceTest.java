@@ -21,6 +21,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.List;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.auth.User;
@@ -37,7 +39,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 public class SecretGeneratorsResourceTest {
-  private static final OffsetDateTime NOW = OffsetDateTime.now();
+  private static final ApiDate NOW = ApiDate.now();
 
   private static final User user = User.named("creator");
   private static final ImmutableMap<String, String> emptyMap = ImmutableMap.of();

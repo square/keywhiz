@@ -25,6 +25,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import javax.inject.Inject;
 import keywhiz.TestDBRule;
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
@@ -54,7 +55,7 @@ public class SecretDAOTest {
   @Inject SecretDAOFactory secretDAOFactory;
 
   final static ContentCryptographer cryptographer = CryptoFixtures.contentCryptographer();
-  final static OffsetDateTime date = OffsetDateTime.now();
+  final static ApiDate date = ApiDate.now();
   final static String version = VersionGenerator.now().toHex();
   ImmutableMap<String, String> emptyMetadata = ImmutableMap.of();
 
@@ -81,7 +82,7 @@ public class SecretDAOTest {
         .set(SECRETS.ID, Math.toIntExact(secret1.series().id()))
         .set(SECRETS.NAME, secret1.series().name())
         .set(SECRETS.DESCRIPTION, secret1.series().description())
-        .set(SECRETS.CREATEDAT, secret1.series().createdAt())
+        .set(SECRETS.CREATEDAT, secret1.series().createdAt().offsetDateTime)
         .set(SECRETS.CREATEDBY, secret1.series().createdBy())
         .set(SECRETS.UPDATEDBY, secret1.series().updatedBy())
         .execute();
@@ -90,7 +91,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.SECRETID, Math.toIntExact(secret1.series().id()))
         .set(SECRETS_CONTENT.VERSION, secret1.content().version().orElse(null))
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret1.content().encryptedContent())
-        .set(SECRETS_CONTENT.CREATEDAT, secret1.content().createdAt())
+        .set(SECRETS_CONTENT.CREATEDAT, secret1.content().createdAt().offsetDateTime)
         .set(SECRETS_CONTENT.CREATEDBY, secret1.content().createdBy())
         .set(SECRETS_CONTENT.UPDATEDBY, secret1.content().updatedBy())
         .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret1.content().metadata()))
@@ -100,7 +101,7 @@ public class SecretDAOTest {
         .set(SECRETS.ID, Math.toIntExact(secret2.series().id()))
         .set(SECRETS.NAME, secret2.series().name())
         .set(SECRETS.DESCRIPTION, secret2.series().description())
-        .set(SECRETS.CREATEDAT, secret2.series().createdAt())
+        .set(SECRETS.CREATEDAT, secret2.series().createdAt().offsetDateTime)
         .set(SECRETS.CREATEDBY, secret2.series().createdBy())
         .set(SECRETS.UPDATEDBY, secret2.series().updatedBy())
         .execute();
@@ -109,7 +110,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.SECRETID, Math.toIntExact(secret2.series().id()))
         .set(SECRETS_CONTENT.VERSION, secret2.content().version().orElse(null))
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret2.content().encryptedContent())
-        .set(SECRETS_CONTENT.CREATEDAT, secret2.content().createdAt())
+        .set(SECRETS_CONTENT.CREATEDAT, secret2.content().createdAt().offsetDateTime)
         .set(SECRETS_CONTENT.CREATEDBY, secret2.content().createdBy())
         .set(SECRETS_CONTENT.UPDATEDBY, secret2.content().updatedBy())
         .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret2.content().metadata()))

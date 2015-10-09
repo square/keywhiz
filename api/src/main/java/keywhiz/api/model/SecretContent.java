@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
+import keywhiz.api.ApiDate;
+
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -33,8 +35,8 @@ import static com.google.common.base.Strings.nullToEmpty;
 @AutoValue
 public abstract class SecretContent {
   public static SecretContent of(long id, long secretSeriesId, String encryptedContent,
-      @Nullable String version, OffsetDateTime createdAt, @Nullable String createdBy,
-      OffsetDateTime updatedAt, @Nullable String updatedBy, ImmutableMap<String, String> metadata) {
+      @Nullable String version, ApiDate createdAt, @Nullable String createdBy,
+      ApiDate updatedAt, @Nullable String updatedBy, ImmutableMap<String, String> metadata) {
     return new AutoValue_SecretContent(id, secretSeriesId, encryptedContent,
         Optional.ofNullable(version), createdAt, nullToEmpty(createdBy), updatedAt,
         nullToEmpty(updatedBy), metadata);
@@ -44,9 +46,9 @@ public abstract class SecretContent {
   public abstract long secretSeriesId();
   public abstract String encryptedContent();
   public abstract Optional<String> version();
-  public abstract OffsetDateTime createdAt();
+  public abstract ApiDate createdAt();
   public abstract String createdBy();
-  public abstract OffsetDateTime updatedAt();
+  public abstract ApiDate updatedAt();
   public abstract String updatedBy();
   @JsonAnyGetter public abstract  ImmutableMap<String, String> metadata();
 

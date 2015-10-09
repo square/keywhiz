@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Map;
 import javax.inject.Inject;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import org.jooq.RecordMapper;
@@ -41,9 +43,9 @@ class SecretContentMapper implements RecordMapper<SecretsContentRecord, SecretCo
         r.getSecretid(),
         r.getEncryptedContent(),
         r.getVersion(),
-        r.getCreatedat(),
+        new ApiDate(r.getCreatedat()),
         r.getCreatedby(),
-        r.getUpdatedat(),
+        new ApiDate(r.getUpdatedat()),
         r.getUpdatedby(),
         tryToReadMapFromMetadata(r));
   }

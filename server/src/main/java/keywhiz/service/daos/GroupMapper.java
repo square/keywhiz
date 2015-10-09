@@ -16,6 +16,7 @@
 
 package keywhiz.service.daos;
 
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.Group;
 import keywhiz.jooq.tables.records.GroupsRecord;
 import org.jooq.RecordMapper;
@@ -26,9 +27,9 @@ class GroupMapper implements RecordMapper<GroupsRecord, Group> {
         r.getId(),
         r.getName(),
         r.getDescription(),
-        r.getCreatedat(),
+        new ApiDate(r.getCreatedat()),
         r.getCreatedby(),
-        r.getUpdatedat(),
+        new ApiDate(r.getUpdatedat()),
         r.getUpdatedby());
   }
 }

@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import keywhiz.api.ApiDate;
+
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -40,9 +42,9 @@ public abstract class SanitizedSecret {
       @JsonProperty("name") String name,
       @JsonProperty("version") String version,
       @JsonProperty("description") @Nullable String description,
-      @JsonProperty("createdAt") OffsetDateTime createdAt,
+      @JsonProperty("createdAt") ApiDate createdAt,
       @JsonProperty("createdBy") @Nullable String createdBy,
-      @JsonProperty("updatedAt") OffsetDateTime updatedAt,
+      @JsonProperty("updatedAt") ApiDate updatedAt,
       @JsonProperty("updatedBy") @Nullable String updatedBy,
       @JsonProperty("metadata") @Nullable Map<String, String> metadata,
       @JsonProperty("type") @Nullable String type,
@@ -111,9 +113,9 @@ public abstract class SanitizedSecret {
   @JsonProperty public abstract String name();
   @JsonProperty public abstract String version();
   @JsonProperty public abstract String description();
-  @JsonProperty public abstract OffsetDateTime createdAt();
+  @JsonProperty public abstract ApiDate createdAt();
   @JsonProperty public abstract String createdBy();
-  @JsonProperty public abstract OffsetDateTime updatedAt();
+  @JsonProperty public abstract ApiDate updatedAt();
   @JsonProperty public abstract String updatedBy();
   @JsonProperty public abstract ImmutableMap<String, String> metadata();
   @JsonProperty public abstract Optional<String> type();

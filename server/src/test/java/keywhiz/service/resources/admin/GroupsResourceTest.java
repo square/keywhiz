@@ -23,6 +23,8 @@ import java.util.Optional;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.CreateGroupRequest;
 import keywhiz.api.GroupDetailResponse;
 import keywhiz.api.model.Client;
@@ -50,7 +52,7 @@ public class GroupsResourceTest {
   @Mock GroupDAO groupDAO;
 
   User user = User.named("user");
-  OffsetDateTime now = OffsetDateTime.now();
+  ApiDate now = ApiDate.now();
   Group group = new Group(1, "group", "desc", now, "creator", now, "creator");
 
   GroupsResource resource;

@@ -19,6 +19,8 @@ import io.dropwizard.jersey.params.LongParam;
 import java.time.OffsetDateTime;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.Secret;
@@ -37,7 +39,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 public class MembershipResourceTest {
-  private static final OffsetDateTime NOW = OffsetDateTime.now();
+  private static final ApiDate NOW = ApiDate.now();
 
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
 

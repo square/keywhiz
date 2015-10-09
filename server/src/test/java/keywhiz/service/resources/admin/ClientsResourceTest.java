@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.CreateClientRequest;
 import keywhiz.api.model.Client;
@@ -53,7 +55,7 @@ public class ClientsResourceTest {
   @Mock ClientDAO clientDAO;
 
   User user = User.named("user");
-  OffsetDateTime now = OffsetDateTime.now();
+  ApiDate now = ApiDate.now();
   Client client = new Client(1, "client", "1st client", now, "test", now, "test", true, false);
 
   ClientsResource resource;

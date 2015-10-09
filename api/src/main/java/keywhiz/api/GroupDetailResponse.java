@@ -36,10 +36,10 @@ public class GroupDetailResponse {
   private final String description;
 
   @JsonProperty
-  private final OffsetDateTime creationDate;
+  private final ApiDate creationDate;
 
   @JsonProperty
-  private final OffsetDateTime updateDate;
+  private final ApiDate updateDate;
 
   @JsonProperty
   private final String createdBy;
@@ -56,8 +56,8 @@ public class GroupDetailResponse {
   public GroupDetailResponse(@JsonProperty("id") long id,
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
-      @JsonProperty("creationDate") OffsetDateTime creationDate,
-      @JsonProperty("updateDate") OffsetDateTime updateDate,
+      @JsonProperty("creationDate") ApiDate creationDate,
+      @JsonProperty("updateDate") ApiDate updateDate,
       @JsonProperty("createdBy") String createdBy,
       @JsonProperty("updatedBy") String updatedBy,
       @JsonProperty("secrets") ImmutableList<SanitizedSecret> secrets,
@@ -98,11 +98,11 @@ public class GroupDetailResponse {
     return description;
   }
 
-  public OffsetDateTime getCreationDate() {
+  public ApiDate getCreationDate() {
     return creationDate;
   }
 
-  public OffsetDateTime getUpdateDate() {
+  public ApiDate getUpdateDate() {
     return updateDate;
   }
 

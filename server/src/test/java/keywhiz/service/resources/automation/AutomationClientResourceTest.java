@@ -21,6 +21,8 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.CreateClientRequest;
 import keywhiz.api.model.AutomationClient;
@@ -44,7 +46,7 @@ public class AutomationClientResourceTest {
 
   @Mock ClientDAO clientDAO;
   @Mock AclDAO aclDAO;
-  OffsetDateTime now = OffsetDateTime.now();
+  ApiDate now = ApiDate.now();
   AutomationClient automation = AutomationClient.of(
       new Client(1, "automation", "Automation client", now, "test", now, "test", true, true));
 

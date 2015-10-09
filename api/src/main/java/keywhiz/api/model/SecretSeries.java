@@ -18,6 +18,8 @@ package keywhiz.api.model;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
+import keywhiz.api.ApiDate;
+
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -38,9 +40,9 @@ public abstract class SecretSeries {
       long id,
       String name,
       @Nullable String description,
-      OffsetDateTime createdAt,
+      ApiDate createdAt,
       @Nullable String createdBy,
-      OffsetDateTime updatedAt,
+      ApiDate updatedAt,
       @Nullable String updatedBy,
       @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
@@ -52,9 +54,9 @@ public abstract class SecretSeries {
   public abstract long id();
   public abstract String name();
   public abstract String description();
-  public abstract OffsetDateTime createdAt();
+  public abstract ApiDate createdAt();
   public abstract String createdBy();
-  public abstract OffsetDateTime updatedAt();
+  public abstract ApiDate updatedAt();
   public abstract String updatedBy();
   public abstract Optional<String> type();
   public abstract ImmutableMap<String, String> generationOptions();

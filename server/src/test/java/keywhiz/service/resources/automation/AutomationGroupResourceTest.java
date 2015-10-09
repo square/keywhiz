@@ -22,6 +22,8 @@ import io.dropwizard.jersey.params.LongParam;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import javax.ws.rs.core.Response;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.CreateGroupRequest;
 import keywhiz.api.GroupDetailResponse;
 import keywhiz.api.model.AutomationClient;
@@ -46,7 +48,7 @@ public class AutomationGroupResourceTest {
 
   @Mock GroupDAO groupDAO;
   @Mock AclDAO aclDAO;
-  OffsetDateTime now = OffsetDateTime.now();
+  ApiDate now = ApiDate.now();
   AutomationClient automation = AutomationClient.of(
       new Client(1, "automation", "Automation client", now, "test", now, "test", true, true));
 

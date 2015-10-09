@@ -18,6 +18,8 @@ package keywhiz.api.model;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
+import keywhiz.api.ApiDate;
+
 import java.text.ParseException;
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -54,9 +56,9 @@ public class Secret {
   /** Base64-encoded content of this version of the secret. */
   private final String secret;
 
-  private final OffsetDateTime createdAt;
+  private final ApiDate createdAt;
   private final String createdBy;
-  private final OffsetDateTime updatedAt;
+  private final ApiDate updatedAt;
   private final String updatedBy;
 
   /** Key-value metadata of the secret. */
@@ -70,9 +72,9 @@ public class Secret {
       @Nullable String version,
       @Nullable String description,
       String secret,
-      OffsetDateTime createdAt,
+      ApiDate createdAt,
       @Nullable String createdBy,
-      OffsetDateTime updatedAt,
+      ApiDate updatedAt,
       @Nullable String updatedBy,
       @Nullable Map<String, String> metadata,
       @Nullable String type,
@@ -124,7 +126,7 @@ public class Secret {
     return secret;
   }
 
-  public OffsetDateTime getCreatedAt() {
+  public ApiDate getCreatedAt() {
     return createdAt;
   }
 
@@ -132,7 +134,7 @@ public class Secret {
     return createdBy;
   }
 
-  public OffsetDateTime getUpdatedAt() {
+  public ApiDate getUpdatedAt() {
     return updatedAt;
   }
 

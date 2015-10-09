@@ -21,6 +21,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.List;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.SanitizedSecret;
@@ -39,7 +41,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 public class AutomationSecretGeneratorsResourceTest {
-  private static final OffsetDateTime NOW = OffsetDateTime.now();
+  private static final ApiDate NOW = ApiDate.now();
 
   private static final AutomationClient automationClient = AutomationClient.of(
       new Client(1, "automation", "Automation client", NOW, "test", NOW, "test", true, true));
