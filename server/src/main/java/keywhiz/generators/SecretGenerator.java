@@ -22,7 +22,7 @@ import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import keywhiz.api.model.Secret;
 import keywhiz.service.daos.SecretController;
-import keywhiz.service.resources.SecretGeneratorsResource;
+import keywhiz.service.resources.admin.SecretGeneratorsResource;
 
 /**
  * A SecretGenerator is used to generate 1 or more of Secrets based on some provided parameters

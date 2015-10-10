@@ -27,7 +27,7 @@ import keywhiz.auth.User;
 import keywhiz.auth.cookie.CookieAuthenticator;
 import keywhiz.auth.cookie.CookieConfig;
 import keywhiz.auth.cookie.SessionCookie;
-import keywhiz.service.resources.SessionLoginResource;
+import keywhiz.service.resources.admin.SessionLoginResource;
 
 /** Checks for valid session cookies on requests and sets a newer cookie. */
 public class CookieRenewingFilter implements ContainerResponseFilter {

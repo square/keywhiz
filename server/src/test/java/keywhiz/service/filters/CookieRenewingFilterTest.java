@@ -29,7 +29,7 @@ import javax.ws.rs.core.NewCookie;
 import keywhiz.auth.User;
 import keywhiz.auth.cookie.CookieAuthenticator;
 import keywhiz.auth.cookie.CookieConfig;
-import keywhiz.service.resources.SessionLoginResource;
+import keywhiz.service.resources.admin.SessionLoginResource;
 import org.eclipse.jetty.server.CookieCutter;
 import org.junit.Before;
 import org.junit.Rule;

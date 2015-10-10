@@ -28,6 +28,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.util.regex.Pattern.quote;
+import static org.apache.commons.lang3.StringUtils.chomp;
+import static org.apache.commons.lang3.StringUtils.removeEnd;
 
 /**
  * Immutable Secret data model.
@@ -168,6 +170,14 @@ public class Secret {
       parts = new String[] {parts[0], ""};
     }
     return parts;
+  }
+
+  /** Slightly hokey way of calculating the decoded-length without bothering to decode. */
+  public static int decodedLength(String secret) {
+    checkNotNull(secret);
+    // Remove newlines and padding from the end of our secret string.
+    secret = removeEnd(removeEnd(chomp(secret), "="), "=");
+    return (secret.length() * 3) / 4;
   }
 
   @Override

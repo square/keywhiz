@@ -24,7 +24,7 @@ import keywhiz.api.model.Secret;
 import keywhiz.api.model.VersionGenerator;
 import org.junit.Test;
 
-import static keywhiz.api.SecretDeliveryResponse.decodedLength;
+import static keywhiz.api.model.Secret.decodedLength;
 import static keywhiz.testing.JsonHelpers.asJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
