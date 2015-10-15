@@ -1,7 +1,7 @@
 {
   "swaggerVersion" : "1.2",
   "apiVersion" : "1",
-  "basePath" : "https://square.github.io/keywhiz/apidocs",
+  "basePath" : "http://localhost:8000/apidocs",
   "apis" : [ {
     "path" : "/secrets-generator-automation.{format}",
     "description" : "Create secrets with a generator"
@@ -18,14 +18,14 @@
     "path" : "/me.{format}",
     "description" : "Retrieve user information"
   }, {
-    "path" : "/secrets-automation.{format}",
-    "description" : "Create, retrieve, and remove secrets"
+    "path" : "/automation_v2 secret management.{format}",
+    "description" : "Automation endpoints to manage secrets"
   }, {
-    "path" : "/enroll-clients-automation.{format}",
-    "description" : "Assign or unassign clients to groups"
+    "path" : "/automation_v2 group management.{format}",
+    "description" : "Automation endpoints to manage groups"
   }, {
-    "path" : "/groups-automation.{format}",
-    "description" : "Create and retrieve groups"
+    "path" : "/automation_v2 client management.{format}",
+    "description" : "Automation endpoints to manage clients"
   }, {
     "path" : "/secrets.{format}",
     "description" : "Retrieve a collection of Secrets"
@@ -33,14 +33,8 @@
     "path" : "/clients-admin.{format}",
     "description" : "Create, retrieve, and delete clients"
   }, {
-    "path" : "/clients-automation.{format}",
-    "description" : "Create and retrieve clients"
-  }, {
     "path" : "/groups-admin.{format}",
     "description" : "Create, retrieve, and delete groups"
-  }, {
-    "path" : "/enroll-secrets-automation.{format}",
-    "description" : "Assign or unassign secrets to groups"
   }, {
     "path" : "/memberships-admin.{format}",
     "description" : "Manage group assignments"
