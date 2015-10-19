@@ -43,7 +43,7 @@ import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName automation/v2 client management
+ * @parentEndpointName automation/v2-client-management
  * @resourceDescription Automation endpoints to manage clients
  */
 @Path("/automation/v2/clients")

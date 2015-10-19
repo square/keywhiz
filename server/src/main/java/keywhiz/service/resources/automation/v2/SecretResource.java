@@ -49,7 +49,7 @@ import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName automation/v2 secret management
+ * @parentEndpointName automation/v2-secret-management
  * @resourceDescription Automation endpoints to manage secrets
  */
 @Path("/automation/v2/secrets")
