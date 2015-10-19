@@ -183,7 +183,7 @@ public class ClientResourceTest {
     ClientDetailResponseV2 clientDetail = modify("client9", request);
     assertThat(clientDetail.name()).isEqualTo("client9b");
     assertThat(clientDetail).isEqualToIgnoringGivenFields(originalClient, "name", "updateDate");
-    assertThat(clientDetail.updateDate()).isGreaterThan(originalClient.updateDate());
+    assertThat(clientDetail.updatedAtSeconds()).isGreaterThan(originalClient.updatedAtSeconds());
   }
 
   private Response createGroup(String name) throws IOException {

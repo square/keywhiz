@@ -7,7 +7,6 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.UnsignedLong;
-import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +40,7 @@ import static keywhiz.api.model.Secret.decodedLength;
     public abstract Builder name(String name);
     public abstract Builder content(String secret);
     public abstract Builder description(String description);
-    public abstract Builder creationDate(OffsetDateTime dateTime);
+    public abstract Builder createdAtSeconds(long createdAt);
     public abstract Builder createdBy(String person);
     public abstract Builder type(@Nullable String type);
 
@@ -57,7 +56,7 @@ import static keywhiz.api.model.Secret.decodedLength;
       return this
           .name(series.name())
           .description(series.description())
-          .creationDate(series.createdAt())
+          .createdAtSeconds(series.createdAt().toEpochSecond())
           .createdBy(series.createdBy())
           .type(series.type().orElse(null));
     }
@@ -68,7 +67,7 @@ import static keywhiz.api.model.Secret.decodedLength;
           .versions(ImmutableList.of(secret.getVersion()))
           .description(secret.getDescription())
           .content(secret.getSecret())
-          .creationDate(secret.getCreatedAt())
+          .createdAtSeconds(secret.getCreatedAt().toEpochSecond())
           .createdBy(secret.getCreatedBy())
           .type(secret.getType().orElse(null))
           .metadata(secret.getMetadata());
@@ -93,7 +92,7 @@ import static keywhiz.api.model.Secret.decodedLength;
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("content") String content,
       @JsonProperty("size") UnsignedLong size,
-      @JsonProperty("creationDate") OffsetDateTime creationDate,
+      @JsonProperty("createdAtSeconds") long createdAtSeconds,
       @JsonProperty("createdBy") String createdBy,
       @JsonProperty("type") @Nullable String type,
       @JsonProperty("metadata") @Nullable Map<String, String> metadata) {
@@ -103,7 +102,7 @@ import static keywhiz.api.model.Secret.decodedLength;
         .description(nullToEmpty(description))
         .content(content)
         .size(size)
-        .creationDate(creationDate)
+        .createdAtSeconds(createdAtSeconds)
         .createdBy(createdBy)
         .type(type)
         .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
@@ -116,7 +115,7 @@ import static keywhiz.api.model.Secret.decodedLength;
   @JsonProperty("description") public abstract String description();
   @JsonProperty("content") public abstract String content();
   @JsonProperty("size") public abstract UnsignedLong size();
-  @JsonProperty("creationDate") public abstract OffsetDateTime creationDate();
+  @JsonProperty("createdAtSeconds") public abstract long createdAtSeconds();
   @JsonProperty("createdBy") public abstract String createdBy();
   @JsonProperty("type") @Nullable public abstract String type();
   @JsonProperty("metadata") public abstract ImmutableMap<String, String> metadata();
@@ -128,7 +127,7 @@ import static keywhiz.api.model.Secret.decodedLength;
         .add("description", description())
         .add("content", "[REDACTED]")
         .add("size", size())
-        .add("creationDate", creationDate())
+        .add("createdAtSeconds", createdAtSeconds())
         .add("createdBy", createdBy())
         .add("type", type())
         .add("metadata", metadata())
