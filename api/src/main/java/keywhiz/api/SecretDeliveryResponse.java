@@ -34,7 +34,7 @@ public class SecretDeliveryResponse {
   private final String name;
   private final String secret;
   private final int secretLength;
-  private final OffsetDateTime creationDate;
+  private final ApiDate creationDate;
   private final boolean isVersioned;
   private final ImmutableMap<String, String> metadata;
 
@@ -42,7 +42,7 @@ public class SecretDeliveryResponse {
       @JsonProperty("name") String name,
       @JsonProperty("secret") String secret,
       @JsonProperty("secretLength") int secretLength,
-      @JsonProperty("creationDate") OffsetDateTime creationDate,
+      @JsonProperty("creationDate") ApiDate creationDate,
       @JsonProperty("isVersioned") boolean isVersioned,
       @JsonProperty("metadata") ImmutableMap<String, String> metadata) {
     this.name = name;
@@ -89,7 +89,7 @@ public class SecretDeliveryResponse {
   }
 
   /** @return ISO-8601 datetime the secret was created. */
-  public OffsetDateTime getCreationDate() {
+  public ApiDate getCreationDate() {
     return creationDate;
   }
 

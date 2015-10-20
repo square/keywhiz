@@ -24,6 +24,7 @@ import java.time.OffsetDateTime;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
+import keywhiz.api.ApiDate;
 import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.Secret;
 import org.junit.Before;
@@ -44,8 +45,8 @@ public class SecretDeliveryResourceIntegrationTest {
   @Before public void setUp() throws Exception {
     client = TestClients.mutualSslClient();
     generalPassword = new Secret(0, "General_Password", null, null, "YXNkZGFz",
-        OffsetDateTime.parse("2011-09-29T15:46:00Z"), null,
-        OffsetDateTime.parse("2011-09-29T15:46:00Z"), null, null, "upload", null);
+        ApiDate.parse("2011-09-29T15:46:00Z"), null,
+        ApiDate.parse("2011-09-29T15:46:00Z"), null, null, "upload", null);
   }
 
   @Test public void returnsSecretWhenAllowed() throws Exception {

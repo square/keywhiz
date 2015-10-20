@@ -20,19 +20,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
 import io.dropwizard.jackson.AnnotationSensitivePropertyNamingStrategy;
 import io.dropwizard.jackson.DiscoverableSubtypeResolver;
 import io.dropwizard.jackson.FuzzyEnumModule;
 import io.dropwizard.jackson.GuavaExtrasModule;
 import io.dropwizard.jackson.LogbackModule;
 import java.io.IOException;
-import java.util.Locale;
-import java.util.TimeZone;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 
@@ -98,16 +93,12 @@ public class JsonHelpers {
   private static ObjectMapper customizeObjectMapper() {
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new Jdk8Module());
-    mapper.registerModule(new JSR310Module());
     mapper.registerModule(new GuavaModule());
     mapper.registerModule(new LogbackModule());
     mapper.registerModule(new GuavaExtrasModule());
     mapper.registerModule(new FuzzyEnumModule());
     mapper.setPropertyNamingStrategy(new AnnotationSensitivePropertyNamingStrategy());
     mapper.setSubtypeResolver(new DiscoverableSubtypeResolver());
-
-    mapper.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    mapper.setDateFormat(StdDateFormat.getISO8601Format(TimeZone.getTimeZone("UTC"), Locale.ENGLISH));
     mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     return mapper;
   }

@@ -21,6 +21,8 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.core.SecurityContext;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.SimplePrincipal;
 import keywhiz.service.daos.ClientDAO;
@@ -82,7 +84,7 @@ public class ClientAuthFactoryTest {
   }
 
   @Test public void createsDbRecordForNewClient() throws Exception {
-    OffsetDateTime now = OffsetDateTime.now();
+    ApiDate now = ApiDate.now();
     Client newClient = new Client(2345L, "new-client", "desc", now, "automatic", now, "automatic",
         true, false);
 

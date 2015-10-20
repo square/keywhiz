@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Map;
 import javax.inject.Inject;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import org.jooq.RecordMapper;
@@ -39,9 +41,9 @@ class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSeries> {
         r.getId(),
         r.getName(),
         r.getDescription(),
-        r.getCreatedat(),
+        new ApiDate(r.getCreatedat()),
         r.getCreatedby(),
-        r.getUpdatedat(),
+        new ApiDate(r.getUpdatedat()),
         r.getUpdatedby(),
         r.getType(),
         tryToReadMapValue(r));

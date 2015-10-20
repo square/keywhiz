@@ -24,6 +24,7 @@ import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.time.OffsetDateTime;
 import javax.inject.Inject;
 import keywhiz.TestDBRule;
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
@@ -55,7 +56,7 @@ public class SecretSeriesDAOTest {
 
   @Test public void createAndLookupSecretSeries() {
     int before = tableSize();
-    OffsetDateTime now = OffsetDateTime.now();
+    ApiDate now = ApiDate.now();
 
     long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
         ImmutableMap.of("foo", "bar"));

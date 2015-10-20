@@ -19,6 +19,8 @@ import com.google.common.collect.ImmutableSet;
 import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.List;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.SanitizedSecret;
@@ -36,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 public class SecretsDeliveryResourceTest {
-  private static final OffsetDateTime NOW = OffsetDateTime.now();
+  private static final ApiDate NOW = ApiDate.now();
 
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
 

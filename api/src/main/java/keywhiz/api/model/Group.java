@@ -18,6 +18,8 @@ package keywhiz.api.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import keywhiz.api.ApiDate;
+
 import java.time.OffsetDateTime;
 import javax.annotation.Nullable;
 
@@ -39,13 +41,13 @@ public class Group {
   private final String description;
 
   @JsonProperty
-  private final OffsetDateTime createdAt;
+  private final ApiDate createdAt;
 
   @JsonProperty
   private final String createdBy;
 
   @JsonProperty
-  private final OffsetDateTime updatedAt;
+  private final ApiDate updatedAt;
 
   @JsonProperty
   private final String updatedBy;
@@ -53,9 +55,9 @@ public class Group {
   public Group(@JsonProperty("id") long id,
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
-      @JsonProperty("createdAt") OffsetDateTime createdAt,
+      @JsonProperty("createdAt") ApiDate createdAt,
       @JsonProperty("createdBy") @Nullable String createdBy,
-      @JsonProperty("updatedAt") OffsetDateTime updatedAt,
+      @JsonProperty("updatedAt") ApiDate updatedAt,
       @JsonProperty("updatedBy") @Nullable String updatedBy) {
     this.id = id;
     this.name = checkNotNull(name);
@@ -78,15 +80,13 @@ public class Group {
     return description;
   }
 
-  public OffsetDateTime getCreatedAt() {
-    return createdAt;
-  }
+  public ApiDate getCreatedAt() { return createdAt; }
 
   public String getCreatedBy() {
     return createdBy;
   }
 
-  public OffsetDateTime getUpdatedAt() {
+  public ApiDate getUpdatedAt() {
     return updatedAt;
   }
 

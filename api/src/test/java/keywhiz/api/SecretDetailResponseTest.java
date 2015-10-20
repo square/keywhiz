@@ -32,9 +32,9 @@ public class SecretDetailResponseTest {
         1000,
         "secretName",
         "desc",
-        OffsetDateTime.parse("2013-03-28T21:23:04.159Z"),
+        ApiDate.parse("2013-03-28T21:23:00.000Z"),
         "keywhizAdmin",
-        OffsetDateTime.parse("2013-03-28T21:23:04.159Z"),
+        ApiDate.parse("2013-03-28T21:23:04.159Z"),
         "keywhizAdmin",
         true,
         ImmutableMap.of("mode", "0660"),
@@ -42,12 +42,13 @@ public class SecretDetailResponseTest {
             new Group(2000,
                       "someGroup",
                       "groupDesc",
-                      OffsetDateTime.parse("2013-03-28T21:29:27.465Z"),
+                      ApiDate.parse("2013-03-28T21:29:27.465Z"),
                       "keywhizAdmin",
-                      OffsetDateTime.parse("2013-03-28T21:29:27.465Z"),
+                      ApiDate.parse("2013-03-28T21:29:27.465Z"),
                       "keywhizAdmin")
         ),
         ImmutableList.of());
+
 
     assertThat(asJson(secretDetailResponse))
         .isEqualTo(jsonFixture("fixtures/secretDetailResponse.json"));

@@ -34,7 +34,7 @@ public class AutomationSecretResponseTest {
 
   private static final ImmutableMap<String, String> metadata =
       ImmutableMap.of("key1", "value1", "key2", "value2");
-  private static final OffsetDateTime NOW = OffsetDateTime.now();
+  private static final ApiDate NOW = ApiDate.now();
   private static final Secret secret = new Secret(0, "name", VersionGenerator.now().toHex(), null,
       "YWJj", NOW, null, NOW, null, metadata, "upload", null);
 
@@ -68,7 +68,7 @@ public class AutomationSecretResponseTest {
         0,
         "Database_Password",
         secret,
-        OffsetDateTime.parse("2011-09-29T15:46:00.232Z"),
+        ApiDate.parse("2011-09-29T15:46:00.232Z"),
         false,
         ImmutableMap.of(),
         ImmutableList.of());
@@ -79,7 +79,7 @@ public class AutomationSecretResponseTest {
         33,
         "General_Password..0be68f903f8b7d86",
         secret,
-        OffsetDateTime.parse("2011-09-29T15:46:00.312Z"),
+        ApiDate.parse("2011-09-29T15:46:00.312Z"),
         true,
         ImmutableMap.of(),
         ImmutableList.of());
@@ -90,7 +90,7 @@ public class AutomationSecretResponseTest {
         66,
         "Nobody_PgPass",
         secret,
-        OffsetDateTime.parse("2011-09-29T15:46:00.232Z"),
+        ApiDate.parse("2011-09-29T15:46:00.232Z"),
         false,
         ImmutableMap.of("mode", "0400", "owner", "nobody"),
         ImmutableList.of());

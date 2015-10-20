@@ -19,6 +19,8 @@ import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.Optional;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.AutomationSecretResponse;
 import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.model.AutomationClient;
@@ -48,7 +50,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class AutomationSecretResourceTest {
-  private static final OffsetDateTime NOW = OffsetDateTime.now();
+  private static final ApiDate NOW = ApiDate.now();
 
   AutomationSecretResource resource;
 

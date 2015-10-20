@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.BadRequestException;
 import keywhiz.FakeRandom;
+import keywhiz.api.ApiDate;
 import keywhiz.api.TemplatedSecretsGeneratorRequest;
 import keywhiz.api.model.Secret;
 import keywhiz.auth.User;
@@ -71,7 +72,7 @@ public class TemplatedSecretGeneratorTest {
 
   @Test
   public void createsSecret() throws Exception {
-    OffsetDateTime now = OffsetDateTime.now();
+    ApiDate now = ApiDate.now();
     Secret secret = new Secret(5, "test-database.yaml", "versionStamp", "desc", "content", now, "creator", now, "creator", null, null, null);
     when(secretBuilder.build()).thenReturn(secret);
 

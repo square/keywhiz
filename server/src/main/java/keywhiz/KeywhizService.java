@@ -17,10 +17,8 @@ package keywhiz;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.Maps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -29,9 +27,7 @@ import io.dropwizard.java8.Java8Bundle;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 import keywhiz.auth.mutualssl.ClientCertificateFilter;
 import keywhiz.auth.xsrf.XsrfServletFilter;
 import keywhiz.commands.DbSeedCommand;
@@ -201,7 +197,6 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(injector.getInstance(AutomationSecretGeneratorsResource.class));
     logger.debug("Keywhiz configuration complete");
   }
-
   /**
    * Customizes ObjectMapper for common settings.
    *
@@ -210,9 +205,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
    */
   public static ObjectMapper customizeObjectMapper(ObjectMapper objectMapper) {
     objectMapper.registerModules(new Jdk8Module());
-    objectMapper.registerModules(new JSR310Module());
-    objectMapper.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    objectMapper.setDateFormat(StdDateFormat.getISO8601Format(TimeZone.getTimeZone("UTC"), Locale.ENGLISH));
+    objectMapper.registerModules(new JavaTimeModule());
     objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     return objectMapper;
   }

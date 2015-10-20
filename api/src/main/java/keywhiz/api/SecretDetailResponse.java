@@ -37,7 +37,7 @@ public class SecretDetailResponse {
   public final String description;
 
   @JsonProperty
-  public final OffsetDateTime createdAt;
+  public final ApiDate createdAt;
 
   /** User who created the record. */
   @JsonProperty
@@ -45,7 +45,7 @@ public class SecretDetailResponse {
 
   /** Should equal createdAt, but added for consistency in the API. */
   @JsonProperty
-  public final OffsetDateTime updatedAt;
+  public final ApiDate updatedAt;
 
   /** User who updated the record. */
   @JsonProperty
@@ -67,9 +67,9 @@ public class SecretDetailResponse {
   public SecretDetailResponse(@JsonProperty("id") long id,
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
-      @JsonProperty("createdAt") OffsetDateTime createdAt,
+      @JsonProperty("createdAt") ApiDate createdAt,
       @JsonProperty("createdBy") String createdBy,
-      @JsonProperty("updatedAt") OffsetDateTime updatedAt,
+      @JsonProperty("updatedAt") ApiDate updatedAt,
       @JsonProperty("updatedBy") String updatedBy,
       @JsonProperty("isVersioned") boolean versioned,
       @JsonProperty("metadata") ImmutableMap<String, String> metadata,

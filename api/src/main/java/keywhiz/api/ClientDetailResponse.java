@@ -34,10 +34,10 @@ public class ClientDetailResponse {
   public final String description;
 
   @JsonProperty
-  public final OffsetDateTime creationDate;
+  public final ApiDate creationDate;
 
   @JsonProperty
-  public final OffsetDateTime updateDate;
+  public final ApiDate updateDate;
 
   @JsonProperty
   public final String createdBy;
@@ -55,8 +55,8 @@ public class ClientDetailResponse {
   public ClientDetailResponse(@JsonProperty("id") long id,
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
-      @JsonProperty("creationDate") OffsetDateTime creationDate,
-      @JsonProperty("updateDate") OffsetDateTime updateDate,
+      @JsonProperty("creationDate") ApiDate creationDate,
+      @JsonProperty("updateDate") ApiDate updateDate,
       @JsonProperty("createdBy") String createdBy,
       @JsonProperty("updatedBy") String updatedBy,
       @JsonProperty("groups") ImmutableList<Group> groups,

@@ -28,6 +28,8 @@ import java.util.Optional;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.model.Client;
@@ -55,7 +57,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SecretsResourceTest {
-  private static final OffsetDateTime NOW = OffsetDateTime.now();
+  private static final ApiDate NOW = ApiDate.now();
 
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
 

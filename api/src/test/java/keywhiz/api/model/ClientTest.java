@@ -17,6 +17,8 @@
 package keywhiz.api.model;
 
 import java.time.OffsetDateTime;
+
+import keywhiz.api.ApiDate;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
@@ -28,9 +30,9 @@ public class ClientTest {
     Client client = new Client(200,
                                "someClient",
                                "clientDesc",
-                               OffsetDateTime.parse("2013-03-28T21:29:27.465Z"),
+                               ApiDate.parse("2013-03-28T21:29:27.465Z"),
                                "keywhizAdmin",
-                               OffsetDateTime.parse("2013-03-28T21:29:27.465Z"),
+                               ApiDate.parse("2013-03-28T21:29:27.465Z"),
                                "keywhizAdmin",
                                true,
                                false);

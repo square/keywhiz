@@ -19,6 +19,8 @@ package keywhiz.cli.commands;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -40,7 +42,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class DescribeActionTest {
-  private static final OffsetDateTime NOW = OffsetDateTime.now();
+  private static final ApiDate NOW = ApiDate.now();
 
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
 

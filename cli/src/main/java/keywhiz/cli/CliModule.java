@@ -18,18 +18,13 @@ package keywhiz.cli;
 import com.beust.jcommander.JCommander;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Names;
 import com.google.inject.util.Providers;
 import io.dropwizard.jackson.Jackson;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 import keywhiz.cli.configs.CliConfiguration;
 
 public class CliModule extends AbstractModule {
@@ -76,9 +71,6 @@ public class CliModule extends AbstractModule {
      */
     ObjectMapper objectMapper = Jackson.newObjectMapper();
     objectMapper.registerModule(new Jdk8Module());
-    objectMapper.registerModule(new JSR310Module());
-    objectMapper.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    objectMapper.setDateFormat(StdDateFormat.getISO8601Format(TimeZone.getTimeZone("UTC"), Locale.ENGLISH));
     objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     return objectMapper;
   }

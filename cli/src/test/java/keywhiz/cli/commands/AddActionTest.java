@@ -22,6 +22,8 @@ import java.io.ByteArrayInputStream;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Base64;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
@@ -44,7 +46,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class AddActionTest {
-  private static final OffsetDateTime NOW = OffsetDateTime.now();
+  private static final ApiDate NOW = ApiDate.now();
   private static final Base64.Decoder base64Decoder = Base64.getDecoder();
 
   @Rule public MockitoRule mockito = MockitoJUnit.rule();

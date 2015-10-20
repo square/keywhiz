@@ -27,6 +27,7 @@ import java.time.ZoneId;
 import java.util.List;
 import javax.inject.Inject;
 import keywhiz.TestDBRule;
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
@@ -50,7 +51,7 @@ public class SecretContentDAOTest {
 
   @Inject SecretContentDAOFactory secretContentDAOFactory;
 
-  final static OffsetDateTime date = OffsetDateTime.now(ZoneId.of("UTC"));
+  final static ApiDate date = ApiDate.now();
   ImmutableMap<String, String> metadata = ImmutableMap.of("foo", "bar");
 
   SecretContent secretContent1 = SecretContent.of(11, 22, "[crypted]", "", date, "creator", date,
@@ -74,9 +75,9 @@ public class SecretContentDAOTest {
         .set(SECRETS_CONTENT.SECRETID, (int) secretContent1.secretSeriesId())
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secretContent1.encryptedContent())
         .set(SECRETS_CONTENT.VERSION, secretContent1.version().orElse(null))
-        .set(SECRETS_CONTENT.CREATEDAT, secretContent1.createdAt())
+        .set(SECRETS_CONTENT.CREATEDAT, secretContent1.createdAt().offsetDateTime)
         .set(SECRETS_CONTENT.CREATEDBY, secretContent1.createdBy())
-        .set(SECRETS_CONTENT.UPDATEDAT, secretContent1.updatedAt())
+        .set(SECRETS_CONTENT.UPDATEDAT, secretContent1.updatedAt().offsetDateTime)
         .set(SECRETS_CONTENT.UPDATEDBY, secretContent1.updatedBy())
         .set(SECRETS_CONTENT.METADATA, JSONObject.toJSONString(secretContent1.metadata()))
         .execute();
