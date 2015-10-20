@@ -5,10 +5,8 @@ set -ex
 REPO="git@github.com:square/keywhiz.git"
 GROUP_ID="com.squareup.keywhiz"
 
-DIR=temp-clone
-
-# Delete any existing temporary website clone
-rm -rf $DIR
+# Create a temp directory
+DIR=`mktemp -d temp-clone-XXXXX`
 
 # Build keywhiz-server for API docs
 mvn package -am -DskipTests -pl server

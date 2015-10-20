@@ -34,7 +34,7 @@ import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName automation/v2 group management
+ * @parentEndpointName automation/v2-group-management
  * @resourceDescription Automation endpoints to manage groups
  */
 @Path("/automation/v2/groups")
