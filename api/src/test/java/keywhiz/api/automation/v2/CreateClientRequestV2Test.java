@@ -16,24 +16,13 @@
 
 package keywhiz.api.automation.v2;
 
-import io.dropwizard.testing.junit.ResourceTestRule;
-import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import org.junit.ClassRule;
 import org.junit.Test;
 
-import static javax.ws.rs.client.Entity.entity;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CreateClientRequestV2Test {
-  @ClassRule public static final ResourceTestRule resources = ResourceTestRule.builder()
-      .addResource(new Resource())
-      .build();
-
   @Test public void deserializesCorrectly() throws Exception {
     CreateClientRequestV2 createClientRequest = CreateClientRequestV2.builder()
         .name("client-name")
@@ -48,15 +37,8 @@ public class CreateClientRequestV2Test {
 
   @Test(expected = IllegalStateException.class)
   public void emptyNameFailsValidation() throws Exception {
-    CreateClientRequestV2 createClientRequest = CreateClientRequestV2.builder()
+     CreateClientRequestV2.builder()
         .name("")
         .build();
-    resources.client().target("/").request().post(entity(createClientRequest, "application/json"));
-  }
-
-  @Path("/") public static class Resource {
-    @POST @Consumes("application/json") public String method(@Valid CreateClientRequestV2 request) {
-      throw new UnsupportedOperationException();
-    }
   }
 }

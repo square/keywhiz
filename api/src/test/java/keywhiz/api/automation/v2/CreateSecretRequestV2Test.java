@@ -39,4 +39,12 @@ public class CreateSecretRequestV2Test {
         jsonFixture("fixtures/v2/createSecretRequest.json"), CreateSecretRequestV2.class))
         .isEqualTo(createSecretRequest);
   }
+
+  @Test(expected = IllegalStateException.class)
+  public void emptyNameFailsValidation() throws Exception {
+    CreateSecretRequestV2.builder()
+        .name("")
+        .content("")
+        .build();
+  }
 }

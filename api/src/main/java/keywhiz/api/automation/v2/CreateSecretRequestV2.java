@@ -11,7 +11,6 @@ import java.util.Base64;
 import java.util.Map;
 import javax.annotation.Nullable;
 import keywhiz.api.validation.ValidBase64;
-import org.hibernate.validator.constraints.NotEmpty;
 
 @AutoValue public abstract class CreateSecretRequestV2 {
   CreateSecretRequestV2() {} // prevent sub-classing
@@ -52,7 +51,12 @@ import org.hibernate.validator.constraints.NotEmpty;
     public CreateSecretRequestV2 build() {
       // throws IllegalArgumentException if content not valid base64.
       Base64.getDecoder().decode(content());
-      return autoBuild();
+
+      CreateSecretRequestV2 request = autoBuild();
+      if (request.name().isEmpty()) {
+        throw new IllegalStateException("name is empty");
+      }
+      return request;
     }
   }
 
@@ -79,8 +83,8 @@ import org.hibernate.validator.constraints.NotEmpty;
         .build();
   }
 
-  @JsonProperty("name") @NotEmpty public abstract String name();
-  @JsonProperty("content") @NotEmpty @ValidBase64 public abstract String content();
+  @JsonProperty("name") public abstract String name();
+  @JsonProperty("content") @ValidBase64 public abstract String content();
   @JsonProperty("description") public abstract String description();
   @JsonProperty("versioned") public abstract boolean versioned();
   @JsonProperty("metadata") public abstract ImmutableMap<String, String> metadata();
