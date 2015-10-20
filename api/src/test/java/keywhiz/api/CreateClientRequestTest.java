@@ -55,7 +55,7 @@ public class CreateClientRequestTest {
         .hasCauseInstanceOf(ConstraintViolationException.class);
   }
 
-  @Path("/") private static class Resource {
+  @Path("/") public static class Resource {
     @POST @Consumes("application/json") public String method(@Valid CreateClientRequest request) {
       throw new UnsupportedOperationException();
     }

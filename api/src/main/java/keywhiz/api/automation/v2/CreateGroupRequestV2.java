@@ -18,7 +18,15 @@ import static com.google.common.base.Strings.nullToEmpty;
   @AutoValue.Builder public abstract static class Builder {
     public abstract Builder name(String name);
     public abstract Builder description(String description);
-    public abstract CreateGroupRequestV2 build();
+    abstract CreateGroupRequestV2 autoBuild();
+
+    public CreateGroupRequestV2 build() {
+      CreateGroupRequestV2 request = autoBuild();
+      if (request.name().isEmpty()) {
+        throw new IllegalStateException("name is empty");
+      }
+      return request;
+    }
   }
 
   /**
