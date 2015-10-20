@@ -1,7 +1,18 @@
-v0.7.7: unreleased
+v0.7.7: 2015-10-20
 
-  * Replace postgres JDBC driver with pgjdbc-ng
+  * New automation API (/automation/v2/). Reduces amount of data fetched from
+    database and returned in the response based on experience using the older
+    API. Uses seconds since epoch to represent createdAt and updatedAt
+    timestamps, which should be more cross-language friendly.
+
+  * Ensures consistent date serialization in old API.
+
+  * Replaces postgres JDBC driver with pgjdbc-ng
     (https://github.com/impossibl/pgjdbc-ng).
+
+  * Fixes a privacy bug which would allow unauthorized access to the list of
+    clients and secrets associated with a given group. The contents of the
+    secrets were never exposed.
 
 v0.7.6: 2015-06-22
 
