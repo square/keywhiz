@@ -28,12 +28,12 @@ import static com.google.common.base.Strings.nullToEmpty;
 
     public abstract Builder description(String description);
     public abstract Builder name(String name);
+    abstract CreateClientRequestV2 autoBuild();
 
     public Builder groups(String... groups) {
       return groups(ImmutableSet.copyOf(groups));
     }
 
-    abstract CreateClientRequestV2 autoBuild();
     public CreateClientRequestV2 build() {
       CreateClientRequestV2 request = autoBuild();
       if (request.name().isEmpty()) {

@@ -33,4 +33,11 @@ public class CreateGroupRequestV2Test {
         jsonFixture("fixtures/v2/createGroupRequest.json"), CreateGroupRequestV2.class))
         .isEqualTo(createGroupRequest);
   }
+
+  @Test(expected = IllegalStateException.class)
+  public void emptyNameFailsValidation() throws Exception {
+    CreateGroupRequestV2.builder()
+        .name("")
+        .build();
+  }
 }
