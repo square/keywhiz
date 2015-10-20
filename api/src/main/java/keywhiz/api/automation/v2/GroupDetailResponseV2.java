@@ -72,8 +72,8 @@ import keywhiz.api.model.Group;
 
   @JsonProperty("name") public abstract String name();
   @JsonProperty("description") public abstract String description();
-  @JsonProperty("creationDate") public abstract long createdAtSeconds();
-  @JsonProperty("updateDate") public abstract long updatedAtSeconds();
+  @JsonProperty("createdAtSeconds") public abstract long createdAtSeconds();
+  @JsonProperty("updatedAtSeconds") public abstract long updatedAtSeconds();
   @JsonProperty("createdBy") public abstract String createdBy();
   @JsonProperty("updatedBy") public abstract String updatedBy();
   @JsonProperty("secrets") public abstract ImmutableSet<String> secrets();
