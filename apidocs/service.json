@@ -1,7 +1,7 @@
 {
   "swaggerVersion" : "1.2",
   "apiVersion" : "1",
-  "basePath" : "https://square.github.io/keywhiz/apidocs",
+  "basePath" : "http://localhost:8000/apidocs",
   "apis" : [ {
     "path" : "/secrets-generator-automation.{format}",
     "description" : "Create secrets with a generator"
@@ -18,14 +18,14 @@
     "path" : "/me.{format}",
     "description" : "Retrieve user information"
   }, {
-    "path" : "/automation_v2_secret_management.{format}",
-    "description" : "Automation endpoints to manage secrets"
-  }, {
-    "path" : "/automation_v2_group_management.{format}",
+    "path" : "/automation_v2-group-management.{format}",
     "description" : "Automation endpoints to manage groups"
   }, {
-    "path" : "/automation_v2_client_management.{format}",
+    "path" : "/automation_v2-client-management.{format}",
     "description" : "Automation endpoints to manage clients"
+  }, {
+    "path" : "/automation_v2-secret-management.{format}",
+    "description" : "Automation endpoints to manage secrets"
   }, {
     "path" : "/secrets.{format}",
     "description" : "Retrieve a collection of Secrets"

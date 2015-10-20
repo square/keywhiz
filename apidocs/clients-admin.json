@@ -122,15 +122,13 @@
           "type" : "string"
         },
         "createdAt" : {
-          "type" : "string",
-          "format" : "date-time"
+          "type" : "ApiDate"
         },
         "createdBy" : {
           "type" : "string"
         },
         "updatedAt" : {
-          "type" : "string",
-          "format" : "date-time"
+          "type" : "ApiDate"
         },
         "updatedBy" : {
           "type" : "string"
@@ -140,6 +138,15 @@
     "SanitizedSecret" : {
       "id" : "SanitizedSecret",
       "properties" : { }
+    },
+    "ApiDate" : {
+      "id" : "ApiDate",
+      "properties" : {
+        "offsetDateTime" : {
+          "type" : "string",
+          "format" : "date-time"
+        }
+      }
     },
     "ClientDetailResponse" : {
       "id" : "ClientDetailResponse",
@@ -155,12 +162,10 @@
           "type" : "string"
         },
         "creationDate" : {
-          "type" : "string",
-          "format" : "date-time"
+          "type" : "ApiDate"
         },
         "updateDate" : {
-          "type" : "string",
-          "format" : "date-time"
+          "type" : "ApiDate"
         },
         "createdBy" : {
           "type" : "string"

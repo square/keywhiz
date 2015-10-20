@@ -122,12 +122,10 @@
           "type" : "string"
         },
         "creationDate" : {
-          "type" : "string",
-          "format" : "date-time"
+          "type" : "ApiDate"
         },
         "updateDate" : {
-          "type" : "string",
-          "format" : "date-time"
+          "type" : "ApiDate"
         },
         "createdBy" : {
           "type" : "string"
@@ -153,6 +151,15 @@
       "id" : "SanitizedSecret",
       "properties" : { }
     },
+    "ApiDate" : {
+      "id" : "ApiDate",
+      "properties" : {
+        "offsetDateTime" : {
+          "type" : "string",
+          "format" : "date-time"
+        }
+      }
+    },
     "Client" : {
       "id" : "Client",
       "properties" : {
@@ -167,15 +174,13 @@
           "type" : "string"
         },
         "createdAt" : {
-          "type" : "string",
-          "format" : "date-time"
+          "type" : "ApiDate"
         },
         "createdBy" : {
           "type" : "string"
         },
         "updatedAt" : {
-          "type" : "string",
-          "format" : "date-time"
+          "type" : "ApiDate"
         },
         "updatedBy" : {
           "type" : "string"
