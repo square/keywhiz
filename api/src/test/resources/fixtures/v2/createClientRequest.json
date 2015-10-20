@@ -1,0 +1,5 @@
+{
+  "name" : "client-name",
+  "description": "client-description",
+  "groups": ["client-group1", "client-group2"]
+}

@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package keywhiz.api;
+package keywhiz.api.automation.v2;
 
 import io.dropwizard.testing.junit.ResourceTestRule;
-import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.ProcessingException;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -30,33 +28,34 @@ import static javax.ws.rs.client.Entity.entity;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
 
-public class CreateClientRequestTest {
+public class CreateClientRequestV2Test {
   @ClassRule public static final ResourceTestRule resources = ResourceTestRule.builder()
       .addResource(new Resource())
       .build();
 
   @Test public void deserializesCorrectly() throws Exception {
-    CreateClientRequest createClientRequest = new CreateClientRequest("client-name");
+    CreateClientRequestV2 createClientRequest = CreateClientRequestV2.builder()
+        .name("client-name")
+        .description("client-description")
+        .groups("client-group1", "client-group2")
+        .build();
+
     assertThat(fromJson(
-        jsonFixture("fixtures/createClientRequest.json"), CreateClientRequest.class))
+        jsonFixture("fixtures/v2/createClientRequest.json"), CreateClientRequestV2.class))
         .isEqualTo(createClientRequest);
   }
 
-  @Test public void emptyNameFailsValidation() throws Exception {
-    CreateClientRequest createClientRequest = new CreateClientRequest("");
-    Throwable exception = catchThrowable(() ->
-        resources.client().target("/").request()
-        .post(entity(createClientRequest, "application/json")));
-
-    assertThat(exception)
-        .isInstanceOf(ProcessingException.class)
-        .hasCauseInstanceOf(ConstraintViolationException.class);
+  @Test(expected = IllegalStateException.class)
+  public void emptyNameFailsValidation() throws Exception {
+    CreateClientRequestV2 createClientRequest = CreateClientRequestV2.builder()
+        .name("")
+        .build();
+    resources.client().target("/").request().post(entity(createClientRequest, "application/json"));
   }
 
   @Path("/") public static class Resource {
-    @POST @Consumes("application/json") public String method(@Valid CreateClientRequest request) {
+    @POST @Consumes("application/json") public String method(@Valid CreateClientRequestV2 request) {
       throw new UnsupportedOperationException();
     }
   }

@@ -33,7 +33,14 @@ import static com.google.common.base.Strings.nullToEmpty;
       return groups(ImmutableSet.copyOf(groups));
     }
 
-    public abstract CreateClientRequestV2 build();
+    abstract CreateClientRequestV2 autoBuild();
+    public CreateClientRequestV2 build() {
+      CreateClientRequestV2 request = autoBuild();
+      if (request.name().isEmpty()) {
+        throw new IllegalStateException("name is empty");
+      }
+      return request;
+    }
   }
 
   /**
