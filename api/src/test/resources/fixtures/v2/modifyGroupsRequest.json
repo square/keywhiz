@@ -1,0 +1,4 @@
+{
+  "addGroups": ["group1", "group2"],
+  "removeGroups": ["group3", "group4"]
+}
