@@ -1,0 +1,10 @@
+{
+  "name" : "group-name",
+  "description" : "group-description",
+  "createdAtSeconds": 1343826930,
+  "updatedAtSeconds":1347246930,
+  "createdBy" : "creator-user",
+  "updatedBy" : "updater-user",
+  "secrets" : ["secret1", "secret2"],
+  "clients" : ["client1", "client2"]
+}
