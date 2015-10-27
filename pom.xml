@@ -13,7 +13,7 @@
 
   <groupId>com.squareup.keywhiz</groupId>
   <artifactId>keywhiz-parent</artifactId>
-  <version>0.7.7-SNAPSHOT</version>
+  <version>0.7.8-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Keywhiz (Parent)</name>

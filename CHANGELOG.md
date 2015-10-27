@@ -1,4 +1,4 @@
-v0.7.7: 2015-10-20
+v0.7.8: 2015-10-27
 
   * New automation API (/automation/v2/). Reduces amount of data fetched from
     database and returned in the response based on experience using the older
