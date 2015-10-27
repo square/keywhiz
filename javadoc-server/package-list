@@ -14,4 +14,7 @@ keywhiz.service.exceptions
 keywhiz.service.filters
 keywhiz.service.providers
 keywhiz.service.resources
+keywhiz.service.resources.admin
+keywhiz.service.resources.automation
+keywhiz.service.resources.automation.v2
 keywhiz.utility
