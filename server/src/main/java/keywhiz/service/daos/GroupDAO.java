@@ -110,7 +110,8 @@ public class GroupDAO {
       return new GroupDAO(readonlyJooq, groupMapper);
     }
 
-    @Override public GroupDAO using(Configuration configuration) {
+    @Override public GroupDAO using(Configuration configuration,
+        Configuration shadowWriteConfiguration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
       return new GroupDAO(dslContext, groupMapper);
     }

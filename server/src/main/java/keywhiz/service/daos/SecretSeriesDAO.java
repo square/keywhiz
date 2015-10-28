@@ -158,7 +158,8 @@ public class SecretSeriesDAO {
       return new SecretSeriesDAO(readonlyJooq, objectMapper, secretSeriesMapper);
     }
 
-    @Override public SecretSeriesDAO using(Configuration configuration) {
+    @Override public SecretSeriesDAO using(Configuration configuration,
+        Configuration shadowWriteConfiguration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
       return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper);
     }

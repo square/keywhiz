@@ -111,7 +111,8 @@ public class ClientDAO {
       return new ClientDAO(readonlyJooq, clientMapper);
     }
 
-    @Override public ClientDAO using(Configuration configuration) {
+    @Override public ClientDAO using(Configuration configuration,
+        Configuration shadowWriteConfiguration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
       return new ClientDAO(dslContext, clientMapper);
     }

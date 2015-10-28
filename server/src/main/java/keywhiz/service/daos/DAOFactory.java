@@ -17,6 +17,7 @@
 
 package keywhiz.service.daos;
 
+import javax.annotation.Nullable;
 import org.jooq.Configuration;
 
 /**
@@ -39,6 +40,10 @@ public interface DAOFactory<T> {
   /**
    * Returns DAO using a supplied jOOQ configuration. Useful for issuing queries on the same
    * underlying transaction from a different DAO.
+   *
+   * For the shadowWrites, we try to handle transactions (to keep things symmetric) but there is
+   * no guarantee that the same data will be written to both databases!
    */
-  T using(Configuration configuration);
+  T using(Configuration configuration,
+      @Nullable Configuration shadowWriteConfiguration);
 }

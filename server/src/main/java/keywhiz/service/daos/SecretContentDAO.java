@@ -141,7 +141,8 @@ public class SecretContentDAO {
       return new SecretContentDAO(readonlyJooq, objectMapper, secretContentMapper);
     }
 
-    @Override public SecretContentDAO using(Configuration configuration) {
+    @Override public SecretContentDAO using(Configuration configuration,
+        Configuration shadowWriteConfiguration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
       return new SecretContentDAO(dslContext, objectMapper, secretContentMapper);
     }

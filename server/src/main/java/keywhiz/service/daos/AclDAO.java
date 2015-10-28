@@ -80,8 +80,8 @@ public class AclDAO {
 
   public void findAndAllowAccess(long secretId, long groupId) {
     dslContext.transaction(configuration -> {
-      GroupDAO groupDAO = groupDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+      GroupDAO groupDAO = groupDAOFactory.using(configuration, null);
+      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration, null);
 
       Optional<Group> group = groupDAO.getGroupById(groupId);
       if (!group.isPresent()) {
@@ -103,8 +103,8 @@ public class AclDAO {
 
   public void findAndRevokeAccess(long secretId, long groupId) {
     dslContext.transaction(configuration -> {
-      GroupDAO groupDAO = groupDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+      GroupDAO groupDAO = groupDAOFactory.using(configuration, null);
+      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration, null);
 
       Optional<Group> group = groupDAO.getGroupById(groupId);
       if (!group.isPresent()) {
@@ -126,8 +126,8 @@ public class AclDAO {
 
   public void findAndEnrollClient(long clientId, long groupId) {
     dslContext.transaction(configuration -> {
-      ClientDAO clientDAO = clientDAOFactory.using(configuration);
-      GroupDAO groupDAO = groupDAOFactory.using(configuration);
+      ClientDAO clientDAO = clientDAOFactory.using(configuration, null);
+      GroupDAO groupDAO = groupDAOFactory.using(configuration, null);
 
       Optional<Client> client = clientDAO.getClientById(clientId);
       if (!client.isPresent()) {
@@ -149,8 +149,8 @@ public class AclDAO {
 
   public void findAndEvictClient(long clientId, long groupId) {
     dslContext.transaction(configuration -> {
-      ClientDAO clientDAO = clientDAOFactory.using(configuration);
-      GroupDAO groupDAO = groupDAOFactory.using(configuration);
+      ClientDAO clientDAO = clientDAOFactory.using(configuration, null);
+      GroupDAO groupDAO = groupDAOFactory.using(configuration, null);
 
       Optional<Client> client = clientDAO.getClientById(clientId);
       if (!client.isPresent()) {
@@ -176,7 +176,7 @@ public class AclDAO {
     ImmutableSet.Builder<SanitizedSecret> set = ImmutableSet.builder();
 
     return dslContext.transactionResult(configuration -> {
-      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
+      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration, null);
 
       for (SecretSeries series : getSecretSeriesFor(configuration, group)) {
         for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.id())) {
@@ -239,7 +239,8 @@ public class AclDAO {
     //
     // A third way to work around this issue is to write a SQL join. Jooq makes it relatively easy,
     // but such joins hurt code re-use.
-    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
+    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration(),
+        null);
 
     ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
 
@@ -281,7 +282,8 @@ public class AclDAO {
     //
     // A third way to work around this issue is to write a SQL join. Jooq makes it relatively easy,
     // but such joins hurt code re-use.
-    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
+    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration(),
+        null);
 
     Optional<SecretSeries> secretSeries = getSecretSeriesFor(dslContext.configuration(), client, name);
     if (!secretSeries.isPresent()) {
@@ -438,7 +440,8 @@ public class AclDAO {
           secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper);
     }
 
-    @Override public AclDAO using(Configuration configuration) {
+    @Override public AclDAO using(Configuration configuration,
+        Configuration shadowWriteConfiguration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
       return new AclDAO(dslContext, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
           secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper);
