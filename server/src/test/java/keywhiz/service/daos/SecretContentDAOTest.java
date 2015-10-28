@@ -24,7 +24,9 @@ import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
+import keywhiz.service.config.ShadowWrite;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
+import keywhiz.shadow_write.jooq.tables.SecretsContent;
 import org.jooq.DSLContext;
 import org.jooq.tools.json.JSONObject;
 import org.junit.Before;
@@ -39,6 +41,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(KeywhizTestRunner.class)
 public class SecretContentDAOTest {
   @Inject DSLContext jooqContext;
+  @Inject @ShadowWrite DSLContext jooqShadowWriteContext;
+
   @Inject SecretContentDAOFactory secretContentDAOFactory;
 
   final static ApiDate date = ApiDate.now();
@@ -70,17 +74,33 @@ public class SecretContentDAOTest {
         .set(SECRETS_CONTENT.UPDATEDBY, secretContent1.updatedBy())
         .set(SECRETS_CONTENT.METADATA, JSONObject.toJSONString(secretContent1.metadata()))
         .execute();
+
+    jooqShadowWriteContext.truncate(SECRETS).execute();
+    jooqShadowWriteContext.truncate(SECRETS_CONTENT).execute();
+    jooqShadowWriteContext.insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT, SECRETS.UPDATEDAT)
+        .values(secretContent1.secretSeriesId(), "secretName", secretContent1.createdAt().toEpochSecond(), secretContent1.updatedAt().toEpochSecond())
+        .execute();
   }
 
   @Test public void createSecretContent() {
     int before = tableSize();
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
-        metadata);
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
-        metadata);
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
-        metadata);
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version",
+        "creator", metadata);
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2",
+        "creator", metadata);
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3",
+        "creator", metadata);
     assertThat(tableSize()).isEqualTo(before + 3);
+
+    // Check that shadow write worked.
+    Object[][] r = jooqShadowWriteContext
+        .select(SecretsContent.SECRETS_CONTENT.SECRETID, SecretsContent.SECRETS_CONTENT.VERSION)
+        .from(SecretsContent.SECRETS_CONTENT)
+        .fetchArrays();
+    assertThat(r.length).isEqualTo(3);
+    assertThat(r[0]).containsOnly(secretContent1.secretSeriesId(), "version");
+    assertThat(r[1]).containsOnly(secretContent1.secretSeriesId(), "version2");
+    assertThat(r[2]).containsOnly(secretContent1.secretSeriesId(), "version3");
   }
 
   @Test public void getSecretContentById() {
