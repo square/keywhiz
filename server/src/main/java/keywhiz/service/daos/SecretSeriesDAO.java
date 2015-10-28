@@ -29,9 +29,14 @@ import javax.inject.Inject;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.config.ShadowWrite;
+import keywhiz.shadow_write.jooq.tables.Secrets;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
@@ -42,14 +47,20 @@ import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
  */
 public class SecretSeriesDAO {
+  private static final Logger logger = LoggerFactory.getLogger(SecretSeriesDAO.class);
+
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretSeriesMapper secretSeriesMapper;
+  private final DSLContext shadowWriteDslContext;
 
-  private SecretSeriesDAO(DSLContext dslContext, ObjectMapper mapper, SecretSeriesMapper secretSeriesMapper) {
+  private SecretSeriesDAO(DSLContext dslContext, ObjectMapper mapper,
+      SecretSeriesMapper secretSeriesMapper,
+      DSLContext shadowWriteDslContext) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretSeriesMapper = secretSeriesMapper;
+    this.shadowWriteDslContext = shadowWriteDslContext;
   }
 
   long createSecretSeries(String name, String creator, String description, @Nullable String type,
@@ -65,19 +76,40 @@ public class SecretSeriesDAO {
     r.setUpdatedby(creator);
     r.setUpdatedat(now);
     r.setType(type);
+    String options;
     if (generationOptions != null) {
       try {
-        r.setOptions(mapper.writeValueAsString(generationOptions));
+        options = mapper.writeValueAsString(generationOptions);
       } catch (JsonProcessingException e) {
         // Serialization of a Map<String, String> can never fail.
         throw Throwables.propagate(e);
       }
     } else {
-      r.setOptions("{}");
+      options = "{}";
     }
+    r.setOptions(options);
     r.store();
 
-    return r.getId();
+    long id = r.getId();
+
+    try {
+      keywhiz.shadow_write.jooq.tables.records.SecretsRecord shadowR = shadowWriteDslContext.newRecord(
+          Secrets.SECRETS);
+      shadowR.setId(id);
+      shadowR.setName(name);
+      shadowR.setDescription(description);
+      shadowR.setCreatedby(creator);
+      shadowR.setCreatedat(now);
+      shadowR.setUpdatedby(creator);
+      shadowR.setUpdatedat(now);
+      shadowR.setType(type);
+      shadowR.setOptions(options);
+      shadowR.store();
+    } catch (DataAccessException e) {
+      logger.error("shadowWrite: failure to create secret secretId {}", e, id);
+    }
+
+    return id;
   }
 
   public Optional<SecretSeries> getSecretSeriesById(long id) {
@@ -100,39 +132,79 @@ public class SecretSeriesDAO {
   }
 
   public void deleteSecretSeriesByName(String name) {
-    dslContext.transaction(configuration -> {
-      SecretsRecord r = DSL.using(configuration).fetchOne(SECRETS, SECRETS.NAME.eq(name));
-      if (r != null) {
-        DSL.using(configuration)
-                .delete(SECRETS)
-                .where(SECRETS.ID.eq(r.getId()))
-                .execute();
-        DSL.using(configuration)
-                .delete(SECRETS_CONTENT)
-                .where(SECRETS_CONTENT.SECRETID.eq(r.getId()))
-                .execute();
-        DSL.using(configuration)
-                .delete(ACCESSGRANTS)
-                .where(ACCESSGRANTS.SECRETID.eq(r.getId()))
-                .execute();
+    shadowWriteDslContext.transaction(shadowWriteConfiguration -> {
+      Long id = dslContext.transactionResult(configuration -> {
+        SecretsRecord r = DSL.using(configuration).fetchOne(SECRETS, SECRETS.NAME.eq(name));
+        if (r != null) {
+          DSL.using(configuration)
+              .delete(SECRETS)
+              .where(SECRETS.ID.eq(r.getId()))
+              .execute();
+          DSL.using(configuration)
+              .delete(SECRETS_CONTENT)
+              .where(SECRETS_CONTENT.SECRETID.eq(r.getId()))
+              .execute();
+          DSL.using(configuration)
+              .delete(ACCESSGRANTS)
+              .where(ACCESSGRANTS.SECRETID.eq(r.getId()))
+              .execute();
+          return r.getId();
+        }
+        return null;
+      });
+      if (id != null) {
+        try {
+          DSL.using(shadowWriteConfiguration)
+              .delete(SECRETS)
+              .where(SECRETS.ID.eq(id))
+              .execute();
+          DSL.using(shadowWriteConfiguration)
+              .delete(SECRETS_CONTENT)
+              .where(SECRETS_CONTENT.SECRETID.eq(id))
+              .execute();
+          DSL.using(shadowWriteConfiguration)
+              .delete(ACCESSGRANTS)
+              .where(ACCESSGRANTS.SECRETID.eq(id))
+              .execute();
+        } catch (DataAccessException e) {
+          logger.error("shadowWrite: failure to delete secret by name secretId {}", e, id);
+        }
       }
     });
   }
 
   public void deleteSecretSeriesById(long id) {
-    dslContext.transaction(configuration -> {
-      DSL.using(configuration)
-              .delete(SECRETS)
-              .where(SECRETS.ID.eq(id))
-              .execute();
-      DSL.using(configuration)
-              .delete(SECRETS_CONTENT)
-              .where(SECRETS_CONTENT.SECRETID.eq(id))
-              .execute();
-      DSL.using(configuration)
-              .delete(ACCESSGRANTS)
-              .where(ACCESSGRANTS.SECRETID.eq(id))
-              .execute();
+    shadowWriteDslContext.transaction(shadowWriteConfiguration -> {
+      dslContext.transaction(configuration -> {
+        DSL.using(configuration)
+            .delete(SECRETS)
+            .where(SECRETS.ID.eq(id))
+            .execute();
+        DSL.using(configuration)
+            .delete(SECRETS_CONTENT)
+            .where(SECRETS_CONTENT.SECRETID.eq(id))
+            .execute();
+        DSL.using(configuration)
+            .delete(ACCESSGRANTS)
+            .where(ACCESSGRANTS.SECRETID.eq(id))
+            .execute();
+      });
+      try {
+        DSL.using(shadowWriteConfiguration)
+            .delete(SECRETS)
+            .where(SECRETS.ID.eq(id))
+            .execute();
+        DSL.using(shadowWriteConfiguration)
+            .delete(SECRETS_CONTENT)
+            .where(SECRETS_CONTENT.SECRETID.eq(id))
+            .execute();
+        DSL.using(shadowWriteConfiguration)
+            .delete(ACCESSGRANTS)
+            .where(ACCESSGRANTS.SECRETID.eq(id))
+            .execute();
+      } catch (DataAccessException e) {
+        logger.error("shadowWrite: failure to delete secret by id secretId {}", e, id);
+      }
     });
   }
 
@@ -141,27 +213,34 @@ public class SecretSeriesDAO {
     private final DSLContext readonlyJooq;
     private final ObjectMapper objectMapper;
     private final SecretSeriesMapper secretSeriesMapper;
+    private final DSLContext shadowWriteJooq;
 
     @Inject public SecretSeriesDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
-        ObjectMapper objectMapper, SecretSeriesMapper secretSeriesMapper) {
+        ObjectMapper objectMapper, SecretSeriesMapper secretSeriesMapper,
+        @ShadowWrite DSLContext shadowWriteJooq) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
       this.secretSeriesMapper = secretSeriesMapper;
+      this.shadowWriteJooq = shadowWriteJooq;
     }
 
     @Override public SecretSeriesDAO readwrite() {
-      return new SecretSeriesDAO(jooq, objectMapper, secretSeriesMapper);
+      return new SecretSeriesDAO(jooq, objectMapper, secretSeriesMapper, shadowWriteJooq);
     }
 
     @Override public SecretSeriesDAO readonly() {
-      return new SecretSeriesDAO(readonlyJooq, objectMapper, secretSeriesMapper);
+      return new SecretSeriesDAO(readonlyJooq, objectMapper, secretSeriesMapper, null);
     }
 
     @Override public SecretSeriesDAO using(Configuration configuration,
         Configuration shadowWriteConfiguration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper);
+      DSLContext shadowWriteDslContext = null;
+      if (shadowWriteConfiguration != null) {
+        shadowWriteDslContext = DSL.using(checkNotNull(shadowWriteConfiguration));
+      }
+      return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper, shadowWriteDslContext);
     }
   }
 }

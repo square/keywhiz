@@ -17,10 +17,13 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableMap;
+import java.time.OffsetDateTime;
+import java.util.List;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.service.config.ShadowWrite;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import org.jooq.DSLContext;
 import org.junit.Before;
@@ -33,12 +36,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(KeywhizTestRunner.class)
 public class SecretSeriesDAOTest {
   @Inject DSLContext jooqContext;
+  @Inject @ShadowWrite DSLContext jooqShadowWriteContext;
+
   @Inject SecretSeriesDAOFactory secretSeriesDAOFactory;
 
   SecretSeriesDAO secretSeriesDAO;
 
   @Before public void setUp() {
     secretSeriesDAO = secretSeriesDAOFactory.readwrite();
+    jooqShadowWriteContext.truncate(SECRETS).execute();
+
+    long now = OffsetDateTime.now().toEpochSecond();
+    jooqShadowWriteContext.insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT, SECRETS.UPDATEDAT)
+        .values(123L, "random_secret", now, now)
+        .execute();
   }
 
   @Test public void createAndLookupSecretSeries() {
@@ -61,6 +72,10 @@ public class SecretSeriesDAOTest {
         .orElseThrow(RuntimeException::new);
     assertThat(actual).isEqualToComparingOnlyGivenFields(expected,
         "name", "description", "type", "generationOptions");
+
+    // Check that shadow write worked.
+    List<Long> r = jooqShadowWriteContext.selectFrom(SECRETS).fetch(SECRETS.ID);
+    assertThat(r).containsOnly(id, 123L);
   }
 
   @Test public void deleteSecretSeriesByName() {
@@ -73,6 +88,10 @@ public class SecretSeriesDAOTest {
     assertThat(tableSize()).isEqualTo(secretsBefore - 1);
     assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName"))
         .isEmpty();
+
+    // Check that shadow delete worked.
+    List<Long> r = jooqShadowWriteContext.selectFrom(SECRETS).fetch(SECRETS.ID);
+    assertThat(r).containsOnly(123L);
   }
 
   @Test public void deleteSecretSeriesById() {
@@ -84,6 +103,10 @@ public class SecretSeriesDAOTest {
 
     assertThat(tableSize()).isEqualTo(secretsBefore - 1);
     assertThat(secretSeriesDAO.getSecretSeriesById(id)).isEmpty();
+
+    // Check that shadow delete worked.
+    List<Long> r = jooqShadowWriteContext.selectFrom(SECRETS).fetch(SECRETS.ID);
+    assertThat(r).containsOnly(123L);
   }
 
   @Test public void getNonExistentSecretSeries() {
