@@ -81,6 +81,13 @@ public class KeywhizConfig extends Configuration {
   @JsonProperty
   private String migrationsDir;
 
+  @NotNull
+  @JsonProperty
+  private TemplatedDataSourceFactory shadowWriteDatabase = new TemplatedDataSourceFactory();
+
+  @JsonProperty
+  private String shadowWriteMigrationsDir;
+
   public String getEnvironment() {
     return environment;
   }
@@ -111,6 +118,13 @@ public class KeywhizConfig extends Configuration {
     return readonlyDatabase;
   }
 
+  public DataSourceFactory getShadowWriteDataSourceFactory() {
+    if (shadowWriteDatabase.getUser() == null) {
+      shadowWriteDatabase.setUser(USER_NAME.value());
+    }
+    return shadowWriteDatabase;
+  }
+
   /**
    * Customizes the migrations directory.
    *
@@ -124,6 +138,13 @@ public class KeywhizConfig extends Configuration {
       return "db/migration";
     }
     return migrationsDir;
+  }
+
+  public String getShadowWriteMigrationsDir() {
+    if (shadowWriteMigrationsDir == null) {
+      return "db/migration";
+    }
+    return shadowWriteMigrationsDir;
   }
 
   /** @return LDAP configuration to authenticate admin users. Absent if fakeLdap is true. */
