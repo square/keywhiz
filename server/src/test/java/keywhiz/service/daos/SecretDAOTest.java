@@ -26,9 +26,12 @@ import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.api.model.VersionGenerator;
+import keywhiz.service.config.ShadowWrite;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
+import keywhiz.shadow_write.jooq.tables.Secrets;
+import keywhiz.shadow_write.jooq.tables.SecretsContent;
 import org.jooq.DSLContext;
 import org.jooq.Table;
 import org.jooq.exception.DataAccessException;
@@ -43,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(KeywhizTestRunner.class)
 public class SecretDAOTest {
   @Inject DSLContext jooqContext;
+  @Inject @ShadowWrite DSLContext jooqShadowWriteContext;
   @Inject ObjectMapper objectMapper;
   @Inject SecretDAOFactory secretDAOFactory;
 
@@ -115,6 +119,9 @@ public class SecretDAOTest {
         secret1.series().name(), secret1.content().version().get()).get();
     secret2 = secretDAO.getSecretByNameAndVersion(
         secret2.series().name(), secret2.content().version().get()).get();
+
+    jooqShadowWriteContext.truncate(SECRETS).execute();
+    jooqShadowWriteContext.truncate(SECRETS_CONTENT).execute();
   }
 
   @Test public void createSecret() {
@@ -135,6 +142,21 @@ public class SecretDAOTest {
     newSecret = secretDAO.getSecretByNameAndVersion(
         newSecret.series().name(), newSecret.content().version().orElse("")).get();
     assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2, newSecret);
+
+    // Check that shadow write worked.
+    Object[][] r = jooqShadowWriteContext
+        .select(Secrets.SECRETS.ID, Secrets.SECRETS.NAME)
+        .from(Secrets.SECRETS)
+        .fetchArrays();
+    assertThat(r.length).isEqualTo(1);
+    assertThat(r[0]).containsOnly(newId, name);
+
+    r = jooqShadowWriteContext
+        .select(SecretsContent.SECRETS_CONTENT.SECRETID, SecretsContent.SECRETS_CONTENT.VERSION)
+        .from(SecretsContent.SECRETS_CONTENT)
+        .fetchArrays();
+    assertThat(r.length).isEqualTo(1);
+    assertThat(r[0]).containsOnly(newId, version);
   }
 
   @Test public void createTwoVersionsOfASecret() {
@@ -144,17 +166,17 @@ public class SecretDAOTest {
     String name = "newSecret";
     String content = "c2VjcmV0MQ==";
     String encryptedContent1 = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    String version = VersionGenerator.fromLong(1234).toHex();
-    long id = secretDAO.createSecret(name, encryptedContent1, version, "creator", ImmutableMap.of(),
+    String version1 = VersionGenerator.fromLong(1234).toHex();
+    long id = secretDAO.createSecret(name, encryptedContent1, version1, "creator", ImmutableMap.of(),
         "", null, ImmutableMap.of());
-    SecretSeriesAndContent newSecret1 = secretDAO.getSecretByIdAndVersion(id, version).get();
+    SecretSeriesAndContent newSecret1 = secretDAO.getSecretByIdAndVersion(id, version1).get();
 
     content = "amFja2RvcnNrZXkK";
     String encryptedContent2 = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    version = VersionGenerator.fromLong(4321).toHex();
-    id = secretDAO.createSecret(name, encryptedContent2, version, "creator", ImmutableMap.of(), "",
+    String version2 = VersionGenerator.fromLong(4321).toHex();
+    id = secretDAO.createSecret(name, encryptedContent2, version2, "creator", ImmutableMap.of(), "",
         null, ImmutableMap.of());
-    SecretSeriesAndContent newSecret2 = secretDAO.getSecretByIdAndVersion(id, version).get();
+    SecretSeriesAndContent newSecret2 = secretDAO.getSecretByIdAndVersion(id, version2).get();
 
     // Only one new secrets entry should be created - there should be 2 secrets_content entries though
     assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore + 1);
@@ -164,6 +186,22 @@ public class SecretDAOTest {
     assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2, newSecret1, newSecret2);
 
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore + 2);
+
+    // Check that shadow write worked.
+    Object[][] r = jooqShadowWriteContext
+        .select(Secrets.SECRETS.ID, Secrets.SECRETS.NAME)
+        .from(Secrets.SECRETS)
+        .fetchArrays();
+    assertThat(r.length).isEqualTo(1);
+    assertThat(r[0]).containsOnly(id, name);
+
+    r = jooqShadowWriteContext
+        .select(SecretsContent.SECRETS_CONTENT.SECRETID, SecretsContent.SECRETS_CONTENT.VERSION)
+        .from(SecretsContent.SECRETS_CONTENT)
+        .fetchArrays();
+    assertThat(r.length).isEqualTo(2);
+    assertThat(r[0]).containsOnly(id, version1);
+    assertThat(r[1]).containsOnly(id, version2);
   }
 
   @Test public void getSecretByNameAndVersion() {
@@ -243,6 +281,12 @@ public class SecretDAOTest {
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore - 1);
     assertThat(secretDAO.getSecretByNameAndVersion("toBeDeleted_deleteSecretsByName", "first"))
         .isEmpty();
+
+    // Check that shadow delete worked.
+    List<Long> r = jooqShadowWriteContext.selectFrom(SECRETS).fetch(SECRETS.ID);
+    assertThat(r).isEmpty();
+    r = jooqShadowWriteContext.selectFrom(SECRETS_CONTENT).fetch(SECRETS_CONTENT.ID);
+    assertThat(r).isEmpty();
   }
 
   @Test public void deleteSecretByNameAndVersion() {
@@ -259,6 +303,12 @@ public class SecretDAOTest {
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore - 1);
     assertThat(secretDAO.getSecretByNameAndVersion("shadow_deleteSecretByNameAndVersion", "no1"))
         .isEmpty();
+
+    // Check that shadow delete worked.
+    List<String> r = jooqShadowWriteContext.selectFrom(SECRETS).fetch(SECRETS.NAME);
+    assertThat(r).containsOnly("shadow_deleteSecretByNameAndVersion");
+    r = jooqShadowWriteContext.selectFrom(SECRETS_CONTENT).fetch(SECRETS_CONTENT.VERSION);
+    assertThat(r).containsOnly("no2");
   }
 
   @Test public void deleteSecretSeriesWhenEmpty() {
@@ -274,6 +324,12 @@ public class SecretDAOTest {
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore - 1);
     assertThat(secretDAO.getSecretByNameAndVersion("toBeDeleted_deleteSecretSeriesWhenEmpty", "v22"))
         .isEmpty();
+
+    // Check that shadow delete worked.
+    List<Long> r = jooqShadowWriteContext.selectFrom(SECRETS).fetch(SECRETS.ID);
+    assertThat(r).isEmpty();
+    r = jooqShadowWriteContext.selectFrom(SECRETS_CONTENT).fetch(SECRETS_CONTENT.ID);
+    assertThat(r).isEmpty();
   }
 
   @Test(expected = DataAccessException.class)
