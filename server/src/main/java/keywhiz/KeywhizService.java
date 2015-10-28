@@ -34,6 +34,7 @@ import keywhiz.commands.DbSeedCommand;
 import keywhiz.commands.GenerateAesKeyCommand;
 import keywhiz.commands.MigrateCommand;
 import keywhiz.commands.PreviewMigrateCommand;
+import keywhiz.commands.SyncShadowDbCommand;
 import keywhiz.generators.SecretGenerator;
 import keywhiz.generators.SecretGeneratorFactory;
 import keywhiz.generators.SecretGeneratorModule;
@@ -139,6 +140,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     bootstrap.addCommand(new MigrateCommand());
     bootstrap.addCommand(new DbSeedCommand());
     bootstrap.addCommand(new GenerateAesKeyCommand());
+    bootstrap.addCommand(new SyncShadowDbCommand());
 
     logger.debug("Registering bundles");
     bootstrap.addBundle(new Java8Bundle());

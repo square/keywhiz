@@ -72,6 +72,21 @@ readonlyDatabase:
 migrationsDir:
   db/h2/migration
 
+shadowWriteDatabase:
+  driverClass: com.mysql.jdbc.Driver
+  url: jdbc:mysql://localhost/keywhizdb_test_shadow_write?useUnicode=true&characterEncoding=utf8
+  user: root
+  properties:
+    charSet: UTF-8
+  initialSize: 2
+  minSize: 2
+  maxSize: 2
+  # There is explicitly no password. Do not uncomment.
+  # password:
+
+shadowWriteMigrationsDir:
+  db/mysql/migration
+
 userAuth:
   type: bcrypt
 
