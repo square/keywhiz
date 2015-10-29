@@ -37,5 +37,13 @@ public class MigrateCommand extends ConfiguredCommand<KeywhizConfig> {
     flyway.setDataSource(dataSource);
     flyway.setLocations(config.getMigrationsDir());
     flyway.migrate();
+
+    dataSource = config.getShadowWriteDataSourceFactory()
+        .build(new MetricRegistry(), "migration-datasource");
+
+    flyway = new Flyway();
+    flyway.setDataSource(dataSource);
+    flyway.setLocations(config.getShadowWriteMigrationsDir());
+    flyway.migrate();
   }
 }
