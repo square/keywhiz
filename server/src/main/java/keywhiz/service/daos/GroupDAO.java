@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.api.model.Group;
+import keywhiz.jooq.tables.Accessgrants;
+import keywhiz.jooq.tables.Memberships;
 import keywhiz.jooq.tables.records.GroupsRecord;
 import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
@@ -30,7 +32,9 @@ import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
+import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 
 public class GroupDAO {
   private final DSLContext dslContext;
@@ -58,10 +62,20 @@ public class GroupDAO {
   }
 
   public void deleteGroup(Group group) {
-    dslContext
-        .delete(GROUPS)
-        .where(GROUPS.ID.eq(group.getId()))
-        .execute();
+    dslContext.transaction(configuration -> {
+      DSL.using(configuration)
+              .delete(GROUPS)
+              .where(GROUPS.ID.eq(group.getId()))
+              .execute();
+      DSL.using(configuration)
+              .delete(MEMBERSHIPS)
+              .where(MEMBERSHIPS.GROUPID.eq(group.getId()))
+              .execute();
+      DSL.using(configuration)
+              .delete(ACCESSGRANTS)
+              .where(ACCESSGRANTS.GROUPID.eq(group.getId()))
+              .execute();
+    });
   }
 
   public Optional<Group> getGroup(String name) {

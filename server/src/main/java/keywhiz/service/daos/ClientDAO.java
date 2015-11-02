@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.api.model.Client;
+import keywhiz.jooq.tables.Accessgrants;
+import keywhiz.jooq.tables.Memberships;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
@@ -30,7 +32,9 @@ import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
+import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 
 public class ClientDAO {
   private final DSLContext dslContext;
@@ -60,10 +64,17 @@ public class ClientDAO {
   }
 
   public void deleteClient(Client client) {
-    dslContext
-        .delete(CLIENTS)
-        .where(CLIENTS.ID.eq(client.getId()))
-        .execute();
+    dslContext.transaction(configuration -> {
+      DSL.using(configuration)
+          .delete(CLIENTS)
+          .where(CLIENTS.ID.eq(client.getId()))
+          .execute();
+
+      DSL.using(configuration)
+          .delete(MEMBERSHIPS)
+          .where(MEMBERSHIPS.CLIENTID.eq(client.getId()))
+          .execute();
+    });
   }
 
   public Optional<Client> getClient(String name) {

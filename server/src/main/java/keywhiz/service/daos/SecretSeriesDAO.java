@@ -28,6 +28,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.jooq.tables.SecretsContent;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
@@ -35,7 +36,9 @@ import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
+import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
 /**
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
@@ -99,16 +102,36 @@ public class SecretSeriesDAO {
   }
 
   public void deleteSecretSeriesByName(String name) {
-    dslContext
-        .delete(SECRETS)
-        .where(SECRETS.NAME.eq(name))
-        .execute();
+    dslContext.transaction(configuration -> {
+      SecretsRecord r = DSL.using(configuration).fetchOne(SECRETS, SECRETS.NAME.eq(name));
+      if (r != null) {
+        DSL.using(configuration)
+                .delete(SECRETS)
+                .where(SECRETS.ID.eq(r.getId()))
+                .execute();
+        DSL.using(configuration)
+                .delete(SECRETS_CONTENT)
+                .where(SECRETS_CONTENT.SECRETID.eq(r.getId()))
+                .execute();
+        DSL.using(configuration)
+                .delete(ACCESSGRANTS)
+                .where(ACCESSGRANTS.SECRETID.eq(r.getId()))
+                .execute();
+      }
+    });
   }
 
   public void deleteSecretSeriesById(long id) {
-    dslContext.delete(SECRETS)
-        .where(SECRETS.ID.eq(id))
-        .execute();
+    dslContext.transaction(configuration -> {
+      DSL.using(configuration)
+              .delete(SECRETS)
+              .where(SECRETS.ID.eq(id))
+              .execute();
+      DSL.using(configuration)
+              .delete(ACCESSGRANTS)
+              .where(ACCESSGRANTS.SECRETID.eq(id))
+              .execute();
+    });
   }
 
   public static class SecretSeriesDAOFactory implements DAOFactory<SecretSeriesDAO> {
