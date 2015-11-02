@@ -212,10 +212,8 @@ public class SecretDAO {
   public void deleteSecretsByName(String name) {
     checkArgument(!name.isEmpty());
 
-    dslContext.transaction(configuration -> {
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
-      secretSeriesDAO.deleteSecretSeriesByName(name);
-    });
+    secretSeriesDAOFactory.using(dslContext.configuration())
+            .deleteSecretSeriesByName(name);
   }
 
   /**
