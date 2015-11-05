@@ -1,4 +1,6 @@
 language: java
+sudo: required
+dist: trusty
 
 # Experimental group for MySQL 5.6
 group: dev
@@ -10,6 +12,8 @@ env:
   - UI_DIR=ui
 
 before_install:
+  - sudo apt-get update
+  - sudo apt-get install mysql-server-5.6 mysql-client-5.6
   # Extra Chrome setup from: http://stackoverflow.com/questions/19255976
   - export CHROME_BIN=chromium-browser
   - export DISPLAY=:99.0
