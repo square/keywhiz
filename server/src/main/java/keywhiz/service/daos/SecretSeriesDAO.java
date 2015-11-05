@@ -28,7 +28,6 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import keywhiz.api.model.SecretSeries;
-import keywhiz.jooq.tables.SecretsContent;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
@@ -126,6 +125,10 @@ public class SecretSeriesDAO {
       DSL.using(configuration)
               .delete(SECRETS)
               .where(SECRETS.ID.eq(id))
+              .execute();
+      DSL.using(configuration)
+              .delete(SECRETS_CONTENT)
+              .where(SECRETS_CONTENT.SECRETID.eq(id))
               .execute();
       DSL.using(configuration)
               .delete(ACCESSGRANTS)
