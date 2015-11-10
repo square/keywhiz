@@ -1,8 +1,8 @@
 CREATE TABLE secrets (
-  id int NOT NULL AUTO_INCREMENT,
+  id bigint NOT NULL AUTO_INCREMENT,
   name varchar(255) NOT NULL,
-  updatedat timestamp NOT NULL DEFAULT now(),
-  createdat timestamp NOT NULL,
+  updatedat bigint NOT NULL,
+  createdat bigint NOT NULL,
   description varchar(255),
   createdby varchar(255),
   updatedby varchar(255),
@@ -13,10 +13,10 @@ CREATE TABLE secrets (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE groups (
-  id int NOT NULL AUTO_INCREMENT,
+  id bigint NOT NULL AUTO_INCREMENT,
   name varchar(255) NOT NULL,
-  updatedat timestamp NOT NULL DEFAULT now(),
-  createdat timestamp NOT NULL,
+  updatedat bigint NOT NULL,
+  createdat bigint NOT NULL,
   description varchar(255),
   createdby varchar(255),
   updatedby varchar(255),
@@ -25,10 +25,10 @@ CREATE TABLE groups (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE clients (
-  id int NOT NULL AUTO_INCREMENT,
+  id bigint NOT NULL AUTO_INCREMENT,
   name varchar(255) NOT NULL,
-  updatedat timestamp NOT NULL DEFAULT now(),
-  createdat timestamp NOT NULL,
+  updatedat bigint NOT NULL,
+  createdat bigint NOT NULL,
   description varchar(255),
   createdby varchar(255),
   updatedby varchar(255),
@@ -39,32 +39,32 @@ CREATE TABLE clients (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE accessgrants (
-  id int NOT NULL AUTO_INCREMENT,
-  groupid int REFERENCES groups(id) ON DELETE CASCADE,
-  secretid int REFERENCES secrets(id) ON DELETE CASCADE,
-  updatedat timestamp NOT NULL DEFAULT now(),
-  createdat timestamp NOT NULL,
+  id bigint NOT NULL AUTO_INCREMENT,
+  groupid bigint NOT NULL,
+  secretid bigint NOT NULL,
+  updatedat bigint NOT NULL,
+  createdat bigint NOT NULL,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE memberships (
-  id int NOT NULL AUTO_INCREMENT,
-  groupid int REFERENCES groups(id) ON DELETE CASCADE,
-  clientid int REFERENCES clients(id) ON DELETE CASCADE,
-  updatedat timestamp NOT NULL DEFAULT now(),
-  createdat timestamp NOT NULL,
+  id bigint NOT NULL AUTO_INCREMENT,
+  groupid bigint NOT NULL,
+  clientid bigint NOT NULL,
+  updatedat bigint NOT NULL,
+  createdat bigint NOT NULL,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE secrets_content (
-  id int NOT NULL AUTO_INCREMENT,
-  secretid int REFERENCES secrets(id) ON DELETE CASCADE,
+  id bigint NOT NULL AUTO_INCREMENT,
+  secretid bigint NOT NULL,
   version varchar(20),
-  updatedat timestamp NOT NULL DEFAULT now(),
-  createdat timestamp NOT NULL,
+  updatedat bigint NOT NULL,
+  createdat bigint NOT NULL,
   createdby varchar(255),
   updatedby varchar(255),
-  encrypted_content text NOT NULL,
+  encrypted_content longtext NOT NULL,
   metadata text NOT NULL,
   PRIMARY KEY (id),
   UNIQUE (secretid, version)
@@ -73,7 +73,7 @@ CREATE TABLE secrets_content (
 CREATE TABLE users (
   username varchar(255) NOT NULL,
   password_hash varchar(128) NOT NULL,
-  updated_at timestamp NOT NULL DEFAULT now(),
-  created_at timestamp NOT NULL,
+  updated_at bigint NOT NULL,
+  created_at bigint NOT NULL,
   PRIMARY KEY (username)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
