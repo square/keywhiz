@@ -16,46 +16,35 @@
 
 package keywhiz.service.daos;
 
-import com.google.inject.Guice;
-import com.google.inject.testing.fieldbinder.Bind;
-import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.time.OffsetDateTime;
 import java.util.Set;
 import javax.inject.Inject;
-import keywhiz.TestDBRule;
+import keywhiz.KeywhizTestRunner;
 import keywhiz.api.model.Client;
-import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import org.jooq.DSLContext;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@RunWith(KeywhizTestRunner.class)
 public class ClientDAOTest {
-  @Rule public final TestDBRule testDBRule = new TestDBRule();
-
-  @Bind DSLContext jooqContext;
-  @Bind @Readonly DSLContext jooqReadonlyContext;
-
+  @Inject DSLContext jooqContext;
   @Inject ClientDAOFactory clientDAOFactory;
 
   Client client1, client2;
   ClientDAO clientDAO;
 
   @Before public void setUp() throws Exception {
-    jooqContext = jooqReadonlyContext = testDBRule.jooqContext();
-    Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
 
     clientDAO = clientDAOFactory.readwrite();
     long now = OffsetDateTime.now().toEpochSecond();
 
-    testDBRule.jooqContext().delete(CLIENTS).execute();
-
-    testDBRule.jooqContext().insertInto(CLIENTS, CLIENTS.NAME, CLIENTS.DESCRIPTION,
-        CLIENTS.CREATEDBY, CLIENTS.UPDATEDBY, CLIENTS.ENABLED, CLIENTS.CREATEDAT, CLIENTS.UPDATEDAT)
+    jooqContext.insertInto(CLIENTS, CLIENTS.NAME, CLIENTS.DESCRIPTION, CLIENTS.CREATEDBY,
+        CLIENTS.UPDATEDBY, CLIENTS.ENABLED, CLIENTS.CREATEDAT, CLIENTS.UPDATEDAT)
         .values("client1", "desc1", "creator", "updater", false, now, now)
         .values("client2", "desc2", "creator", "updater", false, now, now)
         .execute();

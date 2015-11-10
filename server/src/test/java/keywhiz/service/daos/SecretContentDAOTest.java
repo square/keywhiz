@@ -16,38 +16,29 @@
 
 package keywhiz.service.daos;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Guice;
-import com.google.inject.testing.fieldbinder.Bind;
-import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.time.OffsetDateTime;
 import java.util.List;
 import javax.inject.Inject;
-import keywhiz.TestDBRule;
+import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
-import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import org.jooq.DSLContext;
 import org.jooq.tools.json.JSONObject;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@RunWith(KeywhizTestRunner.class)
 public class SecretContentDAOTest {
-  @Rule public final TestDBRule testDBRule = new TestDBRule();
-
-  @Bind @SuppressWarnings("unused") ObjectMapper objectMapper = new ObjectMapper();
-  @Bind DSLContext jooqContext;
-  @Bind @Readonly DSLContext jooqReadonlyContext;
-
+  @Inject DSLContext jooqContext;
   @Inject SecretContentDAOFactory secretContentDAOFactory;
 
   final static ApiDate date = ApiDate.now();
@@ -60,18 +51,15 @@ public class SecretContentDAOTest {
 
   @Before
   public void setUp() throws Exception {
-    jooqContext = jooqReadonlyContext = testDBRule.jooqContext();
-    Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
-
     secretContentDAO = secretContentDAOFactory.readwrite();
     long now = OffsetDateTime.now().toEpochSecond();
 
-    testDBRule.jooqContext().delete(SECRETS).execute();
-    testDBRule.jooqContext().insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT,
+    jooqContext.insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT,
         SECRETS.UPDATEDAT)
         .values(secretContent1.secretSeriesId(), "secretName", now, now)
         .execute();
-    testDBRule.jooqContext().insertInto(SECRETS_CONTENT)
+
+    jooqContext.insertInto(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.ID, secretContent1.id())
         .set(SECRETS_CONTENT.SECRETID, secretContent1.secretSeriesId())
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secretContent1.encryptedContent())

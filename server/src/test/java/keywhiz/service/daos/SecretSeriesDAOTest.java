@@ -16,41 +16,28 @@
 
 package keywhiz.service.daos;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Guice;
-import com.google.inject.testing.fieldbinder.Bind;
-import com.google.inject.testing.fieldbinder.BoundFieldModule;
-import java.time.OffsetDateTime;
 import javax.inject.Inject;
-import keywhiz.TestDBRule;
+import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretSeries;
-import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import org.jooq.DSLContext;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@RunWith(KeywhizTestRunner.class)
 public class SecretSeriesDAOTest {
-  @Rule public final TestDBRule testDBRule = new TestDBRule();
-
-  @Bind @SuppressWarnings("unused") ObjectMapper objectMapper = new ObjectMapper();
-  @Bind DSLContext jooqContext;
-  @Bind @Readonly DSLContext jooqReadonlyContext;
-
+  @Inject DSLContext jooqContext;
   @Inject SecretSeriesDAOFactory secretSeriesDAOFactory;
 
   SecretSeriesDAO secretSeriesDAO;
 
   @Before public void setUp() {
-    jooqContext = jooqReadonlyContext = testDBRule.jooqContext();
-    Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
-
     secretSeriesDAO = secretSeriesDAOFactory.readwrite();
   }
 

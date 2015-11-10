@@ -16,31 +16,25 @@
 
 package keywhiz.service.daos;
 
-import com.google.inject.Guice;
-import com.google.inject.testing.fieldbinder.Bind;
-import com.google.inject.testing.fieldbinder.BoundFieldModule;
+import java.time.OffsetDateTime;
 import java.util.List;
 import javax.inject.Inject;
-import keywhiz.TestDBRule;
+import keywhiz.KeywhizTestRunner;
 import keywhiz.api.model.Group;
-import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@RunWith(KeywhizTestRunner.class)
 public class GroupDAOTest {
-  @Rule public final TestDBRule testDBRule = new TestDBRule();
-
-  @Bind DSLContext jooqContext;
-  @Bind @Readonly DSLContext jooqReadonlyContext;
-
+  @Inject DSLContext jooqContext;
   @Inject GroupDAOFactory groupDAOFactory;
 
   Group group1, group2;
@@ -48,15 +42,13 @@ public class GroupDAOTest {
   GroupDAO groupDAO;
 
   @Before public void setUp() throws Exception {
-    jooqContext = jooqReadonlyContext = testDBRule.jooqContext();
-    Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
-
     groupDAO = groupDAOFactory.readwrite();
+    long now = OffsetDateTime.now().toEpochSecond();
 
-    testDBRule.jooqContext().insertInto(GROUPS,
-        GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDBY, GROUPS.UPDATEDBY)
-        .values("group1", "desc1", "creator1", "updater1")
-        .values("group2", "desc2", "creator2", "updater2")
+    jooqContext.insertInto(GROUPS, GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDBY,
+        GROUPS.UPDATEDBY, GROUPS.CREATEDAT, GROUPS.UPDATEDAT)
+        .values("group1", "desc1", "creator1", "updater1", now, now)
+        .values("group2", "desc2", "creator2", "updater2", now, now)
         .execute();
 
     group1 = groupDAO.getGroup("group1").get();

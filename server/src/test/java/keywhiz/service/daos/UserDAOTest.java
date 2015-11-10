@@ -17,30 +17,31 @@
 package keywhiz.service.daos;
 
 import java.time.OffsetDateTime;
-import keywhiz.TestDBRule;
+import javax.inject.Inject;
+import keywhiz.KeywhizTestRunner;
+import org.jooq.DSLContext;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mindrot.jbcrypt.BCrypt;
 
 import static keywhiz.jooq.tables.Users.USERS;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@RunWith(KeywhizTestRunner.class)
 public class UserDAOTest {
-  @Rule public final TestDBRule testDBRule = new TestDBRule();
+  @Inject DSLContext jooqContext;
 
   UserDAO userDAO;
   String hashedPassword;
 
   @Before public void setUp() {
-    userDAO = new UserDAO(testDBRule.jooqContext());
+    userDAO = new UserDAO(jooqContext);
 
     hashedPassword = BCrypt.hashpw("password", BCrypt.gensalt());
 
-    testDBRule.jooqContext().delete(USERS).execute();
-
-    testDBRule.jooqContext().insertInto(USERS,
-        USERS.USERNAME, USERS.PASSWORD_HASH, USERS.CREATED_AT, USERS.UPDATED_AT)
+    jooqContext.insertInto(USERS, USERS.USERNAME, USERS.PASSWORD_HASH, USERS.CREATED_AT,
+        USERS.UPDATED_AT)
         .values("user", hashedPassword, OffsetDateTime.now().toEpochSecond(),
             OffsetDateTime.now().toEpochSecond())
         .execute();

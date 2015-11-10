@@ -19,48 +19,39 @@ package keywhiz;
 import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.db.ManagedDataSource;
 import java.sql.Connection;
-import org.junit.Rule;
+import javax.inject.Inject;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 
 import static keywhiz.JooqHealthCheck.OnFailure.LOG_ONLY;
 import static keywhiz.JooqHealthCheck.OnFailure.RETURN_UNHEALTHY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+@RunWith(KeywhizTestRunner.class)
 public class JooqHealthCheckTest {
-  @Rule public final TestDBRule testDBRule = new TestDBRule();
-  @Rule public MockitoRule mockito = MockitoJUnit.rule();
+  @Inject ManagedDataSource dataSource;
 
   @Mock ManagedDataSource managedDataSource;
 
   @Test
   public void reportsHealthy() throws Exception {
-    try (Connection connection = testDBRule.dataSource().getConnection()) {
-      when(managedDataSource.getConnection()).thenReturn(connection);
-      JooqHealthCheck healthCheck = new JooqHealthCheck(managedDataSource, LOG_ONLY);
-      assertThat(healthCheck.check()).isEqualTo(HealthCheck.Result.healthy());
-    }
+    JooqHealthCheck healthCheck = new JooqHealthCheck(dataSource, LOG_ONLY);
+    assertThat(healthCheck.check()).isEqualTo(HealthCheck.Result.healthy());
 
-    try (Connection connection = testDBRule.dataSource().getConnection()) {
-      when(managedDataSource.getConnection()).thenReturn(connection);
-      JooqHealthCheck healthCheck = new JooqHealthCheck(managedDataSource,
-          RETURN_UNHEALTHY);
-      assertThat(healthCheck.check()).isEqualTo(HealthCheck.Result.healthy());
-    }
+    healthCheck = new JooqHealthCheck(dataSource, RETURN_UNHEALTHY);
+    assertThat(healthCheck.check()).isEqualTo(HealthCheck.Result.healthy());
   }
 
   @Test
   public void reportsUnhealthy() throws Exception {
     Connection connection;
-    try (Connection c = testDBRule.dataSource().getConnection()) {
+    try (Connection c = dataSource.getConnection()) {
       connection = c;
     }
     when(managedDataSource.getConnection()).thenReturn(connection);
-    JooqHealthCheck healthCheck = new JooqHealthCheck(managedDataSource,
-        RETURN_UNHEALTHY);
+    JooqHealthCheck healthCheck = new JooqHealthCheck(managedDataSource, RETURN_UNHEALTHY);
     assertThat(healthCheck.check()).isEqualTo(
         HealthCheck.Result.unhealthy("Unhealthy connection to database."));
   }
@@ -68,7 +59,7 @@ public class JooqHealthCheckTest {
   @Test
   public void reportsHealthyWhenLogOnlyIsEnabled() throws Exception {
     Connection connection;
-    try (Connection c = testDBRule.dataSource().getConnection()) {
+    try (Connection c = dataSource.getConnection()) {
       connection = c;
     }
     when(managedDataSource.getConnection()).thenReturn(connection);
