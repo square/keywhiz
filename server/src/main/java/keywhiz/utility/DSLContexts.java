@@ -25,6 +25,7 @@ import org.jooq.conf.RenderNameStyle;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 
+import static org.jooq.SQLDialect.POSTGRES;
 import static org.jooq.tools.jdbc.JDBCUtils.dialect;
 
 /**
@@ -39,6 +40,11 @@ public class DSLContexts {
     SQLDialect dialect;
     try (Connection conn = dataSource.getConnection()) {
       dialect = dialect(conn);
+
+      // See https://github.com/jOOQ/jOOQ/issues/4730
+      if (conn.getMetaData().getURL().startsWith("jdbc:pgsql:")) {
+        dialect = POSTGRES;
+      }
     }
     return DSL.using(dataSource, dialect,
             new Settings()
