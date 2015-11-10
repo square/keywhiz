@@ -18,9 +18,7 @@ package keywhiz.cli.commands;
 
 import com.google.common.collect.ImmutableMap;
 import java.io.ByteArrayInputStream;
-import java.time.OffsetDateTime;
 import java.util.Arrays;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
@@ -79,7 +77,7 @@ public class DeleteActionTest {
     when(keywhizClient.getGroupByName(deleteActionConfig.name)).thenReturn(group);
 
     deleteAction.run();
-    verify(keywhizClient).deleteGroupWithId((int) group.getId());
+    verify(keywhizClient).deleteGroupWithId(group.getId());
   }
 
   @Test
@@ -92,7 +90,7 @@ public class DeleteActionTest {
     when(keywhizClient.getClientByName(deleteActionConfig.name)).thenReturn(client);
 
     deleteAction.run();
-    verify(keywhizClient).deleteClientWithId((int) client.getId());
+    verify(keywhizClient).deleteClientWithId(client.getId());
   }
 
   @Test
@@ -104,7 +102,7 @@ public class DeleteActionTest {
         .thenReturn(sanitizedSecret);
 
     deleteAction.run();
-    verify(keywhizClient).deleteSecretWithId((int) sanitizedSecret.id());
+    verify(keywhizClient).deleteSecretWithId(sanitizedSecret.id());
   }
 
   @Test

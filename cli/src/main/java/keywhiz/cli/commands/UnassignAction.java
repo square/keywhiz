@@ -73,14 +73,14 @@ public class UnassignAction implements Runnable {
 
         try {
           Client client = keywhizClient.getClientByName(unassignActionConfig.name);
-          if (!keywhizClient.groupDetailsForId(Math.toIntExact(group.getId())).getClients().contains(client)) {
+          if (!keywhizClient.groupDetailsForId(group.getId()).getClients().contains(client)) {
             throw new AssertionError(
                 format("Client '%s' not assigned to group '%s'.", unassignActionConfig.name,
                     group));
           }
 
           logger.info("Evicting client '{}' from group '{}'.", client.getName(), group.getName());
-          keywhizClient.evictClientFromGroupByIds(Math.toIntExact(client.getId()), Math.toIntExact(group.getId()));
+          keywhizClient.evictClientFromGroupByIds(client.getId(), group.getId());
         } catch (NotFoundException e) {
           throw new AssertionError("Client or group doesn't exist.");
         } catch (IOException e) {
@@ -90,7 +90,7 @@ public class UnassignAction implements Runnable {
 
       case "secret":
         try {
-          int groupId = Math.toIntExact(group.getId());
+          long groupId = group.getId();
           String[] parts = splitNameAndVersion(unassignActionConfig.name);
           SanitizedSecret sanitizedSecret =
               keywhizClient.getSanitizedSecretByNameAndVersion(parts[0], parts[1]);
@@ -100,7 +100,7 @@ public class UnassignAction implements Runnable {
           }
           logger.info("Revoke group '{}' access to secret '{}'.", group.getName(),
               SanitizedSecret.displayName(sanitizedSecret));
-          keywhizClient.revokeSecretFromGroupByIds(Math.toIntExact(sanitizedSecret.id()), groupId);
+          keywhizClient.revokeSecretFromGroupByIds(sanitizedSecret.id(), groupId);
         } catch (NotFoundException e) {
           throw new AssertionError("Secret or group doesn't exist.");
         } catch (ParseException e) {

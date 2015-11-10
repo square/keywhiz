@@ -18,9 +18,7 @@ package keywhiz.cli.commands;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.time.OffsetDateTime;
 import java.util.Arrays;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.GroupDetailResponse;
 import keywhiz.api.model.Client;
@@ -73,10 +71,10 @@ public class UnassignActionTest {
 
     when(keywhizClient.getGroupByName(group.getName())).thenReturn(group);
     when(keywhizClient.getClientByName(client.getName())).thenReturn(client);
-    when(keywhizClient.groupDetailsForId((int) group.getId())).thenReturn(groupDetailResponse);
+    when(keywhizClient.groupDetailsForId(group.getId())).thenReturn(groupDetailResponse);
 
     unassignAction.run();
-    verify(keywhizClient).evictClientFromGroupByIds((int) client.getId(), (int) group.getId());
+    verify(keywhizClient).evictClientFromGroupByIds(client.getId(), group.getId());
   }
 
   @Test
@@ -88,10 +86,10 @@ public class UnassignActionTest {
     when(keywhizClient.getGroupByName(group.getName())).thenReturn(group);
     when(keywhizClient.getSanitizedSecretByNameAndVersion(secret.getName(), secret.getVersion()))
         .thenReturn(sanitizedSecret);
-    when(keywhizClient.groupDetailsForId((int) group.getId())).thenReturn(groupDetailResponse);
+    when(keywhizClient.groupDetailsForId(group.getId())).thenReturn(groupDetailResponse);
 
     unassignAction.run();
-    verify(keywhizClient).revokeSecretFromGroupByIds((int) secret.getId(), (int) group.getId());
+    verify(keywhizClient).revokeSecretFromGroupByIds(secret.getId(), group.getId());
   }
 
   @Test(expected = IllegalArgumentException.class)

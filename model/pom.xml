@@ -187,6 +187,10 @@
                   <name>java.lang.Boolean</name>
                   <converter>keywhiz.model.TinyIntConverter</converter>
                 </customType>
+                <customType>
+                  <name>java.lang.Long</name>
+                  <converter>keywhiz.model.LongConverter</converter>
+                </customType>
               </customTypes>
 
               <!-- Forces JOOQ to use custom types in generated code -->
@@ -199,6 +203,11 @@
                   <name>java.lang.Boolean</name>
                   <!-- mysql doesn't support booleans and uses tinyint instead. -->
                   <types>(?i:tinyint.*)</types>
+                </forcedType>
+                <forcedType>
+                  <name>java.lang.Long</name>
+                  <!-- We ran into some postgres + bigint + autoincrement issues -->
+                  <types>(?i:int.*)</types>
                 </forcedType>
               </forcedTypes>
             </database>

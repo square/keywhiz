@@ -62,7 +62,7 @@ public class ClientDAO {
   public void deleteClient(Client client) {
     dslContext
         .delete(CLIENTS)
-        .where(CLIENTS.ID.eq(Math.toIntExact(client.getId())))
+        .where(CLIENTS.ID.eq(client.getId()))
         .execute();
   }
 
@@ -72,7 +72,7 @@ public class ClientDAO {
   }
 
   public Optional<Client> getClientById(long id) {
-    ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.ID.eq(Math.toIntExact(id)));
+    ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.ID.eq(id));
     return Optional.ofNullable(r).map(clientMapper::map);
   }
 

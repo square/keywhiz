@@ -70,7 +70,7 @@ public class DeleteAction implements Runnable {
         try {
           Group group = keywhizClient.getGroupByName(deleteActionConfig.name);
           logger.info("Deleting group '{}'.", group.getName());
-          keywhizClient.deleteGroupWithId(Math.toIntExact(group.getId()));
+          keywhizClient.deleteGroupWithId(group.getId());
         } catch (NotFoundException e) {
           throw new AssertionError("Group does not exist.");
         } catch (IOException e) {
@@ -82,7 +82,7 @@ public class DeleteAction implements Runnable {
         try {
           Client client = keywhizClient.getClientByName(deleteActionConfig.name);
           logger.info("Deleting client '{}'.", client.getName());
-          keywhizClient.deleteClientWithId(Math.toIntExact(client.getId()));
+          keywhizClient.deleteClientWithId(client.getId());
         } catch (NotFoundException e) {
           throw new AssertionError("Client does not exist.");
         } catch (IOException e) {
@@ -105,7 +105,7 @@ public class DeleteAction implements Runnable {
               return;
             } else if (line.toUpperCase().startsWith("Y")) {
               logger.info("Deleting secret '{}'.", sanitizedSecret.name());
-              keywhizClient.deleteSecretWithId(Math.toIntExact(sanitizedSecret.id()));
+              keywhizClient.deleteSecretWithId(sanitizedSecret.id());
               return;
             } // else loop again
           }

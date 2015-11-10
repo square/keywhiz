@@ -43,7 +43,7 @@ public class Printing {
     System.out.println(client.getName());
     ClientDetailResponse clientDetails;
     try {
-      clientDetails = keywhizClient.clientDetailsForId(Math.toIntExact(client.getId()));
+      clientDetails = keywhizClient.clientDetailsForId(client.getId());
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -67,7 +67,7 @@ public class Printing {
     System.out.println(group.getName());
     GroupDetailResponse groupDetails;
     try {
-      groupDetails = keywhizClient.groupDetailsForId(Math.toIntExact(group.getId()));
+      groupDetails = keywhizClient.groupDetailsForId(group.getId());
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -91,7 +91,7 @@ public class Printing {
     System.out.println(SanitizedSecret.displayName(secret));
     SecretDetailResponse secretDetails;
     try {
-      secretDetails = keywhizClient.secretDetailsForId(Math.toIntExact(secret.id()));
+      secretDetails = keywhizClient.secretDetailsForId(secret.id());
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

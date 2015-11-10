@@ -60,7 +60,7 @@ public class GroupDAO {
   public void deleteGroup(Group group) {
     dslContext
         .delete(GROUPS)
-        .where(GROUPS.ID.eq(Math.toIntExact(group.getId())))
+        .where(GROUPS.ID.eq(group.getId()))
         .execute();
   }
 
@@ -70,7 +70,7 @@ public class GroupDAO {
   }
 
   public Optional<Group> getGroupById(long id) {
-    GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq(Math.toIntExact(id)));
+    GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq(id));
     return Optional.ofNullable(r).map(groupMapper::map);
   }
 

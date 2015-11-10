@@ -65,7 +65,7 @@ public class SecretContentDAO {
 
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
 
-    r.setSecretid(Math.toIntExact(secretId));
+    r.setSecretid(secretId);
     r.setEncryptedContent(encryptedContent);
     r.setVersion(version);
     r.setCreatedby(creator);
@@ -80,14 +80,14 @@ public class SecretContentDAO {
 
   public Optional<SecretContent> getSecretContentById(long id) {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
-        SECRETS_CONTENT.ID.eq(Math.toIntExact(id)));
+        SECRETS_CONTENT.ID.eq(id));
     return Optional.ofNullable(r).map(secretContentMapper::map);
   }
 
   public Optional<SecretContent> getSecretContentBySecretIdAndVersion(long secretId,
       String version) {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
-        SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId))
+        SECRETS_CONTENT.SECRETID.eq(secretId)
             .and(SECRETS_CONTENT.VERSION.eq(version)));
     return Optional.ofNullable(r).map(secretContentMapper::map);
   }
@@ -95,7 +95,7 @@ public class SecretContentDAO {
   public ImmutableList<SecretContent> getSecretContentsBySecretId(long secretId) {
     List<SecretContent> r = dslContext
         .selectFrom(SECRETS_CONTENT)
-        .where(SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId)))
+        .where(SECRETS_CONTENT.SECRETID.eq(secretId))
         .fetch()
         .map(secretContentMapper);
 
@@ -105,7 +105,7 @@ public class SecretContentDAO {
   public void deleteSecretContentBySecretIdAndVersion(long secretId, String version) {
     dslContext
         .delete(SECRETS_CONTENT)
-        .where(SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId))
+        .where(SECRETS_CONTENT.SECRETID.eq(secretId)
             .and(SECRETS_CONTENT.VERSION.eq(version)))
         .execute();
   }
@@ -114,7 +114,7 @@ public class SecretContentDAO {
     List<String> r = dslContext
         .select(SECRETS_CONTENT.VERSION)
         .from(SECRETS_CONTENT)
-        .where(SECRETS_CONTENT.SECRETID.eq(Math.toIntExact(secretId)))
+        .where(SECRETS_CONTENT.SECRETID.eq(secretId))
         .fetch(SECRETS_CONTENT.VERSION);
 
     return ImmutableList.copyOf(r);

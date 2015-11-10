@@ -22,8 +22,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.testing.fieldbinder.Bind;
 import com.google.inject.testing.fieldbinder.BoundFieldModule;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import javax.inject.Inject;
 import keywhiz.TestDBRule;
@@ -68,11 +66,11 @@ public class SecretContentDAOTest {
 
     testDBRule.jooqContext().delete(SECRETS).execute();
     testDBRule.jooqContext().insertInto(SECRETS, SECRETS.ID, SECRETS.NAME)
-        .values((int) secretContent1.secretSeriesId(), "secretName")
+        .values(secretContent1.secretSeriesId(), "secretName")
         .execute();
     testDBRule.jooqContext().insertInto(SECRETS_CONTENT)
-        .set(SECRETS_CONTENT.ID, (int) secretContent1.id())
-        .set(SECRETS_CONTENT.SECRETID, (int) secretContent1.secretSeriesId())
+        .set(SECRETS_CONTENT.ID, secretContent1.id())
+        .set(SECRETS_CONTENT.SECRETID, secretContent1.secretSeriesId())
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secretContent1.encryptedContent())
         .set(SECRETS_CONTENT.VERSION, secretContent1.version().orElse(null))
         .set(SECRETS_CONTENT.CREATEDAT, secretContent1.createdAt().offsetDateTime)

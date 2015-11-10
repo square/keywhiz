@@ -80,7 +80,7 @@ public class SecretSeriesDAO {
   }
 
   public Optional<SecretSeries> getSecretSeriesById(long id) {
-    SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.ID.eq(Math.toIntExact(id)));
+    SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.ID.eq(id));
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
@@ -107,7 +107,7 @@ public class SecretSeriesDAO {
 
   public void deleteSecretSeriesById(long id) {
     dslContext.delete(SECRETS)
-        .where(SECRETS.ID.eq(Math.toIntExact(id)))
+        .where(SECRETS.ID.eq(id))
         .execute();
   }
 

@@ -19,10 +19,8 @@ package keywhiz.cli.commands;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.jackson.Jackson;
 import java.io.ByteArrayInputStream;
-import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Base64;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.model.Client;
@@ -126,7 +124,7 @@ public class AddActionTest {
         .thenReturn(secretDetailResponse);
 
     addAction.run();
-    verify(keywhizClient).grantSecretToGroupByIds((int) secret.getId(), (int) group.getId());
+    verify(keywhizClient).grantSecretToGroupByIds(secret.getId(), group.getId());
   }
 
   @Test
