@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.testing.fieldbinder.Bind;
 import com.google.inject.testing.fieldbinder.BoundFieldModule;
+import java.time.OffsetDateTime;
 import java.util.List;
 import javax.inject.Inject;
 import keywhiz.TestDBRule;
@@ -63,19 +64,21 @@ public class SecretContentDAOTest {
     Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
 
     secretContentDAO = secretContentDAOFactory.readwrite();
+    long now = OffsetDateTime.now().toEpochSecond();
 
     testDBRule.jooqContext().delete(SECRETS).execute();
-    testDBRule.jooqContext().insertInto(SECRETS, SECRETS.ID, SECRETS.NAME)
-        .values(secretContent1.secretSeriesId(), "secretName")
+    testDBRule.jooqContext().insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT,
+        SECRETS.UPDATEDAT)
+        .values(secretContent1.secretSeriesId(), "secretName", now, now)
         .execute();
     testDBRule.jooqContext().insertInto(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.ID, secretContent1.id())
         .set(SECRETS_CONTENT.SECRETID, secretContent1.secretSeriesId())
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secretContent1.encryptedContent())
         .set(SECRETS_CONTENT.VERSION, secretContent1.version().orElse(null))
-        .set(SECRETS_CONTENT.CREATEDAT, secretContent1.createdAt().offsetDateTime)
+        .set(SECRETS_CONTENT.CREATEDAT, secretContent1.createdAt().toEpochSecond())
         .set(SECRETS_CONTENT.CREATEDBY, secretContent1.createdBy())
-        .set(SECRETS_CONTENT.UPDATEDAT, secretContent1.updatedAt().offsetDateTime)
+        .set(SECRETS_CONTENT.UPDATEDAT, secretContent1.updatedAt().toEpochSecond())
         .set(SECRETS_CONTENT.UPDATEDBY, secretContent1.updatedBy())
         .set(SECRETS_CONTENT.METADATA, JSONObject.toJSONString(secretContent1.metadata()))
         .execute();

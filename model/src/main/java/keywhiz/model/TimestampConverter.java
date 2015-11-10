@@ -17,27 +17,26 @@
 package keywhiz.model;
 
 import java.sql.Timestamp;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.Instant;
 import org.jooq.Converter;
 
 /**
- * Converts SQL timestamps to java OffsetDateTime objects in UTC.
+ * Converts SQL timestamps to long
  */
-public class OffsetDateTimeConverter implements Converter<Timestamp, OffsetDateTime> {
-  @Override public OffsetDateTime from(Timestamp timestamp) {
-    return timestamp.toLocalDateTime().atOffset(ZoneOffset.UTC);
+public class TimestampConverter implements Converter<Timestamp, Long> {
+  @Override public Long from(Timestamp timestamp) {
+    return timestamp.toInstant().getEpochSecond();
   }
 
-  @Override public Timestamp to(OffsetDateTime offsetDateTime) {
-    return Timestamp.valueOf(offsetDateTime.toLocalDateTime());
+  @Override public Timestamp to(Long value) {
+    return Timestamp.from(Instant.ofEpochSecond(value));
   }
 
   @Override public Class<Timestamp> fromType() {
     return Timestamp.class;
   }
 
-  @Override public Class<OffsetDateTime> toType() {
-    return OffsetDateTime.class;
+  @Override public Class<Long> toType() {
+    return Long.class;
   }
 }

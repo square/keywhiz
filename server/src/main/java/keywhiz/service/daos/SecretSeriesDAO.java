@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,7 +56,7 @@ public class SecretSeriesDAO {
       @Nullable Map<String, String> generationOptions) {
     SecretsRecord r =  dslContext.newRecord(SECRETS);
 
-    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+    long now = OffsetDateTime.now().toEpochSecond();
 
     r.setName(name);
     r.setDescription(description);

@@ -19,6 +19,7 @@ package keywhiz.service.daos;
 import com.google.inject.Guice;
 import com.google.inject.testing.fieldbinder.Bind;
 import com.google.inject.testing.fieldbinder.BoundFieldModule;
+import java.time.OffsetDateTime;
 import java.util.Set;
 import javax.inject.Inject;
 import keywhiz.TestDBRule;
@@ -49,13 +50,14 @@ public class ClientDAOTest {
     Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
 
     clientDAO = clientDAOFactory.readwrite();
+    long now = OffsetDateTime.now().toEpochSecond();
 
     testDBRule.jooqContext().delete(CLIENTS).execute();
 
-    testDBRule.jooqContext().insertInto(CLIENTS,
-        CLIENTS.NAME, CLIENTS.DESCRIPTION, CLIENTS.CREATEDBY, CLIENTS.UPDATEDBY, CLIENTS.ENABLED)
-        .values("client1", "desc1", "creator", "updater", false)
-        .values("client2", "desc2", "creator", "updater", false)
+    testDBRule.jooqContext().insertInto(CLIENTS, CLIENTS.NAME, CLIENTS.DESCRIPTION,
+        CLIENTS.CREATEDBY, CLIENTS.UPDATEDBY, CLIENTS.ENABLED, CLIENTS.CREATEDAT, CLIENTS.UPDATEDAT)
+        .values("client1", "desc1", "creator", "updater", false, now, now)
+        .values("client2", "desc2", "creator", "updater", false, now, now)
         .execute();
 
     client1 = clientDAO.getClient("client1").get();

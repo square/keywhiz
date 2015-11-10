@@ -41,7 +41,8 @@ public class UserDAOTest {
 
     testDBRule.jooqContext().insertInto(USERS,
         USERS.USERNAME, USERS.PASSWORD_HASH, USERS.CREATED_AT, USERS.UPDATED_AT)
-        .values("user", hashedPassword, OffsetDateTime.now(), OffsetDateTime.now())
+        .values("user", hashedPassword, OffsetDateTime.now().toEpochSecond(),
+            OffsetDateTime.now().toEpochSecond())
         .execute();
   }
 

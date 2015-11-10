@@ -18,13 +18,10 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.api.model.Client;
-import keywhiz.jooq.tables.Accessgrants;
-import keywhiz.jooq.tables.Memberships;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
@@ -32,7 +29,6 @@ import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 
@@ -48,7 +44,7 @@ public class ClientDAO {
   public long createClient(String name, String user, String description) {
     ClientsRecord r = dslContext.newRecord(CLIENTS);
 
-    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+    long now = OffsetDateTime.now().toEpochSecond();
 
     r.setName(name);
     r.setCreatedby(user);

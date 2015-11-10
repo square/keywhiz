@@ -18,13 +18,10 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.api.model.Group;
-import keywhiz.jooq.tables.Accessgrants;
-import keywhiz.jooq.tables.Memberships;
 import keywhiz.jooq.tables.records.GroupsRecord;
 import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
@@ -48,7 +45,7 @@ public class GroupDAO {
   public long createGroup(String name, String creator, String description) {
     GroupsRecord r = dslContext.newRecord(GROUPS);
 
-    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+    long now = OffsetDateTime.now().toEpochSecond();
 
     r.setName(name);
     r.setCreatedby(creator);

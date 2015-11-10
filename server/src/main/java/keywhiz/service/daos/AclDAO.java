@@ -18,7 +18,6 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -301,7 +300,7 @@ public class AclDAO {
   }
 
   protected void allowAccess(Configuration configuration, long secretId, long groupId) {
-    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+    long now = OffsetDateTime.now().toEpochSecond();
 
     boolean assigned = 0 < DSL.using(configuration)
         .fetchCount(ACCESSGRANTS,
@@ -329,7 +328,7 @@ public class AclDAO {
   }
 
   protected void enrollClient(Configuration configuration, long clientId, long groupId) {
-    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+    long now = OffsetDateTime.now().toEpochSecond();
 
     boolean enrolled = 0 < DSL.using(configuration)
         .fetchCount(MEMBERSHIPS,
