@@ -130,12 +130,12 @@ public class KeywhizClient {
     return mapper.readValue(response, GroupDetailResponse.class);
   }
 
-  public GroupDetailResponse groupDetailsForId(int groupId) throws IOException {
+  public GroupDetailResponse groupDetailsForId(long groupId) throws IOException {
     String response = httpGet(baseUrl.resolve(format("/admin/groups/%d", groupId)));
     return mapper.readValue(response, GroupDetailResponse.class);
   }
 
-  public void deleteGroupWithId(int groupId) throws IOException {
+  public void deleteGroupWithId(long groupId) throws IOException {
     httpDelete(baseUrl.resolve(format("/admin/groups/%d", groupId)));
   }
 
@@ -156,12 +156,12 @@ public class KeywhizClient {
     return mapper.readValue(response, SecretDetailResponse.class);
   }
 
-  public SecretDetailResponse secretDetailsForId(int secretId) throws IOException {
+  public SecretDetailResponse secretDetailsForId(long secretId) throws IOException {
     String response = httpGet(baseUrl.resolve(format("/admin/secrets/%d", secretId)));
     return mapper.readValue(response, SecretDetailResponse.class);
   }
 
-  public void deleteSecretWithId(int secretId) throws IOException {
+  public void deleteSecretWithId(long secretId) throws IOException {
     httpDelete(baseUrl.resolve(format("/admin/secrets/%d", secretId)));
   }
 
@@ -192,28 +192,28 @@ public class KeywhizClient {
     return mapper.readValue(response, ClientDetailResponse.class);
   }
 
-  public ClientDetailResponse clientDetailsForId(int clientId) throws IOException {
+  public ClientDetailResponse clientDetailsForId(long clientId) throws IOException {
     String response = httpGet(baseUrl.resolve(format("/admin/clients/%d", clientId)));
     return mapper.readValue(response, ClientDetailResponse.class);
   }
 
-  public void deleteClientWithId(int clientId) throws IOException {
+  public void deleteClientWithId(long clientId) throws IOException {
     httpDelete(baseUrl.resolve(format("/admin/clients/%d", clientId)));
   }
 
-  public void enrollClientInGroupByIds(int clientId, int groupId) throws IOException {
+  public void enrollClientInGroupByIds(long clientId, long groupId) throws IOException {
     httpPut(baseUrl.resolve(format("/admin/memberships/clients/%d/groups/%d", clientId, groupId)));
   }
 
-  public void evictClientFromGroupByIds(int clientId, int groupId) throws IOException {
+  public void evictClientFromGroupByIds(long clientId, long groupId) throws IOException {
     httpDelete(baseUrl.resolve(format("/admin/memberships/clients/%d/groups/%d", clientId, groupId)));
   }
 
-  public void grantSecretToGroupByIds(int secretId, int groupId) throws IOException {
+  public void grantSecretToGroupByIds(long secretId, long groupId) throws IOException {
     httpPut(baseUrl.resolve(format("/admin/memberships/secrets/%d/groups/%d", secretId, groupId)));
   }
 
-  public void revokeSecretFromGroupByIds(int secretId, int groupId) throws IOException {
+  public void revokeSecretFromGroupByIds(long secretId, long groupId) throws IOException {
     httpDelete(baseUrl.resolve(format("/admin/memberships/secrets/%d/groups/%d", secretId, groupId)));
   }
 

@@ -303,21 +303,18 @@ public class AclDAO {
   protected void allowAccess(Configuration configuration, long secretId, long groupId) {
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
 
-    int secretIdInt = Math.toIntExact(secretId);
-    int groupIdInt = Math.toIntExact(groupId);
-
     boolean assigned = 0 < DSL.using(configuration)
         .fetchCount(ACCESSGRANTS,
-            ACCESSGRANTS.SECRETID.eq(secretIdInt).and(
-            ACCESSGRANTS.GROUPID.eq(groupIdInt)));
+            ACCESSGRANTS.SECRETID.eq(secretId).and(
+            ACCESSGRANTS.GROUPID.eq(groupId)));
     if (assigned) {
       return;
     }
 
     DSL.using(configuration)
         .insertInto(ACCESSGRANTS)
-        .set(ACCESSGRANTS.SECRETID, secretIdInt)
-        .set(ACCESSGRANTS.GROUPID, groupIdInt)
+        .set(ACCESSGRANTS.SECRETID, secretId)
+        .set(ACCESSGRANTS.GROUPID, groupId)
         .set(ACCESSGRANTS.CREATEDAT, now)
         .set(ACCESSGRANTS.UPDATEDAT, now)
         .execute();
@@ -326,29 +323,26 @@ public class AclDAO {
   protected void revokeAccess(Configuration configuration, long secretId, long groupId) {
     DSL.using(configuration)
         .delete(ACCESSGRANTS)
-        .where(ACCESSGRANTS.SECRETID.eq(Math.toIntExact(secretId))
-            .and(ACCESSGRANTS.GROUPID.eq(Math.toIntExact(groupId))))
+        .where(ACCESSGRANTS.SECRETID.eq(secretId)
+            .and(ACCESSGRANTS.GROUPID.eq(groupId)))
         .execute();
   }
 
   protected void enrollClient(Configuration configuration, long clientId, long groupId) {
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
 
-    int groupIdInt = Math.toIntExact(groupId);
-    int clientIdInt = Math.toIntExact(clientId);
-
     boolean enrolled = 0 < DSL.using(configuration)
         .fetchCount(MEMBERSHIPS,
-            MEMBERSHIPS.GROUPID.eq(groupIdInt).and(
-            MEMBERSHIPS.CLIENTID.eq(clientIdInt)));
+            MEMBERSHIPS.GROUPID.eq(groupId).and(
+            MEMBERSHIPS.CLIENTID.eq(clientId)));
     if (enrolled) {
       return;
     }
 
     DSL.using(configuration)
         .insertInto(MEMBERSHIPS)
-        .set(MEMBERSHIPS.GROUPID, groupIdInt)
-        .set(MEMBERSHIPS.CLIENTID, clientIdInt)
+        .set(MEMBERSHIPS.GROUPID, groupId)
+        .set(MEMBERSHIPS.CLIENTID, clientId)
         .set(MEMBERSHIPS.CREATEDAT, now)
         .set(MEMBERSHIPS.UPDATEDAT, now)
         .execute();
@@ -357,8 +351,8 @@ public class AclDAO {
   protected void evictClient(Configuration configuration, long clientId, long groupId) {
     DSL.using(configuration)
         .delete(MEMBERSHIPS)
-        .where(MEMBERSHIPS.CLIENTID.eq(Math.toIntExact(clientId))
-            .and(MEMBERSHIPS.GROUPID.eq(Math.toIntExact(groupId))))
+        .where(MEMBERSHIPS.CLIENTID.eq(clientId)
+            .and(MEMBERSHIPS.GROUPID.eq(groupId)))
         .execute();
   }
 

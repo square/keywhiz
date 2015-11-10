@@ -18,9 +18,7 @@ package keywhiz.cli.commands;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.time.OffsetDateTime;
 import java.util.Arrays;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.GroupDetailResponse;
 import keywhiz.api.model.Client;
@@ -79,12 +77,12 @@ public class AssignActionTest {
     when(keywhizClient.getClientByName(client.getName()))
         .thenThrow(new NotFoundException()).thenReturn(client);
     // Client not assigned to group
-    when(keywhizClient.groupDetailsForId((int) group.getId())).thenReturn(groupDetailResponse);
+    when(keywhizClient.groupDetailsForId(group.getId())).thenReturn(groupDetailResponse);
 
     assignAction.run();
 
     verify(keywhizClient).createClient(assignActionConfig.name);
-    verify(keywhizClient).enrollClientInGroupByIds((int) client.getId(), (int) group.getId());
+    verify(keywhizClient).enrollClientInGroupByIds(client.getId(), group.getId());
   }
 
   @Test
@@ -99,12 +97,12 @@ public class AssignActionTest {
     // Client exists
     when(keywhizClient.getClientByName(assignActionConfig.name)).thenReturn(client);
     // Client not assigned to group
-    when(keywhizClient.groupDetailsForId((int) group.getId())).thenReturn(groupDetailResponse);
+    when(keywhizClient.groupDetailsForId(group.getId())).thenReturn(groupDetailResponse);
 
     assignAction.run();
 
     verify(keywhizClient, never()).createClient(anyString());
-    verify(keywhizClient).enrollClientInGroupByIds((int) client.getId(), (int) group.getId());
+    verify(keywhizClient).enrollClientInGroupByIds(client.getId(), group.getId());
   }
 
   @Test
@@ -116,10 +114,10 @@ public class AssignActionTest {
     when(keywhizClient.getGroupByName(group.getName())).thenReturn(group);
     when(keywhizClient.getSanitizedSecretByNameAndVersion(secret.getName(), secret.getVersion()))
         .thenReturn(sanitizedSecret);
-    when(keywhizClient.groupDetailsForId((int) group.getId())).thenReturn(groupDetailResponse);
+    when(keywhizClient.groupDetailsForId(group.getId())).thenReturn(groupDetailResponse);
 
     assignAction.run();
-    verify(keywhizClient).grantSecretToGroupByIds((int) secret.getId(), (int) group.getId());
+    verify(keywhizClient).grantSecretToGroupByIds(secret.getId(), group.getId());
   }
 
   @Test(expected = IllegalArgumentException.class)
