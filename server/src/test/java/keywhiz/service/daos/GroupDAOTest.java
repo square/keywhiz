@@ -58,10 +58,11 @@ public class GroupDAOTest {
     group1 = groupDAO.getGroup("group1").get();
     group2 = groupDAO.getGroup("group2").get();
 
-    // write group1 to shadow db. Notice how jooq's type system falls apart here which is helpful.
-    jooqShadowWriteContext.truncate(GROUPS).execute();
-    jooqShadowWriteContext.insertInto(GROUPS, GROUPS.ID, GROUPS.NAME, GROUPS.DESCRIPTION,
-        GROUPS.CREATEDBY, GROUPS.UPDATEDBY, GROUPS.CREATEDAT, GROUPS.UPDATEDAT)
+    try {
+      jooqShadowWriteContext.truncate(Groups.GROUPS).execute();
+    } catch (DataAccessException e) {}
+    jooqShadowWriteContext.insertInto(Groups.GROUPS, Groups.GROUPS.ID, Groups.GROUPS.NAME, Groups.GROUPS.DESCRIPTION,
+        Groups.GROUPS.CREATEDBY, Groups.GROUPS.UPDATEDBY, Groups.GROUPS.CREATEDAT, Groups.GROUPS.UPDATEDAT)
         .values(group1.getId(), "group1", "desc1", "creator1", "updater1", now, now)
         .execute();
   }

@@ -69,7 +69,7 @@
         <shadow-write.db.migrations-path>mysql/migration</shadow-write.db.migrations-path>
         <shadow-write.jooq.dialect>org.jooq.util.mysql.MySQLDatabase</shadow-write.jooq.dialect>
         <shadow-write.jooq.excludes>mysql.*</shadow-write.jooq.excludes>
-        <shadow-write.jooq.input-schema>keywhizdb_test</shadow-write.jooq.input-schema>
+        <shadow-write.jooq.input-schema>keywhizdb_test_shadow_write</shadow-write.jooq.input-schema>
       </properties>
     </profile>
 
@@ -93,7 +93,7 @@
         <shadow-write.db.migrations-path>mysql/migration</shadow-write.db.migrations-path>
         <shadow-write.jooq.dialect>org.jooq.util.mysql.MySQLDatabase</shadow-write.jooq.dialect>
         <shadow-write.jooq.excludes>mysql.*</shadow-write.jooq.excludes>
-        <shadow-write.jooq.input-schema>keywhizdb_test</shadow-write.jooq.input-schema>
+        <shadow-write.jooq.input-schema>keywhizdb_test_shadow_write</shadow-write.jooq.input-schema>
       </properties>
     </profile>
 
@@ -117,7 +117,7 @@
         <shadow-write.db.migrations-path>mysql/migration</shadow-write.db.migrations-path>
         <shadow-write.jooq.dialect>org.jooq.util.mysql.MySQLDatabase</shadow-write.jooq.dialect>
         <shadow-write.jooq.excludes>mysql.*</shadow-write.jooq.excludes>
-        <shadow-write.jooq.input-schema>keywhizdb_test</shadow-write.jooq.input-schema>
+        <shadow-write.jooq.input-schema>keywhizdb_test_shadow_write</shadow-write.jooq.input-schema>
       </properties>
     </profile>
   </profiles>

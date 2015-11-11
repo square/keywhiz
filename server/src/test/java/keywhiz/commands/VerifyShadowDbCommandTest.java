@@ -20,7 +20,12 @@ import java.time.OffsetDateTime;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.service.config.ShadowWrite;
+import keywhiz.shadow_write.jooq.tables.Accessgrants;
 import keywhiz.shadow_write.jooq.tables.Clients;
+import keywhiz.shadow_write.jooq.tables.Groups;
+import keywhiz.shadow_write.jooq.tables.Memberships;
+import keywhiz.shadow_write.jooq.tables.Secrets;
+import keywhiz.shadow_write.jooq.tables.SecretsContent;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
@@ -28,11 +33,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static keywhiz.jooq.tables.Clients.CLIENTS;
-import static keywhiz.shadow_write.jooq.tables.Accessgrants.ACCESSGRANTS;
-import static keywhiz.shadow_write.jooq.tables.Groups.GROUPS;
-import static keywhiz.shadow_write.jooq.tables.Memberships.MEMBERSHIPS;
-import static keywhiz.shadow_write.jooq.tables.Secrets.SECRETS;
-import static keywhiz.shadow_write.jooq.tables.SecretsContent.SECRETS_CONTENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(KeywhizTestRunner.class)
@@ -45,19 +45,19 @@ public class VerifyShadowDbCommandTest {
       jooq2.truncate(Clients.CLIENTS).execute();
     } catch (DataAccessException e) {}
     try {
-      jooq2.truncate(GROUPS).execute();
+      jooq2.truncate(Groups.GROUPS).execute();
     } catch (DataAccessException e) {}
     try {
-      jooq2.truncate(SECRETS).execute();
+      jooq2.truncate(Secrets.SECRETS).execute();
     } catch (DataAccessException e) {}
     try {
-      jooq2.truncate(SECRETS_CONTENT).execute();
+      jooq2.truncate(SecretsContent.SECRETS_CONTENT).execute();
     } catch (DataAccessException e) {}
     try {
-      jooq2.truncate(MEMBERSHIPS).execute();
+      jooq2.truncate(Memberships.MEMBERSHIPS).execute();
     } catch (DataAccessException e) {}
     try {
-      jooq2.truncate(ACCESSGRANTS).execute();
+      jooq2.truncate(Accessgrants.ACCESSGRANTS).execute();
     } catch (DataAccessException e) {}
   }
 
@@ -77,11 +77,11 @@ public class VerifyShadowDbCommandTest {
     assertThat(ok).isFalse();
 
     // Copy the data
-    jooq2.insertInto(CLIENTS)
-        .set(CLIENTS.ID, 1L)
-        .set(CLIENTS.NAME, "client1")
-        .set(CLIENTS.CREATEDAT, now)
-        .set(CLIENTS.UPDATEDAT, now)
+    jooq2.insertInto(Clients.CLIENTS)
+        .set(Clients.CLIENTS.ID, 1L)
+        .set(Clients.CLIENTS.NAME, "client1")
+        .set(Clients.CLIENTS.CREATEDAT, now)
+        .set(Clients.CLIENTS.UPDATEDAT, now)
         .execute();
 
     // Call verify

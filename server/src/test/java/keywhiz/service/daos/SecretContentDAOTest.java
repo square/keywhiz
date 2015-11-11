@@ -26,8 +26,10 @@ import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
 import keywhiz.service.config.ShadowWrite;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
+import keywhiz.shadow_write.jooq.tables.Secrets;
 import keywhiz.shadow_write.jooq.tables.SecretsContent;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.jooq.tools.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,9 +77,14 @@ public class SecretContentDAOTest {
         .set(SECRETS_CONTENT.METADATA, JSONObject.toJSONString(secretContent1.metadata()))
         .execute();
 
-    jooqShadowWriteContext.truncate(SECRETS).execute();
-    jooqShadowWriteContext.truncate(SECRETS_CONTENT).execute();
-    jooqShadowWriteContext.insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT, SECRETS.UPDATEDAT)
+    try {
+      jooqShadowWriteContext.truncate(Secrets.SECRETS).execute();
+    } catch (DataAccessException e) {}
+    try {
+      jooqShadowWriteContext.truncate(SecretsContent.SECRETS_CONTENT).execute();
+    } catch (DataAccessException e) {}
+    jooqShadowWriteContext.insertInto(Secrets.SECRETS, Secrets.SECRETS.ID, Secrets.SECRETS.NAME,
+        Secrets.SECRETS.CREATEDAT, Secrets.SECRETS.UPDATEDAT)
         .values(secretContent1.secretSeriesId(), "secretName", secretContent1.createdAt().toEpochSecond(), secretContent1.updatedAt().toEpochSecond())
         .execute();
   }

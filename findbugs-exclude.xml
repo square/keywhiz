@@ -7,6 +7,12 @@
   <Match>
     <Package name="keywhiz.jooq.tables"/>
   </Match>
+  <Match>
+    <Package name="keywhiz.shadow_write.jooq"/>
+  </Match>
+  <Match>
+    <Package name="keywhiz.shadow_write.jooq.tables"/>
+  </Match>
 
   <!-- Not interested in serializing a servlet. -->
   <Match>

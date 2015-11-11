@@ -26,6 +26,7 @@ import keywhiz.service.config.ShadowWrite;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.shadow_write.jooq.tables.Clients;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,11 +56,13 @@ public class ClientDAOTest {
     client1 = clientDAO.getClient("client1").get();
     client2 = clientDAO.getClient("client2").get();
 
-    // write client1 to shadow db. Notice how jooq's type system falls apart here which is helpful.
-    jooqShadowWriteContext.truncate(CLIENTS).execute();
-    jooqShadowWriteContext.insertInto(CLIENTS, CLIENTS.ID, CLIENTS.NAME, CLIENTS.DESCRIPTION,
-        CLIENTS.CREATEDBY, CLIENTS.UPDATEDBY, CLIENTS.ENABLED,
-        CLIENTS.CREATEDAT, CLIENTS.UPDATEDAT)
+    try {
+      jooqShadowWriteContext.truncate(Clients.CLIENTS).execute();
+    } catch (DataAccessException e) {}
+    jooqShadowWriteContext.insertInto(Clients.CLIENTS, Clients.CLIENTS.ID, Clients.CLIENTS.NAME,
+        Clients.CLIENTS.DESCRIPTION,
+        Clients.CLIENTS.CREATEDBY, Clients.CLIENTS.UPDATEDBY, Clients.CLIENTS.ENABLED,
+        Clients.CLIENTS.CREATEDAT, Clients.CLIENTS.UPDATEDAT)
         .values(client1.getId(), "client1", "desc1", "creator", "updater", false, now, now)
         .execute();
   }

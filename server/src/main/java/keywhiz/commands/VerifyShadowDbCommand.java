@@ -25,6 +25,12 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import keywhiz.KeywhizConfig;
+import keywhiz.shadow_write.jooq.tables.Accessgrants;
+import keywhiz.shadow_write.jooq.tables.Clients;
+import keywhiz.shadow_write.jooq.tables.Groups;
+import keywhiz.shadow_write.jooq.tables.Memberships;
+import keywhiz.shadow_write.jooq.tables.Secrets;
+import keywhiz.shadow_write.jooq.tables.Users;
 import keywhiz.utility.DSLContexts;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.jooq.DSLContext;
@@ -49,7 +55,8 @@ public class VerifyShadowDbCommand extends ConfiguredCommand<KeywhizConfig> {
   private static final Logger logger = LoggerFactory.getLogger(VerifyShadowDbCommand.class);
 
   public VerifyShadowDbCommand() {
-    super("verifyShadowDb", "verifies that all data in the current database exists in the shadow database and vice-versa.");
+    super("verifyShadowDb",
+        "verifies that all data in the current database exists in the shadow database and vice-versa.");
   }
 
   @Override protected void run(Bootstrap<KeywhizConfig> bootstrap, Namespace namespace,
@@ -71,21 +78,21 @@ public class VerifyShadowDbCommand extends ConfiguredCommand<KeywhizConfig> {
 
     logger.info("Verifying clients");
     boolean r = verifyGeneric(dslSourceContext, CLIENTS, dslDestContext,
-        keywhiz.shadow_write.jooq.tables.Clients.CLIENTS, CLIENTS.ID, null);
+        Clients.CLIENTS, CLIENTS.ID, null);
     logger.info(r ? "pass" : "fail");
     ok = ok && r;
 
     // Verify groups
     logger.info("Verifying groups");
     r = verifyGeneric(dslSourceContext, GROUPS, dslDestContext,
-        keywhiz.shadow_write.jooq.tables.Groups.GROUPS, GROUPS.ID, null);
+        Groups.GROUPS, GROUPS.ID, null);
     logger.info(r ? "pass" : "fail");
     ok = ok && r;
 
     // Verify secrets
     logger.info("Verifying secrets");
     r = verifyGeneric(dslSourceContext, SECRETS, dslDestContext,
-        keywhiz.shadow_write.jooq.tables.Secrets.SECRETS, SECRETS.ID, null);
+        Secrets.SECRETS, SECRETS.ID, null);
     logger.info(r ? "pass" : "fail");
     ok = ok && r;
 
@@ -100,21 +107,21 @@ public class VerifyShadowDbCommand extends ConfiguredCommand<KeywhizConfig> {
     // Verify accessgrants
     logger.info("Verifying accessgrants");
     r = verifyGeneric(dslSourceContext, ACCESSGRANTS, dslDestContext,
-        keywhiz.shadow_write.jooq.tables.Accessgrants.ACCESSGRANTS, ACCESSGRANTS.ID, null);
+        Accessgrants.ACCESSGRANTS, ACCESSGRANTS.ID, null);
     logger.info(r ? "pass" : "fail");
     ok = ok && r;
 
     // Verify memberships
     logger.info("Verifying memberships");
     r = verifyGeneric(dslSourceContext, MEMBERSHIPS, dslDestContext,
-        keywhiz.shadow_write.jooq.tables.Memberships.MEMBERSHIPS, MEMBERSHIPS.ID, null);
+        Memberships.MEMBERSHIPS, MEMBERSHIPS.ID, null);
     logger.info(r ? "pass" : "fail");
     ok = ok && r;
 
     // Verify users
     logger.info("Verifying users");
     r = verifyGeneric(dslSourceContext, USERS, dslDestContext,
-        keywhiz.shadow_write.jooq.tables.Users.USERS, USERS.USERNAME, null);
+        Users.USERS, USERS.USERNAME, null);
     logger.info(r ? "pass" : "fail");
     ok = ok && r;
 
@@ -146,19 +153,46 @@ public class VerifyShadowDbCommand extends ConfiguredCommand<KeywhizConfig> {
       return false;
     }
 
-    Field[] fields = result1.fields();
+    Field[] fields1 = result1.fields();
+    Field[] fields2 = result2.fields();
+    if (fields1.length != fields2.length) {
+      logger.info(format("fields1.length != fields2.length"));
+      logger.info(Arrays.toString(fields1));
+      logger.info(Arrays.toString(fields2));
+      return false;
+    }
+
+    // We need to build the mapping from fields1 <-> fields2
+    int[] mapping = new int[fields1.length];
+    for (int i=0; i<fields1.length; i++) {
+      boolean found = false;
+      for (int j=0; j<fields1.length; j++) {
+        if (fields1[i].getName().equalsIgnoreCase(fields2[j].getName())) {
+          mapping[i] = j;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        logger.info(format("could not map %s", fields1[i].getName()));
+        logger.info(Arrays.toString(fields1));
+        logger.info(Arrays.toString(fields2));
+        return false;
+      }
+    }
+
     boolean ok = true;
     for (int i=0; i<result1.size(); i++) {
       Record row1 = result1.get(i);
       Record row2 = result2.get(i);
 
-      for (int j=0; j<fields.length; j++) {
-        if (!compare(row1.getValue(fields[j]), row2.getValue(fields[j]))) {
+      for (int j=0; j<fields1.length; j++) {
+        if (!compare(row1.getValue(fields1[j]), row2.getValue(fields2[mapping[j]]))) {
           logger.info(format("mismatch at %d:", i));
-          logger.info(Arrays.toString(fields));
+          logger.info(Arrays.toString(fields1));
           logger.info(row1.toString());
           logger.info(row2.toString());
-          logger.info(format("field %s don't match", fields[j].getName()));
+          logger.info(format("field %s don't match", fields1[j].getName()));
           ok = false;
         }
       }

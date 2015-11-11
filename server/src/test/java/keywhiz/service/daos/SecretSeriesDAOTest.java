@@ -25,7 +25,9 @@ import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.service.config.ShadowWrite;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
+import keywhiz.shadow_write.jooq.tables.Secrets;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,10 +46,13 @@ public class SecretSeriesDAOTest {
 
   @Before public void setUp() {
     secretSeriesDAO = secretSeriesDAOFactory.readwrite();
-    jooqShadowWriteContext.truncate(SECRETS).execute();
+    try {
+      jooqShadowWriteContext.truncate(SECRETS).execute();
+    } catch (DataAccessException e) {}
 
     long now = OffsetDateTime.now().toEpochSecond();
-    jooqShadowWriteContext.insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT, SECRETS.UPDATEDAT)
+    jooqShadowWriteContext.insertInto(Secrets.SECRETS, Secrets.SECRETS.ID, Secrets.SECRETS.NAME,
+        Secrets.SECRETS.CREATEDAT, Secrets.SECRETS.UPDATEDAT)
         .values(123L, "random_secret", now, now)
         .execute();
   }

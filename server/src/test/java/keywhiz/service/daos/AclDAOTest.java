@@ -35,6 +35,7 @@ import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.shadow_write.jooq.tables.Accessgrants;
 import keywhiz.shadow_write.jooq.tables.Memberships;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -90,11 +91,21 @@ public class AclDAOTest {
     secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==", VersionGenerator.now().toHex());
     secret2 = secretFixtures.createSecret("secret2", "c2VjcmV0Mg==");
 
-    jooqShadowWriteContext.truncate(MEMBERSHIPS).execute();
-    jooqShadowWriteContext.truncate(ACCESSGRANTS).execute();
-    jooqShadowWriteContext.truncate(SECRETS).execute();
-    jooqShadowWriteContext.truncate(CLIENTS).execute();
-    jooqShadowWriteContext.truncate(GROUPS).execute();
+    try {
+      jooqShadowWriteContext.truncate(MEMBERSHIPS).execute();
+    } catch (DataAccessException e) {}
+    try {
+      jooqShadowWriteContext.truncate(ACCESSGRANTS).execute();
+    } catch (DataAccessException e) {}
+    try {
+      jooqShadowWriteContext.truncate(SECRETS).execute();
+    } catch (DataAccessException e) {}
+    try {
+      jooqShadowWriteContext.truncate(CLIENTS).execute();
+    } catch (DataAccessException e) {}
+    try {
+      jooqShadowWriteContext.truncate(GROUPS).execute();
+    } catch (DataAccessException e) {}
   }
 
   @Test public void allowsAccess() {
