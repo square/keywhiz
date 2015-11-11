@@ -18,12 +18,12 @@ package keywhiz;
 
 import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.db.ManagedDataSource;
-import java.sql.Connection;
 import java.sql.SQLException;
 import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static keywhiz.utility.DSLContexts.databaseAgnostic;
 
 /**
  * TODO: we could improve the code to use the read-write connection if only the readonly connection
@@ -54,8 +54,8 @@ public class JooqHealthCheck extends HealthCheck {
 
   @Override
   protected Result check() throws Exception {
-    try (Connection connection = dataSource.getConnection()) {
-      DSL.using(connection).selectOne().execute();
+    try {
+      databaseAgnostic(dataSource).selectOne().execute();
     } catch (DataAccessException | SQLException e) {
       switch (onFailure) {
         case LOG_ONLY:

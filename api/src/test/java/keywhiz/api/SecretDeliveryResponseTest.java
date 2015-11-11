@@ -17,7 +17,6 @@
 package keywhiz.api;
 
 import com.google.common.collect.ImmutableMap;
-import java.time.OffsetDateTime;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.VersionGenerator;
 import org.junit.Test;
@@ -61,7 +60,7 @@ public class SecretDeliveryResponseTest {
         "Database_Password",
         secret,
         decodedLength(secret),
-        ApiDate.parse("2011-09-29T15:46:00.232Z"),
+        ApiDate.parse("2011-09-29T15:46:00.000Z"),
         false,
         ImmutableMap.of());
     assertThat(asJson(secretDeliveryResponse))
@@ -71,7 +70,7 @@ public class SecretDeliveryResponseTest {
         "General_Password..0be68f903f8b7d86",
         secret,
         decodedLength(secret),
-        ApiDate.parse("2011-09-29T15:46:00.312Z"),
+        ApiDate.parse("2011-09-29T15:46:00.000Z"),
         true,
         ImmutableMap.of());
     assertThat(asJson(secretDeliveryResponseWithVersion))
@@ -81,7 +80,7 @@ public class SecretDeliveryResponseTest {
         "Nobody_PgPass",
         secret,
         decodedLength(secret),
-        ApiDate.parse("2011-09-29T15:46:00.232Z"),
+        ApiDate.parse("2011-09-29T15:46:00.000Z"),
         false,
         ImmutableMap.of("mode", "0400", "owner", "nobody"));
     assertThat(asJson(secretDeliveryResponseWithMetadata))

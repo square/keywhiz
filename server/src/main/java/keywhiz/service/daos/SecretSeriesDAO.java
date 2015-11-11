@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,7 +34,9 @@ import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
+import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
 /**
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
@@ -55,7 +56,7 @@ public class SecretSeriesDAO {
       @Nullable Map<String, String> generationOptions) {
     SecretsRecord r =  dslContext.newRecord(SECRETS);
 
-    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+    long now = OffsetDateTime.now().toEpochSecond();
 
     r.setName(name);
     r.setDescription(description);
@@ -99,16 +100,40 @@ public class SecretSeriesDAO {
   }
 
   public void deleteSecretSeriesByName(String name) {
-    dslContext
-        .delete(SECRETS)
-        .where(SECRETS.NAME.eq(name))
-        .execute();
+    dslContext.transaction(configuration -> {
+      SecretsRecord r = DSL.using(configuration).fetchOne(SECRETS, SECRETS.NAME.eq(name));
+      if (r != null) {
+        DSL.using(configuration)
+                .delete(SECRETS)
+                .where(SECRETS.ID.eq(r.getId()))
+                .execute();
+        DSL.using(configuration)
+                .delete(SECRETS_CONTENT)
+                .where(SECRETS_CONTENT.SECRETID.eq(r.getId()))
+                .execute();
+        DSL.using(configuration)
+                .delete(ACCESSGRANTS)
+                .where(ACCESSGRANTS.SECRETID.eq(r.getId()))
+                .execute();
+      }
+    });
   }
 
   public void deleteSecretSeriesById(long id) {
-    dslContext.delete(SECRETS)
-        .where(SECRETS.ID.eq(id))
-        .execute();
+    dslContext.transaction(configuration -> {
+      DSL.using(configuration)
+              .delete(SECRETS)
+              .where(SECRETS.ID.eq(id))
+              .execute();
+      DSL.using(configuration)
+              .delete(SECRETS_CONTENT)
+              .where(SECRETS_CONTENT.SECRETID.eq(id))
+              .execute();
+      DSL.using(configuration)
+              .delete(ACCESSGRANTS)
+              .where(ACCESSGRANTS.SECRETID.eq(id))
+              .execute();
+    });
   }
 
   public static class SecretSeriesDAOFactory implements DAOFactory<SecretSeriesDAO> {

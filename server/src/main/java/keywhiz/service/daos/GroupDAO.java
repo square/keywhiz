@@ -18,7 +18,6 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -30,7 +29,9 @@ import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
+import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 
 public class GroupDAO {
   private final DSLContext dslContext;
@@ -44,7 +45,7 @@ public class GroupDAO {
   public long createGroup(String name, String creator, String description) {
     GroupsRecord r = dslContext.newRecord(GROUPS);
 
-    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+    long now = OffsetDateTime.now().toEpochSecond();
 
     r.setName(name);
     r.setCreatedby(creator);
@@ -58,10 +59,20 @@ public class GroupDAO {
   }
 
   public void deleteGroup(Group group) {
-    dslContext
-        .delete(GROUPS)
-        .where(GROUPS.ID.eq(group.getId()))
-        .execute();
+    dslContext.transaction(configuration -> {
+      DSL.using(configuration)
+              .delete(GROUPS)
+              .where(GROUPS.ID.eq(group.getId()))
+              .execute();
+      DSL.using(configuration)
+              .delete(MEMBERSHIPS)
+              .where(MEMBERSHIPS.GROUPID.eq(group.getId()))
+              .execute();
+      DSL.using(configuration)
+              .delete(ACCESSGRANTS)
+              .where(ACCESSGRANTS.GROUPID.eq(group.getId()))
+              .execute();
+    });
   }
 
   public Optional<Group> getGroup(String name) {

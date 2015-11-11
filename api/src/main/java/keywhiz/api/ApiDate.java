@@ -24,9 +24,10 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import java.io.IOException;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -35,52 +36,54 @@ import java.time.format.DateTimeFormatter;
 @JsonSerialize(using=ApiDate.ApiDateSerializer.class)
 @JsonDeserialize(using=ApiDate.ApiDateDeserializer.class)
 public class ApiDate {
+  private long epochSecond;
+
+  public long toEpochSecond() {
+    return epochSecond;
+  }
+
+  public ApiDate(long epochSecond) {
+    this.epochSecond = epochSecond;
+  }
 
   static class ApiDateSerializer extends JsonSerializer<ApiDate> {
     private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     @Override
     public void serialize(ApiDate value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-      gen.writeString(formatter.format(value.offsetDateTime));
+      Instant i = Instant.ofEpochSecond(value.epochSecond);
+      gen.writeString(formatter.format(i.atOffset(ZoneOffset.UTC)));
     }
   }
 
   static class ApiDateDeserializer extends JsonDeserializer<ApiDate> {
     @Override
     public ApiDate deserialize(JsonParser parser, DeserializationContext ctxt) throws IOException {
-      return new ApiDate(parser.readValueAs(OffsetDateTime.class));
+      OffsetDateTime odt = parser.readValueAs(OffsetDateTime.class);
+      return new ApiDate(odt.toEpochSecond());
     }
   }
 
   public static ApiDate parse(String s) {
-    return new ApiDate(OffsetDateTime.parse(s));
+    OffsetDateTime odt = OffsetDateTime.parse(s);
+    return new ApiDate(odt.toEpochSecond());
   }
 
   public static ApiDate now() {
-    return new ApiDate(OffsetDateTime.now());
-  }
-
-  public long toEpochSecond() {
-    return this.offsetDateTime.toEpochSecond();
+    return new ApiDate(OffsetDateTime.now().toEpochSecond());
   }
 
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof ApiDate) {
       ApiDate that = (ApiDate) obj;
-      return this.offsetDateTime.equals(that.offsetDateTime);
+      return this.epochSecond == that.epochSecond;
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return this.offsetDateTime.hashCode();
+    return Long.hashCode(this.epochSecond);
   }
-
-  public ApiDate(OffsetDateTime odt) {
-    this.offsetDateTime = odt;
-  }
-
-  public OffsetDateTime offsetDateTime;
 }
 

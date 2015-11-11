@@ -18,18 +18,14 @@ package keywhiz.service.daos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Guice;
-import com.google.inject.testing.fieldbinder.Bind;
-import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.util.List;
 import javax.inject.Inject;
-import keywhiz.TestDBRule;
+import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.api.model.VersionGenerator;
-import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
@@ -37,20 +33,17 @@ import org.jooq.DSLContext;
 import org.jooq.Table;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@RunWith(KeywhizTestRunner.class)
 public class SecretDAOTest {
-  @Rule public final TestDBRule testDBRule = new TestDBRule();
-
-  @Bind @SuppressWarnings("unused") ObjectMapper objectMapper = new ObjectMapper();
-  @Bind DSLContext jooqContext;
-  @Bind @Readonly DSLContext jooqReadonlyContext;
-
+  @Inject DSLContext jooqContext;
+  @Inject ObjectMapper objectMapper;
   @Inject SecretDAOFactory secretDAOFactory;
 
   final static ContentCryptographer cryptographer = CryptoFixtures.contentCryptographer();
@@ -72,46 +65,46 @@ public class SecretDAOTest {
 
   @Before
   public void setUp() throws Exception {
-    jooqContext = jooqReadonlyContext = testDBRule.jooqContext();
-    Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
-
-    jooqContext.delete(SECRETS).execute();
-
     jooqContext.insertInto(SECRETS)
         .set(SECRETS.ID, secret1.series().id())
         .set(SECRETS.NAME, secret1.series().name())
         .set(SECRETS.DESCRIPTION, secret1.series().description())
-        .set(SECRETS.CREATEDAT, secret1.series().createdAt().offsetDateTime)
         .set(SECRETS.CREATEDBY, secret1.series().createdBy())
+        .set(SECRETS.CREATEDAT, secret1.series().createdAt().toEpochSecond())
         .set(SECRETS.UPDATEDBY, secret1.series().updatedBy())
+        .set(SECRETS.UPDATEDAT, secret1.series().updatedAt().toEpochSecond())
         .execute();
 
     jooqContext.insertInto(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.SECRETID, secret1.series().id())
         .set(SECRETS_CONTENT.VERSION, secret1.content().version().orElse(null))
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret1.content().encryptedContent())
-        .set(SECRETS_CONTENT.CREATEDAT, secret1.content().createdAt().offsetDateTime)
         .set(SECRETS_CONTENT.CREATEDBY, secret1.content().createdBy())
+        .set(SECRETS_CONTENT.CREATEDAT, secret1.content().createdAt().toEpochSecond())
         .set(SECRETS_CONTENT.UPDATEDBY, secret1.content().updatedBy())
-        .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret1.content().metadata()))
+        .set(SECRETS_CONTENT.UPDATEDAT, secret1.content().updatedAt().toEpochSecond())
+        .set(SECRETS_CONTENT.METADATA,
+            objectMapper.writeValueAsString(secret1.content().metadata()))
         .execute();
 
     jooqContext.insertInto(SECRETS)
         .set(SECRETS.ID, secret2.series().id())
         .set(SECRETS.NAME, secret2.series().name())
         .set(SECRETS.DESCRIPTION, secret2.series().description())
-        .set(SECRETS.CREATEDAT, secret2.series().createdAt().offsetDateTime)
         .set(SECRETS.CREATEDBY, secret2.series().createdBy())
+        .set(SECRETS.CREATEDAT, secret2.series().createdAt().toEpochSecond())
         .set(SECRETS.UPDATEDBY, secret2.series().updatedBy())
+        .set(SECRETS.UPDATEDAT, secret2.series().updatedAt().toEpochSecond())
         .execute();
 
     jooqContext.insertInto(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.SECRETID, secret2.series().id())
         .set(SECRETS_CONTENT.VERSION, secret2.content().version().orElse(null))
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret2.content().encryptedContent())
-        .set(SECRETS_CONTENT.CREATEDAT, secret2.content().createdAt().offsetDateTime)
         .set(SECRETS_CONTENT.CREATEDBY, secret2.content().createdBy())
+        .set(SECRETS_CONTENT.CREATEDAT, secret2.content().createdAt().toEpochSecond())
         .set(SECRETS_CONTENT.UPDATEDBY, secret2.content().updatedBy())
+        .set(SECRETS_CONTENT.UPDATEDAT, secret2.content().updatedAt().toEpochSecond())
         .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret2.content().metadata()))
         .execute();
 

@@ -18,7 +18,6 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -31,6 +30,7 @@ import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
+import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 
 public class ClientDAO {
   private final DSLContext dslContext;
@@ -44,7 +44,7 @@ public class ClientDAO {
   public long createClient(String name, String user, String description) {
     ClientsRecord r = dslContext.newRecord(CLIENTS);
 
-    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+    long now = OffsetDateTime.now().toEpochSecond();
 
     r.setName(name);
     r.setCreatedby(user);
@@ -60,10 +60,17 @@ public class ClientDAO {
   }
 
   public void deleteClient(Client client) {
-    dslContext
-        .delete(CLIENTS)
-        .where(CLIENTS.ID.eq(client.getId()))
-        .execute();
+    dslContext.transaction(configuration -> {
+      DSL.using(configuration)
+          .delete(CLIENTS)
+          .where(CLIENTS.ID.eq(client.getId()))
+          .execute();
+
+      DSL.using(configuration)
+          .delete(MEMBERSHIPS)
+          .where(MEMBERSHIPS.CLIENTID.eq(client.getId()))
+          .execute();
+    });
   }
 
   public Optional<Client> getClient(String name) {

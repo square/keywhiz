@@ -18,7 +18,6 @@ package keywhiz.api;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.time.OffsetDateTime;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.VersionGenerator;
@@ -68,7 +67,7 @@ public class AutomationSecretResponseTest {
         0,
         "Database_Password",
         secret,
-        ApiDate.parse("2011-09-29T15:46:00.232Z"),
+        ApiDate.parse("2011-09-29T15:46:00.000Z"),
         false,
         ImmutableMap.of(),
         ImmutableList.of());
@@ -79,7 +78,7 @@ public class AutomationSecretResponseTest {
         33,
         "General_Password..0be68f903f8b7d86",
         secret,
-        ApiDate.parse("2011-09-29T15:46:00.312Z"),
+        ApiDate.parse("2011-09-29T15:46:00.000Z"),
         true,
         ImmutableMap.of(),
         ImmutableList.of());
@@ -90,7 +89,7 @@ public class AutomationSecretResponseTest {
         66,
         "Nobody_PgPass",
         secret,
-        ApiDate.parse("2011-09-29T15:46:00.232Z"),
+        ApiDate.parse("2011-09-29T15:46:00.000Z"),
         false,
         ImmutableMap.of("mode", "0400", "owner", "nobody"),
         ImmutableList.of());

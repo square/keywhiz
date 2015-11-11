@@ -29,6 +29,15 @@ import java.io.File;
 import java.io.IOException;
 import javax.validation.Validation;
 import javax.validation.Validator;
+import keywhiz.jooq.tables.Accessgrants;
+import keywhiz.jooq.tables.Clients;
+import keywhiz.jooq.tables.Groups;
+import keywhiz.jooq.tables.Memberships;
+import keywhiz.jooq.tables.Secrets;
+import keywhiz.jooq.tables.SecretsContent;
+import keywhiz.jooq.tables.Users;
+import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.InitializationError;
 import org.mockito.MockitoAnnotations;
@@ -71,6 +80,30 @@ public class KeywhizTestRunner extends BlockJUnit4ClassRunner {
   }
 
   @Override protected Object createTest() throws Exception {
+    // Reset database. Sometimes, the truncate command fails. I don't know why?
+    DSLContext jooqContext = injector.getInstance(DSLContext.class);
+    try {
+      jooqContext.truncate(Users.USERS).execute();
+    } catch(DataAccessException e) {}
+    try {
+      jooqContext.truncate(SecretsContent.SECRETS_CONTENT).execute();
+    } catch(DataAccessException e) {}
+    try {
+      jooqContext.truncate(Memberships.MEMBERSHIPS).execute();
+    } catch(DataAccessException e) {}
+    try {
+      jooqContext.truncate(Accessgrants.ACCESSGRANTS).execute();
+    } catch(DataAccessException e) {}
+    try {
+      jooqContext.truncate(Clients.CLIENTS).execute();
+    } catch(DataAccessException e) {}
+    try {
+      jooqContext.truncate(Groups.GROUPS).execute();
+    } catch(DataAccessException e) {}
+    try {
+      jooqContext.truncate(Secrets.SECRETS).execute();
+    } catch(DataAccessException e) {}
+
     Object object = injector.getInstance(getTestClass().getJavaClass());
     MockitoAnnotations.initMocks(object);
     return object;

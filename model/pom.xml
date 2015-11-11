@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.squareup.keywhiz</groupId>
     <artifactId>keywhiz-parent</artifactId>
-    <version>0.7.9-SNAPSHOT</version>
+    <version>0.7.10-SNAPSHOT</version>
   </parent>
 
   <artifactId>keywhiz-model</artifactId>
@@ -179,9 +179,9 @@
               <!-- Registers custom types -->
               <customTypes>
                 <customType>
-                  <name>OffsetDateTime</name>
-                  <type>java.time.OffsetDateTime</type>
-                  <converter>keywhiz.model.OffsetDateTimeConverter</converter>
+                  <name>keywhiz.model.TimestampConverter</name>
+                  <type>Long</type>
+                  <converter>keywhiz.model.TimestampConverter</converter>
                 </customType>
                 <customType>
                   <name>java.lang.Boolean</name>
@@ -196,7 +196,7 @@
               <!-- Forces JOOQ to use custom types in generated code -->
               <forcedTypes>
                 <forcedType>
-                  <name>OffsetDateTime</name>
+                  <name>keywhiz.model.TimestampConverter</name>
                   <types>(?i:timestamp.*)</types>
                 </forcedType>
                 <forcedType>

@@ -16,45 +16,33 @@
 
 package keywhiz.service.daos;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
-import com.google.inject.Guice;
-import com.google.inject.testing.fieldbinder.Bind;
-import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
-import keywhiz.TestDBRule;
+import keywhiz.KeywhizTestRunner;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.VersionGenerator;
-import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import org.jooq.DSLContext;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
-import static keywhiz.jooq.tables.Clients.CLIENTS;
-import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
-import static keywhiz.jooq.tables.Secrets.SECRETS;
-import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@RunWith(KeywhizTestRunner.class)
 public class AclDAOTest {
-  @Rule public final TestDBRule testDBRule = new TestDBRule();
-
-  @Bind @SuppressWarnings("unused") ObjectMapper objectMapper = new ObjectMapper();
-  @Bind DSLContext jooqContext;
-  @Bind @Readonly DSLContext jooqReadonlyContext;
+  @Inject DSLContext jooqContext;
 
   @Inject SecretSeriesDAOFactory secretSeriesDAOFactory;
   @Inject SecretDAOFactory secretDAOFactory;
@@ -71,18 +59,10 @@ public class AclDAOTest {
   AclDAO aclDAO;
 
   @Before public void setUp() {
-    jooqContext = jooqReadonlyContext = testDBRule.jooqContext();
-    Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
-
     secretSeriesDAO = secretSeriesDAOFactory.readwrite();
     clientDAO = clientDAOFactory.readwrite();
     groupDAO = groupDAOFactory.readwrite();
     aclDAO = aclDAOFactory.readwrite();
-
-    jooqContext.delete(CLIENTS).execute();
-    jooqContext.delete(GROUPS).execute();
-    jooqContext.delete(SECRETS).execute();
-    jooqContext.delete(SECRETS_CONTENT).execute();
 
     long id = clientDAO.createClient("client1", "creator", "");
     client1 = clientDAO.getClientById(id).get();

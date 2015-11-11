@@ -17,7 +17,6 @@
 package keywhiz.api;
 
 import com.google.common.collect.ImmutableList;
-import java.time.OffsetDateTime;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
@@ -30,8 +29,8 @@ public class GroupDetailResponseTest {
         234,
         "group-name",
         "",
-        ApiDate.parse("2012-08-01T13:15:30.001Z"),
-        ApiDate.parse("2012-09-10T03:15:30.001Z"),
+        ApiDate.parse("2012-08-01T13:15:30.000Z"),
+        ApiDate.parse("2012-09-10T03:15:30.000Z"),
         "creator-user",
         "updater-user",
         ImmutableList.of(),

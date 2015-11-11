@@ -1,3 +1,21 @@
+v0.7.9: 2015-11-10
+
+  * Various fixes related to MySQL.
+
+    Note: We modified a flyway migration file. The checksum was changed
+          from 330484744 to -1043629835. Ping us in the unlikely event that you
+          are affected by this change and need help to resolve things.
+
+  * Fixed a bug in the cli.
+
+  * Foreign keys were removed and cascading deletes are handled by Keywhiz
+    instead of the database engine. This is more flexible.
+
+  * Support for bigint, you can now enjoy 9,223,372,036,854,775,807 secrets!
+
+  * Replaced OffsetDateTime with long (epoch in seconds). We no longer track
+    data creation/mutation at the fractional seconds granularity.
+
 v0.7.8: 2015-10-27
 
   * New automation API (/automation/v2/). Reduces amount of data fetched from
