@@ -127,10 +127,11 @@ public class SyncShadowDbCommand extends ConfiguredCommand<KeywhizConfig> {
       InsertSetStep insert = dslDestContext.insertInto(destTable);
       InsertSetMoreStep insert2 = null;
       for (int i = 0; i < fields.length; i++) {
+        Field dstField = dslDestContext.newRecord(destTable).field(fields[i].getName());
         if (i == 0) {
-          insert2 = insert.set(fields[i], row.getValue(fields[i]));
+          insert2 = insert.set(dstField, row.getValue(fields[i]));
         } else {
-          insert2 = insert2.set(fields[i], row.getValue(fields[i]));
+          insert2 = insert2.set(dstField, row.getValue(fields[i]));
         }
       }
       rows += insert2.onDuplicateKeyIgnore().execute();
