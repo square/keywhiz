@@ -19,10 +19,6 @@
   <profiles>
     <profile>
       <id>postgres</id>
-      <activation>
-        <!-- If you change the default database, make sure to also update the model's pom.xml -->
-        <activeByDefault>true</activeByDefault>
-      </activation>
       <properties>
         <development-yaml>src/main/resources/keywhiz-development.yaml.postgres</development-yaml>
         <test-yaml>src/test/resources/keywhiz-test.yaml.postgres</test-yaml>
@@ -31,6 +27,10 @@
 
     <profile>
       <id>mysql</id>
+      <activation>
+        <!-- If you change the default database, make sure to also update the model's pom.xml -->
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <properties>
         <development-yaml>src/main/resources/keywhiz-development.yaml.mysql</development-yaml>
         <test-yaml>src/test/resources/keywhiz-test.yaml.mysql</test-yaml>

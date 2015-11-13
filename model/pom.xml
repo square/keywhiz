@@ -47,10 +47,6 @@
   <profiles>
     <profile>
       <id>postgres</id>
-      <activation>
-        <!-- If you change the default database, make sure to also update the server's pom.xml -->
-        <activeByDefault>true</activeByDefault>
-      </activation>
       <properties>
         <skipResetDatabase>false</skipResetDatabase>
         <db.driver>com.impossibl.postgres.jdbc.PGDriver</db.driver>
@@ -66,6 +62,10 @@
 
     <profile>
       <id>mysql</id>
+      <activation>
+        <!-- If you change the default database, make sure to also update the server's pom.xml -->
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <properties>
         <skipResetDatabase>false</skipResetDatabase>
         <db.driver>com.mysql.jdbc.Driver</db.driver>
