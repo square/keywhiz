@@ -27,22 +27,30 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.VersionGenerator;
+import keywhiz.service.config.ShadowWrite;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
+import keywhiz.shadow_write.jooq.tables.Accessgrants;
+import keywhiz.shadow_write.jooq.tables.Memberships;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
+import static keywhiz.jooq.tables.Clients.CLIENTS;
+import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
+import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(KeywhizTestRunner.class)
 public class AclDAOTest {
   @Inject DSLContext jooqContext;
+  @Inject @ShadowWrite DSLContext jooqShadowWriteContext;
 
   @Inject SecretSeriesDAOFactory secretSeriesDAOFactory;
   @Inject SecretDAOFactory secretDAOFactory;
@@ -82,35 +90,82 @@ public class AclDAOTest {
     SecretFixtures secretFixtures = SecretFixtures.using(secretDAOFactory.readwrite());
     secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==", VersionGenerator.now().toHex());
     secret2 = secretFixtures.createSecret("secret2", "c2VjcmV0Mg==");
+
+    try {
+      jooqShadowWriteContext.truncate(MEMBERSHIPS).execute();
+    } catch (DataAccessException e) {}
+    try {
+      jooqShadowWriteContext.truncate(ACCESSGRANTS).execute();
+    } catch (DataAccessException e) {}
+    try {
+      jooqShadowWriteContext.truncate(SECRETS).execute();
+    } catch (DataAccessException e) {}
+    try {
+      jooqShadowWriteContext.truncate(CLIENTS).execute();
+    } catch (DataAccessException e) {}
+    try {
+      jooqShadowWriteContext.truncate(GROUPS).execute();
+    } catch (DataAccessException e) {}
   }
 
   @Test public void allowsAccess() {
     int before = accessGrantsTableSize();
-    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(accessGrantsTableSize()).isEqualTo(before + 1);
+
+    // Check that shadow write worked.
+    Object[][] r = jooqShadowWriteContext
+        .select(Accessgrants.ACCESSGRANTS.SECRETID, Accessgrants.ACCESSGRANTS.GROUPID)
+        .from(Accessgrants.ACCESSGRANTS)
+        .fetchArrays();
+    assertThat(r.length).isEqualTo(1);
+    assertThat(r[0]).isEqualTo(new long[]{secret2.getId(), group1.getId()});
   }
 
   @Test public void allowsAccessOnlyOnce() {
     int before = accessGrantsTableSize();
-    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId());
-    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId()); // no effect
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration()); // no effect
     assertThat(accessGrantsTableSize()).isEqualTo(before + 1);
+
+    // Check that shadow write worked.
+    Object[][] r = jooqShadowWriteContext
+        .select(Accessgrants.ACCESSGRANTS.SECRETID, Accessgrants.ACCESSGRANTS.GROUPID)
+        .from(Accessgrants.ACCESSGRANTS)
+        .fetchArrays();
+    assertThat(r.length).isEqualTo(1);
+    assertThat(r[0]).isEqualTo(new long[]{secret2.getId(), group1.getId()});
   }
 
   @Test public void revokesAccess() {
-    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
     int before = accessGrantsTableSize();
 
-    aclDAO.revokeAccess(jooqContext.configuration(), secret2.getId(), group2.getId());
+    aclDAO.revokeAccess(jooqContext.configuration(), secret2.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(accessGrantsTableSize()).isEqualTo(before);
 
-    aclDAO.revokeAccess(jooqContext.configuration(), secret2.getId(), group1.getId());
+    aclDAO.revokeAccess(jooqContext.configuration(), secret2.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(accessGrantsTableSize()).isEqualTo(before - 1);
+
+    // Check that shadow write worked.
+    Object[][] r = jooqShadowWriteContext
+        .select(Accessgrants.ACCESSGRANTS.SECRETID, Accessgrants.ACCESSGRANTS.GROUPID)
+        .from(Accessgrants.ACCESSGRANTS)
+        .fetchArrays();
+    assertThat(r).isEmpty();
   }
 
   @Test public void accessGrantsHasReferentialIntegrity() {
-    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
-    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     int before = accessGrantsTableSize();
 
     groupDAO.deleteGroup(group1);
@@ -122,31 +177,62 @@ public class AclDAOTest {
 
   @Test public void enrollsClients() {
     int before = membershipsTableSize();
-    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(membershipsTableSize()).isEqualTo(before + 1);
+
+    // Check that shadow write worked.
+    Object[][] r = jooqShadowWriteContext
+        .select(Memberships.MEMBERSHIPS.CLIENTID, Memberships.MEMBERSHIPS.GROUPID)
+        .from(Memberships.MEMBERSHIPS)
+        .fetchArrays();
+    assertThat(r.length).isEqualTo(1);
+    assertThat(r[0]).isEqualTo(new long[]{client1.getId(), group2.getId()});
   }
 
   @Test public void enrollsClientsOnlyOnce() {
     int before = membershipsTableSize();
-    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId());
-    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(membershipsTableSize()).isEqualTo(before + 1);
+
+    // Check that shadow write worked.
+    Object[][] r = jooqShadowWriteContext
+        .select(Memberships.MEMBERSHIPS.CLIENTID, Memberships.MEMBERSHIPS.GROUPID)
+        .from(Memberships.MEMBERSHIPS)
+        .fetchArrays();
+    assertThat(r.length).isEqualTo(1);
+    assertThat(r[0]).isEqualTo(new long[]{client1.getId(), group2.getId()});
   }
 
   @Test public void evictsClient() {
-    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     int before = membershipsTableSize();
 
-    aclDAO.evictClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.evictClient(jooqContext.configuration(), client2.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(membershipsTableSize()).isEqualTo(before);
 
-    aclDAO.evictClient(jooqContext.configuration(), client1.getId(), group2.getId());
+    aclDAO.evictClient(jooqContext.configuration(), client1.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(membershipsTableSize()).isEqualTo(before - 1);
+
+    // Check that shadow write worked.
+    Object[][] r = jooqShadowWriteContext
+        .select(Memberships.MEMBERSHIPS.CLIENTID, Memberships.MEMBERSHIPS.GROUPID)
+        .from(Memberships.MEMBERSHIPS)
+        .fetchArrays();
+    assertThat(r).isEmpty();
   }
 
   @Test public void membershipsHasReferentialIntegrity() {
-    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
-    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     int before = membershipsTableSize();
 
     groupDAO.deleteGroup(group1);
@@ -160,11 +246,13 @@ public class AclDAOTest {
     SanitizedSecret sanitizedSecret1 = SanitizedSecret.fromSecret(secret1);
     SanitizedSecret sanitizedSecret2 = SanitizedSecret.fromSecret(secret2);
 
-    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
     Set<SanitizedSecret> secrets = aclDAO.getSanitizedSecretsFor(group1);
     assertThat(Iterables.getOnlyElement(secrets)).isEqualToIgnoringGivenFields(sanitizedSecret2, "id");
 
-    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
     secrets = aclDAO.getSanitizedSecretsFor(group1);
     assertThat(secrets).hasSize(2).doesNotHaveDuplicates();
 
@@ -178,39 +266,48 @@ public class AclDAOTest {
   }
 
   @Test public void getGroupsForSecret() {
-    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(aclDAO.getGroupsFor(secret1)).containsOnly(group2);
 
-    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(aclDAO.getGroupsFor(secret1)).containsOnly(group1, group2);
   }
 
   @Test public void getGroupsForClient() {
-    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(aclDAO.getGroupsFor(client1)).containsOnly(group2);
 
-    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(aclDAO.getGroupsFor(client1)).containsOnly(group1, group2);
   }
 
   @Test public void getClientsForGroup() {
-    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group1.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(aclDAO.getClientsFor(group1)).containsOnly(client2);
 
-    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(aclDAO.getClientsFor(group1)).containsOnly(client1, client2);
   }
 
   @Test public void getSanitizedSecretsForClient() {
     assertThat(aclDAO.getSanitizedSecretsFor(client2)).isEmpty();
 
-    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
-    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group2.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     Set<SanitizedSecret> secrets = aclDAO.getSanitizedSecretsFor(client2);
     assertThat(Iterables.getOnlyElement(secrets))
         .isEqualToIgnoringGivenFields(SanitizedSecret.fromSecret(secret2), "id");
 
-    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     secrets = aclDAO.getSanitizedSecretsFor(client2);
     assertThat(secrets).hasSize(2).doesNotHaveDuplicates();
 
@@ -222,21 +319,26 @@ public class AclDAOTest {
       }
     }
 
-    aclDAO.evictClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.evictClient(jooqContext.configuration(), client2.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(aclDAO.getSanitizedSecretsFor(client2)).isEmpty();
   }
 
   @Test public void getClientsForSecret() {
     assertThat(aclDAO.getClientsFor(secret2)).isEmpty();
 
-    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group2.getId());
-    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(aclDAO.getClientsFor(secret2)).containsOnly(client2);
 
-    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(aclDAO.getClientsFor(secret2)).containsOnly(client1, client2);
 
-    aclDAO.revokeAccess(jooqContext.configuration(), secret2.getId(), group2.getId());
+    aclDAO.revokeAccess(jooqContext.configuration(), secret2.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(aclDAO.getClientsFor(secret2)).isEmpty();
   }
 
@@ -253,22 +355,30 @@ public class AclDAOTest {
   @Test public void getSecretSeriesFor() throws Exception {
     SecretSeries secretSeries1 = secretSeriesDAO.getSecretSeriesById(secret1.getId()).get();
 
-    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group1.getId());
-    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group3.getId());
-    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
-    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
-    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group2.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group3.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
 
     SecretSeries secretSeries = aclDAO.getSecretSeriesFor(jooqContext.configuration(), client2, secret1.getName())
         .orElseThrow(RuntimeException::new);
     assertThat(secretSeries).isEqualToIgnoringGivenFields(secretSeries1, "id");
 
-    aclDAO.evictClient(jooqContext.configuration(), client2.getId(), group1.getId());
-    aclDAO.evictClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.evictClient(jooqContext.configuration(), client2.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.evictClient(jooqContext.configuration(), client2.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
     assertThat(aclDAO.getSecretSeriesFor(jooqContext.configuration(), client2, secret1.getName()))
         .isEmpty();
 
-    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group3.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group3.getId(),
+        jooqShadowWriteContext.configuration());
 
     secretSeries = aclDAO.getSecretSeriesFor(jooqContext.configuration(), client2, secret1.getName())
         .orElseThrow(RuntimeException::new);
@@ -287,21 +397,26 @@ public class AclDAOTest {
   @Test public void getSecretFor() throws Exception {
     SanitizedSecret sanitizedSecret1 = SanitizedSecret.fromSecret(secret1);
 
-    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group1.getId());
-    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group3.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group3.getId(),
+        jooqShadowWriteContext.configuration());
 
-    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
 
     SanitizedSecret secret = aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name(), sanitizedSecret1.version())
         .orElseThrow(RuntimeException::new);
     assertThat(secret).isEqualToIgnoringGivenFields(sanitizedSecret1, "id");
 
-    aclDAO.evictClient(jooqContext.configuration(), client2.getId(), group1.getId());
+    aclDAO.evictClient(jooqContext.configuration(), client2.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
     Optional<SanitizedSecret> missingSecret =
         aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name(), sanitizedSecret1.version());
     assertThat(missingSecret).isEmpty();
 
-    aclDAO.allowAccess(jooqContext.configuration(), sanitizedSecret1.id(), group3.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), sanitizedSecret1.id(), group3.getId(),
+        jooqShadowWriteContext.configuration());
 
     secret = aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name(), sanitizedSecret1.version())
         .orElseThrow(RuntimeException::new);
@@ -310,10 +425,14 @@ public class AclDAOTest {
 
   @Test public void getSecretsReturnsDistinct() {
     // client1 has two paths to secret1
-    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
-    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId());
-    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
-    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group2.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId(),
+        jooqShadowWriteContext.configuration());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group2.getId(),
+        jooqShadowWriteContext.configuration());
 
     Set<SanitizedSecret> secret = aclDAO.getSanitizedSecretsFor(client1);
     assertThat(secret).hasSize(1);

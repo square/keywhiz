@@ -32,12 +32,16 @@ import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.config.ShadowWrite;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
+import keywhiz.shadow_write.jooq.tables.Accessgrants;
+import keywhiz.shadow_write.jooq.tables.Memberships;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,11 +67,13 @@ public class AclDAO {
   private final ClientMapper clientMapper;
   private final GroupMapper groupMapper;
   private final SecretSeriesMapper secretSeriesMapper;
+  private final DSLContext shadowWriteDslContext;
 
   private AclDAO(DSLContext dslContext, ClientDAOFactory clientDAOFactory,
       GroupDAOFactory groupDAOFactory, SecretContentDAOFactory secretContentDAOFactory,
       SecretSeriesDAOFactory secretSeriesDAOFactory, ClientMapper clientMapper,
-      GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper) {
+      GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper,
+      DSLContext shadowWriteDslContext) {
     this.dslContext = dslContext;
     this.clientDAOFactory = clientDAOFactory;
     this.groupDAOFactory = groupDAOFactory;
@@ -76,98 +82,105 @@ public class AclDAO {
     this.clientMapper = clientMapper;
     this.groupMapper = groupMapper;
     this.secretSeriesMapper = secretSeriesMapper;
+    this.shadowWriteDslContext = shadowWriteDslContext;
   }
 
   public void findAndAllowAccess(long secretId, long groupId) {
-    dslContext.transaction(configuration -> {
-      GroupDAO groupDAO = groupDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+    shadowWriteDslContext.transaction(shadowWriteConfiguration ->
+        dslContext.transaction(configuration -> {
+          GroupDAO groupDAO = groupDAOFactory.using(configuration, null);
+          SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration, null);
 
-      Optional<Group> group = groupDAO.getGroupById(groupId);
-      if (!group.isPresent()) {
-        logger.info("Failure to allow access groupId {}, secretId {}: groupId not found.", groupId,
-            secretId);
-        throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
-      }
+          Optional<Group> group = groupDAO.getGroupById(groupId);
+          if (!group.isPresent()) {
+            logger.info("Failure to allow access groupId {}, secretId {}: groupId not found.", groupId,
+                secretId);
+            throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
+          }
 
-      Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
-      if (!secret.isPresent()) {
-        logger.info("Failure to allow access groupId {}, secretId {}: secretId not found.", groupId,
-            secretId);
-        throw new IllegalStateException(format("SecretId %d doesn't exist.", secretId));
-      }
+          Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
+          if (!secret.isPresent()) {
+            logger.info("Failure to allow access groupId {}, secretId {}: secretId not found.", groupId,
+                secretId);
+            throw new IllegalStateException(format("SecretId %d doesn't exist.", secretId));
+          }
 
-      allowAccess(configuration, secretId, groupId);
-    });
+          allowAccess(configuration, secretId, groupId, shadowWriteConfiguration);
+        })
+    );
   }
 
   public void findAndRevokeAccess(long secretId, long groupId) {
-    dslContext.transaction(configuration -> {
-      GroupDAO groupDAO = groupDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+    shadowWriteDslContext.transaction(
+        shadowWriteConfiguration -> dslContext.transaction(configuration -> {
+          GroupDAO groupDAO = groupDAOFactory.using(configuration, null);
+          SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration, null);
 
-      Optional<Group> group = groupDAO.getGroupById(groupId);
-      if (!group.isPresent()) {
-        logger.info("Failure to revoke access groupId {}, secretId {}: groupId not found.", groupId,
-            secretId);
-        throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
-      }
+          Optional<Group> group = groupDAO.getGroupById(groupId);
+          if (!group.isPresent()) {
+            logger.info("Failure to revoke access groupId {}, secretId {}: groupId not found.",
+                groupId, secretId);
+            throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
+          }
 
-      Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
-      if (!secret.isPresent()) {
-        logger.info("Failure to revoke access groupId {}, secretId {}: secretId not found.",
-            groupId, secretId);
-        throw new IllegalStateException(format("SecretId %d doesn't exist.", secretId));
-      }
+          Optional<SecretSeries> secret = secretSeriesDAO.getSecretSeriesById(secretId);
+          if (!secret.isPresent()) {
+            logger.info("Failure to revoke access groupId {}, secretId {}: secretId not found.",
+                groupId, secretId);
+            throw new IllegalStateException(format("SecretId %d doesn't exist.", secretId));
+          }
 
-      revokeAccess(configuration, secretId, groupId);
-    });
+          revokeAccess(configuration, secretId, groupId, shadowWriteConfiguration);
+        }));
   }
 
   public void findAndEnrollClient(long clientId, long groupId) {
-    dslContext.transaction(configuration -> {
-      ClientDAO clientDAO = clientDAOFactory.using(configuration);
-      GroupDAO groupDAO = groupDAOFactory.using(configuration);
+    shadowWriteDslContext.transaction(shadowWriteConfiguration ->
+        dslContext.transaction(configuration -> {
+          ClientDAO clientDAO = clientDAOFactory.using(configuration, null);
+          GroupDAO groupDAO = groupDAOFactory.using(configuration, null);
 
-      Optional<Client> client = clientDAO.getClientById(clientId);
-      if (!client.isPresent()) {
-        logger.info("Failure to enroll membership clientId {}, groupId {}: clientId not found.",
-            clientId, groupId);
-        throw new IllegalStateException(format("ClientId %d doesn't exist.", clientId));
-      }
+          Optional<Client> client = clientDAO.getClientById(clientId);
+          if (!client.isPresent()) {
+            logger.info("Failure to enroll membership clientId {}, groupId {}: clientId not found.",
+                clientId, groupId);
+            throw new IllegalStateException(format("ClientId %d doesn't exist.", clientId));
+          }
 
-      Optional<Group> group = groupDAO.getGroupById(groupId);
-      if (!group.isPresent()) {
-        logger.info("Failure to enroll membership clientId {}, groupId {}: groupId not found.",
-            clientId, groupId);
-        throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
-      }
+          Optional<Group> group = groupDAO.getGroupById(groupId);
+          if (!group.isPresent()) {
+            logger.info("Failure to enroll membership clientId {}, groupId {}: groupId not found.",
+                clientId, groupId);
+            throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
+          }
 
-      enrollClient(configuration, clientId, groupId);
-    });
+          enrollClient(configuration, clientId, groupId, shadowWriteConfiguration);
+        })
+    );
   }
 
   public void findAndEvictClient(long clientId, long groupId) {
-    dslContext.transaction(configuration -> {
-      ClientDAO clientDAO = clientDAOFactory.using(configuration);
-      GroupDAO groupDAO = groupDAOFactory.using(configuration);
+    shadowWriteDslContext.transaction(
+        shadowWriteConfiguration -> dslContext.transaction(configuration -> {
+          ClientDAO clientDAO = clientDAOFactory.using(configuration, null);
+          GroupDAO groupDAO = groupDAOFactory.using(configuration, null);
 
-      Optional<Client> client = clientDAO.getClientById(clientId);
-      if (!client.isPresent()) {
-        logger.info("Failure to evict membership clientId {}, groupId {}: clientId not found.",
-            clientId, groupId);
-        throw new IllegalStateException(format("ClientId %d doesn't exist.", clientId));
-      }
+          Optional<Client> client = clientDAO.getClientById(clientId);
+          if (!client.isPresent()) {
+            logger.info("Failure to evict membership clientId {}, groupId {}: clientId not found.",
+                clientId, groupId);
+            throw new IllegalStateException(format("ClientId %d doesn't exist.", clientId));
+          }
 
-      Optional<Group> group = groupDAO.getGroupById(groupId);
-      if (!group.isPresent()) {
-        logger.info("Failure to evict membership clientId {}, groupId {}: groupId not found.",
-            clientId, groupId);
-        throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
-      }
+          Optional<Group> group = groupDAO.getGroupById(groupId);
+          if (!group.isPresent()) {
+            logger.info("Failure to evict membership clientId {}, groupId {}: groupId not found.",
+                clientId, groupId);
+            throw new IllegalStateException(format("GroupId %d doesn't exist.", groupId));
+          }
 
-      evictClient(configuration, clientId, groupId);
-    });
+          evictClient(configuration, clientId, groupId, shadowWriteConfiguration);
+        }));
   }
 
   public ImmutableSet<SanitizedSecret> getSanitizedSecretsFor(Group group) {
@@ -176,7 +189,7 @@ public class AclDAO {
     ImmutableSet.Builder<SanitizedSecret> set = ImmutableSet.builder();
 
     return dslContext.transactionResult(configuration -> {
-      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
+      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration, null);
 
       for (SecretSeries series : getSecretSeriesFor(configuration, group)) {
         for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.id())) {
@@ -239,7 +252,8 @@ public class AclDAO {
     //
     // A third way to work around this issue is to write a SQL join. Jooq makes it relatively easy,
     // but such joins hurt code re-use.
-    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
+    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration(),
+        null);
 
     ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
 
@@ -281,7 +295,8 @@ public class AclDAO {
     //
     // A third way to work around this issue is to write a SQL join. Jooq makes it relatively easy,
     // but such joins hurt code re-use.
-    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
+    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration(),
+        null);
 
     Optional<SecretSeries> secretSeries = getSecretSeriesFor(dslContext.configuration(), client, name);
     if (!secretSeries.isPresent()) {
@@ -299,7 +314,8 @@ public class AclDAO {
     return Optional.of(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
   }
 
-  protected void allowAccess(Configuration configuration, long secretId, long groupId) {
+  protected void allowAccess(Configuration configuration, long secretId, long groupId,
+      Configuration shadowWriteConfiguration) {
     long now = OffsetDateTime.now().toEpochSecond();
 
     boolean assigned = 0 < DSL.using(configuration)
@@ -317,17 +333,43 @@ public class AclDAO {
         .set(ACCESSGRANTS.CREATEDAT, now)
         .set(ACCESSGRANTS.UPDATEDAT, now)
         .execute();
+
+    try {
+      DSL.using(shadowWriteConfiguration)
+          .insertInto(Accessgrants.ACCESSGRANTS)
+          .set(Accessgrants.ACCESSGRANTS.SECRETID, secretId)
+          .set(Accessgrants.ACCESSGRANTS.GROUPID, groupId)
+          .set(Accessgrants.ACCESSGRANTS.CREATEDAT, now)
+          .set(Accessgrants.ACCESSGRANTS.UPDATEDAT, now)
+          .execute();
+    } catch (DataAccessException e) {
+      logger.error("shadowWrite: failure to allow access groupId {}, secretId {}",
+          e, groupId, secretId);
+    }
   }
 
-  protected void revokeAccess(Configuration configuration, long secretId, long groupId) {
+  protected void revokeAccess(Configuration configuration, long secretId, long groupId,
+      Configuration shadowWriteConfiguration) {
     DSL.using(configuration)
         .delete(ACCESSGRANTS)
         .where(ACCESSGRANTS.SECRETID.eq(secretId)
             .and(ACCESSGRANTS.GROUPID.eq(groupId)))
         .execute();
+
+    try {
+      DSL.using(shadowWriteConfiguration)
+          .delete(Accessgrants.ACCESSGRANTS)
+          .where(Accessgrants.ACCESSGRANTS.SECRETID.eq(secretId)
+              .and(Accessgrants.ACCESSGRANTS.GROUPID.eq(groupId)))
+          .execute();
+    } catch (DataAccessException e) {
+      logger.error("shadowWrite: failure to revoke access groupId {}, secretId {}",
+          e, groupId, secretId);
+    }
   }
 
-  protected void enrollClient(Configuration configuration, long clientId, long groupId) {
+  protected void enrollClient(Configuration configuration, long clientId, long groupId,
+    Configuration shadowWriteConfiguration) {
     long now = OffsetDateTime.now().toEpochSecond();
 
     boolean enrolled = 0 < DSL.using(configuration)
@@ -345,14 +387,39 @@ public class AclDAO {
         .set(MEMBERSHIPS.CREATEDAT, now)
         .set(MEMBERSHIPS.UPDATEDAT, now)
         .execute();
+
+    try {
+      DSL.using(shadowWriteConfiguration)
+          .insertInto(Memberships.MEMBERSHIPS)
+          .set(Memberships.MEMBERSHIPS.GROUPID, groupId)
+          .set(Memberships.MEMBERSHIPS.CLIENTID, clientId)
+          .set(Memberships.MEMBERSHIPS.CREATEDAT, now)
+          .set(Memberships.MEMBERSHIPS.UPDATEDAT, now)
+          .execute();
+    } catch (DataAccessException e) {
+      logger.error("shadowWrite: failure to enroll client groupId {}, clientId {}",
+          e, groupId, clientId);
+    }
   }
 
-  protected void evictClient(Configuration configuration, long clientId, long groupId) {
+  protected void evictClient(Configuration configuration, long clientId, long groupId,
+      Configuration shadowWriteConfiguration) {
     DSL.using(configuration)
         .delete(MEMBERSHIPS)
         .where(MEMBERSHIPS.CLIENTID.eq(clientId)
             .and(MEMBERSHIPS.GROUPID.eq(groupId)))
         .execute();
+
+    try {
+      DSL.using(shadowWriteConfiguration)
+          .delete(Memberships.MEMBERSHIPS)
+          .where(Memberships.MEMBERSHIPS.CLIENTID.eq(clientId)
+              .and(Memberships.MEMBERSHIPS.GROUPID.eq(groupId)))
+          .execute();
+    } catch (DataAccessException e) {
+      logger.error("shadowWrite: failure to evict client groupId {}, clientId {}",
+          e, groupId, clientId);
+    }
   }
 
   protected ImmutableSet<SecretSeries> getSecretSeriesFor(Configuration configuration, Group group) {
@@ -411,12 +478,14 @@ public class AclDAO {
     private final ClientMapper clientMapper;
     private final GroupMapper groupMapper;
     private final SecretSeriesMapper secretSeriesMapper;
+    private final DSLContext shadowWriteJooq;
 
     @Inject public AclDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
         ClientDAOFactory clientDAOFactory, GroupDAOFactory groupDAOFactory,
         SecretContentDAOFactory secretContentDAOFactory,
         SecretSeriesDAOFactory secretSeriesDAOFactory, ClientMapper clientMapper,
-        GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper) {
+        GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper,
+        @ShadowWrite DSLContext shadowWriteJooq) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.clientDAOFactory = clientDAOFactory;
@@ -426,22 +495,30 @@ public class AclDAO {
       this.clientMapper = clientMapper;
       this.groupMapper = groupMapper;
       this.secretSeriesMapper = secretSeriesMapper;
+      this.shadowWriteJooq = shadowWriteJooq;
     }
 
     @Override public AclDAO readwrite() {
       return new AclDAO(jooq, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper);
+          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper,
+          shadowWriteJooq);
     }
 
     @Override public AclDAO readonly() {
       return new AclDAO(readonlyJooq, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper);
+          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, null);
     }
 
-    @Override public AclDAO using(Configuration configuration) {
+    @Override public AclDAO using(Configuration configuration,
+        Configuration shadowWriteConfiguration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
+      DSLContext shadowWriteDslContext = null;
+      if (shadowWriteConfiguration != null) {
+        shadowWriteDslContext = DSL.using(shadowWriteConfiguration);
+      }
       return new AclDAO(dslContext, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper);
+          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper,
+          shadowWriteDslContext);
     }
   }
 }

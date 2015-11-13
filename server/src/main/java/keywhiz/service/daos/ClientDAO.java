@@ -24,21 +24,31 @@ import javax.inject.Inject;
 import keywhiz.api.model.Client;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.config.ShadowWrite;
+import keywhiz.shadow_write.jooq.tables.Clients;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 
 public class ClientDAO {
+  private static final Logger logger = LoggerFactory.getLogger(ClientDAO.class);
+
   private final DSLContext dslContext;
   private final ClientMapper clientMapper;
+  private final DSLContext shadowWriteDslContext;
 
-  private ClientDAO(DSLContext dslContext, ClientMapper clientMapper) {
+  private ClientDAO(DSLContext dslContext, ClientMapper clientMapper,
+      DSLContext shadowWriteDslContext) {
     this.dslContext = dslContext;
     this.clientMapper = clientMapper;
+    this.shadowWriteDslContext = shadowWriteDslContext;
   }
 
   public long createClient(String name, String user, String description) {
@@ -56,20 +66,54 @@ public class ClientDAO {
     r.setAutomationallowed(false);
     r.store();
 
-    return r.getId();
+    long id = r.getId();
+
+    try {
+      keywhiz.shadow_write.jooq.tables.records.ClientsRecord shadowR = shadowWriteDslContext.newRecord(Clients.CLIENTS);
+      shadowR.setId(id);
+      shadowR.setName(name);
+      shadowR.setCreatedby(user);
+      shadowR.setCreatedat(now);
+      shadowR.setUpdatedby(user);
+      shadowR.setUpdatedat(now);
+      shadowR.setDescription(description);
+      shadowR.setEnabled(true);
+      shadowR.setAutomationallowed(false);
+      shadowR.store();
+    } catch (DataAccessException e) {
+      logger.error("shadowWrite: failure to create client clientId {}", e, id);
+    }
+    return id;
   }
 
   public void deleteClient(Client client) {
-    dslContext.transaction(configuration -> {
-      DSL.using(configuration)
-          .delete(CLIENTS)
-          .where(CLIENTS.ID.eq(client.getId()))
-          .execute();
+    long id = client.getId();
 
-      DSL.using(configuration)
-          .delete(MEMBERSHIPS)
-          .where(MEMBERSHIPS.CLIENTID.eq(client.getId()))
-          .execute();
+    shadowWriteDslContext.transaction(shadowWriteConfiguration -> {
+      dslContext.transaction(configuration -> {
+        DSL.using(configuration)
+            .delete(CLIENTS)
+            .where(CLIENTS.ID.eq(id))
+            .execute();
+
+        DSL.using(configuration)
+            .delete(MEMBERSHIPS)
+            .where(MEMBERSHIPS.CLIENTID.eq(id))
+            .execute();
+      });
+      try {
+        DSL.using(shadowWriteConfiguration)
+            .delete(CLIENTS)
+            .where(CLIENTS.ID.eq(id))
+            .execute();
+
+        DSL.using(shadowWriteConfiguration)
+            .delete(MEMBERSHIPS)
+            .where(MEMBERSHIPS.CLIENTID.eq(id))
+            .execute();
+      } catch (DataAccessException e) {
+        logger.error("shadowWrite: failure to delete client clientId {}", e, id);
+      }
     });
   }
 
@@ -95,25 +139,33 @@ public class ClientDAO {
     private final DSLContext jooq;
     private final DSLContext readonlyJooq;
     private final ClientMapper clientMapper;
+    private final DSLContext shadowWriteJooq;
 
     @Inject public ClientDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
-        ClientMapper clientMapper) {
+        ClientMapper clientMapper,
+        @ShadowWrite DSLContext shadowWriteJooq) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.clientMapper = clientMapper;
+      this.shadowWriteJooq = shadowWriteJooq;
     }
 
     @Override public ClientDAO readwrite() {
-      return new ClientDAO(jooq, clientMapper);
+      return new ClientDAO(jooq, clientMapper, shadowWriteJooq);
     }
 
     @Override public ClientDAO readonly() {
-      return new ClientDAO(readonlyJooq, clientMapper);
+      return new ClientDAO(readonlyJooq, clientMapper, null);
     }
 
-    @Override public ClientDAO using(Configuration configuration) {
+    @Override public ClientDAO using(Configuration configuration,
+        Configuration shadowWriteConfiguration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new ClientDAO(dslContext, clientMapper);
+      DSLContext shadowWriteDslContext = null;
+      if (shadowWriteConfiguration != null) {
+        shadowWriteDslContext = DSL.using(checkNotNull(shadowWriteConfiguration));
+      }
+      return new ClientDAO(dslContext, clientMapper, shadowWriteDslContext);
     }
   }
 }

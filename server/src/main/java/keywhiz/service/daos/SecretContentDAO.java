@@ -28,9 +28,14 @@ import javax.inject.Inject;
 import keywhiz.api.model.SecretContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.config.ShadowWrite;
+import keywhiz.shadow_write.jooq.tables.SecretsContent;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
@@ -39,15 +44,20 @@ import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
  * Interacts with 'secrets_content' table and actions on {@link SecretContent} entities.
  */
 public class SecretContentDAO {
+  private static final Logger logger = LoggerFactory.getLogger(SecretContentDAO.class);
+
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretContentMapper secretContentMapper;
+  private final DSLContext shadowWriteDslContext;
 
   private SecretContentDAO(DSLContext dslContext, ObjectMapper mapper,
-      SecretContentMapper secretContentMapper) {
+      SecretContentMapper secretContentMapper,
+      DSLContext shadowWriteDslContext) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretContentMapper = secretContentMapper;
+    this.shadowWriteDslContext = shadowWriteDslContext;
   }
 
   public long createSecretContent(long secretId, String encryptedContent, String version,
@@ -74,7 +84,27 @@ public class SecretContentDAO {
     r.setMetadata(jsonMetadata);
     r.store();
 
-    return r.getId();
+    long id = r.getId();
+
+    try {
+      keywhiz.shadow_write.jooq.tables.records.SecretsContentRecord shadowR =
+          shadowWriteDslContext.newRecord(SecretsContent.SECRETS_CONTENT);
+
+      shadowR.setId(id);
+      shadowR.setSecretid(secretId);
+      shadowR.setEncryptedContent(encryptedContent);
+      shadowR.setVersion(version);
+      shadowR.setCreatedby(creator);
+      shadowR.setCreatedat(now);
+      shadowR.setUpdatedby(creator);
+      shadowR.setUpdatedat(now);
+      shadowR.setMetadata(jsonMetadata);
+      shadowR.store();
+    } catch (DataAccessException e) {
+      logger.error("shadowWrite: failure to create secret content secretContentId {}", e, id);
+    }
+
+    return id;
   }
 
   public Optional<SecretContent> getSecretContentById(long id) {
@@ -107,6 +137,16 @@ public class SecretContentDAO {
         .where(SECRETS_CONTENT.SECRETID.eq(secretId)
             .and(SECRETS_CONTENT.VERSION.eq(version)))
         .execute();
+
+    try {
+      shadowWriteDslContext
+          .delete(SECRETS_CONTENT)
+          .where(SECRETS_CONTENT.SECRETID.eq(secretId)
+              .and(SECRETS_CONTENT.VERSION.eq(version)))
+          .execute();
+    } catch (DataAccessException e) {
+      logger.error("shadowWrite: failure to delete secret content secretContentId {}", e, secretId);
+    }
   }
 
   public ImmutableList<String> getVersionFromSecretId(long secretId) {
@@ -124,26 +164,34 @@ public class SecretContentDAO {
     private final DSLContext readonlyJooq;
     private final ObjectMapper objectMapper;
     private final SecretContentMapper secretContentMapper;
+    private final DSLContext shadowWriteJooq;
 
     @Inject public SecretContentDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
-        ObjectMapper objectMapper, SecretContentMapper secretContentMapper) {
+        ObjectMapper objectMapper, SecretContentMapper secretContentMapper,
+        @ShadowWrite DSLContext shadowWriteJooq) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
       this.secretContentMapper = secretContentMapper;
+      this.shadowWriteJooq = shadowWriteJooq;
     }
 
     @Override public SecretContentDAO readwrite() {
-      return new SecretContentDAO(jooq, objectMapper, secretContentMapper);
+      return new SecretContentDAO(jooq, objectMapper, secretContentMapper, shadowWriteJooq);
     }
 
     @Override public SecretContentDAO readonly() {
-      return new SecretContentDAO(readonlyJooq, objectMapper, secretContentMapper);
+      return new SecretContentDAO(readonlyJooq, objectMapper, secretContentMapper, null);
     }
 
-    @Override public SecretContentDAO using(Configuration configuration) {
+    @Override public SecretContentDAO using(Configuration configuration,
+        Configuration shadowWriteConfiguration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretContentDAO(dslContext, objectMapper, secretContentMapper);
+      DSLContext shadowWriteDslContext = null;
+      if (shadowWriteConfiguration != null) {
+        shadowWriteDslContext = DSL.using(checkNotNull(shadowWriteConfiguration));
+      }
+      return new SecretContentDAO(dslContext, objectMapper, secretContentMapper, shadowWriteDslContext);
     }
   }
 }

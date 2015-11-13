@@ -27,6 +27,7 @@ import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.config.ShadowWrite;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import org.jooq.Configuration;
@@ -46,12 +47,15 @@ public class SecretDAO {
   private final DSLContext dslContext;
   private final SecretContentDAOFactory secretContentDAOFactory;
   private final SecretSeriesDAOFactory secretSeriesDAOFactory;
+  private final DSLContext shadowWriteDslContext;
 
   private SecretDAO(DSLContext dslContext, SecretContentDAOFactory secretContentDAOFactory,
-      SecretSeriesDAOFactory secretSeriesDAOFactory) {
+      SecretSeriesDAOFactory secretSeriesDAOFactory,
+      DSLContext shadowWriteDslContext) {
     this.dslContext = dslContext;
     this.secretContentDAOFactory = secretContentDAOFactory;
     this.secretSeriesDAOFactory = secretSeriesDAOFactory;
+    this.shadowWriteDslContext = shadowWriteDslContext;
   }
 
   @VisibleForTesting
@@ -60,23 +64,27 @@ public class SecretDAO {
       @Nullable Map<String, String> generationOptions) {
     // TODO(jlfwong): Should the description be updated...?
 
-    return dslContext.transactionResult(configuration -> {
-      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+    return shadowWriteDslContext.transactionResult(shadowWriteConfiguration ->
+            dslContext.transactionResult(configuration -> {
+              SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration,
+                  shadowWriteConfiguration);
+              SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration,
+                  shadowWriteConfiguration);
 
-      Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
-      long secretId;
-      if (secretSeries.isPresent()) {
-        secretId = secretSeries.get().id();
-      } else {
-        secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type,
-            generationOptions);
-      }
+              Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
+              long secretId;
+              if (secretSeries.isPresent()) {
+                secretId = secretSeries.get().id();
+              } else {
+                secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type,
+                    generationOptions);
+              }
 
-      secretContentDAO.createSecretContent(secretId, encryptedSecret, version, creator,
-          metadata);
-      return secretId;
-    });
+              secretContentDAO.createSecretContent(secretId, encryptedSecret, version, creator,
+                  metadata);
+              return secretId;
+            })
+    );
   }
 
   /**
@@ -85,8 +93,8 @@ public class SecretDAO {
    */
   public ImmutableList<SecretSeriesAndContent> getSecretsById(long secretId) {
     return dslContext.transactionResult(configuration -> {
-      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration, null);
+      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration, null);
 
       ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
 
@@ -112,8 +120,8 @@ public class SecretDAO {
     checkNotNull(version);
 
     return dslContext.<Optional<SecretSeriesAndContent>>transactionResult(configuration -> {
-      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration, null);
+      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration, null);
 
       Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesById(secretId);
       if (!series.isPresent()) {
@@ -138,8 +146,8 @@ public class SecretDAO {
     checkNotNull(name);
 
     return dslContext.<ImmutableList<String>>transactionResult(configuration -> {
-      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration, null);
+      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration, null);
 
       Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesByName(name);
       if (!series.isPresent()) {
@@ -170,8 +178,8 @@ public class SecretDAO {
     //
     // A third way to work around this issue is to write a SQL join. Jooq makes it relatively easy,
     // but such joins hurt code re-use.
-    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
-    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration(), null);
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration(), null);
 
     Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
     if (!secretSeries.isPresent()) {
@@ -190,8 +198,8 @@ public class SecretDAO {
   /** @return all existing secrets. */
   public ImmutableList<SecretSeriesAndContent> getSecrets() {
     return dslContext.transactionResult(configuration -> {
-      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration, null);
+      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration, null);
 
       ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
 
@@ -212,8 +220,13 @@ public class SecretDAO {
   public void deleteSecretsByName(String name) {
     checkArgument(!name.isEmpty());
 
-    secretSeriesDAOFactory.using(dslContext.configuration())
-            .deleteSecretSeriesByName(name);
+    shadowWriteDslContext.transaction(shadowWriteConfiguration ->
+        dslContext.transaction(configuration -> {
+          SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration,
+              shadowWriteConfiguration);
+          secretSeriesDAO.deleteSecretSeriesByName(name);
+        })
+    );
   }
 
   /**
@@ -226,22 +239,26 @@ public class SecretDAO {
     checkArgument(!name.isEmpty());
     checkNotNull(version);
 
-    dslContext.transaction(configuration -> {
-      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+    shadowWriteDslContext.transaction(shadowWriteConfiguration ->
+        dslContext.transaction(configuration -> {
+          SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration,
+              shadowWriteConfiguration);
+          SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration,
+              shadowWriteConfiguration);
 
-      Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
-      if (!secretSeries.isPresent()) {
-        return;
-      }
+          Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
+          if (!secretSeries.isPresent()) {
+            return;
+          }
 
-      long seriesId = secretSeries.get().id();
-      secretContentDAO.deleteSecretContentBySecretIdAndVersion(seriesId, version);
+          long seriesId = secretSeries.get().id();
+          secretContentDAO.deleteSecretContentBySecretIdAndVersion(seriesId, version);
 
-      if (secretContentDAO.getSecretContentsBySecretId(seriesId).isEmpty()) {
-        secretSeriesDAO.deleteSecretSeriesById(seriesId);
-      }
-    });
+          if (secretContentDAO.getSecretContentsBySecretId(seriesId).isEmpty()) {
+            secretSeriesDAO.deleteSecretSeriesById(seriesId);
+          }
+        })
+    );
   }
 
   public static class SecretDAOFactory implements DAOFactory<SecretDAO> {
@@ -249,27 +266,37 @@ public class SecretDAO {
     private final DSLContext readonlyJooq;
     private final SecretContentDAOFactory secretContentDAOFactory;
     private final SecretSeriesDAOFactory secretSeriesDAOFactory;
+    private final DSLContext shadowWriteJooq;
 
     @Inject public SecretDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
         SecretContentDAOFactory secretContentDAOFactory,
-        SecretSeriesDAOFactory secretSeriesDAOFactory) {
+        SecretSeriesDAOFactory secretSeriesDAOFactory,
+        @ShadowWrite DSLContext shadowWriteJooq) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.secretContentDAOFactory = secretContentDAOFactory;
       this.secretSeriesDAOFactory = secretSeriesDAOFactory;
+      this.shadowWriteJooq = shadowWriteJooq;
     }
 
     @Override public SecretDAO readwrite() {
-      return new SecretDAO(jooq, secretContentDAOFactory, secretSeriesDAOFactory);
+      return new SecretDAO(jooq, secretContentDAOFactory, secretSeriesDAOFactory,
+          shadowWriteJooq);
     }
 
     @Override public SecretDAO readonly() {
-      return new SecretDAO(readonlyJooq, secretContentDAOFactory, secretSeriesDAOFactory);
+      return new SecretDAO(readonlyJooq, secretContentDAOFactory, secretSeriesDAOFactory, null);
     }
 
-    @Override public SecretDAO using(Configuration configuration) {
+    @Override public SecretDAO using(Configuration configuration,
+        Configuration shadowWriteConfiguration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretDAO(dslContext, secretContentDAOFactory, secretSeriesDAOFactory);
+      DSLContext shadowWriteDslContext = null;
+      if (shadowWriteConfiguration != null) {
+        shadowWriteDslContext = DSL.using(shadowWriteConfiguration);
+      }
+      return new SecretDAO(dslContext, secretContentDAOFactory, secretSeriesDAOFactory,
+          shadowWriteDslContext);
     }
   }
 }

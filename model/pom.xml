@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.squareup.keywhiz</groupId>
     <artifactId>keywhiz-parent</artifactId>
-    <version>0.7.10-SNAPSHOT</version>
+    <version>0.7.9-sync</version>
   </parent>
 
   <artifactId>keywhiz-model</artifactId>
@@ -57,6 +57,15 @@
         <jooq.dialect>org.jooq.util.postgres.PostgresDatabase</jooq.dialect>
         <jooq.excludes>pg.*</jooq.excludes>
         <jooq.input-schema>public</jooq.input-schema>
+
+        <shadow-write.db.driver>com.mysql.jdbc.Driver</shadow-write.db.driver>
+        <shadow-write.db.create-url>jdbc:mysql://localhost/?useUnicode=true&amp;characterEncoding=utf8</shadow-write.db.create-url>
+        <shadow-write.db.migrate-url>jdbc:mysql://localhost/keywhizdb_test_shadow_write?useUnicode=true&amp;characterEncoding=utf8</shadow-write.db.migrate-url>
+        <shadow-write.db.username>root</shadow-write.db.username>
+        <shadow-write.db.migrations-path>mysql/migration</shadow-write.db.migrations-path>
+        <shadow-write.jooq.dialect>org.jooq.util.mysql.MySQLDatabase</shadow-write.jooq.dialect>
+        <shadow-write.jooq.excludes>mysql.*</shadow-write.jooq.excludes>
+        <shadow-write.jooq.input-schema>keywhizdb_test_shadow_write</shadow-write.jooq.input-schema>
       </properties>
     </profile>
 
@@ -76,6 +85,15 @@
         <jooq.dialect>org.jooq.util.mysql.MySQLDatabase</jooq.dialect>
         <jooq.excludes>mysql.*</jooq.excludes>
         <jooq.input-schema>keywhizdb_test</jooq.input-schema>
+
+        <shadow-write.db.driver>com.mysql.jdbc.Driver</shadow-write.db.driver>
+        <shadow-write.db.create-url>jdbc:mysql://localhost/?useUnicode=true&amp;characterEncoding=utf8</shadow-write.db.create-url>
+        <shadow-write.db.migrate-url>jdbc:mysql://localhost/keywhizdb_test_shadow_write?useUnicode=true&amp;characterEncoding=utf8</shadow-write.db.migrate-url>
+        <shadow-write.db.username>root</shadow-write.db.username>
+        <shadow-write.db.migrations-path>mysql/migration</shadow-write.db.migrations-path>
+        <shadow-write.jooq.dialect>org.jooq.util.mysql.MySQLDatabase</shadow-write.jooq.dialect>
+        <shadow-write.jooq.excludes>mysql.*</shadow-write.jooq.excludes>
+        <shadow-write.jooq.input-schema>keywhizdb_test_shadow_write</shadow-write.jooq.input-schema>
       </properties>
     </profile>
 
@@ -91,13 +109,22 @@
         <jooq.dialect>org.jooq.util.h2.H2Database</jooq.dialect>
         <jooq.excludes />
         <jooq.input-schema>PUBLIC</jooq.input-schema>
+
+        <shadow-write.db.driver>com.mysql.jdbc.Driver</shadow-write.db.driver>
+        <shadow-write.db.create-url>jdbc:mysql://localhost/?useUnicode=true&amp;characterEncoding=utf8</shadow-write.db.create-url>
+        <shadow-write.db.migrate-url>jdbc:mysql://localhost/keywhizdb_test_shadow_write?useUnicode=true&amp;characterEncoding=utf8</shadow-write.db.migrate-url>
+        <shadow-write.db.username>root</shadow-write.db.username>
+        <shadow-write.db.migrations-path>mysql/migration</shadow-write.db.migrations-path>
+        <shadow-write.jooq.dialect>org.jooq.util.mysql.MySQLDatabase</shadow-write.jooq.dialect>
+        <shadow-write.jooq.excludes>mysql.*</shadow-write.jooq.excludes>
+        <shadow-write.jooq.input-schema>keywhizdb_test_shadow_write</shadow-write.jooq.input-schema>
       </properties>
     </profile>
   </profiles>
 
   <build>
     <plugins>
-      <!-- Creates (or re-creates) a keywhizdb_test postgres database. -->
+      <!-- Creates (or re-creates) a keywhizdb_test and keywhizdb_test_shadow_writes databases. -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>sql-maven-plugin</artifactId>
@@ -107,20 +134,39 @@
             <goals>
               <goal>execute</goal>
             </goals>
+
+            <configuration>
+              <skip>${skipResetDatabase}</skip>
+              <driver>${db.driver}</driver>
+              <url>${db.create-url}</url>
+              <username>${db.username}</username>
+              <autocommit>true</autocommit>
+              <sqlCommand>
+                DROP DATABASE IF EXISTS keywhizdb_test;
+                CREATE DATABASE keywhizdb_test;
+              </sqlCommand>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>sql-maven-plugin-shadow-write</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+
+            <configuration>
+              <driver>${shadow-write.db.driver}</driver>
+              <url>${shadow-write.db.create-url}</url>
+              <username>${shadow-write.db.username}</username>
+              <autocommit>true</autocommit>
+              <sqlCommand>
+                DROP DATABASE IF EXISTS keywhizdb_test_shadow_write;
+                CREATE DATABASE keywhizdb_test_shadow_write;
+              </sqlCommand>
+            </configuration>
           </execution>
         </executions>
-
-        <configuration>
-          <skip>${skipResetDatabase}</skip>
-          <driver>${db.driver}</driver>
-          <url>${db.create-url}</url>
-          <username>${db.username}</username>
-          <autocommit>true</autocommit>
-          <sqlCommand>
-            DROP DATABASE IF EXISTS keywhizdb_test;
-            CREATE DATABASE keywhizdb_test;
-          </sqlCommand>
-        </configuration>
       </plugin>
 
       <plugin>
@@ -133,17 +179,32 @@
             <goals>
               <goal>migrate</goal>
             </goals>
+            <configuration>
+              <driver>${db.driver}</driver>
+              <url>${db.migrate-url}</url>
+              <user>${db.username}</user>
+              <locations>
+                <location>filesystem:../server/src/main/resources/db/${db.migrations-path}</location>
+              </locations>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>flyway-maven-plugin-shadow-write</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>migrate</goal>
+            </goals>
+            <configuration>
+              <driver>${shadow-write.db.driver}</driver>
+              <url>${shadow-write.db.migrate-url}</url>
+              <user>${shadow-write.db.username}</user>
+              <locations>
+                <location>filesystem:../server/src/main/resources/db/${shadow-write.db.migrations-path}</location>
+              </locations>
+            </configuration>
           </execution>
         </executions>
-
-        <configuration>
-          <driver>${db.driver}</driver>
-          <url>${db.migrate-url}</url>
-          <user>${db.username}</user>
-          <locations>
-            <location>filesystem:../server/src/main/resources/db/${db.migrations-path}</location>
-          </locations>
-        </configuration>
       </plugin>
 
       <plugin>
@@ -157,65 +218,131 @@
             <goals>
               <goal>generate</goal>
             </goals>
+
+            <configuration>
+              <jdbc>
+                <driver>${db.driver}</driver>
+                <url>${db.migrate-url}</url>
+                <user>${db.username}</user>
+              </jdbc>
+
+              <!-- Generator parameters -->
+              <generator>
+                <name>org.jooq.util.JavaGenerator</name>
+                <database>
+                  <name>${jooq.dialect}</name>
+                  <includes>.*</includes>
+                  <excludes>${jooq.excludes}</excludes>
+                  <inputSchema>${jooq.input-schema}</inputSchema>
+
+                  <!-- Registers custom types -->
+                  <customTypes>
+                    <customType>
+                      <name>keywhiz.model.TimestampConverter</name>
+                      <type>Long</type>
+                      <converter>keywhiz.model.TimestampConverter</converter>
+                    </customType>
+                    <customType>
+                      <name>java.lang.Boolean</name>
+                      <converter>keywhiz.model.TinyIntConverter</converter>
+                    </customType>
+                    <customType>
+                      <name>java.lang.Long</name>
+                      <converter>keywhiz.model.LongConverter</converter>
+                    </customType>
+                  </customTypes>
+
+                  <!-- Forces JOOQ to use custom types in generated code -->
+                  <forcedTypes>
+                    <forcedType>
+                      <name>keywhiz.model.TimestampConverter</name>
+                      <types>(?i:timestamp.*)</types>
+                    </forcedType>
+                    <forcedType>
+                      <name>java.lang.Boolean</name>
+                      <!-- mysql doesn't support booleans and uses tinyint instead. -->
+                      <types>(?i:tinyint.*)</types>
+                    </forcedType>
+                    <forcedType>
+                      <name>java.lang.Long</name>
+                      <!-- We ran into some postgres + bigint + autoincrement issues -->
+                      <types>(?i:int.*)</types>
+                    </forcedType>
+                  </forcedTypes>
+                </database>
+                <target>
+                  <packageName>keywhiz.jooq</packageName>
+                </target>
+              </generator>
+            </configuration>
+          </execution>
+
+        <!-- The plugin should hook into the generate goal -->
+          <execution>
+            <id>jooq-codegen-maven-shadow-write</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+
+            <configuration>
+              <jdbc>
+                <driver>${shadow-write.db.driver}</driver>
+                <url>${shadow-write.db.migrate-url}</url>
+                <user>${shadow-write.db.username}</user>
+              </jdbc>
+
+              <!-- Generator parameters -->
+              <generator>
+                <name>org.jooq.util.JavaGenerator</name>
+                <database>
+                  <name>${shadow-write.jooq.dialect}</name>
+                  <includes>.*</includes>
+                  <excludes>${shadow-write.jooq.excludes}</excludes>
+                  <inputSchema>${shadow-write.jooq.input-schema}</inputSchema>
+
+                  <!-- Registers custom types -->
+                  <customTypes>
+                    <customType>
+                      <name>keywhiz.model.TimestampConverter</name>
+                      <type>Long</type>
+                      <converter>keywhiz.model.TimestampConverter</converter>
+                    </customType>
+                    <customType>
+                      <name>java.lang.Boolean</name>
+                      <converter>keywhiz.model.TinyIntConverter</converter>
+                    </customType>
+                    <customType>
+                      <name>java.lang.Long</name>
+                      <converter>keywhiz.model.LongConverter</converter>
+                    </customType>
+                  </customTypes>
+
+                  <!-- Forces JOOQ to use custom types in generated code -->
+                  <forcedTypes>
+                    <forcedType>
+                      <name>keywhiz.model.TimestampConverter</name>
+                      <types>(?i:timestamp.*)</types>
+                    </forcedType>
+                    <forcedType>
+                      <name>java.lang.Boolean</name>
+                      <!-- mysql doesn't support booleans and uses tinyint instead. -->
+                      <types>(?i:tinyint.*)</types>
+                    </forcedType>
+                    <forcedType>
+                      <name>java.lang.Long</name>
+                      <!-- We ran into some postgres + bigint + autoincrement issues -->
+                      <types>(?i:int.*)</types>
+                    </forcedType>
+                  </forcedTypes>
+                </database>
+                <target>
+                  <packageName>keywhiz.shadow-write.jooq</packageName>
+                </target>
+              </generator>
+            </configuration>
           </execution>
         </executions>
-
-        <configuration>
-          <jdbc>
-            <driver>${db.driver}</driver>
-            <url>${db.migrate-url}</url>
-            <user>${db.username}</user>
-          </jdbc>
-
-          <!-- Generator parameters -->
-          <generator>
-            <name>org.jooq.util.JavaGenerator</name>
-            <database>
-              <name>${jooq.dialect}</name>
-              <includes>.*</includes>
-              <excludes>${jooq.excludes}</excludes>
-              <inputSchema>${jooq.input-schema}</inputSchema>
-
-              <!-- Registers custom types -->
-              <customTypes>
-                <customType>
-                  <name>keywhiz.model.TimestampConverter</name>
-                  <type>Long</type>
-                  <converter>keywhiz.model.TimestampConverter</converter>
-                </customType>
-                <customType>
-                  <name>java.lang.Boolean</name>
-                  <converter>keywhiz.model.TinyIntConverter</converter>
-                </customType>
-                <customType>
-                  <name>java.lang.Long</name>
-                  <converter>keywhiz.model.LongConverter</converter>
-                </customType>
-              </customTypes>
-
-              <!-- Forces JOOQ to use custom types in generated code -->
-              <forcedTypes>
-                <forcedType>
-                  <name>keywhiz.model.TimestampConverter</name>
-                  <types>(?i:timestamp.*)</types>
-                </forcedType>
-                <forcedType>
-                  <name>java.lang.Boolean</name>
-                  <!-- mysql doesn't support booleans and uses tinyint instead. -->
-                  <types>(?i:tinyint.*)</types>
-                </forcedType>
-                <forcedType>
-                  <name>java.lang.Long</name>
-                  <!-- We ran into some postgres + bigint + autoincrement issues -->
-                  <types>(?i:int.*)</types>
-                </forcedType>
-              </forcedTypes>
-            </database>
-            <target>
-              <packageName>keywhiz.jooq</packageName>
-            </target>
-          </generator>
-        </configuration>
       </plugin>
     </plugins>
   </build>

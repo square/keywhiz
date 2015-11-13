@@ -21,7 +21,9 @@ import java.util.List;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.model.Group;
+import keywhiz.service.config.ShadowWrite;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
+import keywhiz.shadow_write.jooq.tables.Groups;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
@@ -35,6 +37,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(KeywhizTestRunner.class)
 public class GroupDAOTest {
   @Inject DSLContext jooqContext;
+  @Inject @ShadowWrite DSLContext jooqShadowWriteContext;
+
   @Inject GroupDAOFactory groupDAOFactory;
 
   Group group1, group2;
@@ -53,11 +57,19 @@ public class GroupDAOTest {
 
     group1 = groupDAO.getGroup("group1").get();
     group2 = groupDAO.getGroup("group2").get();
+
+    try {
+      jooqShadowWriteContext.truncate(Groups.GROUPS).execute();
+    } catch (DataAccessException e) {}
+    jooqShadowWriteContext.insertInto(Groups.GROUPS, Groups.GROUPS.ID, Groups.GROUPS.NAME, Groups.GROUPS.DESCRIPTION,
+        Groups.GROUPS.CREATEDBY, Groups.GROUPS.UPDATEDBY, Groups.GROUPS.CREATEDAT, Groups.GROUPS.UPDATEDAT)
+        .values(group1.getId(), "group1", "desc1", "creator1", "updater1", now, now)
+        .execute();
   }
 
   @Test public void createGroup() {
     int before = tableSize();
-    groupDAO.createGroup("newGroup", "creator3", "");
+    long newGroup = groupDAO.createGroup("newGroup", "creator3", "");
     assertThat(tableSize()).isEqualTo(before + 1);
 
     List<String> names = groupDAO.getGroups()
@@ -65,6 +77,10 @@ public class GroupDAOTest {
         .map(Group::getName)
         .collect(toList());
     assertThat(names).contains("newGroup");
+
+    // Check that shadow write worked.
+    List<Long> r = jooqShadowWriteContext.selectFrom(Groups.GROUPS).fetch(Groups.GROUPS.ID);
+    assertThat(r).containsOnly(group1.getId(), newGroup);
   }
 
   @Test public void deleteGroup() {
@@ -73,6 +89,10 @@ public class GroupDAOTest {
 
     assertThat(tableSize()).isEqualTo(before - 1);
     assertThat(groupDAO.getGroups()).containsOnly(group2);
+
+    // Check that shadow delete worked.
+    List<Long> r = jooqShadowWriteContext.selectFrom(Groups.GROUPS).fetch(Groups.GROUPS.ID);
+    assertThat(r).isEmpty();
   }
 
   @Test public void getGroup() {

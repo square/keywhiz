@@ -24,9 +24,14 @@ import javax.inject.Inject;
 import keywhiz.api.model.Group;
 import keywhiz.jooq.tables.records.GroupsRecord;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.config.ShadowWrite;
+import keywhiz.shadow_write.jooq.tables.Groups;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
@@ -34,12 +39,16 @@ import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 
 public class GroupDAO {
+  private static final Logger logger = LoggerFactory.getLogger(GroupDAO.class);
+
   private final DSLContext dslContext;
   private final GroupMapper groupMapper;
+  private final DSLContext shadowWriteDslContext;
 
-  private GroupDAO(DSLContext dslContext, GroupMapper groupMapper) {
+  private GroupDAO(DSLContext dslContext, GroupMapper groupMapper, DSLContext shadowWriteDslContext) {
     this.dslContext = dslContext;
     this.groupMapper = groupMapper;
+    this.shadowWriteDslContext = shadowWriteDslContext;
   }
 
   public long createGroup(String name, String creator, String description) {
@@ -55,23 +64,59 @@ public class GroupDAO {
     r.setDescription(description);
     r.store();
 
-    return r.getId();
+    long id = r.getId();
+
+    try {
+      keywhiz.shadow_write.jooq.tables.records.GroupsRecord shadowR = shadowWriteDslContext.newRecord(Groups.GROUPS);
+      shadowR.setId(id);
+      shadowR.setName(name);
+      shadowR.setCreatedby(creator);
+      shadowR.setCreatedat(now);
+      shadowR.setUpdatedby(creator);
+      shadowR.setUpdatedat(now);
+      shadowR.setDescription(description);
+      shadowR.store();
+    } catch (DataAccessException e) {
+      logger.error("shadowWrite: failure to create group groupId {}", e, id);
+    }
+
+    return id;
   }
 
   public void deleteGroup(Group group) {
-    dslContext.transaction(configuration -> {
-      DSL.using(configuration)
-              .delete(GROUPS)
-              .where(GROUPS.ID.eq(group.getId()))
-              .execute();
-      DSL.using(configuration)
-              .delete(MEMBERSHIPS)
-              .where(MEMBERSHIPS.GROUPID.eq(group.getId()))
-              .execute();
-      DSL.using(configuration)
-              .delete(ACCESSGRANTS)
-              .where(ACCESSGRANTS.GROUPID.eq(group.getId()))
-              .execute();
+    long id = group.getId();
+    shadowWriteDslContext.transaction(shadowWriteConfiguration -> {
+      dslContext.transaction(configuration -> {
+        DSL.using(configuration)
+            .delete(GROUPS)
+            .where(GROUPS.ID.eq(id))
+            .execute();
+        DSL.using(configuration)
+            .delete(MEMBERSHIPS)
+            .where(MEMBERSHIPS.GROUPID.eq(id))
+            .execute();
+        DSL.using(configuration)
+            .delete(ACCESSGRANTS)
+            .where(ACCESSGRANTS.GROUPID.eq(id))
+            .execute();
+      });
+
+      try {
+        DSL.using(shadowWriteConfiguration)
+            .delete(GROUPS)
+            .where(GROUPS.ID.eq(id))
+            .execute();
+        DSL.using(shadowWriteConfiguration)
+            .delete(MEMBERSHIPS)
+            .where(MEMBERSHIPS.GROUPID.eq(id))
+            .execute();
+        DSL.using(shadowWriteConfiguration)
+            .delete(ACCESSGRANTS)
+            .where(ACCESSGRANTS.GROUPID.eq(id))
+            .execute();
+      } catch (DataAccessException e) {
+        logger.error("shadowWrite: failure to delete group groupId {}", e, id);
+      }
     });
   }
 
@@ -94,25 +139,32 @@ public class GroupDAO {
     private final DSLContext jooq;
     private final DSLContext readonlyJooq;
     private final GroupMapper groupMapper;
+    private final DSLContext shadowWriteJooq;
 
     @Inject public GroupDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
-        GroupMapper groupMapper) {
+        GroupMapper groupMapper, @ShadowWrite DSLContext shadowWriteJooq) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.groupMapper = groupMapper;
+      this.shadowWriteJooq = shadowWriteJooq;
     }
 
     @Override public GroupDAO readwrite() {
-      return new GroupDAO(jooq, groupMapper);
+      return new GroupDAO(jooq, groupMapper, shadowWriteJooq);
     }
 
     @Override public GroupDAO readonly() {
-      return new GroupDAO(readonlyJooq, groupMapper);
+      return new GroupDAO(readonlyJooq, groupMapper, null);
     }
 
-    @Override public GroupDAO using(Configuration configuration) {
+    @Override public GroupDAO using(Configuration configuration,
+        Configuration shadowWriteConfiguration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new GroupDAO(dslContext, groupMapper);
+      DSLContext shadowWriteDslContext = null;
+      if (shadowWriteConfiguration != null) {
+        shadowWriteDslContext = DSL.using(checkNotNull(shadowWriteConfiguration));
+      }
+      return new GroupDAO(dslContext, groupMapper, shadowWriteDslContext);
     }
   }
 }

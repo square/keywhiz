@@ -36,6 +36,7 @@ import keywhiz.auth.xsrf.Xsrf;
 import keywhiz.generators.SecretGeneratorBindingModule;
 import keywhiz.generators.TemplatedSecretGenerator;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.config.ShadowWrite;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoModule;
 import keywhiz.service.crypto.SecretTransformer;
@@ -109,6 +110,18 @@ public class ServiceModule extends AbstractModule {
     return dataSource;
   }
 
+  @Provides @Singleton @ShadowWrite ManagedDataSource shadowWriteDataSource(Environment environment,
+      KeywhizConfig config) {
+    DataSourceFactory dataSourceFactory = config.getShadowWriteDataSourceFactory();
+    ManagedDataSource dataSource = dataSourceFactory.build(environment.metrics(), "db-shadow-write");
+    environment.lifecycle().manage(dataSource);
+
+    environment.healthChecks().register("db-shadow-write-health",
+        new JooqHealthCheck(dataSource, LOG_ONLY));
+
+    return dataSource;
+  }
+
   @Provides ObjectMapper configuredObjectMapper(Environment environment) {
     return environment.getObjectMapper();
   }
@@ -122,6 +135,11 @@ public class ServiceModule extends AbstractModule {
   @Provides @Singleton
   @Readonly DSLContext readonlyJooqContext(@Readonly ManagedDataSource dataSource)
       throws SQLException {
+    return DSLContexts.databaseAgnostic(dataSource);
+  }
+
+  @Provides @Singleton
+  @ShadowWrite DSLContext shadowWriteJooqContext(@ShadowWrite ManagedDataSource dataSource) throws SQLException {
     return DSLContexts.databaseAgnostic(dataSource);
   }
 
