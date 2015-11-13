@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.squareup.keywhiz</groupId>
     <artifactId>keywhiz-parent</artifactId>
-    <version>0.7.9-mysql</version>
+    <version>0.7.10-SNAPSHOT</version>
   </parent>
 
   <artifactId>keywhiz-model</artifactId>
