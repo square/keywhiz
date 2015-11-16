@@ -36,6 +36,7 @@ import keywhiz.cli.commands.AddAction;
 import keywhiz.cli.commands.AssignAction;
 import keywhiz.cli.commands.DeleteAction;
 import keywhiz.cli.commands.DescribeAction;
+import keywhiz.cli.commands.DumpAction;
 import keywhiz.cli.commands.ListAction;
 import keywhiz.cli.commands.UnassignAction;
 import keywhiz.cli.configs.AddActionConfig;
@@ -43,6 +44,7 @@ import keywhiz.cli.configs.AssignActionConfig;
 import keywhiz.cli.configs.CliConfiguration;
 import keywhiz.cli.configs.DeleteActionConfig;
 import keywhiz.cli.configs.DescribeActionConfig;
+import keywhiz.cli.configs.DumpActionConfig;
 import keywhiz.cli.configs.ListActionConfig;
 import keywhiz.cli.configs.UnassignActionConfig;
 import keywhiz.client.KeywhizClient;
@@ -55,7 +57,7 @@ import static java.lang.String.format;
 public class CommandExecutor {
   public static final String APP_VERSION = "2.0";
 
-  public enum Command { LOGIN, LIST, DESCRIBE, ADD, DELETE, ASSIGN, UNASSIGN }
+  public enum Command { LOGIN, LIST, DESCRIBE, ADD, DELETE, ASSIGN, UNASSIGN, DUMP }
 
   private final Path cookieDir = Paths.get(USER_HOME.value());
 
@@ -159,6 +161,10 @@ public class CommandExecutor {
 
       case LOGIN:
         // User is already logged in at this point
+        break;
+
+      case DUMP:
+        new DumpAction((DumpActionConfig) commands.get(command), client).run();
         break;
 
       default:
