@@ -231,11 +231,14 @@ public class SecretsResource {
   @Path("{secretId}")
   @DELETE
   public Response deleteSecret(@Auth User user, @PathParam("secretId") LongParam secretId) {
-    logger.info("User '{}' deleting secret id={}.", user, secretId);
-
     List<Secret> secrets = secretController.getSecretsById(secretId.get());
     if (secrets.isEmpty()) {
+      logger.info("User '{}' tried deleting not found id={}", user, secretId);
       throw new NotFoundException("Secret not found.");
+    }
+
+    for(Secret secret: secrets) {
+      logger.info("User '{}' deleting secret id={}, name='{}'", user, secretId, secret.getDisplayName());
     }
 
     secretSeriesDAO.deleteSecretSeriesById(secretId.get());

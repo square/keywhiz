@@ -110,6 +110,9 @@ public class SecretDeliveryResource {
         throw new ForbiddenException(format("Access denied: %s at '%s' by '%s'", client.getName(),
                 "/secret/" + secretName, client));
       } else {
+        if (clientExists) {
+          logger.info("Client {} requested unknown secret {}", client.getName(), secretName);
+        }
         throw new NotFoundException();
       }
     }
