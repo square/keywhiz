@@ -140,7 +140,7 @@ public class KeywhizClient {
   }
 
   public List<SanitizedSecret> allSecrets() throws IOException {
-    String response = httpGet(baseUrl.resolve("/admin/secrets"));
+    String response = httpGet(baseUrl.resolve("/admin/secrets?nameOnly=1"));
     return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
   }
 

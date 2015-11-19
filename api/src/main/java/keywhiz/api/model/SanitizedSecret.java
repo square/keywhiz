@@ -21,13 +21,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import keywhiz.api.ApiDate;
-
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import keywhiz.api.ApiDate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.nullToEmpty;
@@ -56,6 +54,10 @@ public abstract class SanitizedSecret {
     return new AutoValue_SanitizedSecret(id, name, version, nullToEmpty(description), createdAt,
         nullToEmpty(createdBy), updatedAt, nullToEmpty(updatedBy), meta, Optional.ofNullable(type),
         genOptions);
+  }
+
+  public static SanitizedSecret of(long id, String name) {
+    return of(id, name, "", null, new ApiDate(0), null, new ApiDate(0), null, null, null, null);
   }
 
   public static SanitizedSecret fromSecretSeriesAndContent(SecretSeriesAndContent seriesAndContent) {

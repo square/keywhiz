@@ -18,14 +18,17 @@ package keywhiz.service.daos;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javafx.util.Pair;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
+import keywhiz.jooq.tables.Secrets;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
@@ -35,6 +38,7 @@ import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static keywhiz.jooq.tables.Secrets.SECRETS;
 
 /**
  * Primary class to interact with {@link Secret}s.
@@ -203,6 +207,18 @@ public class SecretDAO {
       return secretsBuilder.build();
     });
   }
+
+  /**
+   * @return A list of id, name
+   */
+  public ImmutableList<Pair<Long, String>> getSecretsNameOnly() {
+    List<Pair<Long, String>> results = dslContext.select(SECRETS.ID, SECRETS.NAME)
+        .from(SECRETS)
+        .fetchInto(Secrets.SECRETS)
+        .map(r -> new Pair<>(r.getId(), r.getName()));
+    return ImmutableList.copyOf(results);
+  }
+
 
   /**
    * Deletes the series and all associated version of the given secret series name.
