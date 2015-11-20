@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javafx.util.Pair;
+import java.util.AbstractMap.SimpleEntry;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import keywhiz.api.model.Secret;
@@ -211,11 +211,11 @@ public class SecretDAO {
   /**
    * @return A list of id, name
    */
-  public ImmutableList<Pair<Long, String>> getSecretsNameOnly() {
-    List<Pair<Long, String>> results = dslContext.select(SECRETS.ID, SECRETS.NAME)
+  public ImmutableList<SimpleEntry<Long, String>> getSecretsNameOnly() {
+    List<SimpleEntry<Long, String>> results = dslContext.select(SECRETS.ID, SECRETS.NAME)
         .from(SECRETS)
         .fetchInto(Secrets.SECRETS)
-        .map(r -> new Pair<>(r.getId(), r.getName()));
+        .map(r -> new SimpleEntry<>(r.getId(), r.getName()));
     return ImmutableList.copyOf(results);
   }
 
