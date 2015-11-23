@@ -15,6 +15,7 @@
  */
 package keywhiz;
 
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -28,6 +29,7 @@ import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import java.util.Map;
+import javax.sql.DataSource;
 import keywhiz.auth.mutualssl.ClientCertificateFilter;
 import keywhiz.auth.xsrf.XsrfServletFilter;
 import keywhiz.commands.DbSeedCommand;
@@ -62,6 +64,7 @@ import keywhiz.service.resources.automation.AutomationSecretResource;
 import keywhiz.service.resources.automation.v2.ClientResource;
 import keywhiz.service.resources.automation.v2.GroupResource;
 import keywhiz.service.resources.automation.v2.SecretResource;
+import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -196,7 +199,20 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(injector.getInstance(AutomationSecretAccessResource.class));
     jersey.register(injector.getInstance(AutomationSecretGeneratorsResource.class));
     logger.debug("Keywhiz configuration complete");
+
+    validateDabase(config);
   }
+
+  private void validateDabase(KeywhizConfig config) {
+    logger.debug("Validating database state");
+    DataSource dataSource = config.getDataSourceFactory()
+        .build(new MetricRegistry(), "flyway-validation-datasource");
+    Flyway flyway = new Flyway();
+    flyway.setDataSource(dataSource);
+    flyway.setLocations(config.getMigrationsDir());
+    flyway.validate();
+  }
+
   /**
    * Customizes ObjectMapper for common settings.
    *
