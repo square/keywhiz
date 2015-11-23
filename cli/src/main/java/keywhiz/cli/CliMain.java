@@ -26,6 +26,7 @@ import keywhiz.cli.configs.AssignActionConfig;
 import keywhiz.cli.configs.CliConfiguration;
 import keywhiz.cli.configs.DeleteActionConfig;
 import keywhiz.cli.configs.DescribeActionConfig;
+import keywhiz.cli.configs.DumpActionConfig;
 import keywhiz.cli.configs.ListActionConfig;
 import keywhiz.cli.configs.LoginActionConfig;
 import keywhiz.cli.configs.UnassignActionConfig;
@@ -44,6 +45,7 @@ public class CliMain {
         .put("delete", new DeleteActionConfig())
         .put("assign", new AssignActionConfig())
         .put("unassign", new UnassignActionConfig())
+        .put("dump", new DumpActionConfig())
         .build();
     commander.setProgramName("KeyWhiz Configuration Utility");
     commander.addObject(config);
