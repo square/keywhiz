@@ -154,9 +154,9 @@
     "ApiDate" : {
       "id" : "ApiDate",
       "properties" : {
-        "offsetDateTime" : {
-          "type" : "string",
-          "format" : "date-time"
+        "epochSecond" : {
+          "type" : "integer",
+          "format" : "int64"
         }
       }
     },

@@ -1,3 +1,4 @@
+db.h2.migration
 keywhiz
 keywhiz.auth
 keywhiz.auth.bcrypt
