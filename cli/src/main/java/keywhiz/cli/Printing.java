@@ -28,8 +28,13 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.client.KeywhizClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Printing {
+
+  private static final Logger logger = LoggerFactory.getLogger(Printing.class);
+    
   private final KeywhizClient keywhizClient;
 
   private static final String INDENT = Strings.repeat("\t", 2);
@@ -40,7 +45,7 @@ public class Printing {
   }
 
   public void printClientWithDetails(Client client, List<String> options) {
-    System.out.println(client.getName());
+    logger.info(client.getName());
     ClientDetailResponse clientDetails;
     try {
       clientDetails = keywhizClient.clientDetailsForId(client.getId());
@@ -49,22 +54,22 @@ public class Printing {
     }
 
     if (options.contains("groups")) {
-      System.out.println("\tGroups:");
+      logger.info("\tGroups:");
       clientDetails.groups.stream()
           .sorted(Comparator.comparing(Group::getName))
-          .forEach(g -> System.out.println(INDENT + g.getName()));
+          .forEach(g -> logger.info(INDENT + g.getName()));
     }
 
     if (options.contains("secrets")) {
-      System.out.println("\tSecrets:");
+      logger.info("\tSecrets:");
       clientDetails.secrets.stream()
           .sorted(Comparator.comparing(SanitizedSecret::name))
-          .forEach(s -> System.out.println(INDENT + SanitizedSecret.displayName(s)));
+          .forEach(s -> logger.info(INDENT + SanitizedSecret.displayName(s)));
     }
   }
 
   public void printGroupWithDetails(Group group, List<String> options) {
-    System.out.println(group.getName());
+    logger.info(group.getName());
     GroupDetailResponse groupDetails;
     try {
       groupDetails = keywhizClient.groupDetailsForId(group.getId());
@@ -73,22 +78,22 @@ public class Printing {
     }
 
     if (options.contains("clients")) {
-      System.out.println("\tClients:");
+      logger.info("\tClients:");
       groupDetails.getClients().stream()
           .sorted(Comparator.comparing(Client::getName))
-          .forEach(c -> System.out.println(INDENT + c.getName()));
+          .forEach(c -> logger.info(INDENT + c.getName()));
       }
 
     if (options.contains("secrets")) {
-      System.out.println("\tSecrets:");
+      logger.info("\tSecrets:");
       groupDetails.getSecrets().stream()
           .sorted(Comparator.comparing(SanitizedSecret::name))
-          .forEach(s -> System.out.println(INDENT + SanitizedSecret.displayName(s)));
+          .forEach(s -> logger.info(INDENT + SanitizedSecret.displayName(s)));
     }
   }
 
   public void printSanitizedSecretWithDetails(SanitizedSecret secret, List<String> options) {
-    System.out.println(SanitizedSecret.displayName(secret));
+    logger.info(SanitizedSecret.displayName(secret));
     SecretDetailResponse secretDetails;
     try {
       secretDetails = keywhizClient.secretDetailsForId(secret.id());
@@ -97,23 +102,23 @@ public class Printing {
     }
 
     if (options.contains("groups")) {
-      System.out.println("\tGroups:");
+      logger.info("\tGroups:");
       secretDetails.groups.stream()
           .sorted(Comparator.comparing(Group::getName))
-          .forEach(g -> System.out.println(INDENT + g.getName()));
+          .forEach(g -> logger.info(INDENT + g.getName()));
     }
 
     if (options.contains("clients")) {
-      System.out.println("\tClients:");
+      logger.info("\tClients:");
       secretDetails.clients.stream()
           .sorted(Comparator.comparing(Client::getName))
-          .forEach(c -> System.out.println(INDENT + c.getName()));
+          .forEach(c -> logger.info(INDENT + c.getName()));
     }
 
     if (options.contains("metadata")) {
-      System.out.println("\tMetadata:");
+      logger.info("\tMetadata:");
       if(!secret.metadata().isEmpty()) {
-        System.out.println(INDENT + secret.metadata().toString());
+        logger.info(INDENT + secret.metadata().toString());
       }
     }
   }
@@ -121,18 +126,18 @@ public class Printing {
   public void printAllClients(List<Client> clients) {
     clients.stream()
         .sorted(Comparator.comparing(Client::getName))
-        .forEach(c -> System.out.println(c.getName()));
+        .forEach(c -> logger.info(c.getName()));
   }
 
   public void printAllGroups(List<Group> groups) {
     groups.stream()
         .sorted(Comparator.comparing(Group::getName))
-        .forEach(g -> System.out.println(g.getName()));
+        .forEach(g -> logger.info(g.getName()));
   }
 
   public void printAllSanitizedSecrets(List<SanitizedSecret> secrets) {
     secrets.stream()
         .sorted(Comparator.comparing(SanitizedSecret::name))
-        .forEach(s -> System.out.println(SanitizedSecret.displayName(s)));
+        .forEach(s -> logger.info(SanitizedSecret.displayName(s)));
   }
 }

@@ -29,9 +29,14 @@ import keywhiz.cli.configs.DescribeActionConfig;
 import keywhiz.cli.configs.ListActionConfig;
 import keywhiz.cli.configs.LoginActionConfig;
 import keywhiz.cli.configs.UnassignActionConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Keywhiz ACL Command Line Management Utility */
 public class CliMain {
+    
+  private static final Logger logger = LoggerFactory.getLogger(CliMain.class);  
+    
   public static void main(String[] args) throws Exception {
     CliConfiguration config = new CliConfiguration();
 
@@ -55,7 +60,7 @@ public class CliMain {
     try {
       commander.parse(args);
     } catch (ParameterException e) {
-      System.err.println("Invalid command: " + e.getMessage());
+      logger.error("Invalid command: " + e.getMessage());
       commander.usage();
       System.exit(1);
     }

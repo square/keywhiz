@@ -29,6 +29,8 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
 
@@ -36,6 +38,7 @@ import static java.lang.String.format;
  * Generates an AES key in a keystore. Particularly, this is useful for a base derivation key.
  */
 public class GenerateAesKeyCommand extends Command {
+  private static final Logger logger = LoggerFactory.getLogger(GenerateAesKeyCommand.class);
   public GenerateAesKeyCommand() {
     super("gen-aes", "Generates a new AES key in a keystore");
   }
@@ -73,7 +76,7 @@ public class GenerateAesKeyCommand extends Command {
     String alias = namespace.getString("alias");
 
     generate(password, destination, keySize, alias);
-    System.out.println(format("Generated a %d-bit AES key at %s with alias %s", keySize,
+    logger.info(format("Generated a %d-bit AES key at %s with alias %s", keySize,
         destination.toAbsolutePath(), alias));
   }
 
