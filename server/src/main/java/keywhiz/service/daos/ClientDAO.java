@@ -112,8 +112,8 @@ public class ClientDAO {
     }
 
     @Override public ClientDAO using(Configuration configuration) {
-      DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new ClientDAO(dslContext, clientMapper);
+      DSLContext dslContextVar = DSL.using(checkNotNull(configuration));
+      return new ClientDAO(dslContextVar, clientMapper);
     }
   }
 }

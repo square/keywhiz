@@ -84,8 +84,8 @@ public class GroupsResourceTest {
   @Test(expected = BadRequestException.class)
   public void rejectsWhenGroupExists() {
     CreateGroupRequest request = new CreateGroupRequest("newGroup", "description");
-    Group group = new Group(3, "newGroup", "desc", now, "creator", now, "updater");
-    when(groupDAO.getGroup("newGroup")).thenReturn(Optional.of(group));
+    Group groupVar = new Group(3, "newGroup", "desc", now, "creator", now, "updater");
+    when(groupDAO.getGroup("newGroup")).thenReturn(Optional.of(groupVar));
 
     resource.createGroup(user, request);
   }

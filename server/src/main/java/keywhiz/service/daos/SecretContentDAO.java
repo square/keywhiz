@@ -142,8 +142,8 @@ public class SecretContentDAO {
     }
 
     @Override public SecretContentDAO using(Configuration configuration) {
-      DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretContentDAO(dslContext, objectMapper, secretContentMapper);
+      DSLContext dslContextVar = DSL.using(checkNotNull(configuration));
+      return new SecretContentDAO(dslContextVar, objectMapper, secretContentMapper);
     }
   }
 }

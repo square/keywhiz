@@ -61,12 +61,12 @@ public class AutomationSecretResponseTest {
 
   @Test
   public void serializesCorrectly() throws Exception {
-    String secret = "YXNkZGFz";
+    String secretVar = "YXNkZGFz";
 
     AutomationSecretResponse automationSecretResponse = AutomationSecretResponse.create(
         0,
         "Database_Password",
-        secret,
+        secretVar,
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
         false,
         ImmutableMap.of(),
@@ -77,7 +77,7 @@ public class AutomationSecretResponseTest {
     AutomationSecretResponse automationSecretResponseWithVersion = AutomationSecretResponse.create(
         33,
         "General_Password..0be68f903f8b7d86",
-        secret,
+        secretVar,
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
         true,
         ImmutableMap.of(),
@@ -88,7 +88,7 @@ public class AutomationSecretResponseTest {
     AutomationSecretResponse automationSecretResponseWithMetadata = AutomationSecretResponse.create(
         66,
         "Nobody_PgPass",
-        secret,
+        secretVar,
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
         false,
         ImmutableMap.of("mode", "0400", "owner", "nobody"),

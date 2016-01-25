@@ -88,8 +88,8 @@ public class ClientUtilsTest {
 
     assertThat(sslClient.getCookieHandler()).isNotNull();
     java.util.List<HttpCookie>
-        cookieList = ((CookieManager) sslClient.getCookieHandler()).getCookieStore().getCookies();
-    assertThat(cookieList).isEmpty();
+        cookieList1 = ((CookieManager) sslClient.getCookieHandler()).getCookieStore().getCookies();
+    assertThat(cookieList1).isEmpty();
   }
 
   @Test public void testSslOkHttpClientCreationWithCookies() throws Exception {
@@ -101,9 +101,9 @@ public class ClientUtilsTest {
     assertThat(sslClient.networkInterceptors()).isNotEmpty();
 
     java.util.List<HttpCookie>
-        cookieList = ((CookieManager) sslClient.getCookieHandler()).getCookieStore().getCookies();
-    assertThat(cookieList).contains(xsrfCookie);
-    assertThat(cookieList).contains(sessionCookie);
+        cookieList1 = ((CookieManager) sslClient.getCookieHandler()).getCookieStore().getCookies();
+    assertThat(cookieList1).contains(xsrfCookie);
+    assertThat(cookieList1).contains(sessionCookie);
   }
 
   @Test public void testSaveCookies() throws Exception {

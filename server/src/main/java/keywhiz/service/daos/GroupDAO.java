@@ -111,8 +111,8 @@ public class GroupDAO {
     }
 
     @Override public GroupDAO using(Configuration configuration) {
-      DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new GroupDAO(dslContext, groupMapper);
+      DSLContext dslContextVar = DSL.using(checkNotNull(configuration));
+      return new GroupDAO(dslContextVar, groupMapper);
     }
   }
 }

@@ -159,8 +159,8 @@ public class SecretSeriesDAO {
     }
 
     @Override public SecretSeriesDAO using(Configuration configuration) {
-      DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper);
+      DSLContext dslContextVar = DSL.using(checkNotNull(configuration));
+      return new SecretSeriesDAO(dslContextVar, objectMapper, secretSeriesMapper);
     }
   }
 }
