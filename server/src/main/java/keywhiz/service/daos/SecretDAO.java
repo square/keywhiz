@@ -284,8 +284,8 @@ public class SecretDAO {
     }
 
     @Override public SecretDAO using(Configuration configuration) {
-      DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretDAO(dslContext, secretContentDAOFactory, secretSeriesDAOFactory);
+      DSLContext dslContextVar = DSL.using(checkNotNull(configuration));
+      return new SecretDAO(dslContextVar, secretContentDAOFactory, secretSeriesDAOFactory);
     }
   }
 }

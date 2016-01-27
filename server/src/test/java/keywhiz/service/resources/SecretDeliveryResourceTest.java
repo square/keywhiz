@@ -60,18 +60,18 @@ public class SecretDeliveryResourceTest {
   }
 
   @Test public void returnsSecretWhenAllowed() throws Exception {
-    Secret secret = new Secret(0, "secret_name", null, null, "unused_secret", NOW, null, NOW, null, null, null, null);
-    SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
+    Secret secretVar = new Secret(0, "secret_name", null, null, "unused_secret", NOW, null, NOW, null, null, null, null);
+    SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secretVar);
     String name = sanitizedSecret.name();
     String version = sanitizedSecret.version();
 
     when(aclDAO.getSanitizedSecretFor(client, name, version))
         .thenReturn(Optional.of(sanitizedSecret));
     when(secretController.getSecretByNameAndVersion(name, version))
-        .thenReturn(Optional.of(secret));
+        .thenReturn(Optional.of(secretVar));
 
     SecretDeliveryResponse response = secretDeliveryResource.getSecret(sanitizedSecret.name(), client);
-    assertThat(response).isEqualTo(SecretDeliveryResponse.fromSecret(secret));
+    assertThat(response).isEqualTo(SecretDeliveryResponse.fromSecret(secretVar));
   }
 
   @Test public void returnsVersionedSecretWhenAllowed() throws Exception {

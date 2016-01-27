@@ -54,12 +54,12 @@ public class SecretDeliveryResponseTest {
 
   @Test
   public void serializesCorrectly() throws Exception {
-    String secret = "YXNkZGFz";
+    String secretVar = "YXNkZGFz";
 
     SecretDeliveryResponse secretDeliveryResponse = new SecretDeliveryResponse(
         "Database_Password",
-        secret,
-        decodedLength(secret),
+        secretVar,
+        decodedLength(secretVar),
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
         false,
         ImmutableMap.of());
@@ -68,8 +68,8 @@ public class SecretDeliveryResponseTest {
 
     SecretDeliveryResponse secretDeliveryResponseWithVersion = new SecretDeliveryResponse(
         "General_Password..0be68f903f8b7d86",
-        secret,
-        decodedLength(secret),
+        secretVar,
+        decodedLength(secretVar),
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
         true,
         ImmutableMap.of());
@@ -78,8 +78,8 @@ public class SecretDeliveryResponseTest {
 
     SecretDeliveryResponse secretDeliveryResponseWithMetadata = new SecretDeliveryResponse(
         "Nobody_PgPass",
-        secret,
-        decodedLength(secret),
+        secretVar,
+        decodedLength(secretVar),
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
         false,
         ImmutableMap.of("mode", "0400", "owner", "nobody"));

@@ -439,8 +439,8 @@ public class AclDAO {
     }
 
     @Override public AclDAO using(Configuration configuration) {
-      DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new AclDAO(dslContext, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
+      DSLContext dslContextVar = DSL.using(checkNotNull(configuration));
+      return new AclDAO(dslContextVar, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
           secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper);
     }
   }

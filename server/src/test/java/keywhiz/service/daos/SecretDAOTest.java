@@ -122,12 +122,12 @@ public class SecretDAOTest {
     int secretContentsBefore = tableSize(SECRETS_CONTENT);
 
     String name = "newSecret";
-    String content = "c2VjcmV0MQ==";
-    String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    String version = VersionGenerator.now().toHex();
-    long newId = secretDAO.createSecret(name, encryptedContent, version, "creator",
+    String contentVar = "c2VjcmV0MQ==";
+    String encryptedContentVar = cryptographer.encryptionKeyDerivedFrom(name).encrypt(contentVar);
+    String versionVar = VersionGenerator.now().toHex();
+    long newId = secretDAO.createSecret(name, encryptedContentVar, versionVar, "creator",
         ImmutableMap.of(), "", null, ImmutableMap.of());
-    SecretSeriesAndContent newSecret = secretDAO.getSecretByIdAndVersion(newId, version).get();
+    SecretSeriesAndContent newSecret = secretDAO.getSecretByIdAndVersion(newId, versionVar).get();
 
     assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore + 1);
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore + 1);
@@ -142,19 +142,19 @@ public class SecretDAOTest {
     int secretContentsBefore = tableSize(SECRETS_CONTENT);
 
     String name = "newSecret";
-    String content = "c2VjcmV0MQ==";
-    String encryptedContent1 = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    String version = VersionGenerator.fromLong(1234).toHex();
-    long id = secretDAO.createSecret(name, encryptedContent1, version, "creator", ImmutableMap.of(),
+    String contentVar = "c2VjcmV0MQ==";
+    String encryptedContent1 = cryptographer.encryptionKeyDerivedFrom(name).encrypt(contentVar);
+    String versionVar = VersionGenerator.fromLong(1234).toHex();
+    long id = secretDAO.createSecret(name, encryptedContent1, versionVar, "creator", ImmutableMap.of(),
         "", null, ImmutableMap.of());
-    SecretSeriesAndContent newSecret1 = secretDAO.getSecretByIdAndVersion(id, version).get();
+    SecretSeriesAndContent newSecret1 = secretDAO.getSecretByIdAndVersion(id, versionVar).get();
 
-    content = "amFja2RvcnNrZXkK";
-    String encryptedContent2 = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    version = VersionGenerator.fromLong(4321).toHex();
-    id = secretDAO.createSecret(name, encryptedContent2, version, "creator", ImmutableMap.of(), "",
+    contentVar = "amFja2RvcnNrZXkK";
+    String encryptedContent2 = cryptographer.encryptionKeyDerivedFrom(name).encrypt(contentVar);
+    versionVar = VersionGenerator.fromLong(4321).toHex();
+    id = secretDAO.createSecret(name, encryptedContent2, versionVar, "creator", ImmutableMap.of(), "",
         null, ImmutableMap.of());
-    SecretSeriesAndContent newSecret2 = secretDAO.getSecretByIdAndVersion(id, version).get();
+    SecretSeriesAndContent newSecret2 = secretDAO.getSecretByIdAndVersion(id, versionVar).get();
 
     // Only one new secrets entry should be created - there should be 2 secrets_content entries though
     assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore + 1);
@@ -168,8 +168,8 @@ public class SecretDAOTest {
 
   @Test public void getSecretByNameAndVersion() {
     String name = secret1.series().name();
-    String version = secret1.content().version().orElse("");
-    assertThat(secretDAO.getSecretByNameAndVersion(name, version)).contains(secret1);
+    String versionVar = secret1.content().version().orElse("");
+    assertThat(secretDAO.getSecretByNameAndVersion(name, versionVar)).contains(secret1);
   }
 
   @Test public void getSecretByNameAndVersionWithoutVersion() {
@@ -181,13 +181,13 @@ public class SecretDAOTest {
     String futureStamp = new VersionGenerator(System.currentTimeMillis() + 100000).toHex();
     String name = secret1.series().name();
     String content = "bmV3ZXJTZWNyZXQy";
-    String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    long newId = secretDAO.createSecret(name, encryptedContent, futureStamp, "creator", ImmutableMap.of(), "desc", null, null);
+    String encryptedContentVar = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
+    long newId = secretDAO.createSecret(name, encryptedContentVar, futureStamp, "creator", ImmutableMap.of(), "desc", null, null);
     SecretSeriesAndContent newerSecret = secretDAO.getSecretByIdAndVersion(newId, futureStamp)
         .orElseThrow(RuntimeException::new);
 
-    String version = secret1.content().version().orElse("");
-    assertThat(secretDAO.getSecretByNameAndVersion(name, version)).contains(secret1);
+    String versionVar = secret1.content().version().orElse("");
+    assertThat(secretDAO.getSecretByNameAndVersion(name, versionVar)).contains(secret1);
 
     assertThat(secretDAO.getSecretByNameAndVersion(name, futureStamp)).contains(newerSecret);
   }
@@ -199,9 +199,9 @@ public class SecretDAOTest {
   @Test public void getSecretByIdAndVersionWithVersion() {
     String futureStamp = new VersionGenerator(System.currentTimeMillis() + 222222).toHex();
     String name = secret1.series().name();
-    String content = "bmV3ZXJTZWNyZXQy";
-    String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    secretDAO.createSecret(name, encryptedContent, futureStamp, "creator", ImmutableMap.of(), "desc", null, null);
+    String contentVar = "bmV3ZXJTZWNyZXQy";
+    String encryptedContentVar = cryptographer.encryptionKeyDerivedFrom(name).encrypt(contentVar);
+    secretDAO.createSecret(name, encryptedContentVar, futureStamp, "creator", ImmutableMap.of(), "desc", null, null);
     SecretSeriesAndContent newerSecret = secretDAO.getSecretByNameAndVersion(name, futureStamp)
         .orElseThrow(RuntimeException::new);
 
