@@ -97,7 +97,7 @@ public class DeleteAction implements Runnable {
               keywhizClient.getSanitizedSecretByNameAndVersion(parts[0], parts[1]);
           BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, UTF_8));
           while (true) {
-            System.out.println(
+            logger.info(String.
                 format("Please confirm deletion of secret '%s': Y/N", sanitizedSecret.name()));
             String line = reader.readLine();
 

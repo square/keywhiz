@@ -51,6 +51,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.servlet.http.Cookie;
 import org.eclipse.jetty.server.CookieCutter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -64,6 +66,8 @@ import static java.util.stream.Collectors.toList;
  */
 
 public class ClientUtils {
+  private static final Logger logger = LoggerFactory.getLogger(ClientUtils.class);
+    
   private static final ObjectMapper mapper = Jackson.newObjectMapper();
 
   /**
@@ -167,7 +171,7 @@ public class ClientUtils {
   public static char[] readPassword(String user) {
     Console console = System.console();
     if (console != null) {
-      System.out.format("password for '%s': ", user);
+      logger.info(String.format("password for '%s': ", user));
       return System.console().readPassword();
     } else {
       throw new RuntimeException("Please login by running a command without piping.\n"

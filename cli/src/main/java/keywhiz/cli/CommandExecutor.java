@@ -47,12 +47,17 @@ import keywhiz.cli.configs.ListActionConfig;
 import keywhiz.cli.configs.UnassignActionConfig;
 import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.UnauthorizedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.StandardSystemProperty.USER_HOME;
 import static com.google.common.base.StandardSystemProperty.USER_NAME;
 import static java.lang.String.format;
 
 public class CommandExecutor {
+    
+  private static final Logger logger = LoggerFactory.getLogger(CommandExecutor.class);
+    
   public static final String APP_VERSION = "2.0";
 
   public enum Command { LOGIN, LIST, DESCRIBE, ADD, DELETE, ASSIGN, UNASSIGN }
@@ -81,9 +86,9 @@ public class CommandExecutor {
   public void executeCommand() throws IOException {
     if (command == null) {
       if (config.version) {
-        System.out.println("Version: " + APP_VERSION);
+        logger.info("Version: " + APP_VERSION);
       } else {
-        System.err.println("Must specify a command.");
+        logger.error("Must specify a command.");
         parentCommander.usage();
       }
 
@@ -93,11 +98,11 @@ public class CommandExecutor {
     HttpUrl url;
     if (Strings.isNullOrEmpty(config.url)) {
       url = HttpUrl.parse("https://localhost:4444");
-      System.out.println("Server URL not specified (--url flag), assuming " + url);
+      logger.info("Server URL not specified (--url flag), assuming " + url);
     } else {
       url = HttpUrl.parse(config.url);
       if (url == null) {
-        System.err.print("Invalid URL " + config.url);
+        logger.error("Invalid URL " + config.url);
         return;
       }
     }
