@@ -168,7 +168,7 @@ public class ClientUtils {
     Console console = System.console();
     if (console != null) {
       System.out.format("password for '%s': ", user);
-      return System.console().readPassword();
+      return console.readPassword();
     } else {
       throw new RuntimeException("Please login by running a command without piping.\n"
           + "For example: keywhiz.cli login");

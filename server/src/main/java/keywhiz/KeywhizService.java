@@ -32,6 +32,7 @@ import java.util.Map;
 import javax.sql.DataSource;
 import keywhiz.auth.mutualssl.ClientCertificateFilter;
 import keywhiz.auth.xsrf.XsrfServletFilter;
+import keywhiz.commands.AddUserCommand;
 import keywhiz.commands.DbSeedCommand;
 import keywhiz.commands.GenerateAesKeyCommand;
 import keywhiz.commands.MigrateCommand;
@@ -142,6 +143,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     bootstrap.addCommand(new MigrateCommand());
     bootstrap.addCommand(new DbSeedCommand());
     bootstrap.addCommand(new GenerateAesKeyCommand());
+    bootstrap.addCommand(new AddUserCommand());
 
     logger.debug("Registering bundles");
     bootstrap.addBundle(new Java8Bundle());

@@ -21,6 +21,7 @@ import io.dropwizard.setup.Bootstrap;
 import java.time.OffsetDateTime;
 import javax.sql.DataSource;
 import keywhiz.KeywhizConfig;
+import keywhiz.service.daos.UserDAO;
 import keywhiz.utility.DSLContexts;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.jooq.DSLContext;
@@ -149,12 +150,9 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
         .values(668L, 917L, 772L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
         .execute();
 
-    dslContext
-        .insertInto(USERS)
-        .set(USERS.USERNAME, defaultUser)
-        .set(USERS.PASSWORD_HASH, BCrypt.hashpw(defaultPassword, BCrypt.gensalt()))
-        .set(USERS.CREATED_AT, OffsetDateTime.parse("2012-06-22T14:38:09Z").toEpochSecond())
-        .set(USERS.UPDATED_AT, OffsetDateTime.parse("2012-06-22T14:38:09Z").toEpochSecond())
-        .execute();
+    new UserDAO(dslContext).createUserAt(
+      defaultUser, defaultPassword,
+      OffsetDateTime.parse("2012-06-22T14:38:09Z"),
+      OffsetDateTime.parse("2012-06-22T14:38:09Z"));
   }
 }

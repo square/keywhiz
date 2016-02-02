@@ -16,8 +16,10 @@
 
 package keywhiz.service.daos;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import org.jooq.DSLContext;
+import org.mindrot.jbcrypt.BCrypt;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Users.USERS;
@@ -36,5 +38,19 @@ public class UserDAO {
         .where(USERS.USERNAME.eq(name))
         .fetchOne(USERS.PASSWORD_HASH);
     return Optional.ofNullable(r);
+  }
+
+  public void createUserAt(String user, String password, OffsetDateTime created, OffsetDateTime updated) {
+    dslContext
+      .insertInto(USERS)
+      .set(USERS.USERNAME, user)
+      .set(USERS.PASSWORD_HASH, BCrypt.hashpw(password, BCrypt.gensalt()))
+      .set(USERS.CREATED_AT, created.toEpochSecond())
+      .set(USERS.UPDATED_AT, updated.toEpochSecond())
+      .execute();
+  }
+
+  public void createUser(String user, String password) {
+    this.createUserAt(user, password, OffsetDateTime.now(), OffsetDateTime.now());
   }
 }
