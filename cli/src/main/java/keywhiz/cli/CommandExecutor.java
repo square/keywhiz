@@ -20,10 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.name.Named;
-import com.squareup.okhttp.HttpUrl;
-import com.squareup.okhttp.OkHttpClient;
 import java.io.IOException;
-import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,6 +44,8 @@ import keywhiz.cli.configs.ListActionConfig;
 import keywhiz.cli.configs.UnassignActionConfig;
 import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.UnauthorizedException;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
 
 import static com.google.common.base.StandardSystemProperty.USER_HOME;
 import static com.google.common.base.StandardSystemProperty.USER_NAME;
@@ -127,7 +126,7 @@ public class CommandExecutor {
       Arrays.fill(password, '\0');
     }
     // Save/update the cookies if we logged in successfully
-    ClientUtils.saveCookies((CookieManager) httpClient.getCookieHandler(), cookiePath);
+    ClientUtils.saveCookies(cookiePath);
 
     Printing printing = new Printing(client);
 

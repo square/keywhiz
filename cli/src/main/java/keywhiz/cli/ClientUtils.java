@@ -18,21 +18,16 @@ package keywhiz.cli;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HttpHeaders;
-import com.squareup.okhttp.ConnectionSpec;
-import com.squareup.okhttp.Interceptor;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import io.dropwizard.jackson.Jackson;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.Console;
 import java.io.IOException;
 import java.net.CookieManager;
-import java.net.CookiePolicy;
 import java.net.HttpCookie;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,10 +45,17 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.servlet.http.Cookie;
+import okhttp3.ConnectionSpec;
+import okhttp3.Interceptor;
+import okhttp3.JavaNetCookieJar;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.eclipse.jetty.server.CookieCutter;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.net.CookiePolicy.ACCEPT_ALL;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
@@ -65,6 +67,16 @@ import static java.util.stream.Collectors.toList;
 
 public class ClientUtils {
   private static final ObjectMapper mapper = Jackson.newObjectMapper();
+  private static CookieManager cookieManager = null;
+
+  public static synchronized CookieManager getCookieManager() {
+    if (cookieManager != null) {
+      return cookieManager;
+    }
+    cookieManager = new CookieManager();
+    cookieManager.setCookiePolicy(ACCEPT_ALL);
+    return cookieManager;
+  }
 
   /**
    * Creates a {@link OkHttpClient} to start a TLS connection.
@@ -97,21 +109,18 @@ public class ClientUtils {
 
     SSLSocketFactory socketFactory = sslContext.getSocketFactory();
 
-    OkHttpClient client = new OkHttpClient()
-        .setSslSocketFactory(socketFactory)
-        .setConnectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS))
-        .setFollowSslRedirects(false);
+    OkHttpClient.Builder client = new OkHttpClient().newBuilder()
+        .sslSocketFactory(socketFactory)
+        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS))
+        .followSslRedirects(false);
 
-    client.setRetryOnConnectionFailure(false);
+    client.retryOnConnectionFailure(false);
     client.networkInterceptors()
         .add(new XsrfTokenInterceptor("XSRF-TOKEN", "X-XSRF-TOKEN"));
 
-    CookieManager cookieManager = new CookieManager();
-    cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
-    cookies.forEach(c -> cookieManager.getCookieStore().add(null, c));
-
-    client.setCookieHandler(cookieManager);
-    return client;
+    cookies.forEach(c -> getCookieManager().getCookieStore().add(null, c));
+    client.cookieJar(new JavaNetCookieJar(getCookieManager()));
+    return client.build();
   }
 
   /**
@@ -121,6 +130,7 @@ public class ClientUtils {
    * @param cookieManager CookieManager that contains cookies to be serialized.
    * @param path Location to serialize cookies to file.
    */
+  @VisibleForTesting
   public static void saveCookies(CookieManager cookieManager, Path path) {
     List<HttpCookie> cookies = cookieManager.getCookieStore().getCookies();
     List<JsonCookie> jsonCookies = cookies.stream()
@@ -133,6 +143,10 @@ public class ClientUtils {
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  public static void saveCookies(Path path) {
+    saveCookies(getCookieManager(), path);
   }
 
   /**

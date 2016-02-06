@@ -17,10 +17,6 @@
 package keywhiz.testing;
 
 import com.google.common.base.Throwables;
-import com.squareup.okhttp.ConnectionSpec;
-import com.squareup.okhttp.HttpUrl;
-import com.squareup.okhttp.Interceptor;
-import com.squareup.okhttp.OkHttpClient;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.security.KeyManagementException;
@@ -33,6 +29,11 @@ import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
+import okhttp3.ConnectionSpec;
+import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
+import okhttp3.JavaNetCookieJar;
+import okhttp3.OkHttpClient;
 import org.apache.http.conn.ssl.SSLContextBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -87,26 +88,26 @@ public class HttpClients {
       throw Throwables.propagate(e);
     }
 
-    OkHttpClient client = new OkHttpClient()
-        .setSslSocketFactory(sslContext.getSocketFactory())
-        .setConnectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS))
-        .setFollowSslRedirects(false);
+    OkHttpClient.Builder client = new OkHttpClient().newBuilder()
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS))
+        .followSslRedirects(false);
 
-    client.setFollowRedirects(false);
-    client.setRetryOnConnectionFailure(false);
+    client.followRedirects(false);
+    client.retryOnConnectionFailure(false);
 
     // Won't use cookies and a client certificate at once.
     if (!usingClientCert) {
       CookieManager cookieManager = new CookieManager();
       cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
-      client.setCookieHandler(cookieManager);
+      client.cookieJar(new JavaNetCookieJar(cookieManager));
     }
 
     for (Interceptor interceptor : requestInterceptors) {
       client.networkInterceptors().add(interceptor);
     }
 
-    return client;
+    return client.build();
   }
 
   public static TestClientBuilder builder() {
