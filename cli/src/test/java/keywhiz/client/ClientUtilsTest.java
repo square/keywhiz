@@ -18,7 +18,6 @@ package keywhiz.client;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
-import com.squareup.okhttp.OkHttpClient;
 import java.io.File;
 import java.io.IOException;
 import java.net.CookieManager;
@@ -32,6 +31,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import keywhiz.cli.ClientUtils;
 import keywhiz.cli.configs.CliConfiguration;
+import okhttp3.OkHttpClient;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -76,32 +76,31 @@ public class ClientUtilsTest {
   @Before public void setup() throws IOException {
     tempFolder.create();
     cookiePath = Paths.get(tempFolder.getRoot().getPath(), "/.keywhiz.cookies");
+    ClientUtils.getCookieManager().getCookieStore().removeAll();
   }
 
   @Test public void testSslOkHttpClientCreation() throws Exception {
     OkHttpClient sslClient = ClientUtils.sslOkHttpClient(config.getDevTrustStore(),
         ImmutableList.of());
 
-    assertThat(sslClient.getFollowSslRedirects()).isFalse();
-    assertThat(sslClient.getSslSocketFactory()).isNotNull();
+    assertThat(sslClient.followSslRedirects()).isFalse();
+    assertThat(sslClient.sslSocketFactory()).isNotNull();
     assertThat(sslClient.networkInterceptors()).isNotEmpty();
 
-    assertThat(sslClient.getCookieHandler()).isNotNull();
-    java.util.List<HttpCookie>
-        cookieList = ((CookieManager) sslClient.getCookieHandler()).getCookieStore().getCookies();
+    assertThat(sslClient.cookieJar()).isNotNull();
+    java.util.List<HttpCookie> cookieList = ClientUtils.getCookieManager().getCookieStore().getCookies();
     assertThat(cookieList).isEmpty();
   }
 
   @Test public void testSslOkHttpClientCreationWithCookies() throws Exception {
     OkHttpClient sslClient = ClientUtils.sslOkHttpClient(config.getDevTrustStore(), cookieList);
 
-    assertThat(sslClient.getFollowSslRedirects()).isFalse();
-    assertThat(sslClient.getCookieHandler()).isNotNull();
-    assertThat(sslClient.getSslSocketFactory()).isNotNull();
+    assertThat(sslClient.followSslRedirects()).isFalse();
+    assertThat(sslClient.cookieJar()).isNotNull();
+    assertThat(sslClient.sslSocketFactory()).isNotNull();
     assertThat(sslClient.networkInterceptors()).isNotEmpty();
 
-    java.util.List<HttpCookie>
-        cookieList = ((CookieManager) sslClient.getCookieHandler()).getCookieStore().getCookies();
+    java.util.List<HttpCookie> cookieList = ClientUtils.getCookieManager().getCookieStore().getCookies();
     assertThat(cookieList).contains(xsrfCookie);
     assertThat(cookieList).contains(sessionCookie);
   }

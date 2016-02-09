@@ -17,10 +17,6 @@
 package keywhiz.service.resources.automation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
 import io.dropwizard.jackson.Jackson;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -30,6 +26,10 @@ import keywhiz.TestClients;
 import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.CreateClientRequest;
 import keywhiz.client.KeywhizClient;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;

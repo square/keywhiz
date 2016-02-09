@@ -18,9 +18,6 @@ package keywhiz;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
-import com.squareup.okhttp.HttpUrl;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
 import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +28,9 @@ import java.security.cert.CertificateException;
 import javax.ws.rs.core.MediaType;
 import keywhiz.client.KeywhizClient;
 import keywhiz.testing.HttpClients;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;

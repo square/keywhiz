@@ -19,10 +19,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.google.common.net.HttpHeaders;
-import com.squareup.okhttp.Interceptor;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
 import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.util.Map;
@@ -31,6 +27,10 @@ import javax.servlet.http.Cookie;
 import javax.ws.rs.core.MediaType;
 import keywhiz.client.KeywhizClient;
 import keywhiz.testing.HttpClients;
+import okhttp3.Interceptor;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import org.eclipse.jetty.server.CookieCutter;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -90,7 +90,7 @@ public class AuthHelper {
     }
 
 
-    @Override public Response intercept(Chain chain) throws IOException {
+    @Override public Response intercept(Interceptor.Chain chain) throws IOException {
       Request request = chain.request();
       for (String header : request.headers(HttpHeaders.COOKIE)) {
 

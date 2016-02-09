@@ -16,16 +16,15 @@
 package keywhiz.service.resources;
 
 import com.google.common.collect.ImmutableMap;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
-import java.time.OffsetDateTime;
 import keywhiz.IntegrationTestRule;
 import keywhiz.TestClients;
 import keywhiz.api.ApiDate;
 import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;

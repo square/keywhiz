@@ -17,17 +17,17 @@
 package keywhiz.service.resources.admin;
 
 import com.google.common.collect.Lists;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.ws.rs.core.HttpHeaders;
 import keywhiz.IntegrationTestRule;
 import keywhiz.TestClients;
 import keywhiz.commands.DbSeedCommand;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;

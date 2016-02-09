@@ -19,13 +19,6 @@ package keywhiz.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import com.squareup.okhttp.Call;
-import com.squareup.okhttp.HttpUrl;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
@@ -40,6 +33,13 @@ import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
+import okhttp3.Call;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import org.apache.http.HttpStatus;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -167,17 +167,18 @@ public class KeywhizClient {
 
   public <T> List<SanitizedSecret> generateSecrets(String generatorName, T params) throws IOException {
     checkArgument(!generatorName.isEmpty());
-    String response = httpPost(baseUrl.resolve(
-        format("/admin/secrets/generators/%s", generatorName)),
-        params);
+    String response = httpPost(baseUrl.resolve("/admin/secrets/generators/").newBuilder()
+        .addPathSegment(generatorName)
+        .build(), params);
     return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
   }
 
   public <T> List<SanitizedSecret> batchGenerateSecrets(String generatorName, List<T> params) throws IOException {
     checkArgument(!generatorName.isEmpty());
-    String response = httpPost(baseUrl.resolve(
-        format("/admin/secrets/generators/%s/batch", generatorName)),
-        params);
+    String response = httpPost(baseUrl.resolve("/admin/secrets/generators/").newBuilder()
+        .addPathSegment(generatorName)
+        .addPathSegment("batch")
+        .build(), params);
     return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
   }
 
@@ -219,26 +220,33 @@ public class KeywhizClient {
 
   public Client getClientByName(String name) throws IOException {
     checkArgument(!name.isEmpty());
-    String response = httpGet(baseUrl.resolve(format("/admin/clients?name=%s", name)));
+    String response = httpGet(baseUrl.resolve("/admin/clients").newBuilder()
+        .addQueryParameter("name", name)
+        .build());
     return mapper.readValue(response, Client.class);
   }
 
   public Group getGroupByName(String name) throws IOException {
     checkArgument(!name.isEmpty());
-    String response = httpGet(baseUrl.resolve(format("/admin/groups?name=%s", name)));
+    String response = httpGet(baseUrl.resolve("/admin/groups").newBuilder()
+        .addQueryParameter("name", name)
+        .build());
     return mapper.readValue(response, Group.class);
   }
 
   public SanitizedSecret getSanitizedSecretByNameAndVersion(String name, String version) throws IOException {
     checkArgument(!name.isEmpty());
-    String response = httpGet(baseUrl.resolve(
-        format("/admin/secrets?name=%s&version=%s", name, version)));
+    String response = httpGet(baseUrl.resolve("/admin/secrets").newBuilder().addQueryParameter("name", name)
+        .addQueryParameter("version", version)
+        .build());
     return mapper.readValue(response, SanitizedSecret.class);
   }
 
   public List<String> getVersionsForSecretName(String name) throws IOException {
     checkNotNull(name);
-    String response = httpGet(baseUrl.resolve(format("/admin/secrets/versions?name=%s", name)));
+    String response = httpGet(
+        baseUrl.resolve("/admin/secrets/versions").newBuilder().addQueryParameter("name", name)
+        .build());
     return mapper.readValue(response, new TypeReference<List<String>>() {});
   }
 
