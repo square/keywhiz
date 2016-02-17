@@ -9,6 +9,10 @@ jdk:
 env:
   - UI_DIR=ui
 
+cache:
+  directories:
+    - $HOME/.m2
+
 before_install:
   # Extra Chrome setup from: http://stackoverflow.com/questions/19255976
   - export CHROME_BIN=chromium-browser
