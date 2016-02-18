@@ -93,6 +93,21 @@
         <jooq.input-schema>PUBLIC</jooq.input-schema>
       </properties>
     </profile>
+
+    <profile>
+      <id>docker</id>
+      <properties>
+        <skipResetDatabase>true</skipResetDatabase>
+        <db.driver>org.h2.Driver</db.driver>
+        <db.create-url>jdbc:h2:/tmp/h2_data/keywhizdb_test</db.create-url>
+        <db.migrate-url>jdbc:h2:/tmp/h2_data/keywhizdb_test</db.migrate-url>
+        <db.username>root</db.username>
+        <db.migrations-path>h2/migration</db.migrations-path>
+        <jooq.dialect>org.jooq.util.h2.H2Database</jooq.dialect>
+        <jooq.excludes />
+        <jooq.input-schema>PUBLIC</jooq.input-schema>
+      </properties>
+    </profile>
   </profiles>
 
   <build>

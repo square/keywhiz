@@ -15,16 +15,23 @@
 #
 # Development:
 #   Create a persistent data volume:
-#     docker volume create keywhiz-db-devel
+#     docker volume create --name keywhiz-db-devel
 #
 #   Initialize the database and apply migrations:
-#     docker run -v keywhiz-db-devel:/tmp/h2_data square/keywhiz migrate
+#     docker run -v keywhiz-db-devel:/data square/keywhiz migrate
+#
+#   Seed the database with development data:
+#     docker run -v keywhiz-db-devel:/data square/keywhiz db-seed
 #
 #   Finally, run the server with the default development config:
-#     docker run -it -v keywhiz-db-devel:/tmp/h2_data square/keywhiz server
+#     docker run -it -p 4444:4444 -v keywhiz-db-devel:/data square/keywhiz server
+#
+# After keywhiz starts up, you can access the admin console by going
+# to https://[DOCKER-MACHINE-IP]/ui in your browser. The default user
+# in development is keywhizAdmin and the default password is adminPass.
 #
 # Note that for a production deployment, you'll probably want to setup
-# your own config that talks to a MySQL database instead of using H2.
+# your own config to make sure you're not using development secrets. 
 #
 FROM maven:3.3-jdk-8
 
@@ -43,7 +50,7 @@ COPY hkdf/pom.xml /usr/src/app/hkdf/
 COPY model/pom.xml /usr/src/app/model/
 COPY server/pom.xml /usr/src/app/server/
 COPY testing/pom.xml /usr/src/app/testing/
-RUN mvn verify clean --fail-never
+RUN mvn dependency:copy-dependencies -P docker --fail-never
 
 # copy source required for build and install
 COPY api /usr/src/app/api/
@@ -53,7 +60,17 @@ COPY hkdf /usr/src/app/hkdf/
 COPY model /usr/src/app/model/
 COPY server /usr/src/app/server/
 COPY testing /usr/src/app/testing/
-RUN mvn install -P h2
+RUN mvn install -P docker
+
+# Drop privs inside container
+RUN useradd -ms /bin/false keywhiz && mkdir /data && chown keywhiz:keywhiz /data
+USER keywhiz
+
+# Expose API port by default. Note that the admin console port
+# is NOT exposed by default, can be exposed manually if desired. 
+EXPOSE 4444
+
+VOLUME ["/data"]
 
 COPY docker.sh /usr/src/app
 ENTRYPOINT ["/usr/src/app/docker.sh"]
