@@ -60,7 +60,6 @@ echo "done"
 
 echo
 echo "Keywhiz requires a SSL/TLS server certificate and private key to run."
-echo "You can import your own cert, or have the wizard generate one."
 
 export KEYSTORE_PATH="/secrets/keywhiz-server.p12"
 export KEYSTORE_PASSWORD=`head -c16 /dev/urandom | xxd -p`
