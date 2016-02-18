@@ -44,6 +44,14 @@
         <test-yaml>src/test/resources/keywhiz-test.yaml.h2</test-yaml>
       </properties>
     </profile>
+
+    <profile>
+      <id>docker</id>
+      <properties>
+        <development-yaml>src/main/resources/keywhiz-development.yaml.docker</development-yaml>
+        <test-yaml>src/test/resources/keywhiz-test.yaml.docker</test-yaml>
+      </properties>
+    </profile>
   </profiles>
 
   <dependencies>
