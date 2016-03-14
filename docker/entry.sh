@@ -3,6 +3,10 @@
 RESET=$(tput -T xterm sgr0)
 RED=$(tput -T xterm setaf 1) 
 
+if [ "$1" == "wizard" ]; then
+    exec ./wizard.sh
+fi
+
 if [ -z "$KEYWHIZ_CONFIG" ]; then
     KEYWHIZ_CONFIG=server/src/main/resources/keywhiz-development.yaml
     echo -n "${RED}"
