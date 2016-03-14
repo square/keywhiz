@@ -202,10 +202,10 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(injector.getInstance(AutomationSecretGeneratorsResource.class));
     logger.debug("Keywhiz configuration complete");
 
-    validateDabase(config);
+    validateDatabase(config);
   }
 
-  private void validateDabase(KeywhizConfig config) {
+  private void validateDatabase(KeywhizConfig config) {
     logger.debug("Validating database state");
     DataSource dataSource = config.getDataSourceFactory()
         .build(new MetricRegistry(), "flyway-validation-datasource");
