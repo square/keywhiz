@@ -48,6 +48,7 @@ import keywhiz.service.providers.ClientAuthFactory;
 import keywhiz.service.providers.UserAuthFactory;
 import keywhiz.service.resources.SecretDeliveryResource;
 import keywhiz.service.resources.SecretsDeliveryResource;
+import keywhiz.service.resources.StatusResource;
 import keywhiz.service.resources.admin.ClientsResource;
 import keywhiz.service.resources.admin.GroupsResource;
 import keywhiz.service.resources.admin.MembershipResource;
@@ -200,6 +201,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(injector.getInstance(AutomationEnrollClientGroupResource.class));
     jersey.register(injector.getInstance(AutomationSecretAccessResource.class));
     jersey.register(injector.getInstance(AutomationSecretGeneratorsResource.class));
+    jersey.register(injector.getInstance(StatusResource.class));
     logger.debug("Keywhiz configuration complete");
 
     validateDatabase(config);
