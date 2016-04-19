@@ -1,5 +1,8 @@
 package keywhiz.service.resources.automation.v2;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Metered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.Sets;
 import io.dropwizard.auth.Auth;
 import java.util.List;
@@ -81,7 +84,7 @@ public class SecretResource {
    * @responseMessage 201 Created secret and assigned to given groups
    * @responseMessage 409 Secret already exists
    */
-  @POST
+  @POST @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Consumes(APPLICATION_JSON)
   public Response createSecret(@Auth AutomationClient automationClient,
       @Valid CreateSecretRequestV2 request) {
@@ -126,7 +129,7 @@ public class SecretResource {
    * @excludeParams automationClient
    * @responseMessage 200 List of secret names
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Produces(APPLICATION_JSON)
   public Iterable<String> secretListing(@Auth AutomationClient automationClient) {
     return secretController.getSanitizedSecrets().stream()
@@ -142,7 +145,7 @@ public class SecretResource {
    * @responseMessage 201 Secret series modified successfully
    * @responseMessage 404 Secret series not found
    */
-  @POST
+  @POST @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}")
   @Produces(APPLICATION_JSON)
   public SecretDetailResponseV2 modifySecretSeries(@Auth AutomationClient automationClient,
@@ -163,7 +166,7 @@ public class SecretResource {
    * @responseMessage 200 Secret series information retrieved
    * @responseMessage 404 Secret series not found
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}")
   @Produces(APPLICATION_JSON)
   public SecretDetailResponseV2 secretInfo(@Auth AutomationClient automationClient,
@@ -186,7 +189,7 @@ public class SecretResource {
    * @responseMessage 200 Listing succeeded
    * @responseMessage 404 Secret series not found
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}/groups")
   public Iterable<String> secretGroupsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
@@ -208,7 +211,7 @@ public class SecretResource {
    * @responseMessage 201 Group membership changed
    * @responseMessage 404 Secret series not found
    */
-  @PUT
+  @PUT @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}/groups")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
@@ -251,7 +254,7 @@ public class SecretResource {
    * @responseMessage 200 Secret information retrieved
    * @responseMessage 404 Secret not found
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}/{version:.*}")
   @Produces(APPLICATION_JSON)
   public SecretDetailResponseV2 secretVersionInfo(@Auth AutomationClient automationClient,
@@ -270,7 +273,7 @@ public class SecretResource {
    * @responseMessage 204 Secret series deleted
    * @responseMessage 404 Secret series not found
    */
-  @DELETE
+  @DELETE @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}")
   public Response deleteSecretSeries(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
@@ -290,7 +293,7 @@ public class SecretResource {
    * @responseMessage 204 Secret version deleted
    * @responseMessage 404 Secret version not found
    */
-  @DELETE
+  @DELETE @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}/{version:.*}")
   public Response deleteSecretVersion(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @PathParam("version") String version) {

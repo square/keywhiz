@@ -16,6 +16,9 @@
 
 package keywhiz.service.resources.admin;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Metered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
@@ -89,7 +92,7 @@ public class ClientsResource {
    * @responseMessage 200 Found and retrieved Client(s)
    * @responseMessage 404 Client with given name not found (if name provided)
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   public Response findClients(@Auth User user, @DefaultValue("") @QueryParam("name") String name) {
     if (name.isEmpty()) {
       return Response.ok().entity(listClients(user)).build();
@@ -119,7 +122,7 @@ public class ClientsResource {
    * @responseMessage 200 Successfully created Client
    * @responseMessage 409 Client with given name already exists
    */
-  @POST
+  @POST @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Consumes(APPLICATION_JSON)
   public Response createClient(@Auth User user,
       @Valid CreateClientRequest createClientRequest) {
@@ -153,7 +156,7 @@ public class ClientsResource {
    * @responseMessage 404 Client with given ID not Found
    */
   @Path("{clientId}")
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   public ClientDetailResponse getClient(@Auth User user,
       @PathParam("clientId") LongParam clientId) {
     logger.info("User '{}' retrieving client id={}.", user, clientId);
@@ -172,7 +175,7 @@ public class ClientsResource {
    * @responseMessage 404 Client with given ID not Found
    */
   @Path("{clientId}")
-  @DELETE
+  @DELETE @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   public Response deleteClient(@Auth User user, @PathParam("clientId") LongParam clientId) {
     logger.info("User '{}' deleting client id={}.", user, clientId);
 

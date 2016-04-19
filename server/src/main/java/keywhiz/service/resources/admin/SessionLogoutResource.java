@@ -16,6 +16,9 @@
 
 package keywhiz.service.resources.admin;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Metered;
+import com.codahale.metrics.annotation.Timed;
 import java.net.URI;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -62,7 +65,7 @@ public class SessionLogoutResource {
    * @description Log out and remove any session cookies
    * @responseMessage 200 Logged out successfully
    */
-  @POST
+  @POST @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Produces(APPLICATION_JSON)
   public Response logout(@Nullable @CookieParam(value = "session") Cookie sessionCookie) {
     if (sessionCookie != null) {

@@ -16,6 +16,9 @@
 
 package keywhiz.service.resources.admin;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Metered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
@@ -103,7 +106,7 @@ public class SecretsResource {
    * @responseMessage 200 Found and retrieved Secret(s)
    * @responseMessage 404 Secret with given name not found (if name provided)
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   public Response findSecrets(@Auth User user, @DefaultValue("") @QueryParam("name") String name,
       @DefaultValue("") @QueryParam("version") String version,
       @DefaultValue("") @QueryParam("nameOnly") String nameOnly) {
@@ -144,7 +147,7 @@ public class SecretsResource {
    * @responseMessage 400 Name not given
    */
   @Path("/versions")
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   public List<String> getVersionsForSecretName(@Auth User user,
       @DefaultValue("") @QueryParam("name") String name) {
     if (name.isEmpty()) {
@@ -171,7 +174,7 @@ public class SecretsResource {
    * @responseMessage 200 Successfully created Secret
    * @responseMessage 400 Secret with given name already exists
    */
-  @POST
+  @POST @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Consumes(APPLICATION_JSON)
   public Response createSecret(@Auth User user, @Valid CreateSecretRequest request) {
 
@@ -220,7 +223,7 @@ public class SecretsResource {
    * @responseMessage 404 Secret with given ID not Found
    */
   @Path("{secretId}")
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   public SecretDetailResponse retrieveSecret(@Auth User user,
       @PathParam("secretId") LongParam secretId) {
 
@@ -240,7 +243,7 @@ public class SecretsResource {
    * @responseMessage 404 Secret with given ID not Found
    */
   @Path("{secretId}")
-  @DELETE
+  @DELETE @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   public Response deleteSecret(@Auth User user, @PathParam("secretId") LongParam secretId) {
     List<Secret> secrets = secretController.getSecretsById(secretId.get());
     if (secrets.isEmpty()) {

@@ -16,6 +16,9 @@
 
 package keywhiz.service.resources.automation;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Metered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
@@ -87,7 +90,7 @@ public class AutomationGroupResource {
    * @responseMessage 200 Found and retrieved Group with given ID
    * @responseMessage 404 Group with given ID not Found
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{groupId}")
   public GroupDetailResponse getGroupById(
       @Auth AutomationClient automationClient,
@@ -111,7 +114,7 @@ public class AutomationGroupResource {
    * @responseMessage 200 Found and retrieved Group(s)
    * @responseMessage 404 Group with given name not found (if name provided)
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   public Response getGroupByName(
       @Auth AutomationClient automationClient,
       @QueryParam("name") Optional<String> name) {
@@ -145,7 +148,7 @@ public class AutomationGroupResource {
    * @responseMessage 200 Successfully created Group
    * @responseMessage 409 Group with given name already exists
    */
-  @POST
+  @POST @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Consumes(APPLICATION_JSON)
   public Group createGroup(
       @Auth AutomationClient automationClient,
@@ -172,7 +175,7 @@ public class AutomationGroupResource {
    * @responseMessage 200 Deleted group
    * @responseMessage 404 Group not found by id
    */
-  @DELETE
+  @DELETE @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{groupId}")
   public Response deleteGroup(
       @Auth AutomationClient automationClient,

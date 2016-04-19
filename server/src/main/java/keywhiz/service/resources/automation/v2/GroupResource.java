@@ -1,5 +1,8 @@
 package keywhiz.service.resources.automation.v2;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Metered;
+import com.codahale.metrics.annotation.Timed;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
 import java.util.Set;
@@ -58,7 +61,7 @@ public class GroupResource {
    * @responseMessage 201 Created group
    * @responseMessage 409 Group already exists
    */
-  @POST
+  @POST @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Consumes(APPLICATION_JSON)
   public Response createGroup(@Auth AutomationClient automationClient,
       @Valid CreateGroupRequestV2 request) {
@@ -81,7 +84,7 @@ public class GroupResource {
    * @excludeParams automationClient
    * @responseMessage 200 List of group names
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Produces(APPLICATION_JSON)
   public Iterable<String> groupListing(@Auth AutomationClient automationClient) {
     return groupDAO.getGroups().stream()
@@ -98,7 +101,7 @@ public class GroupResource {
    * @responseMessage 200 Group information retrieved
    * @responseMessage 404 Group not found
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}")
   @Produces(APPLICATION_JSON)
   public GroupDetailResponseV2 groupInfo(@Auth AutomationClient automationClient,
@@ -130,7 +133,7 @@ public class GroupResource {
    * @responseMessage 204 Group deleted
    * @responseMessage 404 Group not found
    */
-  @DELETE
+  @DELETE @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}")
   public Response deleteGroup(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {

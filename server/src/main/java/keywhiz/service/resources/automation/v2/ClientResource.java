@@ -1,5 +1,8 @@
 package keywhiz.service.resources.automation.v2;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Metered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.Sets;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
@@ -70,7 +73,7 @@ public class ClientResource {
    * @responseMessage 201 Created client and assigned to given groups
    * @responseMessage 409 Client already exists
    */
-  @POST
+  @POST @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Consumes(APPLICATION_JSON)
   public Response createClient(@Auth AutomationClient automationClient,
       @Valid CreateClientRequestV2 request) {
@@ -101,7 +104,7 @@ public class ClientResource {
    * @excludeParams automationClient
    * @responseMessage 200 List of client names
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientListing(@Auth AutomationClient automationClient) {
     return clientDAO.getClients().stream()
@@ -118,7 +121,7 @@ public class ClientResource {
    * @responseMessage 200 Client information retrieved
    * @responseMessage 404 Client not found
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}")
   @Produces(APPLICATION_JSON)
   public ClientDetailResponseV2 clientInfo(@Auth AutomationClient automationClient,
@@ -139,7 +142,7 @@ public class ClientResource {
    * @responseMessage 200 Listing succeeded
    * @responseMessage 404 Client not found
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}/groups")
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientGroupsListing(@Auth AutomationClient automationClient,
@@ -162,7 +165,7 @@ public class ClientResource {
    * @responseMessage 201 Client modified successfully
    * @responseMessage 404 Client not found
    */
-  @PUT
+  @PUT @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}/groups")
   @Produces(APPLICATION_JSON)
   public Iterable<String> modifyClientGroups(@Auth AutomationClient automationClient,
@@ -203,7 +206,7 @@ public class ClientResource {
    * @responseMessage 200 Client lookup succeeded
    * @responseMessage 404 Client not found
    */
-  @GET
+  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}/secrets")
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientSecretsListing(@Auth AutomationClient automationClient,
@@ -224,7 +227,7 @@ public class ClientResource {
    * @responseMessage 204 Client deleted
    * @responseMessage 404 Client not found
    */
-  @DELETE
+  @DELETE @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}")
   public Response deleteClient(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
@@ -246,7 +249,7 @@ public class ClientResource {
    * @responseMessage 201 Client updated
    * @responseMessage 404 Client not found
    */
-  @POST
+  @POST @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
   @Path("{name}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
