@@ -15,8 +15,6 @@
  */
 package keywhiz.service.resources.automation;
 
-import com.codahale.metrics.annotation.ExceptionMetered;
-import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
