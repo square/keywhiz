@@ -65,7 +65,8 @@ public class SessionLogoutResource {
    * @description Log out and remove any session cookies
    * @responseMessage 200 Logged out successfully
    */
-  @POST @Timed
+  @Timed
+  @POST
   @Produces(APPLICATION_JSON)
   public Response logout(@Nullable @CookieParam(value = "session") Cookie sessionCookie) {
     if (sessionCookie != null) {

@@ -29,7 +29,8 @@ public class StatusResource {
     this.environment = environment;
   }
 
-  @GET @Timed
+  @Timed
+  @GET
   public boolean get() {
     HealthCheckRegistry checks = this.environment.healthChecks();
     SortedMap<String, HealthCheck.Result> results = checks.runHealthChecks();

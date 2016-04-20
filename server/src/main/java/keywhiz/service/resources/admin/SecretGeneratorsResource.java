@@ -72,7 +72,8 @@ public class SecretGeneratorsResource {
    * @responseMessage 422 Request was formed correctly but was semantically incorrect
    */
   @Path("{generatorName}")
-  @POST @Timed
+  @Timed
+  @POST
   @Consumes(APPLICATION_JSON)
   public List<SanitizedSecret> generate(@Auth User user,
       @PathParam("generatorName") String generatorName, String requestBody) {
@@ -102,7 +103,8 @@ public class SecretGeneratorsResource {
    * @responseMessage 422 Request was formed correctly but was semantically incorrect, batch may have been empty
    */
   @Path("{generatorName}/batch")
-  @POST @Timed
+  @Timed
+  @POST
   @Consumes(APPLICATION_JSON)
   public List<SanitizedSecret> batchGenerate(@Auth User user,
       @PathParam("generatorName") String generatorName, String requestBody) {

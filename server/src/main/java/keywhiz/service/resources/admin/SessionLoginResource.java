@@ -76,7 +76,8 @@ public class SessionLoginResource {
    * @responseMessage 200 Logged in successfully
    * @responseMessage 401 Incorrect credentials or not authorized
    */
-  @POST @Timed
+  @Timed
+  @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
   public Response login(@Valid LoginRequest request) {

@@ -62,7 +62,8 @@ public class SecretsDeliveryResource {
    * @excludeParams client
    * @description Returns all Secrets for the current Client
    */
-  @GET @Timed
+  @Timed
+  @GET
   public List<SecretDeliveryResponse> getSecrets(@Auth Client client) {
     logger.info("Client {} listed available secrets.", client.getName());
     return aclDAO.getSanitizedSecretsFor(client).stream()

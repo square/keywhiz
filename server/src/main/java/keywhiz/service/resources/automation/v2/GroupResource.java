@@ -61,7 +61,8 @@ public class GroupResource {
    * @responseMessage 201 Created group
    * @responseMessage 409 Group already exists
    */
-  @POST @Timed
+  @Timed
+  @POST
   @Consumes(APPLICATION_JSON)
   public Response createGroup(@Auth AutomationClient automationClient,
       @Valid CreateGroupRequestV2 request) {
@@ -84,7 +85,8 @@ public class GroupResource {
    * @excludeParams automationClient
    * @responseMessage 200 List of group names
    */
-  @GET @Timed
+  @Timed
+  @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> groupListing(@Auth AutomationClient automationClient) {
     return groupDAO.getGroups().stream()
@@ -101,7 +103,8 @@ public class GroupResource {
    * @responseMessage 200 Group information retrieved
    * @responseMessage 404 Group not found
    */
-  @GET @Timed
+  @Timed
+  @GET
   @Path("{name}")
   @Produces(APPLICATION_JSON)
   public GroupDetailResponseV2 groupInfo(@Auth AutomationClient automationClient,
@@ -133,7 +136,8 @@ public class GroupResource {
    * @responseMessage 204 Group deleted
    * @responseMessage 404 Group not found
    */
-  @DELETE @Timed
+  @Timed
+  @DELETE
   @Path("{name}")
   public Response deleteGroup(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {

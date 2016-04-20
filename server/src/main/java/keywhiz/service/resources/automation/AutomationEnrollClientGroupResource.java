@@ -61,7 +61,8 @@ public class AutomationEnrollClientGroupResource {
    * @responseMessage 200 Successfully enrolled Client in Group
    * @responseMessage 404 Could not find Client or Group
    */
-  @PUT @Timed
+  @Timed
+  @PUT
   public Response enrollClientInGroup(
       @Auth AutomationClient automationClient,
       @PathParam("clientId") LongParam clientId,
@@ -87,7 +88,8 @@ public class AutomationEnrollClientGroupResource {
    * @responseMessage 200 Successfully removed Client from Group
    * @responseMessage 404 Could not find Client or Group
    */
-  @DELETE @Timed
+  @Timed
+  @DELETE
   public Response evictClientFromGroup(
       @Auth AutomationClient automationClient,
       @PathParam("clientId") long clientId,

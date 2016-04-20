@@ -71,7 +71,8 @@ public class MembershipResource {
    * @responseMessage 404 Could not find Secret or Group
    */
   @Path("/secrets/{secretId}/groups/{groupId}")
-  @PUT @Timed
+  @Timed
+  @PUT
   public Response allowAccess(
       @Auth User user,
       @PathParam("secretId") LongParam secretId,
@@ -101,7 +102,8 @@ public class MembershipResource {
    * @responseMessage 404 Could not find Secret or Group
    */
   @Path("/secrets/{secretId}/groups/{groupId}")
-  @DELETE @Timed
+  @Timed
+  @DELETE
   public Response disallowAccess(
       @Auth User user,
       @PathParam("secretId") LongParam secretId,
@@ -130,7 +132,8 @@ public class MembershipResource {
    * @responseMessage 404 Could not find Client or Group
    */
   @Path("/clients/{clientId}/groups/{groupId}")
-  @PUT @Timed
+  @Timed
+  @PUT
   public Response enrollClient(
     @Auth User user,
     @PathParam("clientId") LongParam clientId,
@@ -159,7 +162,8 @@ public class MembershipResource {
    * @responseMessage 404 Could not find Client or Group
    */
   @Path("/clients/{clientId}/groups/{groupId}")
-  @DELETE @Timed
+  @Timed
+  @DELETE
   public Response evictClient(
       @Auth User user,
       @PathParam("clientId") LongParam clientId,

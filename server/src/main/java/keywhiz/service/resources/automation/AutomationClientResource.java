@@ -90,7 +90,8 @@ public class AutomationClientResource {
    * @responseMessage 200 Found and retrieved Client with given ID
    * @responseMessage 404 Client with given ID not Found
    */
-  @GET @Timed
+  @Timed
+  @GET
   @Path("{clientId}")
   public Response findClientById(
       @Auth AutomationClient automationClient,
@@ -117,7 +118,8 @@ public class AutomationClientResource {
    * @responseMessage 200 Found and retrieved Client(s)
    * @responseMessage 404 Client with given name not found (if name provided)
    */
-  @GET @Timed
+  @Timed
+  @GET
   public Response findClient(
       @Auth AutomationClient automationClient,
       @QueryParam("name") Optional<String> name) {
@@ -148,7 +150,8 @@ public class AutomationClientResource {
    * @responseMessage 200 Successfully created Client
    * @responseMessage 409 Client with given name already exists
    */
-  @POST @Timed
+  @Timed
+  @POST
   @Consumes(APPLICATION_JSON)
   public ClientDetailResponse createClient(
       @Auth AutomationClient automationClient,
@@ -176,7 +179,8 @@ public class AutomationClientResource {
    * @responseMessage 200 Deleted client
    * @responseMessage 404 Client not found by id
    */
-  @DELETE @Timed
+  @Timed
+  @DELETE
   @Path("{clientId}")
   public Response deleteClient(@Auth AutomationClient automationClient,
       @PathParam("clientId") LongParam clientId) {

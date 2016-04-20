@@ -73,7 +73,8 @@ public class ClientResource {
    * @responseMessage 201 Created client and assigned to given groups
    * @responseMessage 409 Client already exists
    */
-  @POST @Timed
+  @Timed
+  @POST
   @Consumes(APPLICATION_JSON)
   public Response createClient(@Auth AutomationClient automationClient,
       @Valid CreateClientRequestV2 request) {
@@ -104,7 +105,8 @@ public class ClientResource {
    * @excludeParams automationClient
    * @responseMessage 200 List of client names
    */
-  @GET @Timed
+  @Timed
+  @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientListing(@Auth AutomationClient automationClient) {
     return clientDAO.getClients().stream()
@@ -121,7 +123,8 @@ public class ClientResource {
    * @responseMessage 200 Client information retrieved
    * @responseMessage 404 Client not found
    */
-  @GET @Timed
+  @Timed
+  @GET
   @Path("{name}")
   @Produces(APPLICATION_JSON)
   public ClientDetailResponseV2 clientInfo(@Auth AutomationClient automationClient,
@@ -142,7 +145,8 @@ public class ClientResource {
    * @responseMessage 200 Listing succeeded
    * @responseMessage 404 Client not found
    */
-  @GET @Timed
+  @Timed
+  @GET
   @Path("{name}/groups")
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientGroupsListing(@Auth AutomationClient automationClient,
@@ -165,7 +169,8 @@ public class ClientResource {
    * @responseMessage 201 Client modified successfully
    * @responseMessage 404 Client not found
    */
-  @PUT @Timed
+  @Timed
+  @PUT
   @Path("{name}/groups")
   @Produces(APPLICATION_JSON)
   public Iterable<String> modifyClientGroups(@Auth AutomationClient automationClient,
@@ -206,7 +211,8 @@ public class ClientResource {
    * @responseMessage 200 Client lookup succeeded
    * @responseMessage 404 Client not found
    */
-  @GET @Timed
+  @Timed
+  @GET
   @Path("{name}/secrets")
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientSecretsListing(@Auth AutomationClient automationClient,
@@ -227,7 +233,8 @@ public class ClientResource {
    * @responseMessage 204 Client deleted
    * @responseMessage 404 Client not found
    */
-  @DELETE @Timed
+  @Timed
+  @DELETE
   @Path("{name}")
   public Response deleteClient(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
@@ -249,7 +256,8 @@ public class ClientResource {
    * @responseMessage 201 Client updated
    * @responseMessage 404 Client not found
    */
-  @POST @Timed
+  @Timed
+  @POST
   @Path("{name}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)

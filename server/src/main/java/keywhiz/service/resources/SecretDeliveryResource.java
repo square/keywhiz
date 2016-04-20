@@ -90,7 +90,8 @@ public class SecretDeliveryResource {
    * @responseMessage 404 Secret with given name not found
    * @responseMessage 500 Secret response could not be generated for given Secret
    */
-  @GET @Timed
+  @Timed
+  @GET
   public SecretDeliveryResponse getSecret(@NotEmpty @PathParam("secretName") String secretName,
                                           @Auth Client client) {
     String[] parts;
