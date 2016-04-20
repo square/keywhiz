@@ -1,13 +1,11 @@
-language: java
-
-# Experimental group for MySQL 5.6
-group: dev
+sudo: required
+dist: trusty
 
 jdk:
   - oraclejdk8
 
-env:
-  - UI_DIR=ui
+services:
+  - mysql
 
 cache:
   directories:
@@ -19,14 +17,12 @@ before_install:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
   - npm install karma && npm install karma-jasmine karma-chrome-launcher
-  - cd $UI_DIR && npm install -g grunt-cli bower
+  - cd ui && npm install -g grunt-cli bower
   - npm install
   - bower install
   - grunt build && cd ..
 
 script:
-  - mvn test -P postgres
   - mvn test -P mysql
-  - mvn test -P h2
   - "mvn compile findbugs:check"
-  - cd $UI_DIR && grunt test
+  - cd ui && grunt test
