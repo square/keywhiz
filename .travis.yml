@@ -1,8 +1,5 @@
 language: java
 
-# Experimental group for MySQL 5.6
-group: dev
-
 jdk:
   - oraclejdk8
 
@@ -25,8 +22,5 @@ before_install:
   - grunt build && cd ..
 
 script:
-  - mvn test -P postgres
-  - mvn test -P mysql
-  - mvn test -P h2
-  - "mvn compile findbugs:check"
+  - mvn test findbugs:check jacoco:report coveralls:report -P h2
   - cd $UI_DIR && grunt test
