@@ -4,10 +4,8 @@ dist: trusty
 jdk:
   - oraclejdk8
 
-env:
-  - DB=mysql
-  - DB=h2
-  - DB=postgres
+services:
+  - mysql
 
 cache:
   directories:
@@ -25,6 +23,6 @@ before_install:
   - grunt build && cd ..
 
 script:
-  - mvn test -P $DB
+  - mvn test -P mysql
   - "mvn compile findbugs:check"
   - cd ui && grunt test
