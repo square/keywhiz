@@ -16,6 +16,7 @@
 
 package keywhiz.service.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import io.dropwizard.auth.Auth;
 import java.text.ParseException;
@@ -87,6 +88,7 @@ public class SecretDeliveryResource {
    * @responseMessage 404 Secret with given name not found
    * @responseMessage 500 Secret response could not be generated for given Secret
    */
+  @Timed
   @GET
   public SecretDeliveryResponse getSecret(@NotEmpty @PathParam("secretName") String secretName,
                                           @Auth Client client) {

@@ -16,6 +16,7 @@
 
 package keywhiz.service.resources.admin;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
@@ -90,6 +91,7 @@ public class GroupsResource {
    * @responseMessage 200 Found and retrieved Group(s)
    * @responseMessage 404 Group with given name not found (if name provided)
    */
+  @Timed
   @GET
   public Response findGroups(@Auth User user, @DefaultValue("") @QueryParam("name") String name) {
     if (name.isEmpty()) {
@@ -120,6 +122,7 @@ public class GroupsResource {
    * @responseMessage 200 Successfully created Group
    * @responseMessage 400 Group with given name already exists
    */
+  @Timed
   @POST
   @Consumes(APPLICATION_JSON)
   public Response createGroup(@Auth User user, @Valid CreateGroupRequest request) {
@@ -150,6 +153,7 @@ public class GroupsResource {
    * @responseMessage 404 Group with given ID not Found
    */
   @Path("{groupId}")
+  @Timed
   @GET
   public GroupDetailResponse getGroup(@Auth User user, @PathParam("groupId") LongParam groupId) {
     logger.info("User '{}' retrieving group id={}.", user, groupId);
@@ -168,6 +172,7 @@ public class GroupsResource {
    * @responseMessage 404 Group with given ID not Found
    */
   @Path("{groupId}")
+  @Timed
   @DELETE
   public Response deleteGroup(@Auth User user, @PathParam("groupId") LongParam groupId) {
     logger.info("User '{}' deleting group id={}.", user, groupId);

@@ -16,6 +16,7 @@
 
 package keywhiz.service.resources.automation;
 
+import com.codahale.metrics.annotation.Timed;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
 import javax.inject.Inject;
@@ -63,6 +64,7 @@ public class AutomationSecretAccessResource {
    * @responseMessage 200 Successfully enrolled Secret in Group
    * @responseMessage 404 Could not find Secret or Group
    */
+  @Timed
   @PUT
   public Response allowAccess(
       @Auth AutomationClient automationClient,
@@ -91,6 +93,7 @@ public class AutomationSecretAccessResource {
    * @responseMessage 200 Successfully removed Secret from Group
    * @responseMessage 404 Could not find Secret or Group
    */
+  @Timed
   @DELETE
   public Response disallowAccess(
       @Auth AutomationClient automationClient,
