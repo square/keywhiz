@@ -45,7 +45,7 @@ public class SessionMeResource {
    * @description Returns JSON information about the current Keywhiz user
    * @responseMessage 200 Found and retrieved User information
    */
-  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @GET @Timed
   @Produces(APPLICATION_JSON)
   public User getInformation(@Auth User user) {
     logger.info("User '{}' accessing me.", user);

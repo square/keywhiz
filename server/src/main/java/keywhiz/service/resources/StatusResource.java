@@ -29,7 +29,7 @@ public class StatusResource {
     this.environment = environment;
   }
 
-  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @GET @Timed
   public boolean get() {
     HealthCheckRegistry checks = this.environment.healthChecks();
     SortedMap<String, HealthCheck.Result> results = checks.runHealthChecks();

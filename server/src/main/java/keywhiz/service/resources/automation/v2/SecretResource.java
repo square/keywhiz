@@ -84,7 +84,7 @@ public class SecretResource {
    * @responseMessage 201 Created secret and assigned to given groups
    * @responseMessage 409 Secret already exists
    */
-  @POST @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @POST @Timed
   @Consumes(APPLICATION_JSON)
   public Response createSecret(@Auth AutomationClient automationClient,
       @Valid CreateSecretRequestV2 request) {
@@ -129,7 +129,7 @@ public class SecretResource {
    * @excludeParams automationClient
    * @responseMessage 200 List of secret names
    */
-  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @GET @Timed
   @Produces(APPLICATION_JSON)
   public Iterable<String> secretListing(@Auth AutomationClient automationClient) {
     return secretController.getSanitizedSecrets().stream()
@@ -145,7 +145,7 @@ public class SecretResource {
    * @responseMessage 201 Secret series modified successfully
    * @responseMessage 404 Secret series not found
    */
-  @POST @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @POST @Timed
   @Path("{name}")
   @Produces(APPLICATION_JSON)
   public SecretDetailResponseV2 modifySecretSeries(@Auth AutomationClient automationClient,
@@ -166,7 +166,7 @@ public class SecretResource {
    * @responseMessage 200 Secret series information retrieved
    * @responseMessage 404 Secret series not found
    */
-  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @GET @Timed
   @Path("{name}")
   @Produces(APPLICATION_JSON)
   public SecretDetailResponseV2 secretInfo(@Auth AutomationClient automationClient,
@@ -189,7 +189,7 @@ public class SecretResource {
    * @responseMessage 200 Listing succeeded
    * @responseMessage 404 Secret series not found
    */
-  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @GET @Timed
   @Path("{name}/groups")
   public Iterable<String> secretGroupsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
@@ -211,7 +211,7 @@ public class SecretResource {
    * @responseMessage 201 Group membership changed
    * @responseMessage 404 Secret series not found
    */
-  @PUT @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @PUT @Timed
   @Path("{name}/groups")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
@@ -254,7 +254,7 @@ public class SecretResource {
    * @responseMessage 200 Secret information retrieved
    * @responseMessage 404 Secret not found
    */
-  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @GET @Timed
   @Path("{name}/{version:.*}")
   @Produces(APPLICATION_JSON)
   public SecretDetailResponseV2 secretVersionInfo(@Auth AutomationClient automationClient,
@@ -273,7 +273,7 @@ public class SecretResource {
    * @responseMessage 204 Secret series deleted
    * @responseMessage 404 Secret series not found
    */
-  @DELETE @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @DELETE @Timed
   @Path("{name}")
   public Response deleteSecretSeries(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
@@ -293,7 +293,7 @@ public class SecretResource {
    * @responseMessage 204 Secret version deleted
    * @responseMessage 404 Secret version not found
    */
-  @DELETE @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @DELETE @Timed
   @Path("{name}/{version:.*}")
   public Response deleteSecretVersion(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @PathParam("version") String version) {

@@ -66,7 +66,7 @@ public class AutomationSecretAccessResource {
    * @responseMessage 200 Successfully enrolled Secret in Group
    * @responseMessage 404 Could not find Secret or Group
    */
-  @PUT @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @PUT @Timed
   public Response allowAccess(
       @Auth AutomationClient automationClient,
       @PathParam("secretId") LongParam secretId,
@@ -94,7 +94,7 @@ public class AutomationSecretAccessResource {
    * @responseMessage 200 Successfully removed Secret from Group
    * @responseMessage 404 Could not find Secret or Group
    */
-  @DELETE @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @DELETE @Timed
   public Response disallowAccess(
       @Auth AutomationClient automationClient,
       @PathParam("secretId") LongParam secretId,

@@ -96,7 +96,7 @@ public class AutomationSecretResource {
    * @responseMessage 200 Successfully created secret
    * @responseMessage 409 Secret with given name already exists
    */
-  @POST @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @POST @Timed
   @Consumes(APPLICATION_JSON)
   public AutomationSecretResponse createSecret(
       @Auth AutomationClient automationClient,
@@ -139,7 +139,7 @@ public class AutomationSecretResource {
    * @responseMessage 200 Found and retrieved secret(s)
    * @responseMessage 404 Secret with given name not found (if name provided)
    */
-  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @GET @Timed
   public ImmutableList<AutomationSecretResponse> readSecrets(
       @Auth AutomationClient automationClient, @QueryParam("name") String name) {
 
@@ -183,7 +183,7 @@ public class AutomationSecretResource {
    * @responseMessage 404 Secret with given ID not found
    */
   @Path("{secretId}")
-  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @GET @Timed
   public AutomationSecretResponse readSecretById(
       @Auth AutomationClient automationClient,
       @PathParam("secretId") LongParam secretId) {
@@ -211,7 +211,7 @@ public class AutomationSecretResource {
    * @responseMessage 404 Secret series not Found
    */
   @Path("{secretName}")
-  @DELETE @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @DELETE @Timed
   public Response deleteSecretSeries(
       @Auth AutomationClient automationClient,
       @PathParam("secretName") String secretName) {

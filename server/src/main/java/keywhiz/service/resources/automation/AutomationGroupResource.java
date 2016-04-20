@@ -90,7 +90,7 @@ public class AutomationGroupResource {
    * @responseMessage 200 Found and retrieved Group with given ID
    * @responseMessage 404 Group with given ID not Found
    */
-  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @GET @Timed
   @Path("{groupId}")
   public GroupDetailResponse getGroupById(
       @Auth AutomationClient automationClient,
@@ -114,7 +114,7 @@ public class AutomationGroupResource {
    * @responseMessage 200 Found and retrieved Group(s)
    * @responseMessage 404 Group with given name not found (if name provided)
    */
-  @GET @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @GET @Timed
   public Response getGroupByName(
       @Auth AutomationClient automationClient,
       @QueryParam("name") Optional<String> name) {
@@ -148,7 +148,7 @@ public class AutomationGroupResource {
    * @responseMessage 200 Successfully created Group
    * @responseMessage 409 Group with given name already exists
    */
-  @POST @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @POST @Timed
   @Consumes(APPLICATION_JSON)
   public Group createGroup(
       @Auth AutomationClient automationClient,
@@ -175,7 +175,7 @@ public class AutomationGroupResource {
    * @responseMessage 200 Deleted group
    * @responseMessage 404 Group not found by id
    */
-  @DELETE @Timed @Metered(name="QPS") @ExceptionMetered(name="ExceptionQPS")
+  @DELETE @Timed
   @Path("{groupId}")
   public Response deleteGroup(
       @Auth AutomationClient automationClient,
