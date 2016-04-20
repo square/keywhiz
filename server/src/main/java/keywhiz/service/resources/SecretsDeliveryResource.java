@@ -16,6 +16,7 @@
 
 package keywhiz.service.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import io.dropwizard.auth.Auth;
 import java.util.List;
@@ -59,6 +60,7 @@ public class SecretsDeliveryResource {
    * @excludeParams client
    * @description Returns all Secrets for the current Client
    */
+  @Timed
   @GET
   public List<SecretDeliveryResponse> getSecrets(@Auth Client client) {
     logger.info("Client {} listed available secrets.", client.getName());

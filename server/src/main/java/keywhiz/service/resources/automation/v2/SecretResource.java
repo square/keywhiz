@@ -1,5 +1,6 @@
 package keywhiz.service.resources.automation.v2;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.Sets;
 import io.dropwizard.auth.Auth;
 import java.util.List;
@@ -81,6 +82,7 @@ public class SecretResource {
    * @responseMessage 201 Created secret and assigned to given groups
    * @responseMessage 409 Secret already exists
    */
+  @Timed
   @POST
   @Consumes(APPLICATION_JSON)
   public Response createSecret(@Auth AutomationClient automationClient,
@@ -126,6 +128,7 @@ public class SecretResource {
    * @excludeParams automationClient
    * @responseMessage 200 List of secret names
    */
+  @Timed
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> secretListing(@Auth AutomationClient automationClient) {
@@ -142,6 +145,7 @@ public class SecretResource {
    * @responseMessage 201 Secret series modified successfully
    * @responseMessage 404 Secret series not found
    */
+  @Timed
   @POST
   @Path("{name}")
   @Produces(APPLICATION_JSON)
@@ -163,6 +167,7 @@ public class SecretResource {
    * @responseMessage 200 Secret series information retrieved
    * @responseMessage 404 Secret series not found
    */
+  @Timed
   @GET
   @Path("{name}")
   @Produces(APPLICATION_JSON)
@@ -186,6 +191,7 @@ public class SecretResource {
    * @responseMessage 200 Listing succeeded
    * @responseMessage 404 Secret series not found
    */
+  @Timed
   @GET
   @Path("{name}/groups")
   public Iterable<String> secretGroupsListing(@Auth AutomationClient automationClient,
@@ -208,6 +214,7 @@ public class SecretResource {
    * @responseMessage 201 Group membership changed
    * @responseMessage 404 Secret series not found
    */
+  @Timed
   @PUT
   @Path("{name}/groups")
   @Consumes(APPLICATION_JSON)
@@ -251,6 +258,7 @@ public class SecretResource {
    * @responseMessage 200 Secret information retrieved
    * @responseMessage 404 Secret not found
    */
+  @Timed
   @GET
   @Path("{name}/{version:.*}")
   @Produces(APPLICATION_JSON)
@@ -270,6 +278,7 @@ public class SecretResource {
    * @responseMessage 204 Secret series deleted
    * @responseMessage 404 Secret series not found
    */
+  @Timed
   @DELETE
   @Path("{name}")
   public Response deleteSecretSeries(@Auth AutomationClient automationClient,
@@ -290,6 +299,7 @@ public class SecretResource {
    * @responseMessage 204 Secret version deleted
    * @responseMessage 404 Secret version not found
    */
+  @Timed
   @DELETE
   @Path("{name}/{version:.*}")
   public Response deleteSecretVersion(@Auth AutomationClient automationClient,

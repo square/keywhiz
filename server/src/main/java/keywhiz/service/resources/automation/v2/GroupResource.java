@@ -1,5 +1,6 @@
 package keywhiz.service.resources.automation.v2;
 
+import com.codahale.metrics.annotation.Timed;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
 import java.util.Set;
@@ -58,6 +59,7 @@ public class GroupResource {
    * @responseMessage 201 Created group
    * @responseMessage 409 Group already exists
    */
+  @Timed
   @POST
   @Consumes(APPLICATION_JSON)
   public Response createGroup(@Auth AutomationClient automationClient,
@@ -81,6 +83,7 @@ public class GroupResource {
    * @excludeParams automationClient
    * @responseMessage 200 List of group names
    */
+  @Timed
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> groupListing(@Auth AutomationClient automationClient) {
@@ -98,6 +101,7 @@ public class GroupResource {
    * @responseMessage 200 Group information retrieved
    * @responseMessage 404 Group not found
    */
+  @Timed
   @GET
   @Path("{name}")
   @Produces(APPLICATION_JSON)
@@ -130,6 +134,7 @@ public class GroupResource {
    * @responseMessage 204 Group deleted
    * @responseMessage 404 Group not found
    */
+  @Timed
   @DELETE
   @Path("{name}")
   public Response deleteGroup(@Auth AutomationClient automationClient,
