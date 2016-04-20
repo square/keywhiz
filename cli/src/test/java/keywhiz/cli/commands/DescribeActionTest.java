@@ -17,9 +17,7 @@
 package keywhiz.cli.commands;
 
 import com.google.common.collect.ImmutableMap;
-import java.time.OffsetDateTime;
 import java.util.Arrays;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;

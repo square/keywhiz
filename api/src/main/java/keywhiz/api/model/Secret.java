@@ -18,13 +18,11 @@ package keywhiz.api.model;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
-import keywhiz.api.ApiDate;
-
 import java.text.ParseException;
-import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import keywhiz.api.ApiDate;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

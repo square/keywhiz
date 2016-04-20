@@ -16,8 +16,6 @@
 
 package keywhiz.api.model;
 
-import java.time.OffsetDateTime;
-
 import keywhiz.api.ApiDate;
 import org.junit.Test;
 

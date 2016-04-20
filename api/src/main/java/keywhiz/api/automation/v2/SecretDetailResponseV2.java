@@ -11,7 +11,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
 

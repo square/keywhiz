@@ -18,10 +18,10 @@ package keywhiz.service.daos;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.AbstractMap.SimpleEntry;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import keywhiz.api.model.Secret;

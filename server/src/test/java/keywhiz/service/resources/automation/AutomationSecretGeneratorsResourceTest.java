@@ -19,16 +19,13 @@ package keywhiz.service.resources.automation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.time.OffsetDateTime;
 import java.util.List;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.generators.SecretGenerator;
-import keywhiz.service.resources.automation.AutomationSecretGeneratorsResource;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

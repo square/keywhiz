@@ -17,13 +17,11 @@ package keywhiz.service.resources.admin;
 
 import com.google.common.collect.ImmutableSet;
 import io.dropwizard.jersey.params.LongParam;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.CreateGroupRequest;
 import keywhiz.api.GroupDetailResponse;
@@ -33,7 +31,6 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.GroupDAO;
-import keywhiz.service.resources.admin.GroupsResource;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

@@ -16,10 +16,8 @@
 package keywhiz.service.resources;
 
 import com.google.common.collect.ImmutableSet;
-import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.List;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.Client;

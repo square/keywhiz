@@ -18,14 +18,13 @@ package keywhiz.commands;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
+import java.io.Console;
+import javax.sql.DataSource;
 import keywhiz.KeywhizConfig;
 import keywhiz.service.daos.UserDAO;
 import keywhiz.utility.DSLContexts;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.jooq.DSLContext;
-
-import javax.sql.DataSource;
-import java.io.Console;
 
 public class AddUserCommand extends ConfiguredCommand<KeywhizConfig> {
   public AddUserCommand() {

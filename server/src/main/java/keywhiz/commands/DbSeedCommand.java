@@ -25,7 +25,6 @@ import keywhiz.service.daos.UserDAO;
 import keywhiz.utility.DSLContexts;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.jooq.DSLContext;
-import org.mindrot.jbcrypt.BCrypt;
 
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
@@ -33,7 +32,6 @@ import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
-import static keywhiz.jooq.tables.Users.USERS;
 
 /**
  * Command to populate the database with development data.

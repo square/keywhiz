@@ -31,7 +31,6 @@ import keywhiz.auth.cookie.CookieAuthenticator;
 import keywhiz.auth.cookie.CookieConfig;
 import keywhiz.auth.cookie.GCMEncryptor;
 import keywhiz.auth.cookie.SessionCookie;
-import keywhiz.service.resources.admin.SessionLogoutResource;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

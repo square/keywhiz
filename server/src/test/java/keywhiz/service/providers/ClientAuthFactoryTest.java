@@ -17,11 +17,9 @@
 package keywhiz.service.providers;
 
 import java.security.Principal;
-import java.time.OffsetDateTime;
 import java.util.Optional;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.core.SecurityContext;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.SimplePrincipal;
