@@ -17,7 +17,6 @@
 package keywhiz.api;
 
 import com.google.common.collect.ImmutableList;
-import java.time.OffsetDateTime;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;

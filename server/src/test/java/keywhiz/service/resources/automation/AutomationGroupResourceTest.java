@@ -19,10 +19,8 @@ package keywhiz.service.resources.automation;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.dropwizard.jersey.params.LongParam;
-import java.time.OffsetDateTime;
 import java.util.Optional;
 import javax.ws.rs.core.Response;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.CreateGroupRequest;
 import keywhiz.api.GroupDetailResponse;
@@ -32,7 +30,6 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.GroupDAO;
-import keywhiz.service.resources.automation.AutomationGroupResource;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

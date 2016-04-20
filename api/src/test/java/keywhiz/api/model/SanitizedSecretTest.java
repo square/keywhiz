@@ -17,8 +17,6 @@
 package keywhiz.api.model;
 
 import com.google.common.collect.ImmutableMap;
-import java.time.OffsetDateTime;
-
 import keywhiz.api.ApiDate;
 import org.junit.Test;
 

@@ -18,10 +18,8 @@ package keywhiz.api.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import keywhiz.api.ApiDate;
-
-import java.time.OffsetDateTime;
 import javax.annotation.Nullable;
+import keywhiz.api.ApiDate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.nullToEmpty;

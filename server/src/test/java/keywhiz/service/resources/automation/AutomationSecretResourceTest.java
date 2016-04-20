@@ -16,10 +16,8 @@
 package keywhiz.service.resources.automation;
 
 import com.google.common.collect.ImmutableMap;
-import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.Optional;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.AutomationSecretResponse;
 import keywhiz.api.CreateSecretRequest;
@@ -32,7 +30,6 @@ import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.exceptions.ConflictException;
-import keywhiz.service.resources.automation.AutomationSecretResource;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Rule;

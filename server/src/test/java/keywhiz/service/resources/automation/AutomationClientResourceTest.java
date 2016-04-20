@@ -17,11 +17,9 @@ package keywhiz.service.resources.automation;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import java.time.OffsetDateTime;
 import java.util.Optional;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.CreateClientRequest;
@@ -30,7 +28,6 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
-import keywhiz.service.resources.automation.AutomationClientResource;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

@@ -18,7 +18,6 @@ package keywhiz.service.resources.admin;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.BadRequestException;

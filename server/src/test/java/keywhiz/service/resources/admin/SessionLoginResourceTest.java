@@ -36,7 +36,6 @@ import keywhiz.auth.cookie.SessionCookie;
 import keywhiz.auth.ldap.LdapAuthenticator;
 import keywhiz.auth.xsrf.Xsrf;
 import keywhiz.auth.xsrf.XsrfProtection;
-import keywhiz.service.resources.admin.SessionLoginResource;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

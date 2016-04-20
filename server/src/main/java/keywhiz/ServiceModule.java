@@ -40,8 +40,8 @@ import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoModule;
 import keywhiz.service.crypto.SecretTransformer;
 import keywhiz.service.daos.SecretController;
-import keywhiz.utility.DSLContexts;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
+import keywhiz.utility.DSLContexts;
 import org.jooq.DSLContext;
 
 import static com.google.common.base.Preconditions.checkNotNull;

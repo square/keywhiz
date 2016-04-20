@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Map;
 import javax.inject.Inject;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;

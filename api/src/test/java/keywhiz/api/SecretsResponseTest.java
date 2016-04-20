@@ -18,7 +18,6 @@ package keywhiz.api;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.time.OffsetDateTime;
 import keywhiz.api.model.SanitizedSecret;
 import org.junit.Test;
 

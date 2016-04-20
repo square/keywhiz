@@ -15,11 +15,9 @@
  */
 package keywhiz.service.resources;
 
-import java.time.OffsetDateTime;
 import java.util.Optional;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.Client;
