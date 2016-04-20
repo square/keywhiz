@@ -320,6 +320,31 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.7.5.201505241946</version>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <!-- ignore generated source files -->
+          <excludes>
+            <exclude>**/AutoValue*</exclude>
+            <exclude>**/keywhiz/jooq/*</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.eluder.coveralls</groupId>
+        <artifactId>coveralls-maven-plugin</artifactId>
+        <version>4.1.0</version>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.1</version>
@@ -449,7 +474,7 @@
           <version>2.14.1</version>
           <configuration>
             <!-- passing timezone in argLine instead of in systemPropertyVariables to make it work for java 8 -->
-            <argLine>-Duser.timezone=UTC</argLine>
+            <argLine>${argLine} -Duser.timezone=UTC</argLine>
           </configuration>
         </plugin>
 
