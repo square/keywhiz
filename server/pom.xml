@@ -140,6 +140,10 @@
       <groupId>io.dropwizard.modules</groupId>
       <artifactId>dropwizard-java8-auth</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.tradier</groupId>
+      <artifactId>dropwizard-raven</artifactId>
+    </dependency>
 
     <!-- Necessary for object type detection. -->
     <dependency>
