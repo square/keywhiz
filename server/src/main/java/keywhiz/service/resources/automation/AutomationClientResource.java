@@ -17,6 +17,7 @@
 package keywhiz.service.resources.automation;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
@@ -88,7 +89,7 @@ public class AutomationClientResource {
    * @responseMessage 200 Found and retrieved Client with given ID
    * @responseMessage 404 Client with given ID not Found
    */
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   @Path("{clientId}")
   public Response findClientById(
@@ -116,7 +117,7 @@ public class AutomationClientResource {
    * @responseMessage 200 Found and retrieved Client(s)
    * @responseMessage 404 Client with given name not found (if name provided)
    */
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   public Response findClient(
       @Auth AutomationClient automationClient,
@@ -148,7 +149,7 @@ public class AutomationClientResource {
    * @responseMessage 200 Successfully created Client
    * @responseMessage 409 Client with given name already exists
    */
-  @Timed
+  @Timed @ExceptionMetered
   @POST
   @Consumes(APPLICATION_JSON)
   public ClientDetailResponse createClient(
@@ -177,7 +178,7 @@ public class AutomationClientResource {
    * @responseMessage 200 Deleted client
    * @responseMessage 404 Client not found by id
    */
-  @Timed
+  @Timed @ExceptionMetered
   @DELETE
   @Path("{clientId}")
   public Response deleteClient(@Auth AutomationClient automationClient,

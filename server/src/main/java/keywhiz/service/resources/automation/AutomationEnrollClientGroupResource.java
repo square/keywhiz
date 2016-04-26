@@ -16,6 +16,7 @@
 package keywhiz.service.resources.automation;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.ExceptionMetered;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
 import javax.inject.Inject;
@@ -59,7 +60,7 @@ public class AutomationEnrollClientGroupResource {
    * @responseMessage 200 Successfully enrolled Client in Group
    * @responseMessage 404 Could not find Client or Group
    */
-  @Timed
+  @Timed @ExceptionMetered
   @PUT
   public Response enrollClientInGroup(
       @Auth AutomationClient automationClient,
@@ -86,7 +87,7 @@ public class AutomationEnrollClientGroupResource {
    * @responseMessage 200 Successfully removed Client from Group
    * @responseMessage 404 Could not find Client or Group
    */
-  @Timed
+  @Timed @ExceptionMetered
   @DELETE
   public Response evictClientFromGroup(
       @Auth AutomationClient automationClient,

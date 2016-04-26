@@ -17,6 +17,7 @@
 package keywhiz.service.resources.automation;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.auth.Auth;
 import java.io.IOException;
@@ -66,7 +67,7 @@ public class AutomationSecretGeneratorsResource {
    * @responseMessage 422 Request was formed correctly but was semantically incorrect
    */
   @Path("{generatorName}")
-  @Timed
+  @Timed @ExceptionMetered
   @POST
   @Consumes(APPLICATION_JSON)
   public List<SanitizedSecret> generate(@Auth AutomationClient client,
@@ -95,7 +96,7 @@ public class AutomationSecretGeneratorsResource {
    * @responseMessage 422 Request was formed correctly but was semantically incorrect, batch may have been empty
    */
   @Path("{generatorName}/batch")
-  @Timed
+  @Timed @ExceptionMetered
   @POST
   @Consumes(APPLICATION_JSON)
   public List<SanitizedSecret> batchGenerate(@Auth AutomationClient client,

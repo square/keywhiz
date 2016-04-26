@@ -17,6 +17,7 @@
 package keywhiz.service.resources.admin;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.ExceptionMetered;
 import io.dropwizard.auth.Auth;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -43,7 +44,7 @@ public class SessionMeResource {
    * @description Returns JSON information about the current Keywhiz user
    * @responseMessage 200 Found and retrieved User information
    */
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   @Produces(APPLICATION_JSON)
   public User getInformation(@Auth User user) {

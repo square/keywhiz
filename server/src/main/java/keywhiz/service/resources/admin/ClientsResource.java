@@ -17,6 +17,7 @@
 package keywhiz.service.resources.admin;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
@@ -90,7 +91,7 @@ public class ClientsResource {
    * @responseMessage 200 Found and retrieved Client(s)
    * @responseMessage 404 Client with given name not found (if name provided)
    */
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   public Response findClients(@Auth User user, @DefaultValue("") @QueryParam("name") String name) {
     if (name.isEmpty()) {
@@ -121,7 +122,7 @@ public class ClientsResource {
    * @responseMessage 200 Successfully created Client
    * @responseMessage 409 Client with given name already exists
    */
-  @Timed
+  @Timed @ExceptionMetered
   @POST
   @Consumes(APPLICATION_JSON)
   public Response createClient(@Auth User user,
@@ -156,7 +157,7 @@ public class ClientsResource {
    * @responseMessage 404 Client with given ID not Found
    */
   @Path("{clientId}")
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   public ClientDetailResponse getClient(@Auth User user,
       @PathParam("clientId") LongParam clientId) {
@@ -176,7 +177,7 @@ public class ClientsResource {
    * @responseMessage 404 Client with given ID not Found
    */
   @Path("{clientId}")
-  @Timed
+  @Timed @ExceptionMetered
   @DELETE
   public Response deleteClient(@Auth User user, @PathParam("clientId") LongParam clientId) {
     logger.info("User '{}' deleting client id={}.", user, clientId);

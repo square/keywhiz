@@ -1,6 +1,7 @@
 package keywhiz.service.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import io.dropwizard.setup.Environment;
@@ -27,7 +28,7 @@ public class StatusResource {
     this.environment = environment;
   }
 
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   public boolean get() {
     HealthCheckRegistry checks = this.environment.healthChecks();
