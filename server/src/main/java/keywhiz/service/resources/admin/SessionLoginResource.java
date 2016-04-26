@@ -17,6 +17,7 @@
 package keywhiz.service.resources.admin;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.basic.BasicCredentials;
@@ -74,7 +75,7 @@ public class SessionLoginResource {
    * @responseMessage 200 Logged in successfully
    * @responseMessage 401 Incorrect credentials or not authorized
    */
-  @Timed
+  @Timed @ExceptionMetered
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)

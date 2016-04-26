@@ -17,6 +17,7 @@
 package keywhiz.service.resources.automation;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
@@ -88,7 +89,7 @@ public class AutomationGroupResource {
    * @responseMessage 200 Found and retrieved Group with given ID
    * @responseMessage 404 Group with given ID not Found
    */
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   @Path("{groupId}")
   public GroupDetailResponse getGroupById(
@@ -113,7 +114,7 @@ public class AutomationGroupResource {
    * @responseMessage 200 Found and retrieved Group(s)
    * @responseMessage 404 Group with given name not found (if name provided)
    */
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   public Response getGroupByName(
       @Auth AutomationClient automationClient,
@@ -148,7 +149,7 @@ public class AutomationGroupResource {
    * @responseMessage 200 Successfully created Group
    * @responseMessage 409 Group with given name already exists
    */
-  @Timed
+  @Timed @ExceptionMetered
   @POST
   @Consumes(APPLICATION_JSON)
   public Group createGroup(
@@ -176,7 +177,7 @@ public class AutomationGroupResource {
    * @responseMessage 200 Deleted group
    * @responseMessage 404 Group not found by id
    */
-  @Timed
+  @Timed @ExceptionMetered
   @DELETE
   @Path("{groupId}")
   public Response deleteGroup(

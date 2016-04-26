@@ -16,6 +16,7 @@
 package keywhiz.service.resources.automation;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
@@ -94,7 +95,7 @@ public class AutomationSecretResource {
    * @responseMessage 200 Successfully created secret
    * @responseMessage 409 Secret with given name already exists
    */
-  @Timed
+  @Timed @ExceptionMetered
   @POST
   @Consumes(APPLICATION_JSON)
   public AutomationSecretResponse createSecret(
@@ -138,7 +139,7 @@ public class AutomationSecretResource {
    * @responseMessage 200 Found and retrieved secret(s)
    * @responseMessage 404 Secret with given name not found (if name provided)
    */
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   public ImmutableList<AutomationSecretResponse> readSecrets(
       @Auth AutomationClient automationClient, @QueryParam("name") String name) {
@@ -183,7 +184,7 @@ public class AutomationSecretResource {
    * @responseMessage 404 Secret with given ID not found
    */
   @Path("{secretId}")
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   public AutomationSecretResponse readSecretById(
       @Auth AutomationClient automationClient,
@@ -212,7 +213,7 @@ public class AutomationSecretResource {
    * @responseMessage 404 Secret series not Found
    */
   @Path("{secretName}")
-  @Timed
+  @Timed @ExceptionMetered
   @DELETE
   public Response deleteSecretSeries(
       @Auth AutomationClient automationClient,

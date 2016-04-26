@@ -16,6 +16,7 @@
 package keywhiz.service.resources.admin;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.google.common.annotations.VisibleForTesting;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
@@ -69,7 +70,7 @@ public class MembershipResource {
    * @responseMessage 404 Could not find Secret or Group
    */
   @Path("/secrets/{secretId}/groups/{groupId}")
-  @Timed
+  @Timed @ExceptionMetered
   @PUT
   public Response allowAccess(
       @Auth User user,
@@ -100,7 +101,7 @@ public class MembershipResource {
    * @responseMessage 404 Could not find Secret or Group
    */
   @Path("/secrets/{secretId}/groups/{groupId}")
-  @Timed
+  @Timed @ExceptionMetered
   @DELETE
   public Response disallowAccess(
       @Auth User user,
@@ -130,7 +131,7 @@ public class MembershipResource {
    * @responseMessage 404 Could not find Client or Group
    */
   @Path("/clients/{clientId}/groups/{groupId}")
-  @Timed
+  @Timed @ExceptionMetered
   @PUT
   public Response enrollClient(
     @Auth User user,
@@ -160,7 +161,7 @@ public class MembershipResource {
    * @responseMessage 404 Could not find Client or Group
    */
   @Path("/clients/{clientId}/groups/{groupId}")
-  @Timed
+  @Timed @ExceptionMetered
   @DELETE
   public Response evictClient(
       @Auth User user,

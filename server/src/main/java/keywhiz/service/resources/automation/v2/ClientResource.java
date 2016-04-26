@@ -1,6 +1,7 @@
 package keywhiz.service.resources.automation.v2;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.google.common.collect.Sets;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
@@ -71,7 +72,7 @@ public class ClientResource {
    * @responseMessage 201 Created client and assigned to given groups
    * @responseMessage 409 Client already exists
    */
-  @Timed
+  @Timed @ExceptionMetered
   @POST
   @Consumes(APPLICATION_JSON)
   public Response createClient(@Auth AutomationClient automationClient,
@@ -103,7 +104,7 @@ public class ClientResource {
    * @excludeParams automationClient
    * @responseMessage 200 List of client names
    */
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientListing(@Auth AutomationClient automationClient) {
@@ -121,7 +122,7 @@ public class ClientResource {
    * @responseMessage 200 Client information retrieved
    * @responseMessage 404 Client not found
    */
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   @Path("{name}")
   @Produces(APPLICATION_JSON)
@@ -143,7 +144,7 @@ public class ClientResource {
    * @responseMessage 200 Listing succeeded
    * @responseMessage 404 Client not found
    */
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   @Path("{name}/groups")
   @Produces(APPLICATION_JSON)
@@ -167,7 +168,7 @@ public class ClientResource {
    * @responseMessage 201 Client modified successfully
    * @responseMessage 404 Client not found
    */
-  @Timed
+  @Timed @ExceptionMetered
   @PUT
   @Path("{name}/groups")
   @Produces(APPLICATION_JSON)
@@ -209,7 +210,7 @@ public class ClientResource {
    * @responseMessage 200 Client lookup succeeded
    * @responseMessage 404 Client not found
    */
-  @Timed
+  @Timed @ExceptionMetered
   @GET
   @Path("{name}/secrets")
   @Produces(APPLICATION_JSON)
@@ -231,7 +232,7 @@ public class ClientResource {
    * @responseMessage 204 Client deleted
    * @responseMessage 404 Client not found
    */
-  @Timed
+  @Timed @ExceptionMetered
   @DELETE
   @Path("{name}")
   public Response deleteClient(@Auth AutomationClient automationClient,
@@ -254,7 +255,7 @@ public class ClientResource {
    * @responseMessage 201 Client updated
    * @responseMessage 404 Client not found
    */
-  @Timed
+  @Timed @ExceptionMetered
   @POST
   @Path("{name}")
   @Consumes(APPLICATION_JSON)
