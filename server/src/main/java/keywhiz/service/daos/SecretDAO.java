@@ -83,6 +83,13 @@ public class SecretDAO {
     });
   }
 
+  public int updateSecret(long secretId, String encryptedSecret, String version) {
+    return dslContext.transactionResult(configuration -> {
+      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
+      return secretContentDAO.updateSecretContent(secretId, encryptedSecret, version);
+    });
+  }
+
   /**
    * @param secretId external secret series id to look up secrets by.
    * @return all Secrets with given id. May be empty or include multiple versions.

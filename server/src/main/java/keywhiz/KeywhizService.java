@@ -52,6 +52,7 @@ import keywhiz.service.resources.StatusResource;
 import keywhiz.service.resources.admin.ClientsResource;
 import keywhiz.service.resources.admin.GroupsResource;
 import keywhiz.service.resources.admin.MembershipResource;
+import keywhiz.service.resources.admin.MigrateResource;
 import keywhiz.service.resources.admin.SecretGeneratorsResource;
 import keywhiz.service.resources.admin.SecretsResource;
 import keywhiz.service.resources.admin.SessionLoginResource;
@@ -202,6 +203,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(injector.getInstance(AutomationSecretAccessResource.class));
     jersey.register(injector.getInstance(AutomationSecretGeneratorsResource.class));
     jersey.register(injector.getInstance(StatusResource.class));
+    jersey.register(injector.getInstance(MigrateResource.class));
 
     ManualStatusHealthCheck mshc = new ManualStatusHealthCheck();
     environment.healthChecks().register("manualStatus", mshc);

@@ -290,6 +290,20 @@ public class SecretDAOTest {
     secretDAO.createSecret("secret1", "encrypted1", "", "creator", emptyMap, "", null, emptyMap);
   }
 
+  @Test
+  public void updateSecret() throws Exception {
+    String name = "newSecret";
+    String content = "encrypted2";
+    String version = VersionGenerator.now().toHex();
+    long newId = secretDAO.createSecret(name, "encrypted1", version, "creator",
+        ImmutableMap.of(), "", null, ImmutableMap.of());
+
+    secretDAO.updateSecret(newId, content, version);
+    SecretSeriesAndContent secret = secretDAO.getSecretByIdAndVersion(newId, version).get();
+
+    assertThat(secret.content().encryptedContent()).isEqualTo(content);
+  }
+
   private int tableSize(Table table) {
     return jooqContext.fetchCount(table);
   }
