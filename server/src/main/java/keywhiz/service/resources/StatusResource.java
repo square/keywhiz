@@ -4,7 +4,6 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.setup.Environment;
 import java.util.Arrays;
 import java.util.List;
@@ -32,15 +31,35 @@ public class StatusResource {
     this.environment = environment;
   }
 
-  private static class StatusResponse {
-    public String status;
-    public String message;
-    public SortedMap<String, HealthCheck.Result> results;
+  public static class StatusResponse {
+    public SortedMap<String, HealthCheck.Result> getResults() {
+      return results;
+    }
+
+    public String getMessage() {
+      return message;
+    }
+
+    public String getStatus() {
+      return status;
+    }
+
+    private String status;
+    private String message;
+    private SortedMap<String, HealthCheck.Result> results;
 
     StatusResponse(String status, String message, SortedMap<String, HealthCheck.Result> results) {
       this.status = status;
       this.message = message;
       this.results = results;
+    }
+
+    @Override public String toString() {
+      return "StatusResponse{" +
+          "status='" + this.getStatus() + '\'' +
+          ", message='" + this.getMessage() + '\'' +
+          ", results=" + this.getResults() +
+          '}';
     }
   }
 
