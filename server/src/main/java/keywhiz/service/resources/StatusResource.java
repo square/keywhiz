@@ -32,12 +32,12 @@ public class StatusResource {
     this.environment = environment;
   }
 
-  public class StatusResponse {
+  private static class StatusResponse {
     public String status;
     public String message;
     public SortedMap<String, HealthCheck.Result> results;
 
-    public StatusResponse(String status, String message, SortedMap<String, HealthCheck.Result> results) {
+    StatusResponse(String status, String message, SortedMap<String, HealthCheck.Result> results) {
       this.status = status;
       this.message = message;
       this.results = results;
