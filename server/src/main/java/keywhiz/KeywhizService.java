@@ -202,9 +202,14 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(injector.getInstance(AutomationSecretAccessResource.class));
     jersey.register(injector.getInstance(AutomationSecretGeneratorsResource.class));
     jersey.register(injector.getInstance(StatusResource.class));
-    logger.debug("Keywhiz configuration complete");
+
+    ManualStatusHealthCheck mshc = new ManualStatusHealthCheck();
+    environment.healthChecks().register("manualStatus", mshc);
+    environment.admin().addServlet("manualStatus", new ManualStatusServlet(mshc)).addMapping("/status/*");
 
     validateDatabase(config);
+
+    logger.debug("Keywhiz configuration complete");
   }
 
   private void validateDatabase(KeywhizConfig config) {
