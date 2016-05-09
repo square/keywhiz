@@ -35,7 +35,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-    <dropwizard.version>0.8.1</dropwizard.version>
+    <dropwizard.version>0.8.4</dropwizard.version>
     <guice.version>4.0</guice.version>
     <jackson.version>2.6.1</jackson.version>
     <jooq.version>3.6.2</jooq.version>
@@ -44,7 +44,7 @@
     <findbugs.version>3.0.0</findbugs.version>
     <pgjdbc-ng.version>0.5</pgjdbc-ng.version>
     <mysql.version>5.1.35</mysql.version>
-    <logback.version>1.1.7</logback.version>
+    <logback.version>1.1.3</logback.version>
   </properties>
 
   <scm>
