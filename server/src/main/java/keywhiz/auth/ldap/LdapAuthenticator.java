@@ -28,6 +28,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import io.dropwizard.auth.basic.BasicCredentials;
 import io.dropwizard.java8.auth.Authenticator;
+import java.security.GeneralSecurityException;
 import java.util.Optional;
 import java.util.Set;
 import javax.ws.rs.ForbiddenException;
@@ -97,12 +98,15 @@ public class LdapAuthenticator implements Authenticator<BasicCredentials, User> 
         logger.error("Error connecting to LDAP", le);
         throw Throwables.propagate(le);
       }
+    } catch (GeneralSecurityException gse) {
+        logger.error("TLS error connecting to LDAP", gse);
+        throw Throwables.propagate(gse);
     }
 
     return Optional.ofNullable(user);
   }
 
-  private String dnFromUsername(String username) throws LDAPException {
+  private String dnFromUsername(String username) throws LDAPException, GeneralSecurityException {
     String baseDN = config.getUserBaseDN();
     String lookup = String.format("(%s=%s)", config.getUserAttribute(), username);
     SearchRequest searchRequest = new SearchRequest(baseDN, SearchScope.SUB, lookup);
@@ -121,7 +125,7 @@ public class LdapAuthenticator implements Authenticator<BasicCredentials, User> 
     }
   }
 
-  private Set<String> rolesFromDN(String userDN) throws LDAPException {
+  private Set<String> rolesFromDN(String userDN) throws LDAPException, GeneralSecurityException {
     SearchRequest searchRequest = new SearchRequest(config.getRoleBaseDN(),
         SearchScope.SUB, Filter.createEqualityFilter("uniqueMember", userDN));
     Set<String> roles = Sets.newLinkedHashSet();
