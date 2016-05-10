@@ -33,7 +33,7 @@ final class EndpointIdentificationSocketFactory extends SocketFactory {
     this.factory = factory;
   }
 
-  private Socket setEndpoint(Socket socket) {
+  private Socket prepareSocket(Socket socket) {
     SSLSocket sslSocket = (SSLSocket)socket;
     SSLParameters parameters = sslSocket.getSSLParameters();
     parameters.setEndpointIdentificationAlgorithm("LDAPS");
@@ -43,23 +43,23 @@ final class EndpointIdentificationSocketFactory extends SocketFactory {
 
   @Override
   public Socket createSocket(String host, int port) throws IOException {
-    return setEndpoint(factory.createSocket(host, port));
+    return prepareSocket(factory.createSocket(host, port));
   }
 
   @Override
   public Socket createSocket(String host, int port, InetAddress localAddress, int localPort)
       throws IOException {
-    return setEndpoint(factory.createSocket(host, port, localAddress, localPort));
+    return prepareSocket(factory.createSocket(host, port, localAddress, localPort));
   }
 
   @Override
   public Socket createSocket(InetAddress inetAddress, int port) throws IOException {
-    return setEndpoint(factory.createSocket(inetAddress, port));
+    return prepareSocket(factory.createSocket(inetAddress, port));
   }
 
   @Override
   public Socket createSocket(InetAddress inetAddress, int port, InetAddress localAddress, int localPort)
       throws IOException {
-    return setEndpoint(factory.createSocket(inetAddress, port, localAddress, localPort));
+    return prepareSocket(factory.createSocket(inetAddress, port, localAddress, localPort));
   }
 }
