@@ -62,6 +62,16 @@ public class LdapAuthenticatorFactory implements UserAuthenticatorFactory {
   @NotNull @Valid
   private LdapLookupConfig lookup;
 
+  /** Trust store options for LDAP */
+  @NotEmpty
+  private String trustStorePath;
+
+  @NotEmpty
+  private String trustStorePassword;
+
+  @NotEmpty
+  private String trustStoreType;
+
   public String getServer() {
     return server;
   }
@@ -72,6 +82,18 @@ public class LdapAuthenticatorFactory implements UserAuthenticatorFactory {
 
   public String getUserDN() {
     return userDN;
+  }
+
+  public String getTrustStorePath() {
+    return trustStorePath;
+  }
+
+  public String getTrustStorePassword() {
+    return trustStorePassword;
+  }
+
+  public String getTrustStoreType() {
+    return trustStoreType;
   }
 
   @NotEmpty
@@ -93,7 +115,8 @@ public class LdapAuthenticatorFactory implements UserAuthenticatorFactory {
   @Override public Authenticator<BasicCredentials, User> build(DSLContext dslContext) {
     logger.debug("Creating LDAP authenticator");
     LdapConnectionFactory connectionFactory =
-        new LdapConnectionFactory(getServer(), getPort(), getUserDN(), getPassword());
+        new LdapConnectionFactory(getServer(), getPort(), getUserDN(), getPassword(),
+            getTrustStorePath(), getTrustStorePassword(), getTrustStoreType());
     return new LdapAuthenticator(connectionFactory, getLookup());
   }
 }
