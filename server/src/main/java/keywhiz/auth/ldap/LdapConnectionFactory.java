@@ -22,6 +22,7 @@ import com.unboundid.util.ssl.HostNameSSLSocketVerifier;
 import com.unboundid.util.ssl.SSLUtil;
 import com.unboundid.util.ssl.TrustStoreTrustManager;
 import java.security.GeneralSecurityException;
+import javax.net.SocketFactory;
 
 public class LdapConnectionFactory {
   private final String server;
@@ -52,7 +53,8 @@ public class LdapConnectionFactory {
     LDAPConnectionOptions options = new LDAPConnectionOptions();
     options.setSSLSocketVerifier(new HostNameSSLSocketVerifier(false));
     SSLUtil sslUtil = new SSLUtil(trust);
-    LDAPConnection ldapConnection = new LDAPConnection(sslUtil.createSSLSocketFactory("TLSv1.2"), options);
+    SocketFactory factory = new EndpointIdentificationSocketFactory(sslUtil.createSSLSocketFactory("TLSv1.2"));
+    LDAPConnection ldapConnection = new LDAPConnection(factory, options);
 
     // Connect, retrieve the DN of the user (if any)
     ldapConnection.connect(server, port);
