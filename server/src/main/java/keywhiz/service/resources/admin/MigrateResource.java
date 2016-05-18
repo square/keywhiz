@@ -71,7 +71,7 @@ public class MigrateResource {
   protected List<String> _replaceIntermediateCertificate(long id) {
     List<Secret> secrets = secretController.getSecretsById(id);
     List<String> updates = new ArrayList<>();
-    logger.info("replace-intermediate-certificate %d: processing %d secrets", id, secrets.size());
+    logger.info("replace-intermediate-certificate {}: processing {} secrets", id, secrets.size());
     ReplaceIntermediateCertificate.KeyStoreType type;
 
     for (Secret secret : secrets) {
@@ -88,16 +88,16 @@ public class MigrateResource {
         continue;
       }
       try {
-        logger.info("replace-intermediate-certificate %d: processing %s", id, secret.getVersion());
+        logger.info("replace-intermediate-certificate {}: processing {}", id, secret.getVersion());
         String newData = replaceIntermediateCertificate.process(secret.getSecret(), type);
         if (newData != null) {
-          logger.info("replace-intermediate-certificate %d: updating %s", id, secret.getVersion());
+          logger.info("replace-intermediate-certificate {}: updating {}", id, secret.getVersion());
           updates.add(String.valueOf(secretController.update(secret, newData)));
         } else {
           updates.add("no match");
         }
       } catch (IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException | UnrecoverableEntryException e) {
-        logger.warn("replace-intermediate-certificate %d: failed %s", id, secret.getVersion(), e);
+        logger.warn("replace-intermediate-certificate {}: failed {}", id, secret.getVersion(), e);
         updates.add("exception");
       }
     }
