@@ -97,7 +97,7 @@ public class MigrateResource {
           updates.add("no match");
         }
       } catch (IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException | UnrecoverableEntryException e) {
-        logger.warn("replace-intermediate-certificate {}: failed {}", id, secret.getVersion(), e);
+        logger.info("replace-intermediate-certificate {}: failed {}", id, secret.getVersion(), e);
         updates.add("exception");
       }
     }
