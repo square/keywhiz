@@ -160,7 +160,7 @@ public class ReplaceIntermediateCertificate {
     Set<String> aliases = new HashSet<>(Collections.list(keyStore.aliases()));
     for (String alias : aliases) {
       Certificate[] chain = keyStore.getCertificateChain(alias);
-      if (updateChain(chain)) {
+      if ((chain != null) && updateChain(chain)) {
         r = true;
         PrivateKey key = (PrivateKey)keyStore.getKey(alias, password.toCharArray());
         KeyStore.Entry privateKeyEntry = new KeyStore.PrivateKeyEntry(key, chain);
