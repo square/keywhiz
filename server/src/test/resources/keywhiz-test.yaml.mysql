@@ -92,3 +92,9 @@ contentKeyStore:
   type: JCEKS
   password: CHANGE
   alias: basekey
+
+replaceIntermediateCertificate:
+  oldCertificate: src/test/resources/fixtures/cert2-a.crt
+  newCertificate: src/test/resources/fixtures/cert2-b.crt
+  passwords:
+    - toto1234

@@ -96,6 +96,15 @@ public class SecretController {
     return new SecretBuilder(transformer, secretDAO, name, encryptedSecret, creator);
   }
 
+  /**
+   * Currently only used for migration purpose.
+   */
+  public int update(Secret secret, String newContent) {
+    String encryptedSecret = cryptographer.encryptionKeyDerivedFrom(secret.getName()).encrypt(newContent);
+    return secretDAO.updateSecret(secret.getId(), encryptedSecret, secret.getVersion());
+  }
+
+
   /** Builder to generate new secret series or versions with. */
   public static class SecretBuilder {
     private final SecretTransformer transformer;

@@ -83,6 +83,21 @@ public class SecretContentDAOTest {
     assertThat(tableSize()).isEqualTo(before + 3);
   }
 
+  @Test public void updateSecretContent() {
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
+        metadata);
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
+        metadata);
+    secretContentDAO.updateSecretContent(secretContent1.secretSeriesId(), "newEncrypted2", "version2");
+
+    List<String> content = secretContentDAO.getSecretContentsBySecretId(secretContent1.secretSeriesId())
+        .stream()
+        .map((s) -> (s == null) ? "" : s.encryptedContent())
+        .collect(toList());
+
+    assertThat(content).containsExactly("[crypted]", "encrypted", "newEncrypted2");
+  }
+
   @Test public void getSecretContentById() {
     assertThat(secretContentDAO.getSecretContentById(secretContent1.id())).contains(secretContent1);
   }

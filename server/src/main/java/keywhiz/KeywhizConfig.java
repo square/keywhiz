@@ -21,6 +21,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.db.ManagedDataSource;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -80,6 +81,9 @@ public class KeywhizConfig extends Configuration {
 
   @JsonProperty
   private String migrationsDir;
+
+  @JsonProperty
+  public ReplaceIntermediateCertificateFactory replaceIntermediateCertificate;
 
   public String getEnvironment() {
     return environment;
@@ -184,5 +188,11 @@ public class KeywhizConfig extends Configuration {
       setPassword(getPassword());
       return super.build(metricRegistry, name);
     }
+  }
+
+  public static class ReplaceIntermediateCertificateFactory {
+    @JsonProperty public String oldCertificate;
+    @JsonProperty public String newCertificate;
+    @JsonProperty public List<String> passwords;
   }
 }

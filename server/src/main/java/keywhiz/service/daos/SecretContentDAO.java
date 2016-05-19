@@ -77,6 +77,14 @@ public class SecretContentDAO {
     return r.getId();
   }
 
+  public int updateSecretContent(long secretId, String encryptedContent, String version) {
+    return dslContext.update(SECRETS_CONTENT)
+        .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, encryptedContent)
+        .where(SECRETS_CONTENT.SECRETID.eq(secretId).and(
+            SECRETS_CONTENT.VERSION.eq(version)))
+        .execute();
+  }
+
   public Optional<SecretContent> getSecretContentById(long id) {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
         SECRETS_CONTENT.ID.eq(id));
