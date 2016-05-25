@@ -17,6 +17,8 @@
 package keywhiz.model;
 
 import java.sql.Timestamp;
+import java.util.TimeZone;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,11 +33,13 @@ public class TimestampConverterTest {
   }
 
   @Test public void testFrom() {
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
     assertThat(converter.from(Timestamp.valueOf("2015-6-2 13:2:34")))
         .isEqualTo(1433250154);
   }
 
   @Test public void testTo() {
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
     assertThat(converter.to(946621439L))
         .isEqualTo(Timestamp.valueOf("1999-12-31 6:23:59"));
   }
