@@ -68,7 +68,7 @@ public class TemplatedSecretGenerator extends SecretGenerator<TemplatedSecretsGe
         creatorName, request.getName(), request.isWithVersion() ? "with" : "without");
 
     SecretController.SecretBuilder builder =
-        secretController.builder(secretName, secretContent, creatorName)
+        secretController.builder(secretName, secretContent, creatorName, 0)
         .withDescription(request.getDescription())
         .withMetadata(request.getMetadata())
         .withType("templated")

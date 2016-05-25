@@ -30,7 +30,8 @@ public class CreateSecretRequestTest {
         "secretDesc",
         "YXNkZGFz",
         true,
-        ImmutableMap.of("owner", "root"));
+        ImmutableMap.of("owner", "root"),
+        0);
 
     assertThat(fromJson(
         jsonFixture("fixtures/createSecretRequest.json"), CreateSecretRequest.class))

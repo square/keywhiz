@@ -145,13 +145,13 @@ public class KeywhizClient {
   }
 
   public SecretDetailResponse createSecret(String name, String description, byte[] content, boolean withVersion,
-      ImmutableMap<String, String> metadata) throws IOException {
+      ImmutableMap<String, String> metadata, long expiry) throws IOException {
     checkArgument(!name.isEmpty());
     checkArgument(content.length > 0, "Content must not be empty");
 
     String b64Content = Base64.getEncoder().encodeToString(content);
     CreateSecretRequest request = new CreateSecretRequest(name, description, b64Content,
-        withVersion, metadata);
+        withVersion, metadata, expiry);
     String response = httpPost(baseUrl.resolve("/admin/secrets"), request);
     return mapper.readValue(response, SecretDetailResponse.class);
   }

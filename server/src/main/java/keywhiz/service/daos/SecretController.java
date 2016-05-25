@@ -88,12 +88,12 @@ public class SecretController {
     return secretDAO.getVersionsForSecretName(name);
   }
 
-  public SecretBuilder builder(String name, String secret, String creator) {
+  public SecretBuilder builder(String name, String secret, String creator, long expiry) {
     checkArgument(!name.isEmpty());
     checkArgument(!secret.isEmpty());
     checkArgument(!creator.isEmpty());
     String encryptedSecret = cryptographer.encryptionKeyDerivedFrom(name).encrypt(secret);
-    return new SecretBuilder(transformer, secretDAO, name, encryptedSecret, creator);
+    return new SecretBuilder(transformer, secretDAO, name, encryptedSecret, creator, expiry);
   }
 
   /** Builder to generate new secret series or versions with. */
@@ -105,6 +105,7 @@ public class SecretController {
     private final String creator;
     private String description = "";
     private Map<String, String> metadata = ImmutableMap.of();
+    private long expiry = 0;
     private String version = "";
     private String type;
     private Map<String, String> generationOptions = ImmutableMap.of();
@@ -117,12 +118,13 @@ public class SecretController {
      * @param creator username responsible for creating this secret version.
      */
     private SecretBuilder(SecretTransformer transformer, SecretDAO secretDAO, String name, String encryptedSecret,
-        String creator) {
+        String creator, long expiry) {
       this.transformer = transformer;
       this.secretDAO = secretDAO;
       this.name = name;
       this.encryptedSecret = encryptedSecret;
       this.creator = creator;
+      this.expiry = expiry;
     }
 
     /**
@@ -181,7 +183,7 @@ public class SecretController {
      * @return an instance of the newly created secret.
      */
     public Secret build() {
-        secretDAO.createSecret(name, encryptedSecret, version, creator, metadata, description, type,
+        secretDAO.createSecret(name, encryptedSecret, version, creator, metadata, expiry, description, type,
             generationOptions);
         return transformer.transform(secretDAO.getSecretByNameAndVersion(name, version).get());
     }

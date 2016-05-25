@@ -51,7 +51,7 @@ public class SecretContentDAO {
   }
 
   public long createSecretContent(long secretId, String encryptedContent, String version,
-      String creator, Map<String, String> metadata) {
+      String creator, Map<String, String> metadata, long expiry) {
     SecretsContentRecord r = dslContext.newRecord(SECRETS_CONTENT);
 
     String jsonMetadata;
@@ -72,6 +72,7 @@ public class SecretContentDAO {
     r.setUpdatedby(creator);
     r.setUpdatedat(now);
     r.setMetadata(jsonMetadata);
+    r.setExpiry(expiry);
     r.store();
 
     return r.getId();

@@ -31,6 +31,7 @@ public class CreateSecretRequestV2Test {
         .description("secret-description")
         .versioned(true)
         .metadata(ImmutableMap.of("owner", "root"))
+        .expiry(0)
         .type("text/plain")
         .groups("secret-group1", "secret-group2")
         .build();

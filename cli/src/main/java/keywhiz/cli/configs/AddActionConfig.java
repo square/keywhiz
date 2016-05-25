@@ -36,4 +36,7 @@ public class AddActionConfig {
 
   @Parameter(names = { "-g", "--group" }, description = "Also assign the secret to this group (secrets only)")
   public String group;
+
+  @Parameter(names = { "-e", "--expiry" }, description = "Secret expiry. For keystores, it is recommended to use the expiry of the earliest key. Format should be 2006-01-02T15:04:05Z or seconds since epoch.")
+  public String expiry;
 }

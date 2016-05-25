@@ -39,9 +39,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
@@ -66,7 +64,7 @@ public class TemplatedSecretGeneratorTest {
     when(secretBuilder.withType(anyString())).thenReturn(secretBuilder);
     when(secretBuilder.withMetadata(anyMapOf(String.class, String.class))).thenReturn(secretBuilder);
     when(secretBuilder.withGenerationOptions(anyMapOf(String.class, String.class))).thenReturn(secretBuilder);
-    when(secretController.builder(anyString(), anyString(), anyString())).thenReturn(secretBuilder);
+    when(secretController.builder(anyString(), anyString(), anyString(), anyLong())).thenReturn(secretBuilder);
   }
 
   @Test

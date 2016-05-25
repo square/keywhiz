@@ -32,6 +32,7 @@ import keywhiz.api.model.VersionGenerator;
 import keywhiz.cli.configs.AddActionConfig;
 import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.NotFoundException;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,7 +109,7 @@ public class AddAction implements Runnable {
         String version = getVersion(parts);
         boolean useVersion = (!version.isEmpty()) || addActionConfig.withVersion;
 
-        createAndAssignSecret(secretName, content, useVersion, version, metadata);
+        createAndAssignSecret(secretName, content, useVersion, version, metadata, getExpiry());
         break;
 
       case "client":
@@ -134,10 +135,10 @@ public class AddAction implements Runnable {
   }
 
   private void createAndAssignSecret(String secretName, byte[] content, boolean useVersion,
-      String version, ImmutableMap<String, String> metadata) {
+      String version, ImmutableMap<String, String> metadata, long expiry) {
     try {
       SecretDetailResponse secretResponse = keywhizClient.createSecret(secretName, "", content,
-          useVersion, metadata);
+          useVersion, metadata, expiry);
       long secretId = secretResponse.id;
 
       logger.info("Creating secret '{}' with version '{}'.", secretName, version);
@@ -164,6 +165,19 @@ public class AddAction implements Runnable {
       validateMetadata(metadata);
     }
     return metadata;
+  }
+
+  private long getExpiry() {
+    String expiry = addActionConfig.expiry;
+    if (expiry != null) {
+      try {
+        return Long.parseLong(expiry);
+      } catch (NumberFormatException e) {
+      }
+      DateTime dt = new DateTime(expiry);
+      return dt.getMillis();
+    }
+    return 0;
   }
 
   private String getVersion(String[] parts) {
