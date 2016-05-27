@@ -33,8 +33,6 @@ import keywhiz.auth.cookie.CookieConfig;
 import keywhiz.auth.cookie.CookieModule;
 import keywhiz.auth.cookie.SessionCookie;
 import keywhiz.auth.xsrf.Xsrf;
-import keywhiz.generators.SecretGeneratorBindingModule;
-import keywhiz.generators.TemplatedSecretGenerator;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoModule;
@@ -75,12 +73,6 @@ public class ServiceModule extends AbstractModule {
     bind(Environment.class).toInstance(environment);
     bind(Configuration.class).toInstance(config);
     bind(KeywhizConfig.class).toInstance(config);
-
-    install(new SecretGeneratorBindingModule() {
-      @Override protected void configure() {
-        bindSecretGenerator("templated", TemplatedSecretGenerator.class);
-      }
-    });
   }
 
   // ManagedDataSource
