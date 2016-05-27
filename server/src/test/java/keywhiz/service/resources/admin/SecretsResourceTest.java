@@ -92,12 +92,12 @@ public class SecretsResourceTest {
     when(secretController.getSecretsById(secret.getId())).thenReturn(ImmutableList.of(secret));
 
     SecretController.SecretBuilder secretBuilder = mock(SecretController.SecretBuilder.class);
-    when(secretController.builder(secret.getName(), secret.getSecret(), user.getName()))
+    when(secretController.builder(secret.getName(), secret.getSecret(), user.getName(), 0))
         .thenReturn(secretBuilder);
     when(secretBuilder.build()).thenReturn(secret);
 
     CreateSecretRequest req = new CreateSecretRequest(secret.getName(),
-        secret.getDescription(), secret.getSecret(), true, emptyMap);
+        secret.getDescription(), secret.getSecret(), true, emptyMap, 0);
     Response response = resource.createSecret(user, req);
 
     assertThat(response.getStatus()).isEqualTo(201);
@@ -116,11 +116,11 @@ public class SecretsResourceTest {
   @Test(expected = ConflictException.class)
   public void triesToCreateDuplicateSecret() throws Exception {
     SecretController.SecretBuilder secretBuilder = mock(SecretController.SecretBuilder.class);
-    when(secretController.builder("name", "content", user.getName())).thenReturn(secretBuilder);
+    when(secretController.builder("name", "content", user.getName(), 0)).thenReturn(secretBuilder);
     DataAccessException exception = new DataAccessException("");
     doThrow(exception).when(secretBuilder).build();
 
-    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", false, emptyMap);
+    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", false, emptyMap, 0);
     resource.createSecret(user, req);
   }
 

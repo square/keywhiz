@@ -51,7 +51,7 @@ public class AutomationSecretResourceIntegrationTest {
   public void addSecrets() throws Exception {
     CreateSecretRequest request = new CreateSecretRequest("new_secret", "desc", "superSecret",
         true,
-        ImmutableMap.of());
+        ImmutableMap.of(), 0);
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
@@ -65,7 +65,7 @@ public class AutomationSecretResourceIntegrationTest {
 
   @Test
   public void addInvalidSecrets() throws Exception {
-    CreateSecretRequest request = new CreateSecretRequest("empty_secret", "desc", "", true, null);
+    CreateSecretRequest request = new CreateSecretRequest("empty_secret", "desc", "", true, null, 0);
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
@@ -81,7 +81,7 @@ public class AutomationSecretResourceIntegrationTest {
   public void addConflictingSecrets() throws Exception {
     CreateSecretRequest request = new CreateSecretRequest("dup_secret", "desc", "content",
         false,
-        ImmutableMap.of());
+        ImmutableMap.of(), 0);
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
@@ -109,7 +109,7 @@ public class AutomationSecretResourceIntegrationTest {
   @Test
   public void readValidSecret() throws Exception {
     CreateSecretRequest request = new CreateSecretRequest("readable", "desc", "c3VwZXJTZWNyZXQK",
-        false, ImmutableMap.of());
+        false, ImmutableMap.of(), 0);
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
@@ -141,7 +141,7 @@ public class AutomationSecretResourceIntegrationTest {
   @Test
   public void deleteSecrets() throws Exception {
     CreateSecretRequest request = new CreateSecretRequest("deletable", "desc", "c3VwZXJTZWNyZXQK",
-        true, ImmutableMap.of());
+        true, ImmutableMap.of(), 0);
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))

@@ -20,6 +20,7 @@ import keywhiz.api.validation.ValidBase64;
         .description("")
         .versioned(false) // may flip default in the future
         .metadata(ImmutableMap.of())
+        .expiry(0)
         .type("")
         .groups();
   }
@@ -36,6 +37,7 @@ import keywhiz.api.validation.ValidBase64;
     public abstract Builder versioned(boolean versioned);
     public abstract Builder metadata(ImmutableMap<String, String> metadata);
     public abstract Builder type(String type);
+    public abstract Builder expiry(long expiry);
 
     public Builder groups(String... groups) {
       return groups(ImmutableSet.copyOf(groups));
@@ -70,6 +72,7 @@ import keywhiz.api.validation.ValidBase64;
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("withVersion") boolean withVersion,
       @JsonProperty("metadata") @Nullable Map<String, String> metadata,
+      @JsonProperty("expiry") long expiry,
       @JsonProperty("type") @Nullable String type,
       @JsonProperty("groups") @Nullable Iterable<String> groups) {
     return builder()
@@ -78,6 +81,7 @@ import keywhiz.api.validation.ValidBase64;
         .versioned(withVersion)
         .description(Strings.nullToEmpty(description))
         .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
+        .expiry(expiry)
         .type(Strings.nullToEmpty(type))
         .groups(groups == null ? ImmutableSet.of() : groups)
         .build();
@@ -88,6 +92,7 @@ import keywhiz.api.validation.ValidBase64;
   @JsonProperty("description") public abstract String description();
   @JsonProperty("versioned") public abstract boolean versioned();
   @JsonProperty("metadata") public abstract ImmutableMap<String, String> metadata();
+  @JsonProperty("expiry") public abstract long expiry();
   @JsonProperty("type") public abstract String type();
   @JsonProperty("groups") public abstract ImmutableSet<String> groups();
 
@@ -98,6 +103,7 @@ import keywhiz.api.validation.ValidBase64;
         .add("description", description())
         .add("withVersion", versioned())
         .add("metadata", metadata())
+        .add("expiry", expiry())
         .add("type", type())
         .add("groups", groups())
         .omitNullValues()

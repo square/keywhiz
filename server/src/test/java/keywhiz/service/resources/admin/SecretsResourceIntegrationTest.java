@@ -75,7 +75,7 @@ public class SecretsResourceIntegrationTest {
   @Test public void createsSecret() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
     SecretDetailResponse secretDetails = keywhizClient.createSecret("newSecret", "",
-        "content".getBytes(), false, ImmutableMap.of());
+        "content".getBytes(), false, ImmutableMap.of(), 0);
     assertThat(secretDetails.name).isEqualTo("newSecret");
 
     assertThat(keywhizClient.allSecrets().stream().map(SanitizedSecret::name).toArray())
@@ -85,7 +85,7 @@ public class SecretsResourceIntegrationTest {
   @Test public void createsDuplicateSecretWithVersion() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
-    keywhizClient.createSecret("trapdoor", "v1", "content".getBytes(), true, ImmutableMap.of());
+    keywhizClient.createSecret("trapdoor", "v1", "content".getBytes(), true, ImmutableMap.of(), 0);
 
     List<SanitizedSecret> sanitizedSecrets1 = keywhizClient.allSecrets();
 
@@ -99,7 +99,7 @@ public class SecretsResourceIntegrationTest {
     }
     assertThat(found1).isTrue();
 
-    keywhizClient.createSecret("trapdoor", "v2", "content".getBytes(), true, ImmutableMap.of());
+    keywhizClient.createSecret("trapdoor", "v2", "content".getBytes(), true, ImmutableMap.of(), 0);
 
     List<SanitizedSecret> sanitizedSecrets2 = keywhizClient.allSecrets();
 
@@ -118,8 +118,8 @@ public class SecretsResourceIntegrationTest {
   public void rejectsCreatingDuplicateSecretWithoutVersion() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
-    keywhizClient.createSecret("passage", "v1", "content".getBytes(), false, ImmutableMap.of());
-    keywhizClient.createSecret("passage", "v2", "content".getBytes(), false, ImmutableMap.of());
+    keywhizClient.createSecret("passage", "v1", "content".getBytes(), false, ImmutableMap.of(), 0);
+    keywhizClient.createSecret("passage", "v2", "content".getBytes(), false, ImmutableMap.of(), 0);
   }
 
   @Test public void deletesSecret() throws IOException {

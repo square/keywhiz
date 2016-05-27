@@ -126,7 +126,7 @@ public class SecretDAOTest {
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
     String version = VersionGenerator.now().toHex();
     long newId = secretDAO.createSecret(name, encryptedContent, version, "creator",
-        ImmutableMap.of(), "", null, ImmutableMap.of());
+        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
     SecretSeriesAndContent newSecret = secretDAO.getSecretByIdAndVersion(newId, version).get();
 
     assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore + 1);
@@ -146,13 +146,13 @@ public class SecretDAOTest {
     String encryptedContent1 = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
     String version = VersionGenerator.fromLong(1234).toHex();
     long id = secretDAO.createSecret(name, encryptedContent1, version, "creator", ImmutableMap.of(),
-        "", null, ImmutableMap.of());
+        0, "", null, ImmutableMap.of());
     SecretSeriesAndContent newSecret1 = secretDAO.getSecretByIdAndVersion(id, version).get();
 
     content = "amFja2RvcnNrZXkK";
     String encryptedContent2 = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
     version = VersionGenerator.fromLong(4321).toHex();
-    id = secretDAO.createSecret(name, encryptedContent2, version, "creator", ImmutableMap.of(), "",
+    id = secretDAO.createSecret(name, encryptedContent2, version, "creator", ImmutableMap.of(), 0, "",
         null, ImmutableMap.of());
     SecretSeriesAndContent newSecret2 = secretDAO.getSecretByIdAndVersion(id, version).get();
 
@@ -182,7 +182,8 @@ public class SecretDAOTest {
     String name = secret1.series().name();
     String content = "bmV3ZXJTZWNyZXQy";
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    long newId = secretDAO.createSecret(name, encryptedContent, futureStamp, "creator", ImmutableMap.of(), "desc", null, null);
+    long newId = secretDAO.createSecret(name, encryptedContent, futureStamp, "creator", ImmutableMap.of(), 0, "desc",
+        null, null);
     SecretSeriesAndContent newerSecret = secretDAO.getSecretByIdAndVersion(newId, futureStamp)
         .orElseThrow(RuntimeException::new);
 
@@ -201,7 +202,7 @@ public class SecretDAOTest {
     String name = secret1.series().name();
     String content = "bmV3ZXJTZWNyZXQy";
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    secretDAO.createSecret(name, encryptedContent, futureStamp, "creator", ImmutableMap.of(), "desc", null, null);
+    secretDAO.createSecret(name, encryptedContent, futureStamp, "creator", ImmutableMap.of(), 0, "desc", null, null);
     SecretSeriesAndContent newerSecret = secretDAO.getSecretByNameAndVersion(name, futureStamp)
         .orElseThrow(RuntimeException::new);
 
@@ -232,7 +233,7 @@ public class SecretDAOTest {
 
   @Test public void deleteSecretsByName() {
     secretDAO.createSecret("toBeDeleted_deleteSecretsByName", "encryptedShhh", "first", "creator",
-        ImmutableMap.of(), "", null, null);
+        ImmutableMap.of(), 0, "", null, null);
 
     int secretsBefore = tableSize(SECRETS);
     int secretContentsBefore = tableSize(SECRETS_CONTENT);
@@ -247,9 +248,9 @@ public class SecretDAOTest {
 
   @Test public void deleteSecretByNameAndVersion() {
     secretDAO.createSecret("shadow_deleteSecretByNameAndVersion", "encrypted1", "no1", "creator",
-        ImmutableMap.of(), "desc", null, null);
+        ImmutableMap.of(), 0, "desc", null, null);
     secretDAO.createSecret("shadow_deleteSecretByNameAndVersion", "encrypted2", "no2", "creator",
-        ImmutableMap.of(), "desc", null, null);
+        ImmutableMap.of(), 0, "desc", null, null);
     int secretsBefore = tableSize(SECRETS);
     int secretContentsBefore = tableSize(SECRETS_CONTENT);
 
@@ -263,7 +264,7 @@ public class SecretDAOTest {
 
   @Test public void deleteSecretSeriesWhenEmpty() {
     secretDAO.createSecret("toBeDeleted_deleteSecretSeriesWhenEmpty", "encryptedOvaltine", "v22",
-        "creator", ImmutableMap.of(), "desc", null, null);
+        "creator", ImmutableMap.of(), 0, "desc", null, null);
 
     int secretsBefore = tableSize(SECRETS);
     int secretContentsBefore = tableSize(SECRETS_CONTENT);
@@ -279,15 +280,15 @@ public class SecretDAOTest {
   @Test(expected = DataAccessException.class)
   public void willNotCreateDuplicateVersionedSecret() throws Exception {
     ImmutableMap<String, String> emptyMap = ImmutableMap.of();
-    secretDAO.createSecret("secret1", "encrypted1", version, "creator", emptyMap, "", null, emptyMap);
-    secretDAO.createSecret("secret1", "encrypted1", version, "creator", emptyMap, "", null, emptyMap);
+    secretDAO.createSecret("secret1", "encrypted1", version, "creator", emptyMap, 0, "", null, emptyMap);
+    secretDAO.createSecret("secret1", "encrypted1", version, "creator", emptyMap, 0, "", null, emptyMap);
   }
 
   @Test(expected = DataAccessException.class)
   public void willNotCreateDuplicateSecret() throws Exception {
     ImmutableMap<String, String> emptyMap = ImmutableMap.of();
-    secretDAO.createSecret("secret1", "encrypted1", "", "creator", emptyMap, "", null, emptyMap);
-    secretDAO.createSecret("secret1", "encrypted1", "", "creator", emptyMap, "", null, emptyMap);
+    secretDAO.createSecret("secret1", "encrypted1", "", "creator", emptyMap, 0, "", null, emptyMap);
+    secretDAO.createSecret("secret1", "encrypted1", "", "creator", emptyMap, 0, "", null, emptyMap);
   }
 
   private int tableSize(Table table) {

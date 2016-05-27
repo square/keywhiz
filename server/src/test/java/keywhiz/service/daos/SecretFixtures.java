@@ -64,9 +64,8 @@ public class SecretFixtures {
    */
   public Secret createSecret(String name, String content, String version) {
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    long id =
-        secretDAO.createSecret(name, encryptedContent, version, "creator", ImmutableMap.of(),
-            "", null, ImmutableMap.of());
+    long id = secretDAO.createSecret(name, encryptedContent, version, "creator", ImmutableMap.of(), 0, "", null,
+        ImmutableMap.of());
     return transformer.transform(secretDAO.getSecretByIdAndVersion(id, version).get());
   }
 }

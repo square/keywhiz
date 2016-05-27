@@ -40,6 +40,7 @@ import org.mockito.junit.MockitoRule;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -65,7 +66,7 @@ public class AutomationSecretResourceTest {
   public void setUp() {
     resource = new AutomationSecretResource(secretController, secretSeriesDAO, aclDAO);
 
-    when(secretController.builder(anyString(), anyString(), anyString())).thenReturn(secretBuilder);
+    when(secretController.builder(anyString(), anyString(), anyString(), anyLong())).thenReturn(secretBuilder);
     when(secretBuilder.withDescription(anyString())).thenReturn(secretBuilder);
   }
 
@@ -75,7 +76,8 @@ public class AutomationSecretResourceTest {
         "some secret",
         "ponies",
         true,
-        null);
+        null,
+        0);
 
     Secret secret = new Secret(0, /* Set by DB */
         request.name,
@@ -128,7 +130,7 @@ public class AutomationSecretResourceTest {
 
     doThrow(exception).when(secretBuilder).build();
 
-    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", false, emptyMap);
+    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", false, emptyMap, 0);
     resource.createSecret(automation, req);
   }
 }

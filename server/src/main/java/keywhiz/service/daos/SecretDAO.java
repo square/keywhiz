@@ -60,7 +60,7 @@ public class SecretDAO {
 
   @VisibleForTesting
   public long createSecret(String name, String encryptedSecret, String version,
-      String creator, Map<String, String> metadata, String description, @Nullable String type,
+      String creator, Map<String, String> metadata, long expiry, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
     // TODO(jlfwong): Should the description be updated...?
 
@@ -78,7 +78,7 @@ public class SecretDAO {
       }
 
       secretContentDAO.createSecretContent(secretId, encryptedSecret, version, creator,
-          metadata);
+          metadata, expiry);
       return secretId;
     });
   }

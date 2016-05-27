@@ -75,11 +75,11 @@ public class SecretContentDAOTest {
   @Test public void createSecretContent() {
     int before = tableSize();
     secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
-        metadata);
+        metadata, 0);
     secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
-        metadata);
+        metadata, 0);
     secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
-        metadata);
+        metadata, 0);
     assertThat(tableSize()).isEqualTo(before + 3);
   }
 
@@ -89,11 +89,11 @@ public class SecretContentDAOTest {
 
   @Test public void getSecretContentsBySecretId() {
     long id1 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
-        metadata);
+        metadata, 0);
     long id2 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
-        metadata);
+        metadata, 0);
     long id3 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
-        metadata);
+        metadata, 0);
 
     List<Long> actualIds = secretContentDAO.getSecretContentsBySecretId(secretContent1.secretSeriesId())
         .stream()
@@ -105,11 +105,11 @@ public class SecretContentDAOTest {
 
   @Test public void getVersionsBySecretId() {
     secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
-        metadata);
+        metadata, 0);
     secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
-        metadata);
+        metadata, 0);
     secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
-        metadata);
+        metadata, 0);
 
     // We have the empty string as a version from the setUp() call
     assertThat(secretContentDAO.getVersionFromSecretId(secretContent1.secretSeriesId()))

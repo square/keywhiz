@@ -103,7 +103,7 @@ public class AutomationSecretResource {
       @Valid CreateSecretRequest request) {
 
     SecretController.SecretBuilder builder = secretController.builder(request.name, request.content,
-        automationClient.getName())
+        automationClient.getName(), request.expiry)
         .withDescription(nullToEmpty(request.description));
 
     if (request.withVersion) {

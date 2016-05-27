@@ -120,7 +120,7 @@ public class SecretGeneratorModuleTest {
 
     @Override public List<Secret> generate(String creatorName, String request) {
       return Arrays.asList(
-          secretController.builder("dummyName", "dummy", creatorName).build());
+          secretController.builder("dummyName", "dummy", creatorName, 0).build());
     }
 
     @Override public Class<String> getRequestType() { return String.class; }

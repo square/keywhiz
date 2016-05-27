@@ -92,7 +92,7 @@ public class SecretResource {
     String name = request.name();
 
     SecretBuilder builder = secretController
-        .builder(name, request.content(), automationClient.getName())
+        .builder(name, request.content(), automationClient.getName(), request.expiry())
         .withDescription(request.description())
         .withMetadata(request.metadata())
         .withType(request.type());

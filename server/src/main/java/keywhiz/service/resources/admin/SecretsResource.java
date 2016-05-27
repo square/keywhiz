@@ -186,7 +186,7 @@ public class SecretsResource {
     Secret secret;
     try {
       SecretController.SecretBuilder builder =
-          secretController.builder(request.name, request.content, user.getName());
+          secretController.builder(request.name, request.content, user.getName(), request.expiry);
 
       if (request.description != null) {
         builder.withDescription(request.description);
