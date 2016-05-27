@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.common.collect.Maps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
@@ -28,7 +27,6 @@ import io.dropwizard.java8.Java8Bundle;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import java.util.Map;
 import javax.sql.DataSource;
 import keywhiz.auth.mutualssl.ClientCertificateFilter;
 import keywhiz.auth.xsrf.XsrfServletFilter;
@@ -37,9 +35,6 @@ import keywhiz.commands.DbSeedCommand;
 import keywhiz.commands.GenerateAesKeyCommand;
 import keywhiz.commands.MigrateCommand;
 import keywhiz.commands.PreviewMigrateCommand;
-import keywhiz.generators.SecretGenerator;
-import keywhiz.generators.SecretGeneratorFactory;
-import keywhiz.generators.SecretGeneratorModule;
 import keywhiz.service.filters.CookieRenewingFilter;
 import keywhiz.service.filters.SecurityHeadersFilter;
 import keywhiz.service.providers.AuthResolver;
@@ -52,7 +47,6 @@ import keywhiz.service.resources.StatusResource;
 import keywhiz.service.resources.admin.ClientsResource;
 import keywhiz.service.resources.admin.GroupsResource;
 import keywhiz.service.resources.admin.MembershipResource;
-import keywhiz.service.resources.admin.SecretGeneratorsResource;
 import keywhiz.service.resources.admin.SecretsResource;
 import keywhiz.service.resources.admin.SessionLoginResource;
 import keywhiz.service.resources.admin.SessionLogoutResource;
@@ -61,7 +55,6 @@ import keywhiz.service.resources.automation.AutomationClientResource;
 import keywhiz.service.resources.automation.AutomationEnrollClientGroupResource;
 import keywhiz.service.resources.automation.AutomationGroupResource;
 import keywhiz.service.resources.automation.AutomationSecretAccessResource;
-import keywhiz.service.resources.automation.AutomationSecretGeneratorsResource;
 import keywhiz.service.resources.automation.AutomationSecretResource;
 import keywhiz.service.resources.automation.v2.ClientResource;
 import keywhiz.service.resources.automation.v2.GroupResource;
@@ -72,7 +65,6 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static keywhiz.utility.SecretTemplateCompiler.validName;
 
 /**
  * Starting point for Keywhiz, an implementation of the Dropwizard Service.
@@ -89,8 +81,6 @@ public class KeywhizService extends Application<KeywhizConfig> {
 
   private static final Logger logger = LoggerFactory.getLogger(KeywhizService.class);
 
-  private final Map<String, SecretGeneratorFactory<?>> secretGeneratorFactories = Maps.newHashMap();
-  private final Map<String, SecretGenerator<?>> secretGenerators = Maps.newHashMap();
   private Injector injector;
 
   @SuppressWarnings("unused")
@@ -100,36 +90,6 @@ public class KeywhizService extends Application<KeywhizConfig> {
 
   public void setInjector(Injector injector) {
     this.injector = injector;
-  }
-
-  /**
-   * Register a {@link SecretGeneratorFactory} and its name.
-   *
-   * @param name associated with generators from factory.
-   * @param secretGeneratorFactory factory to register.
-   */
-  @SuppressWarnings("unused")
-  public void addSecretGeneratorFactory(String name, SecretGeneratorFactory<?> secretGeneratorFactory) {
-    checkArgument(validName(name)
-        && !secretGenerators.containsKey(name));
-    logger.debug("Registering SecretGeneratorFactory {} -> {}",
-        name, secretGeneratorFactory.getClass().getSimpleName());
-    secretGeneratorFactories.put(name, checkNotNull(secretGeneratorFactory));
-  }
-
-  /**
-   * Register a {@link SecretGenerator} and its name.
-   *
-   * @param name associated with generator.
-   * @param secretGenerator generator to register.
-   */
-  @SuppressWarnings("unused")
-  public void addSecretGenerator(String name, SecretGenerator<?> secretGenerator) {
-    checkArgument(validName(name)
-        && !secretGeneratorFactories.containsKey(name));
-    logger.debug("Registering SecretGenerator {} -> {}",
-        name, secretGenerator.getClass().getSimpleName());
-    secretGenerators.put(name, checkNotNull(secretGenerator));
   }
 
   @Override public String getName() {
@@ -156,9 +116,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
   @Override public void run(KeywhizConfig config, Environment environment) throws Exception {
     if (injector == null) {
       logger.debug("No existing guice injector; creating new one");
-      injector = Guice.createInjector(
-          new ServiceModule(config, environment),
-          new SecretGeneratorModule(secretGeneratorFactories, secretGenerators));
+      injector = Guice.createInjector(new ServiceModule(config, environment));
     }
 
     JerseyEnvironment jersey = environment.jersey();
@@ -190,7 +148,6 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(injector.getInstance(SecretsDeliveryResource.class));
     jersey.register(injector.getInstance(SecretResource.class));
     jersey.register(injector.getInstance(SecretsResource.class));
-    jersey.register(injector.getInstance(SecretGeneratorsResource.class));
     jersey.register(injector.getInstance(SecretDeliveryResource.class));
     jersey.register(injector.getInstance(SessionLoginResource.class));
     jersey.register(injector.getInstance(SessionLogoutResource.class));
@@ -200,7 +157,6 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(injector.getInstance(AutomationSecretResource.class));
     jersey.register(injector.getInstance(AutomationEnrollClientGroupResource.class));
     jersey.register(injector.getInstance(AutomationSecretAccessResource.class));
-    jersey.register(injector.getInstance(AutomationSecretGeneratorsResource.class));
     jersey.register(injector.getInstance(StatusResource.class));
 
     ManualStatusHealthCheck mshc = new ManualStatusHealthCheck();
