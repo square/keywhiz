@@ -98,6 +98,7 @@ public class SecretResource {
         .withType(request.type());
 
     if (request.versioned()) {
+      logger.error("Deprecated version feature still in use for %s!", name);
       builder.withVersion(VersionGenerator.now().toHex());
     }
 
@@ -265,6 +266,8 @@ public class SecretResource {
   @Produces(APPLICATION_JSON)
   public SecretDetailResponseV2 secretVersionInfo(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @PathParam("version") String version) {
+    logger.error("Deprecated version feature still in use for %s!", name);
+
     Secret secret = secretController.getSecretByNameAndVersion(name, version)
         .orElseThrow(NotFoundException::new);
     return SecretDetailResponseV2.builder().secret(secret).build();
@@ -305,6 +308,9 @@ public class SecretResource {
   @Path("{name}/{version:.*}")
   public Response deleteSecretVersion(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @PathParam("version") String version) {
+
+    logger.error("Deprecated version feature still in use for %s!", name);
+
     secretController.getSecretByNameAndVersion(name, version)
         .orElseThrow(NotFoundException::new);
     secretDAO.deleteSecretByNameAndVersion(name, version);
