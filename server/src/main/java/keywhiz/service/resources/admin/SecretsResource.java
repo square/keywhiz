@@ -117,6 +117,9 @@ public class SecretsResource {
         return Response.ok().entity(listSecretsNameOnly(user)).build();
       }
     }
+    if (!version.equals("")) {
+      logger.error("Deprecated version feature still in use for %s!", name);
+    }
     return Response.ok().entity(retrieveSecret(user, name, version)).build();
   }
 
@@ -155,6 +158,7 @@ public class SecretsResource {
       // Must supply a secret name to find versions for
       throw new BadRequestException("Must supply secret name to find versions.");
     }
+    logger.error("Deprecated version feature still in use for %s!", name);
     return retrieveSecretVersions(user, name);
   }
 
@@ -197,6 +201,7 @@ public class SecretsResource {
       }
 
       if (request.withVersion) {
+        logger.error("Deprecated version feature still in use for %s!", request.name);
         builder.withVersion(VersionGenerator.now().toHex());
       }
 
