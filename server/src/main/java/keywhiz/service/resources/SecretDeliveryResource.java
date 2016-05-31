@@ -102,7 +102,7 @@ public class SecretDeliveryResource {
     String name = parts[0];
     String version = parts[1];
     if (!version.equals("")) {
-      logger.error("Deprecated version feature still in use for %s!", secretName);
+      logger.error("Deprecated version feature still in use for {}!", secretName);
     }
 
     Optional<SanitizedSecret> sanitizedSecret = aclDAO.getSanitizedSecretFor(client, name, version);
