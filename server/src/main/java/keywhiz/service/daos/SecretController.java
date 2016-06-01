@@ -51,20 +51,18 @@ public class SecretController {
 
   /**
    * @param secretId external secret series id to look up secrets by.
-   * @param version specific version of secret. May be empty.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<Secret> getSecretByIdAndVersion(long secretId, String version) {
-    return secretDAO.getSecretByIdAndVersion(secretId, version).map(transformer::transform);
+  public Optional<Secret> getSecretByIdOne(long secretId) {
+    return secretDAO.getSecretByIdOne(secretId).map(transformer::transform);
   }
 
   /**
    * @param name of secret series to look up secrets by.
-   * @param version specific version of secret. May be empty.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<Secret> getSecretByNameAndVersion(String name, String version) {
-    return secretDAO.getSecretByNameAndVersion(name, version).map(transformer::transform);
+  public Optional<Secret> getSecretByNameOne(String name) {
+    return secretDAO.getSecretByNameOne(name).map(transformer::transform);
   }
 
   /** @return all existing sanitized secrets. */
@@ -80,12 +78,6 @@ public class SecretController {
         .stream()
         .map(s -> SanitizedSecret.of(s.getKey(), s.getValue()))
         .collect(toList());
-  }
-
-  /** @return all versions for this secret name. */
-  public List<String> getVersionsForName(String name) {
-    checkArgument(!name.isEmpty());
-    return secretDAO.getVersionsForSecretName(name);
   }
 
   public SecretBuilder builder(String name, String secret, String creator, long expiry) {
@@ -106,7 +98,6 @@ public class SecretController {
     private String description = "";
     private Map<String, String> metadata = ImmutableMap.of();
     private long expiry = 0;
-    private String version = "";
     private String type;
     private Map<String, String> generationOptions = ImmutableMap.of();
 
@@ -148,16 +139,6 @@ public class SecretController {
     }
 
     /**
-     * Supply an optional version of the secret, otherwise the default '' is used.
-     * @param version version of secret
-     * @return the builder
-     */
-    public SecretBuilder withVersion(String version) {
-      this.version = checkNotNull(version);
-      return this;
-    }
-
-    /**
      * Supply a secret type, otherwise the default '' is used.
      * @param type type of secret
      * @return the builder
@@ -168,24 +149,14 @@ public class SecretController {
     }
 
     /**
-     * Supply a map of options used to generate the secret.
-     * @param generationOptions map of settings from the generator to persist
-     * @return the builder
-     */
-    public SecretBuilder withGenerationOptions(Map<String, String> generationOptions) {
-      this.generationOptions = checkNotNull(generationOptions);
-      return this;
-    }
-
-    /**
      * Finalizes creation of a new secret.
      *
      * @return an instance of the newly created secret.
      */
     public Secret build() {
-        secretDAO.createSecret(name, encryptedSecret, version, creator, metadata, expiry, description, type,
+        secretDAO.createSecret(name, encryptedSecret, creator, metadata, expiry, description, type,
             generationOptions);
-        return transformer.transform(secretDAO.getSecretByNameAndVersion(name, version).get());
+        return transformer.transform(secretDAO.getSecretByNameOne(name).get());
     }
   }
 }

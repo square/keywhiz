@@ -18,7 +18,6 @@ package keywhiz.api;
 
 import com.google.common.collect.ImmutableMap;
 import keywhiz.api.model.Secret;
-import keywhiz.api.model.VersionGenerator;
 import org.junit.Test;
 
 import static keywhiz.api.model.Secret.decodedLength;
@@ -31,19 +30,13 @@ public class SecretDeliveryResponseTest {
   private static final ImmutableMap<String, String> metadata =
       ImmutableMap.of("key1", "value1", "key2", "value2");
   private static final ApiDate NOW = ApiDate.now();
-  private static final Secret secret = new Secret(0, "name", VersionGenerator.now().toHex(), null,
+  private static final Secret secret = new Secret(0, "name", null,
       "YWJj", NOW, null, NOW, null, metadata, "upload", null);
 
   @Test
   public void setsLength() {
     SecretDeliveryResponse response = SecretDeliveryResponse.fromSecret(secret);
     assertThat(response.getSecretLength()).isEqualTo(decodedLength("YWJj")).isEqualTo(3);
-  }
-
-  @Test
-  public void hasVersionedName() {
-    SecretDeliveryResponse response = SecretDeliveryResponse.fromSecret(secret);
-    assertThat(response.getName()).matches("name" + Secret.VERSION_DELIMITER + "[0-9a-f]+");
   }
 
   @Test
@@ -61,17 +54,15 @@ public class SecretDeliveryResponseTest {
         secret,
         decodedLength(secret),
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
-        false,
         ImmutableMap.of());
     assertThat(asJson(secretDeliveryResponse))
         .isEqualTo(jsonFixture("fixtures/secretDeliveryResponse.json"));
 
     SecretDeliveryResponse secretDeliveryResponseWithVersion = new SecretDeliveryResponse(
-        "General_Password..0be68f903f8b7d86",
+        "General_Password",
         secret,
         decodedLength(secret),
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
-        true,
         ImmutableMap.of());
     assertThat(asJson(secretDeliveryResponseWithVersion))
         .isEqualTo(jsonFixture("fixtures/secretDeliveryResponseWithVersion.json"));
@@ -81,7 +72,6 @@ public class SecretDeliveryResponseTest {
         secret,
         decodedLength(secret),
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
-        false,
         ImmutableMap.of("mode", "0400", "owner", "nobody"));
     assertThat(asJson(secretDeliveryResponseWithMetadata))
         .isEqualTo(jsonFixture("fixtures/secretDeliveryResponseWithMetadata.json"));

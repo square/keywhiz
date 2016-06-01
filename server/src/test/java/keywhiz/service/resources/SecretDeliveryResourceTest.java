@@ -23,7 +23,6 @@ import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
-import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.SecretController;
@@ -48,9 +47,9 @@ public class SecretDeliveryResourceTest {
   SecretDeliveryResource secretDeliveryResource;
 
   final Client client = new Client(0, "principal", null, null, null, null, null, false, false);
-  final Secret secret = new Secret(0, "secret_name", null, null, "secret_value", NOW, null, NOW, null,
+  final Secret secret = new Secret(0, "secret_name", null, "secret_value", NOW, null, NOW, null,
       null, null, null);
-  final Secret secretBase64 = new Secret(1, "Base64With=", null, null, "SGVsbG8=", NOW, null, NOW,
+  final Secret secretBase64 = new Secret(1, "Base64With=", null, "SGVsbG8=", NOW, null, NOW,
       null, null, null, null);
 
   @Before public void setUp() {
@@ -58,14 +57,13 @@ public class SecretDeliveryResourceTest {
   }
 
   @Test public void returnsSecretWhenAllowed() throws Exception {
-    Secret secret = new Secret(0, "secret_name", null, null, "unused_secret", NOW, null, NOW, null, null, null, null);
+    Secret secret = new Secret(0, "secret_name", null, "unused_secret", NOW, null, NOW, null, null, null, null);
     SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
     String name = sanitizedSecret.name();
-    String version = sanitizedSecret.version();
 
-    when(aclDAO.getSanitizedSecretFor(client, name, version))
+    when(aclDAO.getSanitizedSecretFor(client, name))
         .thenReturn(Optional.of(sanitizedSecret));
-    when(secretController.getSecretByNameAndVersion(name, version))
+    when(secretController.getSecretByNameOne(name))
         .thenReturn(Optional.of(secret));
 
     SecretDeliveryResponse response = secretDeliveryResource.getSecret(sanitizedSecret.name(), client);
@@ -74,13 +72,12 @@ public class SecretDeliveryResourceTest {
 
   @Test public void returnsVersionedSecretWhenAllowed() throws Exception {
     String name = "secret_name";
-    String version = VersionGenerator.now().toHex();
-    Secret versionedSecret = new Secret(2, name, version, null, "U3BpZGVybWFu", NOW, null, NOW,
+    Secret versionedSecret = new Secret(2, name, null, "U3BpZGVybWFu", NOW, null, NOW,
         null, null, null, null);
 
-    when(aclDAO.getSanitizedSecretFor(client, name, version))
+    when(aclDAO.getSanitizedSecretFor(client, name))
         .thenReturn(Optional.of(SanitizedSecret.fromSecret(versionedSecret)));
-    when(secretController.getSecretByNameAndVersion(name, version))
+    when(secretController.getSecretByNameOne(name))
         .thenReturn(Optional.of(versionedSecret));
 
     String displayName = versionedSecret.getDisplayName();
@@ -90,9 +87,9 @@ public class SecretDeliveryResourceTest {
 
   @Test(expected = NotFoundException.class)
   public void returnsNotFoundWhenClientDoesNotExist() throws Exception {
-    when(aclDAO.getSanitizedSecretFor(client, secret.getName(), "")).thenReturn(Optional.empty());
+    when(aclDAO.getSanitizedSecretFor(client, secret.getName())).thenReturn(Optional.empty());
     when(clientDAO.getClient(client.getName())).thenReturn(Optional.empty());
-    when(secretController.getSecretByNameAndVersion(secret.getName(), ""))
+    when(secretController.getSecretByNameOne(secret.getName()))
         .thenReturn(Optional.of(secret));
 
     secretDeliveryResource.getSecret(secret.getName(), client);
@@ -100,9 +97,9 @@ public class SecretDeliveryResourceTest {
 
   @Test(expected = NotFoundException.class)
   public void returnsNotFoundWhenSecretDoesNotExist() throws Exception {
-    when(aclDAO.getSanitizedSecretFor(client, "secret_name", "")).thenReturn(Optional.empty());
+    when(aclDAO.getSanitizedSecretFor(client, "secret_name")).thenReturn(Optional.empty());
     when(clientDAO.getClient(client.getName())).thenReturn(Optional.of(client));
-    when(secretController.getSecretByNameAndVersion("secret_name", ""))
+    when(secretController.getSecretByNameOne("secret_name"))
         .thenReturn(Optional.empty());
 
     secretDeliveryResource.getSecret("secret_name", client);
@@ -110,9 +107,9 @@ public class SecretDeliveryResourceTest {
 
   @Test(expected = ForbiddenException.class)
   public void returnsUnauthorizedWhenDenied() throws Exception {
-    when(aclDAO.getSanitizedSecretFor(client, secret.getName(), "")).thenReturn(Optional.empty());
+    when(aclDAO.getSanitizedSecretFor(client, secret.getName())).thenReturn(Optional.empty());
     when(clientDAO.getClient(client.getName())).thenReturn(Optional.of(client));
-    when(secretController.getSecretByNameAndVersion(secret.getName(), ""))
+    when(secretController.getSecretByNameOne(secret.getName()))
         .thenReturn(Optional.of(secret));
 
     secretDeliveryResource.getSecret(secret.getName(), client);
@@ -120,11 +117,10 @@ public class SecretDeliveryResourceTest {
 
   @Test public void doesNotEscapeBase64() throws Exception {
     String name = secretBase64.getName();
-    String version = secretBase64.getVersion();
 
-    when(aclDAO.getSanitizedSecretFor(client, name, version))
+    when(aclDAO.getSanitizedSecretFor(client, name))
         .thenReturn(Optional.of(SanitizedSecret.fromSecret(secretBase64)));
-    when(secretController.getSecretByNameAndVersion(name, version))
+    when(secretController.getSecretByNameOne(name))
         .thenReturn(Optional.of(secretBase64));
 
     SecretDeliveryResponse response = secretDeliveryResource.getSecret(secretBase64.getName(), client);

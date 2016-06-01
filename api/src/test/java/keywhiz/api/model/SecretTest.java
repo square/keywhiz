@@ -21,29 +21,9 @@ import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static keywhiz.api.model.Secret.decodedLength;
-import static keywhiz.api.model.Secret.splitNameAndVersion;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SecretTest {
-  @Test public void splitUnVersionedSecretName() throws Exception {
-    assertThat(splitNameAndVersion("secretName")).isEqualTo(new String[] {"secretName", ""});
-  }
-
-  @Test public void splitVersionedSecretName() throws Exception {
-    assertThat(splitNameAndVersion("secretName..version")).isEqualTo(
-        new String[] {"secretName", "version"});
-  }
-
-  @Test public void splitNameAndVersion_withEmptyVersion() throws Exception {
-    assertThat(splitNameAndVersion("secretName..")).isEqualTo(
-        new String[] {"secretName", ""});
-  }
-
-  @Test(expected = ParseException.class)
-  public void splitRejectsBadSecretName() throws Exception {
-    splitNameAndVersion("secretName..notAVersion..version");
-  }
-
   @Test public void decodedLengthCalculates() {
     Base64.Encoder encoder = Base64.getEncoder();
     String base64 = encoder.encodeToString("31337".getBytes(UTF_8));

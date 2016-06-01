@@ -35,7 +35,6 @@ public class SecretDetailResponseTest {
         "keywhizAdmin",
         ApiDate.parse("2013-03-28T21:23:04.159Z"),
         "keywhizAdmin",
-        true,
         ImmutableMap.of("mode", "0660"),
         ImmutableList.of(
             new Group(2000,

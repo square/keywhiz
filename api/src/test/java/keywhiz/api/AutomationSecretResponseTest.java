@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.Secret;
-import keywhiz.api.model.VersionGenerator;
 import org.junit.Test;
 
 import static keywhiz.api.model.Secret.decodedLength;
@@ -34,7 +33,7 @@ public class AutomationSecretResponseTest {
   private static final ImmutableMap<String, String> metadata =
       ImmutableMap.of("key1", "value1", "key2", "value2");
   private static final ApiDate NOW = ApiDate.now();
-  private static final Secret secret = new Secret(0, "name", VersionGenerator.now().toHex(), null,
+  private static final Secret secret = new Secret(0, "name", null,
       "YWJj", NOW, null, NOW, null, metadata, "upload", null);
 
   @Test
@@ -42,13 +41,6 @@ public class AutomationSecretResponseTest {
     AutomationSecretResponse response = AutomationSecretResponse.fromSecret(secret,
         ImmutableList.<Group>of());
     assertThat(response.secretLength()).isEqualTo(decodedLength("YWJj")).isEqualTo(3);
-  }
-
-  @Test
-  public void hasVersionedName() {
-    AutomationSecretResponse response = AutomationSecretResponse.fromSecret(secret,
-        ImmutableList.<Group>of());
-    assertThat(response.name()).matches("name" + Secret.VERSION_DELIMITER + "[0-9a-f]+");
   }
 
   @Test
@@ -68,7 +60,6 @@ public class AutomationSecretResponseTest {
         "Database_Password",
         secret,
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
-        false,
         ImmutableMap.of(),
         ImmutableList.of());
     assertThat(asJson(automationSecretResponse))
@@ -76,10 +67,9 @@ public class AutomationSecretResponseTest {
 
     AutomationSecretResponse automationSecretResponseWithVersion = AutomationSecretResponse.create(
         33,
-        "General_Password..0be68f903f8b7d86",
+        "General_Password",
         secret,
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
-        true,
         ImmutableMap.of(),
         ImmutableList.of());
     assertThat(asJson(automationSecretResponseWithVersion))
@@ -90,7 +80,6 @@ public class AutomationSecretResponseTest {
         "Nobody_PgPass",
         secret,
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
-        false,
         ImmutableMap.of("mode", "0400", "owner", "nobody"),
         ImmutableList.of());
     assertThat(asJson(automationSecretResponseWithMetadata))

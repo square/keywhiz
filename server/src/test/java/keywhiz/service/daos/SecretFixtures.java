@@ -44,28 +44,16 @@ public class SecretFixtures {
   }
 
   /**
-   * Create a new secret without a version.
+   * Create a new secret.
    *
    * @param name secret name
    * @param content secret content
    * @return created secret model
    */
   public Secret createSecret(String name, String content) {
-    return createSecret(name, content, "");
-  }
-
-  /**
-   * Create a new secret.
-   *
-   * @param name secret name
-   * @param content secret content
-   * @param version secret version
-   * @return created secret model
-   */
-  public Secret createSecret(String name, String content, String version) {
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    long id = secretDAO.createSecret(name, encryptedContent, version, "creator", ImmutableMap.of(), 0, "", null,
+    long id = secretDAO.createSecret(name, encryptedContent, "creator", ImmutableMap.of(), 0, "", null,
         ImmutableMap.of());
-    return transformer.transform(secretDAO.getSecretByIdAndVersion(id, version).get());
+    return transformer.transform(secretDAO.getSecretByIdOne(id).get());
   }
 }

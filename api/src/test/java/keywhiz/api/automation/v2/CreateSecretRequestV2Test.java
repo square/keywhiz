@@ -29,7 +29,6 @@ public class CreateSecretRequestV2Test {
         .name("secret-name")
         .content("YXNkZGFz")
         .description("secret-description")
-        .versioned(true)
         .metadata(ImmutableMap.of("owner", "root"))
         .expiry(0)
         .type("text/plain")

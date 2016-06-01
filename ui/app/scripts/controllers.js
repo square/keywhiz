@@ -323,7 +323,6 @@ angular.module('keywhizUi.controllers', ['ngRoute'])
           '    password: DBYAML_GEN_PASSWORD{{#alphanumeric}}32{{/alphanumeric}}'
         ].join('\n'),
         description: description,
-        withVersion: false,
         metadata: {}
       };
 
@@ -368,7 +367,6 @@ angular.module('keywhizUi.controllers', ['ngRoute'])
             'password = DBYAML_GEN_PASSWORD{{#alphanumeric}}32{{/alphanumeric}}'
           ].join('\n'),
           description: description,
-          withVersion: false,
           metadata: metadata
         });
       });
@@ -377,7 +375,6 @@ angular.module('keywhizUi.controllers', ['ngRoute'])
         name: 'replication_pass_' + name,
         template: '{{#alphanumeric}}32{{/alphanumeric}}',
         description: description,
-        withVersion: false,
         metadata: {}
       });
 
@@ -407,7 +404,6 @@ angular.module('keywhizUi.controllers', ['ngRoute'])
         name: 'pgpass_' + postgresUsername + '_' + clusterName,
         template: '*:5432:*:' + postgresUsername + ':PG_GEN_PASSWORD{{#alphanumeric}}32{{/alphanumeric}}',
         description: description,
-        withVersion: false,
         metadata: { owner: hostUsername, group: hostUsername, mode: '0400'}
       };
     }
@@ -420,7 +416,6 @@ angular.module('keywhizUi.controllers', ['ngRoute'])
           name: 'replication_pass_' + name,
           template: '{{#alphanumeric}}32{{/alphanumeric}}',
           description: description,
-          withVersion: false,
           metadata: {}
         }
       ];
@@ -450,7 +445,6 @@ angular.module('keywhizUi.controllers', ['ngRoute'])
         name: groupName + '-rails-secret-token',
         template: '{{#hexadecimal}}128{{/hexadecimal}}',
         description: 'Random 512-bit hexadecimal string (128 chars) for rails secret token',
-        withVersion: false
       };
     }
 
@@ -530,7 +524,6 @@ angular.module('keywhizUi.controllers', ['ngRoute'])
         name: name,
         content: $scope.content,
         description: description,
-        withVersion: false,
         metadata: secretMetadata
       });
 

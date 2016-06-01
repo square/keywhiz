@@ -75,51 +75,19 @@ public class SecretsResourceIntegrationTest {
   @Test public void createsSecret() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
     SecretDetailResponse secretDetails = keywhizClient.createSecret("newSecret", "",
-        "content".getBytes(), false, ImmutableMap.of(), 0);
+        "content".getBytes(), ImmutableMap.of(), 0);
     assertThat(secretDetails.name).isEqualTo("newSecret");
 
     assertThat(keywhizClient.allSecrets().stream().map(SanitizedSecret::name).toArray())
         .contains("newSecret");
   }
 
-  @Test public void createsDuplicateSecretWithVersion() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-
-    keywhizClient.createSecret("trapdoor", "v1", "content".getBytes(), true, ImmutableMap.of(), 0);
-
-    List<SanitizedSecret> sanitizedSecrets1 = keywhizClient.allSecrets();
-
-    boolean found1 = false;
-    for (SanitizedSecret secret : sanitizedSecrets1) {
-      if (secret.name().equals("trapdoor")) {
-        assertThat(secret.description().equals("v1"));
-        found1 = true;
-        break;
-      }
-    }
-    assertThat(found1).isTrue();
-
-    keywhizClient.createSecret("trapdoor", "v2", "content".getBytes(), true, ImmutableMap.of(), 0);
-
-    List<SanitizedSecret> sanitizedSecrets2 = keywhizClient.allSecrets();
-
-    boolean found2 = false;
-    for (SanitizedSecret secret : sanitizedSecrets2) {
-      if (secret.name().equals("trapdoor")) {
-        assertThat(secret.description().equals("v2"));
-        found2 = true;
-        break;
-      }
-    }
-    assertThat(found2).isTrue();
-  }
-
   @Test(expected = KeywhizClient.ConflictException.class)
   public void rejectsCreatingDuplicateSecretWithoutVersion() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
-    keywhizClient.createSecret("passage", "v1", "content".getBytes(), false, ImmutableMap.of(), 0);
-    keywhizClient.createSecret("passage", "v2", "content".getBytes(), false, ImmutableMap.of(), 0);
+    keywhizClient.createSecret("passage", "v1", "content".getBytes(), ImmutableMap.of(), 0);
+    keywhizClient.createSecret("passage", "v2", "content".getBytes(), ImmutableMap.of(), 0);
   }
 
   @Test public void deletesSecret() throws IOException {
@@ -141,19 +109,10 @@ public class SecretsResourceIntegrationTest {
     assertThat(response.name).isEqualTo("Nobody_PgPass");
   }
 
-  @Test public void listSpecificSecretByNameWithVersion() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-
-    SanitizedSecret sanitizedSecret = keywhizClient
-        .getSanitizedSecretByNameAndVersion("Versioned_Password", "0aae825a73e161d8");
-    assertThat(sanitizedSecret.id()).isEqualTo(742);
-  }
-
   @Test public void listSpecificNonVersionedSecretByName() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
-    SanitizedSecret sanitizedSecret = keywhizClient
-        .getSanitizedSecretByNameAndVersion("Nobody_PgPass", "");
+    SanitizedSecret sanitizedSecret = keywhizClient.getSanitizedSecretByName("Nobody_PgPass");
     assertThat(sanitizedSecret.id()).isEqualTo(737);
   }
 
@@ -166,21 +125,6 @@ public class SecretsResourceIntegrationTest {
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void notFoundOnBadSecretName() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-    keywhizClient.getSanitizedSecretByNameAndVersion("non-existent-secret", "");
-  }
-
-  @Test public void listSecretVersions() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-
-    List<String> versions = keywhizClient.getVersionsForSecretName("Versioned_Password");
-    assertThat(versions).containsOnlyElementsOf(
-        ImmutableList.of("0aae825a73e161d8", "0aae825a73e161e8", "0aae825a73e161f8", "0aae825a73e161g8"));
-  }
-
-  @Test(expected = KeywhizClient.MalformedRequestException.class)
-  public void noVersionsWhenNoNameGiven() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-
-    keywhizClient.getVersionsForSecretName("");
+    keywhizClient.getSanitizedSecretByName("non-existent-secret");
   }
 }

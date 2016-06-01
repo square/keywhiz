@@ -49,7 +49,6 @@ public class SecretTransformer {
     return new Secret(
         series.id(),
         series.name(),
-        content.version().orElse(""),
         series.description(),
         secretContent,
         content.createdAt(),

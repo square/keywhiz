@@ -65,7 +65,7 @@ public class SecretsResourceTest {
   User user = User.named("user");
   ImmutableMap<String, String> emptyMap = ImmutableMap.of();
 
-  Secret secret = new Secret(22, "name", "version", "desc", "secret", NOW, "creator", NOW,
+  Secret secret = new Secret(22, "name", "desc", "secret", NOW, "creator", NOW,
       "updater", emptyMap, null, null);
 
   SecretsResource resource;
@@ -77,9 +77,9 @@ public class SecretsResourceTest {
 
   @Test
   public void listSecrets() {
-    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "", "desc", NOW, "user", NOW, "user",
+    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc", NOW, "user", NOW, "user",
         emptyMap, null, null);
-    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "", "desc", NOW, "user", NOW, "user",
+    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "desc", NOW, "user", NOW, "user",
         emptyMap, null, null);
     when(secretController.getSanitizedSecrets()).thenReturn(ImmutableList.of(secret1, secret2));
 
@@ -97,7 +97,7 @@ public class SecretsResourceTest {
     when(secretBuilder.build()).thenReturn(secret);
 
     CreateSecretRequest req = new CreateSecretRequest(secret.getName(),
-        secret.getDescription(), secret.getSecret(), true, emptyMap, 0);
+        secret.getDescription(), secret.getSecret(), emptyMap, 0);
     Response response = resource.createSecret(user, req);
 
     assertThat(response.getStatus()).isEqualTo(201);
@@ -120,7 +120,7 @@ public class SecretsResourceTest {
     DataAccessException exception = new DataAccessException("");
     doThrow(exception).when(secretBuilder).build();
 
-    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", false, emptyMap, 0);
+    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", emptyMap, 0);
     resource.createSecret(user, req);
   }
 
@@ -135,7 +135,6 @@ public class SecretsResourceTest {
     assertThat(response.id).isEqualTo(secret.getId());
     assertThat(response.name).isEqualTo(secret.getName());
     assertThat(response.description).isEqualTo(secret.getDescription());
-    assertThat(response.isVersioned).isTrue();
     assertThat(response.createdAt).isEqualTo(secret.getCreatedAt());
     assertThat(response.createdBy).isEqualTo(secret.getCreatedBy());
     assertThat(response.updatedAt).isEqualTo(secret.getUpdatedAt());
@@ -176,23 +175,15 @@ public class SecretsResourceTest {
   }
 
   @Test public void findSecretByNameAndVersion() {
-    when(secretController.getSecretByNameAndVersion(secret.getName(), secret.getVersion()))
+    when(secretController.getSecretByNameOne(secret.getName()))
         .thenReturn(Optional.of(secret));
-    assertThat(resource.retrieveSecret(user, "name", "version"))
+    assertThat(resource.retrieveSecret(user, "name"))
         .isEqualTo(SanitizedSecret.fromSecret(secret));
   }
 
   @Test(expected = NotFoundException.class)
   public void badNameNotFound() {
-    when(secretController.getSecretByNameAndVersion("non-existent", null)).thenReturn(Optional.empty());
-    resource.retrieveSecret(user, "non-existent", null);
-  }
-
-  @Test public void getsVersions() {
-    when(secretController.getVersionsForName("multiple-versions"))
-        .thenReturn(ImmutableList.of("version1", "version2", "version3"));
-
-    assertThat(resource.getVersionsForSecretName(user, "multiple-versions"))
-        .hasSameElementsAs(ImmutableList.of("version1", "version2", "version3"));
+    when(secretController.getSecretByNameOne("non-existent")).thenReturn(Optional.empty());
+    resource.retrieveSecret(user, "non-existent");
   }
 }

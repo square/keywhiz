@@ -41,7 +41,6 @@ class SecretContentMapper implements RecordMapper<SecretsContentRecord, SecretCo
         r.getId(),
         r.getSecretid(),
         r.getEncryptedContent(),
-        r.getVersion(),
         new ApiDate(r.getCreatedat()),
         r.getCreatedby(),
         new ApiDate(r.getUpdatedat()),

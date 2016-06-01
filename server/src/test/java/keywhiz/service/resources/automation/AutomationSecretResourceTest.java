@@ -25,7 +25,6 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
-import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretSeriesDAO;
@@ -75,13 +74,11 @@ public class AutomationSecretResourceTest {
     CreateSecretRequest request = new CreateSecretRequest("mySecret",
         "some secret",
         "ponies",
-        true,
         null,
         0);
 
     Secret secret = new Secret(0, /* Set by DB */
         request.name,
-        VersionGenerator.now().toHex(),
         request.description,
         Base64.getUrlEncoder().encodeToString(request.content.getBytes(UTF_8)),
         NOW,
@@ -94,7 +91,7 @@ public class AutomationSecretResourceTest {
 
     when(secretBuilder.build()).thenReturn(secret);
 
-    when(secretController.getSecretByNameAndVersion(eq(request.name), anyString()))
+    when(secretController.getSecretByNameOne(eq(request.name)))
         .thenReturn(Optional.of(secret));
 
     AutomationSecretResponse response = resource.createSecret(automation, request);
@@ -130,7 +127,7 @@ public class AutomationSecretResourceTest {
 
     doThrow(exception).when(secretBuilder).build();
 
-    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", false, emptyMap, 0);
+    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", emptyMap, 0);
     resource.createSecret(automation, req);
   }
 }

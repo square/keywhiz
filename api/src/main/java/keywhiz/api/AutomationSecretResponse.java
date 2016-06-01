@@ -37,10 +37,10 @@ import static keywhiz.api.model.Secret.decodedLength;
 public abstract class AutomationSecretResponse {
 
   public static AutomationSecretResponse create(long id, String name, String secret,
-      ApiDate creationDate, boolean isVersioned,
+      ApiDate creationDate,
       ImmutableMap<String, String> metadata, ImmutableList<Group> groups) {
     return new AutoValue_AutomationSecretResponse(id, name, secret, decodedLength(secret),
-        creationDate, isVersioned, groups, metadata);
+        creationDate, groups, metadata);
   }
 
   public static AutomationSecretResponse fromSecret(Secret secret, ImmutableList<Group> groups) {
@@ -50,7 +50,6 @@ public abstract class AutomationSecretResponse {
         secret.getDisplayName(),
         secret.getSecret(),
         secret.getCreatedAt(),
-        !secret.getVersion().isEmpty(),
         secret.getMetadata(),
         groups);
   }
@@ -60,7 +59,6 @@ public abstract class AutomationSecretResponse {
   @JsonProperty("secret") public abstract String secret();
   @JsonProperty("secretLength") public abstract long secretLength();
   @JsonProperty("creationDate") public abstract ApiDate creationDate();
-  @JsonProperty("isVersioned") public abstract boolean isVersioned();
   @JsonProperty("groups") public abstract ImmutableList<Group> groups();
   @JsonAnyGetter @JsonProperty("metadata") public abstract Map<String, String> metadata();
 }

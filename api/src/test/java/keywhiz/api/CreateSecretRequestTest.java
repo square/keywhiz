@@ -29,7 +29,6 @@ public class CreateSecretRequestTest {
         "secretName",
         "secretDesc",
         "YXNkZGFz",
-        true,
         ImmutableMap.of("owner", "root"),
         0);
 

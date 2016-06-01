@@ -18,7 +18,6 @@ import keywhiz.api.validation.ValidBase64;
   public static Builder builder() {
     return new AutoValue_CreateSecretRequestV2.Builder()
         .description("")
-        .versioned(false) // may flip default in the future
         .metadata(ImmutableMap.of())
         .expiry(0)
         .type("")
@@ -34,7 +33,6 @@ import keywhiz.api.validation.ValidBase64;
     public abstract Builder name(String name);
     public abstract Builder content(String content);
     public abstract Builder description(String description);
-    public abstract Builder versioned(boolean versioned);
     public abstract Builder metadata(ImmutableMap<String, String> metadata);
     public abstract Builder type(String type);
     public abstract Builder expiry(long expiry);
@@ -70,7 +68,6 @@ import keywhiz.api.validation.ValidBase64;
       @JsonProperty("name") String name,
       @JsonProperty("content") String content,
       @JsonProperty("description") @Nullable String description,
-      @JsonProperty("withVersion") boolean withVersion,
       @JsonProperty("metadata") @Nullable Map<String, String> metadata,
       @JsonProperty("expiry") long expiry,
       @JsonProperty("type") @Nullable String type,
@@ -78,7 +75,6 @@ import keywhiz.api.validation.ValidBase64;
     return builder()
         .name(name)
         .content(content)
-        .versioned(withVersion)
         .description(Strings.nullToEmpty(description))
         .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
         .expiry(expiry)
@@ -90,7 +86,6 @@ import keywhiz.api.validation.ValidBase64;
   @JsonProperty("name") public abstract String name();
   @JsonProperty("content") @ValidBase64 public abstract String content();
   @JsonProperty("description") public abstract String description();
-  @JsonProperty("versioned") public abstract boolean versioned();
   @JsonProperty("metadata") public abstract ImmutableMap<String, String> metadata();
   @JsonProperty("expiry") public abstract long expiry();
   @JsonProperty("type") public abstract String type();
@@ -101,7 +96,6 @@ import keywhiz.api.validation.ValidBase64;
         .add("name", name())
         .add("content", "[REDACTED]")
         .add("description", description())
-        .add("withVersion", versioned())
         .add("metadata", metadata())
         .add("expiry", expiry())
         .add("type", type())

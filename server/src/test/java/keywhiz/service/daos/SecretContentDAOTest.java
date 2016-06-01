@@ -44,7 +44,7 @@ public class SecretContentDAOTest {
   final static ApiDate date = ApiDate.now();
   ImmutableMap<String, String> metadata = ImmutableMap.of("foo", "bar");
 
-  SecretContent secretContent1 = SecretContent.of(11, 22, "[crypted]", "", date, "creator", date,
+  SecretContent secretContent1 = SecretContent.of(11, 22, "[crypted]", date, "creator", date,
       "creator", metadata);
 
   SecretContentDAO secretContentDAO;
@@ -63,7 +63,6 @@ public class SecretContentDAOTest {
         .set(SECRETS_CONTENT.ID, secretContent1.id())
         .set(SECRETS_CONTENT.SECRETID, secretContent1.secretSeriesId())
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secretContent1.encryptedContent())
-        .set(SECRETS_CONTENT.VERSION, secretContent1.version().orElse(null))
         .set(SECRETS_CONTENT.CREATEDAT, secretContent1.createdAt().toEpochSecond())
         .set(SECRETS_CONTENT.CREATEDBY, secretContent1.createdBy())
         .set(SECRETS_CONTENT.UPDATEDAT, secretContent1.updatedAt().toEpochSecond())
@@ -74,13 +73,9 @@ public class SecretContentDAOTest {
 
   @Test public void createSecretContent() {
     int before = tableSize();
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "creator",
         metadata, 0);
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
-        metadata, 0);
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
-        metadata, 0);
-    assertThat(tableSize()).isEqualTo(before + 3);
+    assertThat(tableSize()).isEqualTo(before + 1);
   }
 
   @Test public void getSecretContentById() {
@@ -88,11 +83,7 @@ public class SecretContentDAOTest {
   }
 
   @Test public void getSecretContentsBySecretId() {
-    long id1 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
-        metadata, 0);
-    long id2 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
-        metadata, 0);
-    long id3 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
+    long id1 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "creator",
         metadata, 0);
 
     List<Long> actualIds = secretContentDAO.getSecretContentsBySecretId(secretContent1.secretSeriesId())
@@ -100,20 +91,7 @@ public class SecretContentDAOTest {
         .map((content) -> (content == null) ? 0 : content.id())
         .collect(toList());
 
-    assertThat(actualIds).containsExactly(secretContent1.id(), id1, id2, id3);
-  }
-
-  @Test public void getVersionsBySecretId() {
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "version", "creator",
-        metadata, 0);
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted2", "version2", "creator",
-        metadata, 0);
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted3", "version3", "creator",
-        metadata, 0);
-
-    // We have the empty string as a version from the setUp() call
-    assertThat(secretContentDAO.getVersionFromSecretId(secretContent1.secretSeriesId()))
-        .hasSameElementsAs(ImmutableList.of("", "version", "version2", "version3"));
+    assertThat(actualIds).containsExactly(secretContent1.id(), id1);
   }
 
   private int tableSize() {

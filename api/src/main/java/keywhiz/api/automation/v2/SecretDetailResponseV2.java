@@ -23,7 +23,6 @@ import static keywhiz.api.model.Secret.decodedLength;
   public static Builder builder() {
     return new AutoValue_SecretDetailResponseV2.Builder()
         .content("")
-        .versions(null)
         .description("")
         .type(null)
         .metadata(ImmutableMap.of());
@@ -33,7 +32,6 @@ import static keywhiz.api.model.Secret.decodedLength;
     // intended to be package-private
     abstract String content();
     abstract Builder size(UnsignedLong size);
-    abstract Builder versions(@Nullable ImmutableList<String> versions);
     public abstract Builder metadata(ImmutableMap<String, String> metadata);
     abstract SecretDetailResponseV2 autoBuild();
 
@@ -43,10 +41,6 @@ import static keywhiz.api.model.Secret.decodedLength;
     public abstract Builder createdAtSeconds(long createdAt);
     public abstract Builder createdBy(String person);
     public abstract Builder type(@Nullable String type);
-
-    public Builder versions(@Nullable Iterable<String> versions) {
-      return versions(versions == null ? null : ImmutableList.copyOf(versions));
-    }
 
     public Builder metadata(Map<String, String> metadata) {
       return metadata(ImmutableMap.copyOf(metadata));
@@ -64,7 +58,6 @@ import static keywhiz.api.model.Secret.decodedLength;
     public Builder secret(Secret secret) {
       return this
           .name(secret.getName())
-          .versions(ImmutableList.of(secret.getVersion()))
           .description(secret.getDescription())
           .content(secret.getSecret())
           .createdAtSeconds(secret.getCreatedAt().toEpochSecond())
@@ -88,7 +81,6 @@ import static keywhiz.api.model.Secret.decodedLength;
   @SuppressWarnings("unused")
   @JsonCreator public static SecretDetailResponseV2 fromParts(
       @JsonProperty("name") String name,
-      @JsonProperty("version") @Nullable List<String> versions,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("content") String content,
       @JsonProperty("size") UnsignedLong size,
@@ -98,7 +90,6 @@ import static keywhiz.api.model.Secret.decodedLength;
       @JsonProperty("metadata") @Nullable Map<String, String> metadata) {
     return builder()
         .name(name)
-        .versions(versions == null ? null : ImmutableList.copyOf(versions))
         .description(nullToEmpty(description))
         .content(content)
         .size(size)
@@ -111,7 +102,6 @@ import static keywhiz.api.model.Secret.decodedLength;
 
   // TODO: Consider Optional values in place of Nullable.
   @JsonProperty("name") public abstract String name();
-  @JsonProperty("version") @Nullable public abstract ImmutableList<String> versions();
   @JsonProperty("description") public abstract String description();
   @JsonProperty("content") public abstract String content();
   @JsonProperty("size") public abstract UnsignedLong size();
@@ -123,7 +113,6 @@ import static keywhiz.api.model.Secret.decodedLength;
   @Override public final String toString() {
     return MoreObjects.toStringHelper(this)
         .add("name", name())
-        .add("versions", versions())
         .add("description", description())
         .add("content", "[REDACTED]")
         .add("size", size())

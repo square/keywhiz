@@ -23,12 +23,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.ParseException;
 import java.util.List;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.model.Group;
-import keywhiz.api.model.Secret;
-import keywhiz.api.model.VersionGenerator;
 import keywhiz.cli.configs.AddActionConfig;
 import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.NotFoundException;
@@ -88,28 +85,18 @@ public class AddAction implements Runnable {
         break;
 
       case "secret":
-        String[] parts;
         try {
-          parts = Secret.splitNameAndVersion(name);
-        } catch (ParseException e) {
-          throw new IllegalArgumentException("Invalid secret name");
-        }
-        try {
-          keywhizClient.getSanitizedSecretByNameAndVersion(parts[0], parts[1]);
+          keywhizClient.getSanitizedSecretByName(name);
           throw new AssertionError("Secret already exists.");
         } catch (NotFoundException e) {
           // secret does not exist, continue to add it
         } catch (IOException e) {
           throw Throwables.propagate(e);
         }
-        String secretName = parts[0];
         byte[] content = readSecretContent();
         ImmutableMap<String, String> metadata = getMetadata();
 
-        String version = getVersion(parts);
-        boolean useVersion = !version.isEmpty();
-
-        createAndAssignSecret(secretName, content, useVersion, version, metadata, getExpiry());
+        createAndAssignSecret(name, content, metadata, getExpiry());
         break;
 
       case "client":
@@ -134,14 +121,13 @@ public class AddAction implements Runnable {
     }
   }
 
-  private void createAndAssignSecret(String secretName, byte[] content, boolean useVersion,
-      String version, ImmutableMap<String, String> metadata, long expiry) {
+  private void createAndAssignSecret(String secretName, byte[] content,
+      ImmutableMap<String, String> metadata, long expiry) {
     try {
-      SecretDetailResponse secretResponse = keywhizClient.createSecret(secretName, "", content,
-          useVersion, metadata, expiry);
+      SecretDetailResponse secretResponse = keywhizClient.createSecret(secretName, "", content, metadata, expiry);
       long secretId = secretResponse.id;
 
-      logger.info("Creating secret '{}' with version '{}'.", secretName, version);
+      logger.info("Creating secret '{}'.", secretName);
 
       // Optionally, also assign
       if (addActionConfig.group != null) {
@@ -178,14 +164,6 @@ public class AddAction implements Runnable {
       return dt.getMillis();
     }
     return 0;
-  }
-
-  private String getVersion(String[] parts) {
-    String version = "";
-    if (parts[1] != null && !parts[1].isEmpty()) {
-      version = parts[1];
-    }
-    return version;
   }
 
   private byte[] readSecretContent() {

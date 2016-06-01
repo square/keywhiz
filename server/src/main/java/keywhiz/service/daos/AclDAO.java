@@ -265,10 +265,9 @@ public class AclDAO {
     return new HashSet<>(r);
   }
 
-  public Optional<SanitizedSecret> getSanitizedSecretFor(Client client, String name, String version) {
+  public Optional<SanitizedSecret> getSanitizedSecretFor(Client client, String name) {
     checkNotNull(client);
     checkArgument(!name.isEmpty());
-    checkNotNull(version);
 
     // In the past, the two data fetches below were wrapped in a transaction. The transaction was
     // removed because jOOQ transactions doesn't play well with MySQL readonly connections
@@ -288,8 +287,7 @@ public class AclDAO {
       return Optional.empty();
     }
 
-    Optional<SecretContent> secretContent =
-        secretContentDAO.getSecretContentBySecretIdAndVersion(secretSeries.get().id(), version);
+    Optional<SecretContent> secretContent = secretContentDAO.getSecretContentBySecretIdOne(secretSeries.get().id());
     if (!secretContent.isPresent()) {
       return Optional.empty();
     }

@@ -16,7 +16,6 @@
 
 package keywhiz.api.automation.v2;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import org.junit.Test;
@@ -29,7 +28,6 @@ public class SecretDetailResponseV2Test {
   @Test public void serializesCorrectly() throws Exception {
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .name("secret-name")
-        .versions(ImmutableList.of("version1", "version2"))
         .description("secret-description")
         .content("YXNkZGFz")
         .createdAtSeconds(OffsetDateTime.parse("2013-03-28T21:23:04.159Z").toEpochSecond())

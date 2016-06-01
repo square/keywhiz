@@ -18,7 +18,6 @@ package keywhiz.cli.commands;
 
 import com.google.common.base.Throwables;
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
 import keywhiz.api.model.Client;
@@ -30,7 +29,6 @@ import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.NotFoundException;
 
 import static java.lang.String.format;
-import static keywhiz.api.model.Secret.splitNameAndVersion;
 import static keywhiz.cli.Utilities.VALID_NAME_PATTERN;
 import static keywhiz.cli.Utilities.validName;
 
@@ -88,15 +86,12 @@ public class DescribeAction implements Runnable {
       case "secret":
         SanitizedSecret sanitizedSecret;
         try {
-          String[] parts = splitNameAndVersion(name);
-          sanitizedSecret = keywhizClient.getSanitizedSecretByNameAndVersion(parts[0], parts[1]);
+          sanitizedSecret = keywhizClient.getSanitizedSecretByName(name);
 
           printing.printSanitizedSecretWithDetails(sanitizedSecret,
               Arrays.asList("groups", "clients", "metadata"));
         } catch (NotFoundException e) {
           throw new AssertionError("Secret not found.");
-        } catch (ParseException e) {
-          throw new IllegalArgumentException(format("Invalid secret name: '%s'", name), e);
         } catch (IOException e) {
           throw Throwables.propagate(e);
         }
