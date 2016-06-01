@@ -152,26 +152,6 @@ public class Secret {
     return generationOptions;
   }
 
-  /**
-   * @param name original secret name, optionally containing a version.
-   * @return an array of size 2, containing name, and (possibly empty) version Strings.
-   * @throws ParseException when string contains more than one delimiter.
-   */
-  public static String[] splitNameAndVersion(String name) throws ParseException {
-    if (!name.contains(Secret.VERSION_DELIMITER)) {
-      return new String[] {name, ""};
-    }
-
-    String[] parts = name.split(quote(Secret.VERSION_DELIMITER));
-    if (parts.length > 2) {
-      throw new ParseException("Split ambiguous, more then one delimiter.", parts[0].length() + parts[1].length());
-    }
-    if (parts.length == 1) {
-      parts = new String[] {parts[0], ""};
-    }
-    return parts;
-  }
-
   /** Slightly hokey way of calculating the decoded-length without bothering to decode. */
   public static int decodedLength(String secret) {
     checkNotNull(secret);

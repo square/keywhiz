@@ -22,7 +22,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.text.ParseException;
 import java.util.List;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
@@ -35,7 +34,6 @@ import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static keywhiz.api.model.Secret.splitNameAndVersion;
 import static keywhiz.cli.Utilities.VALID_NAME_PATTERN;
 import static keywhiz.cli.Utilities.validName;
 
@@ -92,9 +90,8 @@ public class DeleteAction implements Runnable {
 
       case "secret":
         try {
-          String[] parts = splitNameAndVersion(deleteActionConfig.name);
           SanitizedSecret sanitizedSecret =
-              keywhizClient.getSanitizedSecretByNameAndVersion(parts[0], parts[1]);
+              keywhizClient.getSanitizedSecretByNameAndVersion(deleteActionConfig.name, "");
           BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, UTF_8));
           while (true) {
             System.out.println(
@@ -111,8 +108,6 @@ public class DeleteAction implements Runnable {
           }
         } catch (NotFoundException e) {
           throw new AssertionError("Secret does not exist: " + deleteActionConfig.name);
-        } catch (ParseException e) {
-          throw new IllegalArgumentException(e);
         } catch (IOException e) {
           throw new AssertionError(e);
         }

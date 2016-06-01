@@ -18,7 +18,6 @@ package keywhiz.cli.commands;
 
 import com.google.common.base.Throwables;
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.List;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
@@ -29,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
-import static keywhiz.api.model.Secret.splitNameAndVersion;
 import static keywhiz.cli.Utilities.VALID_NAME_PATTERN;
 import static keywhiz.cli.Utilities.validName;
 
@@ -104,9 +102,8 @@ public class AssignAction implements Runnable {
 
         try {
           long groupId = group.getId();
-          String[] parts = splitNameAndVersion(assignActionConfig.name);
           SanitizedSecret sanitizedSecret =
-                keywhizClient.getSanitizedSecretByNameAndVersion(parts[0], parts[1]);
+                keywhizClient.getSanitizedSecretByNameAndVersion(assignActionConfig.name, "");
           if (keywhizClient.groupDetailsForId(groupId).getSecrets().contains(sanitizedSecret)) {
             throw new AssertionError(
                 format("Secret '%s' already assigned to group '%s'", assignActionConfig.name,
@@ -116,8 +113,6 @@ public class AssignAction implements Runnable {
           keywhizClient.grantSecretToGroupByIds(sanitizedSecret.id(), groupId);
         } catch (KeywhizClient.NotFoundException e) {
           throw new AssertionError("Secret doesn't exist.");
-        } catch (ParseException e) {
-          throw new IllegalArgumentException(e);
         } catch (IOException e) {
           throw Throwables.propagate(e);
         }

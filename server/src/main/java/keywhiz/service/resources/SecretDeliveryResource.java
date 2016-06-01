@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static keywhiz.api.model.Secret.splitNameAndVersion;
 
 /**
  * @parentEndpointName secret
@@ -93,20 +92,8 @@ public class SecretDeliveryResource {
   @GET
   public SecretDeliveryResponse getSecret(@NotEmpty @PathParam("secretName") String secretName,
                                           @Auth Client client) {
-    String[] parts;
-    try {
-      parts = splitNameAndVersion(secretName);
-    } catch (ParseException e) {
-      throw new BadRequestException(format("Invalid secret name '%s'", secretName));
-    }
-    String name = parts[0];
-    String version = parts[1];
-    if (!version.equals("")) {
-      logger.error("Deprecated version feature still in use for {}!", secretName);
-    }
-
-    Optional<SanitizedSecret> sanitizedSecret = aclDAO.getSanitizedSecretFor(client, name, version);
-    Optional<Secret> secret = secretController.getSecretByNameAndVersion(name, version);
+    Optional<SanitizedSecret> sanitizedSecret = aclDAO.getSanitizedSecretFor(client, secretName, "");
+    Optional<Secret> secret = secretController.getSecretByNameAndVersion(secretName, "");
 
     if (!sanitizedSecret.isPresent()) {
       boolean clientExists = clientDAO.getClient(client.getName()).isPresent();
