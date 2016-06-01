@@ -187,7 +187,7 @@ public class SecretResource {
   public Iterable<String> secretGroupsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     // TODO: Use latest version instead of non-versioned
-    Secret secret = secretController.getSecretByNameAndVersion(name, "")
+    Secret secret = secretController.getSecretByNameOne(name)
         .orElseThrow(NotFoundException::new);
     return aclDAO.getGroupsFor(secret).stream()
         .map(Group::getName)
@@ -212,7 +212,7 @@ public class SecretResource {
   public Iterable<String> modifySecretGroups(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @Valid ModifyGroupsRequestV2 request) {
     // TODO: Use latest version instead of non-versioned
-    Secret secret = secretController.getSecretByNameAndVersion(name, "")
+    Secret secret = secretController.getSecretByNameOne(name)
         .orElseThrow(NotFoundException::new);
 
     long secretId = secret.getId();

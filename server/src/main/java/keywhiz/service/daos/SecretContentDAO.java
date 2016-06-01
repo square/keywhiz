@@ -84,12 +84,12 @@ public class SecretContentDAO {
     return Optional.ofNullable(r).map(secretContentMapper::map);
   }
 
-  public Optional<SecretContent> getSecretContentBySecretIdAndVersion(long secretId,
-      String version) {
-    SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT,
-        SECRETS_CONTENT.SECRETID.eq(secretId)
-            .and(SECRETS_CONTENT.VERSION.eq(version)));
-    return Optional.ofNullable(r).map(secretContentMapper::map);
+  public Optional<SecretContent> getSecretContentBySecretIdOne(long secretId) {
+    ImmutableList<SecretContent> r = getSecretContentsBySecretId(secretId);
+    if (r.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(r.get(0));
   }
 
   public ImmutableList<SecretContent> getSecretContentsBySecretId(long secretId) {

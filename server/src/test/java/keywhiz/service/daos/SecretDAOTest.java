@@ -110,10 +110,8 @@ public class SecretDAOTest {
     secretDAO = secretDAOFactory.readwrite();
 
     // Secrets created in the DB will have different id, updatedAt values.
-    secret1 = secretDAO.getSecretByNameAndVersion(
-        secret1.series().name(), secret1.content().version().get()).get();
-    secret2 = secretDAO.getSecretByNameAndVersion(
-        secret2.series().name(), secret2.content().version().get()).get();
+    secret1 = secretDAO.getSecretByNameOne(secret1.series().name()).get();
+    secret2 = secretDAO.getSecretByNameOne(secret2.series().name()).get();
   }
 
   @Test public void createSecret() {
@@ -123,44 +121,35 @@ public class SecretDAOTest {
     String name = "newSecret";
     String content = "c2VjcmV0MQ==";
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    String version = "";
     long newId = secretDAO.createSecret(name, encryptedContent, "creator",
         ImmutableMap.of(), 0, "", null, ImmutableMap.of());
-    SecretSeriesAndContent newSecret = secretDAO.getSecretByIdAndVersion(newId, version).get();
+    SecretSeriesAndContent newSecret = secretDAO.getSecretByIdOne(newId).get();
 
     assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore + 1);
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore + 1);
 
-    newSecret = secretDAO.getSecretByNameAndVersion(
-        newSecret.series().name(), newSecret.content().version().orElse("")).get();
+    newSecret = secretDAO.getSecretByNameOne(newSecret.series().name()).get();
     assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2, newSecret);
   }
 
-  @Test public void getSecretByNameAndVersion() {
+  @Test public void getSecretByName() {
     String name = secret1.series().name();
-    String version = secret1.content().version().orElse("");
-    assertThat(secretDAO.getSecretByNameAndVersion(name, version)).contains(secret1);
-  }
-
-  @Test public void getSecretByNameAndVersionWithoutVersion() {
-    String name = secret2.series().name();
-    assertThat(secretDAO.getSecretByNameAndVersion(name, "")).contains(secret2);
+    assertThat(secretDAO.getSecretByNameOne(name)).contains(secret1);
   }
 
   @Test public void getSecretByIdAndVersionWithoutVersion() {
-    assertThat(secretDAO.getSecretByIdAndVersion(secret2.series().id(), "")).contains(secret2);
+    assertThat(secretDAO.getSecretByIdOne(secret2.series().id())).contains(secret2);
   }
 
   @Test public void getSecretById() {
-    SecretSeriesAndContent expected = secretDAO.getSecretByNameAndVersion(
-        secret1.series().name(), secret1.content().version().orElse(""))
+    SecretSeriesAndContent expected = secretDAO.getSecretByNameOne(secret1.series().name())
         .orElseThrow(RuntimeException::new);
     List<SecretSeriesAndContent> actual = secretDAO.getSecretsById(expected.series().id());
     assertThat(actual).containsExactly(expected);
   }
 
   @Test public void getNonExistentSecret() {
-    assertThat(secretDAO.getSecretByNameAndVersion("non-existent", "")).isEmpty();
+    assertThat(secretDAO.getSecretByNameOne("non-existent")).isEmpty();
     assertThat(secretDAO.getSecretsById(-1231)).isEmpty();
   }
 
@@ -179,7 +168,7 @@ public class SecretDAOTest {
 
     assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore - 1);
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore - 1);
-    assertThat(secretDAO.getSecretByNameAndVersion("toBeDeleted_deleteSecretsByName", "first"))
+    assertThat(secretDAO.getSecretByNameOne("toBeDeleted_deleteSecretsByName"))
         .isEmpty();
   }
 

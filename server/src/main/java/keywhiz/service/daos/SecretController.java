@@ -51,20 +51,18 @@ public class SecretController {
 
   /**
    * @param secretId external secret series id to look up secrets by.
-   * @param version specific version of secret. May be empty.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<Secret> getSecretByIdAndVersion(long secretId, String version) {
-    return secretDAO.getSecretByIdAndVersion(secretId, version).map(transformer::transform);
+  public Optional<Secret> getSecretByIdOne(long secretId) {
+    return secretDAO.getSecretByIdOne(secretId).map(transformer::transform);
   }
 
   /**
    * @param name of secret series to look up secrets by.
-   * @param version specific version of secret. May be empty.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<Secret> getSecretByNameAndVersion(String name, String version) {
-    return secretDAO.getSecretByNameAndVersion(name, version).map(transformer::transform);
+  public Optional<Secret> getSecretByNameOne(String name) {
+    return secretDAO.getSecretByNameOne(name).map(transformer::transform);
   }
 
   /** @return all existing sanitized secrets. */
@@ -158,7 +156,7 @@ public class SecretController {
     public Secret build() {
         secretDAO.createSecret(name, encryptedSecret, creator, metadata, expiry, description, type,
             generationOptions);
-        return transformer.transform(secretDAO.getSecretByNameAndVersion(name, "").get());
+        return transformer.transform(secretDAO.getSecretByNameOne(name).get());
     }
   }
 }

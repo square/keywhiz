@@ -142,7 +142,7 @@ public class AutomationSecretResource {
     ImmutableList.Builder<AutomationSecretResponse> responseBuilder = ImmutableList.builder();
 
     if (name != null) {
-      Optional<Secret> optionalSecret = secretController.getSecretByNameAndVersion(name, "");
+      Optional<Secret> optionalSecret = secretController.getSecretByNameOne(name);
       if (!optionalSecret.isPresent()) {
         throw new NotFoundException("Secret not found.");
       }
@@ -155,8 +155,7 @@ public class AutomationSecretResource {
       List<SanitizedSecret> secrets = secretController.getSanitizedSecrets();
 
       for (SanitizedSecret sanitizedSecret : secrets) {
-        Secret secret = secretController.getSecretByIdAndVersion(
-            sanitizedSecret.id(), sanitizedSecret.version()).orElseThrow(() ->
+        Secret secret = secretController.getSecretByIdOne(sanitizedSecret.id()).orElseThrow(() ->
             new IllegalStateException(format("Cannot find record related to %s", sanitizedSecret)));
 
         ImmutableList<Group> groups =

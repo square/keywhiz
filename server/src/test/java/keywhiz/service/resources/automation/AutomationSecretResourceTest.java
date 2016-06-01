@@ -92,7 +92,7 @@ public class AutomationSecretResourceTest {
 
     when(secretBuilder.build()).thenReturn(secret);
 
-    when(secretController.getSecretByNameAndVersion(eq(request.name), anyString()))
+    when(secretController.getSecretByNameOne(eq(request.name)))
         .thenReturn(Optional.of(secret));
 
     AutomationSecretResponse response = resource.createSecret(automation, request);

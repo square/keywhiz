@@ -109,39 +109,22 @@ public class SecretDAO {
 
   /**
    * @param secretId external secret series id to look up secrets by.
-   * @param version specific version of secret. May be empty.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<SecretSeriesAndContent> getSecretByIdAndVersion(long secretId, String version) {
-    checkNotNull(version);
-
-    return dslContext.<Optional<SecretSeriesAndContent>>transactionResult(configuration -> {
-      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
-
-      Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesById(secretId);
-      if (!series.isPresent()) {
-        return Optional.empty();
-      }
-
-      Optional<SecretContent> content =
-          secretContentDAO.getSecretContentBySecretIdAndVersion(secretId, version);
-      if (!content.isPresent()) {
-        return Optional.empty();
-      }
-
-      return Optional.of(SecretSeriesAndContent.of(series.get(), content.get()));
-    });
+  public Optional<SecretSeriesAndContent> getSecretByIdOne(long secretId) {
+    ImmutableList<SecretSeriesAndContent> r = getSecretsById(secretId);
+    if (r.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(r.get(0));
   }
 
   /**
    * @param name of secret series to look up secrets by.
-   * @param version specific version of secret. May be empty.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<SecretSeriesAndContent> getSecretByNameAndVersion(String name, String version) {
+  public Optional<SecretSeriesAndContent> getSecretByNameOne(String name) {
     checkArgument(!name.isEmpty());
-    checkNotNull(version);
 
     // In the past, the two data fetches below were wrapped in a transaction. The transaction was
     // removed because jOOQ transactions doesn't play well with MySQL readonly connections
@@ -162,8 +145,7 @@ public class SecretDAO {
       return Optional.empty();
     }
 
-    Optional<SecretContent> secretContent =
-        secretContentDAO.getSecretContentBySecretIdAndVersion(secretSeries.get().id(), version);
+    Optional<SecretContent> secretContent = secretContentDAO.getSecretContentBySecretIdOne(secretSeries.get().id());
     if (!secretContent.isPresent()) {
       return Optional.empty();
     }

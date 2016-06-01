@@ -92,8 +92,8 @@ public class SecretDeliveryResource {
   @GET
   public SecretDeliveryResponse getSecret(@NotEmpty @PathParam("secretName") String secretName,
                                           @Auth Client client) {
-    Optional<SanitizedSecret> sanitizedSecret = aclDAO.getSanitizedSecretFor(client, secretName, "");
-    Optional<Secret> secret = secretController.getSecretByNameAndVersion(secretName, "");
+    Optional<SanitizedSecret> sanitizedSecret = aclDAO.getSanitizedSecretFor(client, secretName);
+    Optional<Secret> secret = secretController.getSecretByNameOne(secretName);
 
     if (!sanitizedSecret.isPresent()) {
       boolean clientExists = clientDAO.getClient(client.getName()).isPresent();

@@ -175,15 +175,15 @@ public class SecretsResourceTest {
   }
 
   @Test public void findSecretByNameAndVersion() {
-    when(secretController.getSecretByNameAndVersion(secret.getName(), secret.getVersion()))
+    when(secretController.getSecretByNameOne(secret.getName()))
         .thenReturn(Optional.of(secret));
-    assertThat(resource.retrieveSecret(user, "name", "version"))
+    assertThat(resource.retrieveSecret(user, "name"))
         .isEqualTo(SanitizedSecret.fromSecret(secret));
   }
 
   @Test(expected = NotFoundException.class)
   public void badNameNotFound() {
-    when(secretController.getSecretByNameAndVersion("non-existent", null)).thenReturn(Optional.empty());
-    resource.retrieveSecret(user, "non-existent", null);
+    when(secretController.getSecretByNameOne("non-existent")).thenReturn(Optional.empty());
+    resource.retrieveSecret(user, "non-existent");
   }
 }

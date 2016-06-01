@@ -109,14 +109,6 @@ public class SecretsResourceIntegrationTest {
     assertThat(response.name).isEqualTo("Nobody_PgPass");
   }
 
-  @Test public void listSpecificSecretByNameWithVersion() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-
-    SanitizedSecret sanitizedSecret = keywhizClient
-        .getSanitizedSecretByNameAndVersion("Versioned_Password", "0aae825a73e161d8");
-    assertThat(sanitizedSecret.id()).isEqualTo(742);
-  }
-
   @Test public void listSpecificNonVersionedSecretByName() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 

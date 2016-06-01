@@ -275,12 +275,12 @@ public class AclDAOTest {
   }
 
   @Test public void getSecretForWhenUnauthorized() throws Exception {
-    assertThat(aclDAO.getSanitizedSecretFor(client1, secret1.getName(), secret1.getVersion()))
+    assertThat(aclDAO.getSanitizedSecretFor(client1, secret1.getName()))
         .isEmpty();
   }
 
   @Test public void getSecretForWhenMissing() throws Exception {
-    assertThat(aclDAO.getSanitizedSecretFor(client1, "non-existent", "")).isEmpty();
+    assertThat(aclDAO.getSanitizedSecretFor(client1, "non-existent")).isEmpty();
   }
 
   @Test public void getSecretFor() throws Exception {
@@ -291,18 +291,18 @@ public class AclDAOTest {
 
     aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
 
-    SanitizedSecret secret = aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name(), sanitizedSecret1.version())
+    SanitizedSecret secret = aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name())
         .orElseThrow(RuntimeException::new);
     assertThat(secret).isEqualToIgnoringGivenFields(sanitizedSecret1, "id");
 
     aclDAO.evictClient(jooqContext.configuration(), client2.getId(), group1.getId());
     Optional<SanitizedSecret> missingSecret =
-        aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name(), sanitizedSecret1.version());
+        aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name());
     assertThat(missingSecret).isEmpty();
 
     aclDAO.allowAccess(jooqContext.configuration(), sanitizedSecret1.id(), group3.getId());
 
-    secret = aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name(), sanitizedSecret1.version())
+    secret = aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name())
         .orElseThrow(RuntimeException::new);
     assertThat(secret).isEqualToIgnoringGivenFields(sanitizedSecret1, "id");
   }

@@ -96,7 +96,6 @@ public class SecretsResource {
    * @optionalParams name
    * @param name the name of the Secret to retrieve, if provided
    * @optionalParams version
-   * @param version the version of the Secret to retrieve, if provided
    * @param nameOnly if set, the result only contains the id and name for the secrets.
    *
    * @description Returns a single Secret or a set of all Secrets for this user.
@@ -107,7 +106,6 @@ public class SecretsResource {
   @Timed @ExceptionMetered
   @GET
   public Response findSecrets(@Auth User user, @DefaultValue("") @QueryParam("name") String name,
-      @DefaultValue("") @QueryParam("version") String version,
       @DefaultValue("") @QueryParam("nameOnly") String nameOnly) {
     if (name.isEmpty()) {
       if (nameOnly.isEmpty()) {
@@ -116,10 +114,7 @@ public class SecretsResource {
         return Response.ok().entity(listSecretsNameOnly(user)).build();
       }
     }
-    if (!version.equals("")) {
-      logger.error("Deprecated version feature still in use for {}!", name);
-    }
-    return Response.ok().entity(retrieveSecret(user, name, version)).build();
+    return Response.ok().entity(retrieveSecret(user, name)).build();
   }
 
   protected List<SanitizedSecret> listSecrets(@Auth User user) {
@@ -132,9 +127,9 @@ public class SecretsResource {
     return secretController.getSecretsNameOnly();
   }
 
-  protected SanitizedSecret retrieveSecret(@Auth User user, String name, String version) {
-    logger.info("User '{}' retrieving secret name={} version={}.", user, name, version);
-    return sanitizedSecretFromNameAndVersion(name, version);
+  protected SanitizedSecret retrieveSecret(@Auth User user, String name) {
+    logger.info("User '{}' retrieving secret name={}.", user, name);
+    return sanitizedSecretFromName(name);
   }
 
   /**
@@ -244,8 +239,8 @@ public class SecretsResource {
     return SecretDetailResponse.fromSecret(secret, groups, clients);
   }
 
-  private SanitizedSecret sanitizedSecretFromNameAndVersion(String name, String version) {
-    Optional<Secret> optionalSecret = secretController.getSecretByNameAndVersion(name, version);
+  private SanitizedSecret sanitizedSecretFromName(String name) {
+    Optional<Secret> optionalSecret = secretController.getSecretByNameOne(name);
     if (!optionalSecret.isPresent()) {
       throw new NotFoundException("Secret not found.");
     }
