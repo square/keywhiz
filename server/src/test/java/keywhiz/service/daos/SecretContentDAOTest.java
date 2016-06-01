@@ -16,7 +16,6 @@
 
 package keywhiz.service.daos;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -73,7 +72,7 @@ public class SecretContentDAOTest {
 
   @Test public void createSecretContent() {
     int before = tableSize();
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "creator",
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId()+1, "encrypted", "creator",
         metadata, 0);
     assertThat(tableSize()).isEqualTo(before + 1);
   }
@@ -83,15 +82,12 @@ public class SecretContentDAOTest {
   }
 
   @Test public void getSecretContentsBySecretId() {
-    long id1 = secretContentDAO.createSecretContent(secretContent1.secretSeriesId(), "encrypted", "creator",
-        metadata, 0);
-
     List<Long> actualIds = secretContentDAO.getSecretContentsBySecretId(secretContent1.secretSeriesId())
         .stream()
         .map((content) -> (content == null) ? 0 : content.id())
         .collect(toList());
 
-    assertThat(actualIds).containsExactly(secretContent1.id(), id1);
+    assertThat(actualIds).containsExactly(secretContent1.id());
   }
 
   private int tableSize() {
