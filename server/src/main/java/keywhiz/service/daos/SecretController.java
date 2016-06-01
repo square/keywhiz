@@ -82,12 +82,6 @@ public class SecretController {
         .collect(toList());
   }
 
-  /** @return all versions for this secret name. */
-  public List<String> getVersionsForName(String name) {
-    checkArgument(!name.isEmpty());
-    return secretDAO.getVersionsForSecretName(name);
-  }
-
   public SecretBuilder builder(String name, String secret, String creator, long expiry) {
     checkArgument(!name.isEmpty());
     checkArgument(!secret.isEmpty());

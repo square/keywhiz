@@ -137,14 +137,6 @@ public class SecretsResourceIntegrationTest {
     keywhizClient.getSanitizedSecretByNameAndVersion("non-existent-secret", "");
   }
 
-  @Test public void listSecretVersions() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-
-    List<String> versions = keywhizClient.getVersionsForSecretName("Versioned_Password");
-    assertThat(versions).containsOnlyElementsOf(
-        ImmutableList.of("0aae825a73e161d8", "0aae825a73e161e8", "0aae825a73e161f8", "0aae825a73e161g8"));
-  }
-
   @Test(expected = KeywhizClient.MalformedRequestException.class)
   public void noVersionsWhenNoNameGiven() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());

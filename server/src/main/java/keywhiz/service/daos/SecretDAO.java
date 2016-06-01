@@ -135,26 +135,6 @@ public class SecretDAO {
   }
 
   /**
-   * @param name external secret series name to look up versions by
-   * @return List of versions tied to the parameter secret name.
-   */
-  public ImmutableList<String> getVersionsForSecretName(String name) {
-    checkNotNull(name);
-
-    return dslContext.<ImmutableList<String>>transactionResult(configuration -> {
-      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
-
-      Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesByName(name);
-      if (!series.isPresent()) {
-        return ImmutableList.of();
-      }
-
-      return secretContentDAO.getVersionFromSecretId(series.get().id());
-    });
-  }
-
-  /**
    * @param name of secret series to look up secrets by.
    * @param version specific version of secret. May be empty.
    * @return Secret matching input parameters or Optional.absent().

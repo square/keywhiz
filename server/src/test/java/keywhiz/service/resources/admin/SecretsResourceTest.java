@@ -186,12 +186,4 @@ public class SecretsResourceTest {
     when(secretController.getSecretByNameAndVersion("non-existent", null)).thenReturn(Optional.empty());
     resource.retrieveSecret(user, "non-existent", null);
   }
-
-  @Test public void getsVersions() {
-    when(secretController.getVersionsForName("multiple-versions"))
-        .thenReturn(ImmutableList.of("version1", "version2", "version3"));
-
-    assertThat(resource.getVersionsForSecretName(user, "multiple-versions"))
-        .hasSameElementsAs(ImmutableList.of("version1", "version2", "version3"));
-  }
 }

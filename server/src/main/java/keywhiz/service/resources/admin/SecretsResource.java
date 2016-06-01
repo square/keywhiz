@@ -138,36 +138,6 @@ public class SecretsResource {
   }
 
   /**
-   * Retrieve all versions for a Secret name
-   *
-   * @excludeParams user
-   * @param name the name of the Secret to find all versions for
-   *
-   * @description Returns a list of all versions for the given secret.
-   * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Found and retrieved versions(s)
-   * @responseMessage 400 Name not given
-   */
-  @Path("/versions")
-  @Timed @ExceptionMetered
-  @GET
-  public List<String> getVersionsForSecretName(@Auth User user,
-      @DefaultValue("") @QueryParam("name") String name) {
-    if (name.isEmpty()) {
-      // Must supply a secret name to find versions for
-      throw new BadRequestException("Must supply secret name to find versions.");
-    }
-    logger.error("Deprecated version feature still in use for {}!", name);
-    return retrieveSecretVersions(user, name);
-  }
-
-  /** Finds all versions for the specified secret name **/
-  protected List<String> retrieveSecretVersions(User user, String name) {
-    logger.info("User '{}' finding versions for secret '{}'.", user, name);
-    return secretController.getVersionsForName(name);
-  }
-
-  /**
    * Create Secret
    *
    * @excludeParams user
