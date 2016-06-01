@@ -183,37 +183,6 @@ public class SecretDAOTest {
         .isEmpty();
   }
 
-  @Test public void deleteSecretByNameAndVersion() {
-    secretDAO.createSecret("shadow_deleteSecretByNameAndVersion", "encrypted1", "no1", "creator",
-        ImmutableMap.of(), 0, "desc", null, null);
-    secretDAO.createSecret("shadow_deleteSecretByNameAndVersion", "encrypted2", "no2", "creator",
-        ImmutableMap.of(), 0, "desc", null, null);
-    int secretsBefore = tableSize(SECRETS);
-    int secretContentsBefore = tableSize(SECRETS_CONTENT);
-
-    secretDAO.deleteSecretByNameAndVersion("shadow_deleteSecretByNameAndVersion", "no1");
-
-    assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore);
-    assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore - 1);
-    assertThat(secretDAO.getSecretByNameAndVersion("shadow_deleteSecretByNameAndVersion", "no1"))
-        .isEmpty();
-  }
-
-  @Test public void deleteSecretSeriesWhenEmpty() {
-    secretDAO.createSecret("toBeDeleted_deleteSecretSeriesWhenEmpty", "encryptedOvaltine", "v22",
-        "creator", ImmutableMap.of(), 0, "desc", null, null);
-
-    int secretsBefore = tableSize(SECRETS);
-    int secretContentsBefore = tableSize(SECRETS_CONTENT);
-
-    secretDAO.deleteSecretByNameAndVersion("toBeDeleted_deleteSecretSeriesWhenEmpty", "v22");
-
-    assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore - 1);
-    assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore - 1);
-    assertThat(secretDAO.getSecretByNameAndVersion("toBeDeleted_deleteSecretSeriesWhenEmpty", "v22"))
-        .isEmpty();
-  }
-
   @Test(expected = DataAccessException.class)
   public void willNotCreateDuplicateVersionedSecret() throws Exception {
     ImmutableMap<String, String> emptyMap = ImmutableMap.of();

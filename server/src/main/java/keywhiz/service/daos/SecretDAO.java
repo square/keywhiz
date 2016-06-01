@@ -232,34 +232,6 @@ public class SecretDAO {
             .deleteSecretSeriesByName(name);
   }
 
-  /**
-   * Deletes a specific version in a secret series.
-   *
-   * @param name of secret series to delete from.
-   * @param version of secret to specifically delete.
-   */
-  public void deleteSecretByNameAndVersion(String name, String version) {
-    checkArgument(!name.isEmpty());
-    checkNotNull(version);
-
-    dslContext.transaction(configuration -> {
-      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
-
-      Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
-      if (!secretSeries.isPresent()) {
-        return;
-      }
-
-      long seriesId = secretSeries.get().id();
-      secretContentDAO.deleteSecretContentBySecretIdAndVersion(seriesId, version);
-
-      if (secretContentDAO.getSecretContentsBySecretId(seriesId).isEmpty()) {
-        secretSeriesDAO.deleteSecretSeriesById(seriesId);
-      }
-    });
-  }
-
   public static class SecretDAOFactory implements DAOFactory<SecretDAO> {
     private final DSLContext jooq;
     private final DSLContext readonlyJooq;
