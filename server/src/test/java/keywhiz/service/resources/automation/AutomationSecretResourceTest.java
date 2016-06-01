@@ -74,7 +74,6 @@ public class AutomationSecretResourceTest {
     CreateSecretRequest request = new CreateSecretRequest("mySecret",
         "some secret",
         "ponies",
-        true,
         null,
         0);
 
@@ -129,7 +128,7 @@ public class AutomationSecretResourceTest {
 
     doThrow(exception).when(secretBuilder).build();
 
-    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", false, emptyMap, 0);
+    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", emptyMap, 0);
     resource.createSecret(automation, req);
   }
 }

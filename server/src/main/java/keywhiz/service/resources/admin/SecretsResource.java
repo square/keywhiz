@@ -183,8 +183,7 @@ public class SecretsResource {
   @Consumes(APPLICATION_JSON)
   public Response createSecret(@Auth User user, @Valid CreateSecretRequest request) {
 
-    logger.info("User '{}' creating secret '{}' {} versioning.",
-        user, request.name, request.withVersion ? "with" : "without");
+    logger.info("User '{}' creating secret '{}'.", user, request.name);
 
     Secret secret;
     try {

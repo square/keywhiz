@@ -40,9 +40,6 @@ public class CreateSecretRequest {
   @JsonProperty
   public final String content;
 
-  @JsonProperty
-  public final boolean withVersion;
-
   @Nullable
   @JsonProperty
   public final ImmutableMap<String, String> metadata;
@@ -54,19 +51,17 @@ public class CreateSecretRequest {
   public CreateSecretRequest(@JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("content") String content,
-      @JsonProperty("withVersion") boolean withVersion,
       @JsonProperty("metadata") @Nullable ImmutableMap<String, String> metadata,
       @JsonProperty("expiry") long expiry) {
     this.name = name;
     this.description = description;
     this.content = content;
-    this.withVersion = withVersion;
     this.metadata = metadata;
     this.expiry = expiry;
   }
 
   @Override public int hashCode() {
-    return Objects.hashCode(name, description, content, withVersion, metadata, expiry);
+    return Objects.hashCode(name, description, content, metadata, expiry);
   }
 
   @Override public boolean equals(Object o) {
@@ -76,7 +71,6 @@ public class CreateSecretRequest {
       if (Objects.equal(this.name, that.name) &&
           Objects.equal(this.description, that.description) &&
           Objects.equal(this.content, that.content) &&
-          Objects.equal(this.withVersion, that.withVersion) &&
           Objects.equal(this.metadata, that.metadata) &&
           this.expiry == that.expiry) {
         return true;

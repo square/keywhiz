@@ -96,7 +96,7 @@ public class AddAction implements Runnable {
         byte[] content = readSecretContent();
         ImmutableMap<String, String> metadata = getMetadata();
 
-        createAndAssignSecret(name, content, false, "", metadata, getExpiry());
+        createAndAssignSecret(name, content, metadata, getExpiry());
         break;
 
       case "client":
@@ -121,14 +121,13 @@ public class AddAction implements Runnable {
     }
   }
 
-  private void createAndAssignSecret(String secretName, byte[] content, boolean useVersion,
-      String version, ImmutableMap<String, String> metadata, long expiry) {
+  private void createAndAssignSecret(String secretName, byte[] content,
+      ImmutableMap<String, String> metadata, long expiry) {
     try {
-      SecretDetailResponse secretResponse = keywhizClient.createSecret(secretName, "", content,
-          useVersion, metadata, expiry);
+      SecretDetailResponse secretResponse = keywhizClient.createSecret(secretName, "", content, metadata, expiry);
       long secretId = secretResponse.id;
 
-      logger.info("Creating secret '{}' with version '{}'.", secretName, version);
+      logger.info("Creating secret '{}'.", secretName);
 
       // Optionally, also assign
       if (addActionConfig.group != null) {

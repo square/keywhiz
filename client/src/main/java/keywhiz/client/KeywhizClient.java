@@ -144,14 +144,13 @@ public class KeywhizClient {
     return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
   }
 
-  public SecretDetailResponse createSecret(String name, String description, byte[] content, boolean withVersion,
+  public SecretDetailResponse createSecret(String name, String description, byte[] content,
       ImmutableMap<String, String> metadata, long expiry) throws IOException {
     checkArgument(!name.isEmpty());
     checkArgument(content.length > 0, "Content must not be empty");
 
     String b64Content = Base64.getEncoder().encodeToString(content);
-    CreateSecretRequest request = new CreateSecretRequest(name, description, b64Content,
-        withVersion, metadata, expiry);
+    CreateSecretRequest request = new CreateSecretRequest(name, description, b64Content, metadata, expiry);
     String response = httpPost(baseUrl.resolve("/admin/secrets"), request);
     return mapper.readValue(response, SecretDetailResponse.class);
   }

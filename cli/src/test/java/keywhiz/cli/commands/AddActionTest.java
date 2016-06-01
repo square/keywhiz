@@ -87,12 +87,12 @@ public class AddActionTest {
     when(keywhizClient.getSanitizedSecretByNameAndVersion(secret.getName(), secret.getVersion()))
         .thenThrow(new NotFoundException()); // Call checks for existence.
 
-    when(keywhizClient.createSecret(secret.getName(), "", content, false, secret.getMetadata(), 0))
+    when(keywhizClient.createSecret(secret.getName(), "", content, secret.getMetadata(), 0))
         .thenReturn(secretDetailResponse);
 
     addAction.run();
     verify(keywhizClient, times(1))
-        .createSecret(secret.getName(), "", content, false, secret.getMetadata(), 0);
+        .createSecret(secret.getName(), "", content, secret.getMetadata(), 0);
   }
 
   @Test
@@ -119,7 +119,7 @@ public class AddActionTest {
     when(keywhizClient.getSanitizedSecretByNameAndVersion(secret.getName(), secret.getVersion()))
         .thenThrow(new NotFoundException()); // Call checks for existence.
 
-    when(keywhizClient.createSecret(secret.getName(), "", content, false, secret.getMetadata(), 0))
+    when(keywhizClient.createSecret(secret.getName(), "", content, secret.getMetadata(), 0))
         .thenReturn(secretDetailResponse);
 
     addAction.run();
@@ -137,12 +137,12 @@ public class AddActionTest {
     when(keywhizClient.getSanitizedSecretByNameAndVersion(secret.getName(), ""))
         .thenThrow(new NotFoundException()); // Call checks for existence.
 
-    when(keywhizClient.createSecret(secret.getName(), "", content, false, secret.getMetadata(), 0))
+    when(keywhizClient.createSecret(secret.getName(), "", content, secret.getMetadata(), 0))
         .thenReturn(secretDetailResponse);
 
     addAction.run();
 
-    verify(keywhizClient, never()).createSecret(secret.getName(), "", content, true, secret.getMetadata(), 0);
+    verify(keywhizClient, times(1)).createSecret(secret.getName(), "", content, secret.getMetadata(), 0);
   }
 
   @Test
@@ -158,12 +158,12 @@ public class AddActionTest {
 
     ImmutableMap<String,String> expected = ImmutableMap.of("owner", "example-name", "group", "example-group");
 
-    when(keywhizClient.createSecret(secret.getName(), "", content, false, expected, 0))
+    when(keywhizClient.createSecret(secret.getName(), "", content, expected, 0))
         .thenReturn(secretDetailResponse);
 
     addAction.run();
 
-    verify(keywhizClient, times(1)).createSecret(secret.getName(), "", content, false, expected, 0);
+    verify(keywhizClient, times(1)).createSecret(secret.getName(), "", content, expected, 0);
   }
 
   @Test(expected = IllegalArgumentException.class)

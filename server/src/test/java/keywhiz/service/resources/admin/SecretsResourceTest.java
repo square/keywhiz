@@ -97,7 +97,7 @@ public class SecretsResourceTest {
     when(secretBuilder.build()).thenReturn(secret);
 
     CreateSecretRequest req = new CreateSecretRequest(secret.getName(),
-        secret.getDescription(), secret.getSecret(), true, emptyMap, 0);
+        secret.getDescription(), secret.getSecret(), emptyMap, 0);
     Response response = resource.createSecret(user, req);
 
     assertThat(response.getStatus()).isEqualTo(201);
@@ -120,7 +120,7 @@ public class SecretsResourceTest {
     DataAccessException exception = new DataAccessException("");
     doThrow(exception).when(secretBuilder).build();
 
-    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", false, emptyMap, 0);
+    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", emptyMap, 0);
     resource.createSecret(user, req);
   }
 
