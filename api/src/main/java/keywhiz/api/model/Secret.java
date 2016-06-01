@@ -46,9 +46,6 @@ public class Secret {
   /** Name of secret or the secret series. */
   private final String name;
 
-  /** Version of secret. May be empty. Lexicographically increasing. */
-  private final String version;
-
   private final String description;
 
   /** Base64-encoded content of this version of the secret. */
@@ -67,7 +64,6 @@ public class Secret {
 
   public Secret(long id,
       String name,
-      @Nullable String version,
       @Nullable String description,
       String secret,
       ApiDate createdAt,
@@ -81,7 +77,6 @@ public class Secret {
     checkArgument(!name.isEmpty());
     this.id = id;
     this.name = name;
-    this.version = nullToEmpty(version);
     this.description = nullToEmpty(description);
     this.secret = checkNotNull(secret); /* Expected empty when sanitized. */
     this.createdAt = checkNotNull(createdAt);
@@ -105,15 +100,7 @@ public class Secret {
 
   /** @return Name to serialize for clients. */
   public String getDisplayName() {
-    if (version.isEmpty()) {
-      return name;
-    }
-
-    return name + VERSION_DELIMITER + version;
-  }
-
-  public String getVersion() {
-    return version;
+    return name;
   }
 
   public String getDescription() {
@@ -166,7 +153,6 @@ public class Secret {
       Secret that = (Secret) o;
       if (Objects.equal(this.id, that.id) &&
           Objects.equal(this.name, that.name) &&
-          Objects.equal(this.version, that.version) &&
           Objects.equal(this.description, that.description) &&
           Objects.equal(this.secret, that.secret) &&
           Objects.equal(this.createdAt, that.createdAt) &&
@@ -183,7 +169,7 @@ public class Secret {
   }
 
   @Override public int hashCode() {
-    return Objects.hashCode(id, name, version, description, secret, createdAt, createdBy, updatedAt,
+    return Objects.hashCode(id, name, description, secret, createdAt, createdBy, updatedAt,
         updatedBy, metadata, type, generationOptions);
   }
 
@@ -192,7 +178,6 @@ public class Secret {
     return MoreObjects.toStringHelper(this)
         .add("id", id)
         .add("name", name)
-        .add("version", version)
         .add("description", description)
         .add("secret", "[REDACTED]")
         .add("creationDate", createdAt)

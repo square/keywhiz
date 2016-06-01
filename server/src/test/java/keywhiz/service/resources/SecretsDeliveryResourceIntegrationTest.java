@@ -53,24 +53,24 @@ public class SecretsDeliveryResourceIntegrationTest {
 
     generalPassword = SecretDeliveryResponse.fromSanitizedSecret(
         SanitizedSecret.fromSecret(
-            new Secret(0, "General_Password", null, null, "YXNkZGFz",
+            new Secret(0, "General_Password", null, "YXNkZGFz",
                 ApiDate.parse("2011-09-29T15:46:00.312Z"), null,
                 ApiDate.parse("2011-09-29T15:46:00.312Z"), null, null, null, null)));
     databasePassword = SecretDeliveryResponse.fromSanitizedSecret(
         SanitizedSecret.fromSecret(
-            new Secret(1, "Database_Password", null, null, "MTIzNDU=",
+            new Secret(1, "Database_Password", null, "MTIzNDU=",
                 ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
                 ApiDate.parse("2011-09-29T15:46:00.232Z"), null, null, null, null)));
     nobodyPgPassPassword = SecretDeliveryResponse.fromSanitizedSecret(
         SanitizedSecret.fromSecret(
-            new Secret(2, "Nobody_PgPass", null, null,
+            new Secret(2, "Nobody_PgPass", null,
                 "c29tZWhvc3Quc29tZXBsYWNlLmNvbTo1NDMyOnNvbWVkYXRhYmFzZTptaXN0ZXJhd2Vzb21lOmhlbGwwTWNGbHkK",
                 ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
                 ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
                 ImmutableMap.of("owner", "nobody", "mode", "0400"), null, null)));
     nonExistentOwnerPass = SecretDeliveryResponse.fromSanitizedSecret(
         SanitizedSecret.fromSecret(
-            new Secret(3, "NonexistentOwner_Pass", null, null, "MTIzNDU=",
+            new Secret(3, "NonexistentOwner_Pass", null, "MTIzNDU=",
                 ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
                 ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
                 ImmutableMap.of("owner", "NonExistent", "mode", "0400"), null, null)));

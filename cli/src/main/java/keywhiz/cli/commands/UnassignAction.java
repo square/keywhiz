@@ -90,7 +90,7 @@ public class UnassignAction implements Runnable {
         try {
           long groupId = group.getId();
           SanitizedSecret sanitizedSecret =
-              keywhizClient.getSanitizedSecretByNameAndVersion(unassignActionConfig.name, "");
+              keywhizClient.getSanitizedSecretByName(unassignActionConfig.name);
           if (!keywhizClient.groupDetailsForId(groupId).getSecrets().contains(sanitizedSecret)) {
             throw new AssertionError(
                 format("Secret '%s' not assigned to group '%s'", unassignActionConfig.name, group));

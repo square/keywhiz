@@ -47,17 +47,16 @@ public class SecretDAOTest {
 
   final static ContentCryptographer cryptographer = CryptoFixtures.contentCryptographer();
   final static ApiDate date = ApiDate.now();
-  final static String version = "";
   ImmutableMap<String, String> emptyMetadata = ImmutableMap.of();
 
   SecretSeries series1 = SecretSeries.of(1, "secret1", "desc1", date, "creator", date, "updater", null, null);
   String content = "c2VjcmV0MQ==";
   String encryptedContent = cryptographer.encryptionKeyDerivedFrom(series1.name()).encrypt(content);
-  SecretContent content1 = SecretContent.of(101, 1, encryptedContent, version, date, "creator", date, "updater", emptyMetadata);
+  SecretContent content1 = SecretContent.of(101, 1, encryptedContent, date, "creator", date, "updater", emptyMetadata);
   SecretSeriesAndContent secret1 = SecretSeriesAndContent.of(series1, content1);
 
   SecretSeries series2 = SecretSeries.of(2, "secret2", "desc2", date, "creator", date, "updater", null, null);
-  SecretContent content2 = SecretContent.of(102, 2, encryptedContent, "", date, "creator", date, "updater", emptyMetadata);
+  SecretContent content2 = SecretContent.of(102, 2, encryptedContent, date, "creator", date, "updater", emptyMetadata);
   SecretSeriesAndContent secret2 = SecretSeriesAndContent.of(series2, content2);
 
   SecretDAO secretDAO;
@@ -76,7 +75,6 @@ public class SecretDAOTest {
 
     jooqContext.insertInto(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.SECRETID, secret1.series().id())
-        .set(SECRETS_CONTENT.VERSION, secret1.content().version().orElse(null))
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret1.content().encryptedContent())
         .set(SECRETS_CONTENT.CREATEDBY, secret1.content().createdBy())
         .set(SECRETS_CONTENT.CREATEDAT, secret1.content().createdAt().toEpochSecond())
@@ -98,7 +96,6 @@ public class SecretDAOTest {
 
     jooqContext.insertInto(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.SECRETID, secret2.series().id())
-        .set(SECRETS_CONTENT.VERSION, secret2.content().version().orElse(null))
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret2.content().encryptedContent())
         .set(SECRETS_CONTENT.CREATEDBY, secret2.content().createdBy())
         .set(SECRETS_CONTENT.CREATEDAT, secret2.content().createdAt().toEpochSecond())
@@ -170,13 +167,6 @@ public class SecretDAOTest {
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore - 1);
     assertThat(secretDAO.getSecretByNameOne("toBeDeleted_deleteSecretsByName"))
         .isEmpty();
-  }
-
-  @Test(expected = DataAccessException.class)
-  public void willNotCreateDuplicateVersionedSecret() throws Exception {
-    ImmutableMap<String, String> emptyMap = ImmutableMap.of();
-    secretDAO.createSecret("secret1", "encrypted1", "creator", emptyMap, 0, "", null, emptyMap);
-    secretDAO.createSecret("secret1", "encrypted1", "creator", emptyMap, 0, "", null, emptyMap);
   }
 
   @Test(expected = DataAccessException.class)

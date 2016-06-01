@@ -112,8 +112,7 @@ public class SecretsResourceIntegrationTest {
   @Test public void listSpecificNonVersionedSecretByName() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
-    SanitizedSecret sanitizedSecret = keywhizClient
-        .getSanitizedSecretByNameAndVersion("Nobody_PgPass", "");
+    SanitizedSecret sanitizedSecret = keywhizClient.getSanitizedSecretByName("Nobody_PgPass");
     assertThat(sanitizedSecret.id()).isEqualTo(737);
   }
 
@@ -126,13 +125,6 @@ public class SecretsResourceIntegrationTest {
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void notFoundOnBadSecretName() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-    keywhizClient.getSanitizedSecretByNameAndVersion("non-existent-secret", "");
-  }
-
-  @Test(expected = KeywhizClient.MalformedRequestException.class)
-  public void noVersionsWhenNoNameGiven() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-
-    keywhizClient.getVersionsForSecretName("");
+    keywhizClient.getSanitizedSecretByName("non-existent-secret");
   }
 }

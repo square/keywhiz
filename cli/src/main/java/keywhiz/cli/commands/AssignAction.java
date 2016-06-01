@@ -103,7 +103,7 @@ public class AssignAction implements Runnable {
         try {
           long groupId = group.getId();
           SanitizedSecret sanitizedSecret =
-                keywhizClient.getSanitizedSecretByNameAndVersion(assignActionConfig.name, "");
+                keywhizClient.getSanitizedSecretByName(assignActionConfig.name);
           if (keywhizClient.groupDetailsForId(groupId).getSecrets().contains(sanitizedSecret)) {
             throw new AssertionError(
                 format("Secret '%s' already assigned to group '%s'", assignActionConfig.name,

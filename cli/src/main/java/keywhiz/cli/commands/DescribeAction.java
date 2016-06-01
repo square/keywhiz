@@ -86,7 +86,7 @@ public class DescribeAction implements Runnable {
       case "secret":
         SanitizedSecret sanitizedSecret;
         try {
-          sanitizedSecret = keywhizClient.getSanitizedSecretByNameAndVersion(name, "");
+          sanitizedSecret = keywhizClient.getSanitizedSecretByName(name);
 
           printing.printSanitizedSecretWithDetails(sanitizedSecret,
               Arrays.asList("groups", "clients", "metadata"));

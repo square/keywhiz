@@ -91,7 +91,7 @@ public class DeleteAction implements Runnable {
       case "secret":
         try {
           SanitizedSecret sanitizedSecret =
-              keywhizClient.getSanitizedSecretByNameAndVersion(deleteActionConfig.name, "");
+              keywhizClient.getSanitizedSecretByName(deleteActionConfig.name);
           BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, UTF_8));
           while (true) {
             System.out.println(

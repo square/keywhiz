@@ -50,7 +50,7 @@ public class SecretContentDAO {
     this.secretContentMapper = secretContentMapper;
   }
 
-  public long createSecretContent(long secretId, String encryptedContent, String version,
+  public long createSecretContent(long secretId, String encryptedContent,
       String creator, Map<String, String> metadata, long expiry) {
     SecretsContentRecord r = dslContext.newRecord(SECRETS_CONTENT);
 
@@ -66,7 +66,6 @@ public class SecretContentDAO {
 
     r.setSecretid(secretId);
     r.setEncryptedContent(encryptedContent);
-    r.setVersion(version);
     r.setCreatedby(creator);
     r.setCreatedat(now);
     r.setUpdatedby(creator);
@@ -98,24 +97,6 @@ public class SecretContentDAO {
         .where(SECRETS_CONTENT.SECRETID.eq(secretId))
         .fetch()
         .map(secretContentMapper);
-
-    return ImmutableList.copyOf(r);
-  }
-
-  public void deleteSecretContentBySecretIdAndVersion(long secretId, String version) {
-    dslContext
-        .delete(SECRETS_CONTENT)
-        .where(SECRETS_CONTENT.SECRETID.eq(secretId)
-            .and(SECRETS_CONTENT.VERSION.eq(version)))
-        .execute();
-  }
-
-  public ImmutableList<String> getVersionFromSecretId(long secretId) {
-    List<String> r = dslContext
-        .select(SECRETS_CONTENT.VERSION)
-        .from(SECRETS_CONTENT)
-        .where(SECRETS_CONTENT.SECRETID.eq(secretId))
-        .fetch(SECRETS_CONTENT.VERSION);
 
     return ImmutableList.copyOf(r);
   }

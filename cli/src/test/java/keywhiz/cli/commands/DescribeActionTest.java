@@ -48,7 +48,7 @@ public class DescribeActionTest {
 
   DescribeActionConfig describeActionConfig;
   DescribeAction describeAction;
-  Secret secret = new Secret(0, "secret", "", null, "c2VjcmV0MQ==", NOW,
+  Secret secret = new Secret(0, "secret", null, "c2VjcmV0MQ==", NOW,
       null, NOW, null, null, null, ImmutableMap.of());
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
 
@@ -87,8 +87,7 @@ public class DescribeActionTest {
     describeActionConfig.describeType = Arrays.asList("secret");
     describeActionConfig.name = "General_Password";
 
-    when(keywhizClient.getSanitizedSecretByNameAndVersion(anyString(), anyString()))
-        .thenReturn(sanitizedSecret);
+    when(keywhizClient.getSanitizedSecretByName(anyString())).thenReturn(sanitizedSecret);
 
     describeAction.run();
     verify(printing).printSanitizedSecretWithDetails(sanitizedSecret,
@@ -122,8 +121,7 @@ public class DescribeActionTest {
     describeActionConfig.describeType = Arrays.asList("secret");
     describeActionConfig.name = "nonexistent-secret-name";
 
-    when(keywhizClient.getSanitizedSecretByNameAndVersion(anyString(), anyString()))
-        .thenThrow(new NotFoundException());
+    when(keywhizClient.getSanitizedSecretByName(anyString())).thenThrow(new NotFoundException());
 
     describeAction.run();
   }

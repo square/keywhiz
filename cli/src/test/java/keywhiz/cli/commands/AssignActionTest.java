@@ -53,7 +53,7 @@ public class AssignActionTest {
   Group group = new Group(5, "group", null, null, null, null, null);
   GroupDetailResponse groupDetailResponse = GroupDetailResponse.fromGroup(group,
       ImmutableList.<SanitizedSecret>of(), ImmutableList.<Client>of());
-  Secret secret = new Secret(16, "secret", "", null, "c2VjcmV0MQ==", NOW,
+  Secret secret = new Secret(16, "secret", null, "c2VjcmV0MQ==", NOW,
       null, NOW, null, null, null, ImmutableMap.of());
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
 
@@ -111,7 +111,7 @@ public class AssignActionTest {
     assignActionConfig.group = group.getName();
 
     when(keywhizClient.getGroupByName(group.getName())).thenReturn(group);
-    when(keywhizClient.getSanitizedSecretByNameAndVersion(secret.getName(), secret.getVersion()))
+    when(keywhizClient.getSanitizedSecretByName(secret.getName()))
         .thenReturn(sanitizedSecret);
     when(keywhizClient.groupDetailsForId(group.getId())).thenReturn(groupDetailResponse);
 

@@ -233,20 +233,11 @@ public class KeywhizClient {
     return mapper.readValue(response, Group.class);
   }
 
-  public SanitizedSecret getSanitizedSecretByNameAndVersion(String name, String version) throws IOException {
+  public SanitizedSecret getSanitizedSecretByName(String name) throws IOException {
     checkArgument(!name.isEmpty());
     String response = httpGet(baseUrl.resolve("/admin/secrets").newBuilder().addQueryParameter("name", name)
-        .addQueryParameter("version", version)
         .build());
     return mapper.readValue(response, SanitizedSecret.class);
-  }
-
-  public List<String> getVersionsForSecretName(String name) throws IOException {
-    checkNotNull(name);
-    String response = httpGet(
-        baseUrl.resolve("/admin/secrets/versions").newBuilder().addQueryParameter("name", name)
-        .build());
-    return mapper.readValue(response, new TypeReference<List<String>>() {});
   }
 
   public boolean isLoggedIn() throws IOException{

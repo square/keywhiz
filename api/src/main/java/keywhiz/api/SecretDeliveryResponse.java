@@ -34,7 +34,6 @@ public class SecretDeliveryResponse {
   private final String secret;
   private final int secretLength;
   private final ApiDate creationDate;
-  private final boolean isVersioned;
   private final ImmutableMap<String, String> metadata;
 
   public SecretDeliveryResponse(
@@ -42,13 +41,11 @@ public class SecretDeliveryResponse {
       @JsonProperty("secret") String secret,
       @JsonProperty("secretLength") int secretLength,
       @JsonProperty("creationDate") ApiDate creationDate,
-      @JsonProperty("isVersioned") boolean isVersioned,
       @JsonProperty("metadata") ImmutableMap<String, String> metadata) {
     this.name = name;
     this.secret = secret;
     this.secretLength = secretLength;
     this.creationDate = creationDate;
-    this.isVersioned = isVersioned;
     this.metadata = metadata;
   }
 
@@ -58,7 +55,6 @@ public class SecretDeliveryResponse {
         secret.getSecret(),
         decodedLength(secret.getSecret()),
         secret.getCreatedAt(),
-        !secret.getVersion().isEmpty(),
         secret.getMetadata());
   }
 
@@ -68,7 +64,6 @@ public class SecretDeliveryResponse {
         "",
         0,
         sanitizedSecret.createdAt(),
-        !sanitizedSecret.version().isEmpty(),
         sanitizedSecret.metadata());
   }
 
@@ -92,11 +87,6 @@ public class SecretDeliveryResponse {
     return creationDate;
   }
 
-  @JsonProperty("isVersioned")
-  public boolean isVersioned() {
-    return isVersioned;
-  }
-
   /** @return Arbitrary key-values, serialized with existing fields. */
   @JsonAnyGetter
   public Map<String, String> getMetadata() {
@@ -106,7 +96,7 @@ public class SecretDeliveryResponse {
   @Override
   public int hashCode() {
     return Objects.hashCode(getName(), getSecret(), getSecretLength(), getCreationDate(),
-        isVersioned(), metadata);
+        metadata);
   }
 
   @Override
@@ -117,7 +107,6 @@ public class SecretDeliveryResponse {
           Objects.equal(this.getSecret(), that.getSecret()) &&
           this.getSecretLength() == that.getSecretLength() &&
           Objects.equal(this.getCreationDate(), that.getCreationDate()) &&
-          this.isVersioned() == that.isVersioned() &&
           Objects.equal(this.metadata, that.metadata)) {
         return true;
       }
@@ -132,7 +121,6 @@ public class SecretDeliveryResponse {
         .add("secret", "[REDACTED]")
         .add("secretLength", getSecretLength())
         .add("creationDate", getCreationDate())
-        .add("isVersioned", isVersioned())
         .add("metadata", metadata)
         .toString();
   }

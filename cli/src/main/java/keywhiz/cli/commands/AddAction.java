@@ -86,7 +86,7 @@ public class AddAction implements Runnable {
 
       case "secret":
         try {
-          keywhizClient.getSanitizedSecretByNameAndVersion(name, "");
+          keywhizClient.getSanitizedSecretByName(name);
           throw new AssertionError("Secret already exists.");
         } catch (NotFoundException e) {
           // secret does not exist, continue to add it

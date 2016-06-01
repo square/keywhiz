@@ -90,7 +90,7 @@ public class GroupsResourceTest {
   @Test public void getSpecificIncludesAllTheThings() {
     when(groupDAO.getGroupById(4444)).thenReturn(Optional.of(group));
 
-    SanitizedSecret secret = SanitizedSecret.of(1, "name", "", null, now, "creator", now, "creator", null, null, null);
+    SanitizedSecret secret = SanitizedSecret.of(1, "name", null, now, "creator", now, "creator", null, null, null);
     when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of(secret));
 
     Client client = new Client(1, "client", "desc", now, "creator", now, "creator", true, false);

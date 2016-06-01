@@ -34,10 +34,12 @@ import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 
 /**
@@ -71,14 +73,13 @@ public class SecretDAO {
       Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
       long secretId;
       if (secretSeries.isPresent()) {
-        secretId = secretSeries.get().id();
+        throw new DataAccessException(format("secret already present: %s", name));
       } else {
         secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type,
             generationOptions);
       }
 
-      secretContentDAO.createSecretContent(secretId, encryptedSecret, "", creator,
-          metadata, expiry);
+      secretContentDAO.createSecretContent(secretId, encryptedSecret, creator, metadata, expiry);
       return secretId;
     });
   }

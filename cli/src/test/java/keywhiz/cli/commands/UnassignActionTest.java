@@ -49,7 +49,7 @@ public class UnassignActionTest {
 
   Client client = new Client(11, "client-name", null, null, null, null, null, false, false);
   Group group = new Group(22, "group-name", null, null, null, null, null);
-  Secret secret = new Secret(33, "secret-name", "", null, "c2VjcmV0MQ==", NOW,
+  Secret secret = new Secret(33, "secret-name", null, "c2VjcmV0MQ==", NOW,
       null, NOW, null, null, null, ImmutableMap.of());
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
   GroupDetailResponse groupDetailResponse = GroupDetailResponse.fromGroup(group,
@@ -83,7 +83,7 @@ public class UnassignActionTest {
     unassignActionConfig.group = group.getName();
 
     when(keywhizClient.getGroupByName(group.getName())).thenReturn(group);
-    when(keywhizClient.getSanitizedSecretByNameAndVersion(secret.getName(), secret.getVersion()))
+    when(keywhizClient.getSanitizedSecretByName(secret.getName()))
         .thenReturn(sanitizedSecret);
     when(keywhizClient.groupDetailsForId(group.getId())).thenReturn(groupDetailResponse);
 

@@ -33,17 +33,16 @@ import static com.google.common.base.Strings.nullToEmpty;
 @AutoValue
 public abstract class SecretContent {
   public static SecretContent of(long id, long secretSeriesId, String encryptedContent,
-      @Nullable String version, ApiDate createdAt, @Nullable String createdBy,
+      ApiDate createdAt, @Nullable String createdBy,
       ApiDate updatedAt, @Nullable String updatedBy, ImmutableMap<String, String> metadata) {
     return new AutoValue_SecretContent(id, secretSeriesId, encryptedContent,
-        Optional.ofNullable(version), createdAt, nullToEmpty(createdBy), updatedAt,
+        createdAt, nullToEmpty(createdBy), updatedAt,
         nullToEmpty(updatedBy), metadata);
   }
 
   public abstract long id();
   public abstract long secretSeriesId();
   public abstract String encryptedContent();
-  public abstract Optional<String> version();
   public abstract ApiDate createdAt();
   public abstract String createdBy();
   public abstract ApiDate updatedAt();
@@ -55,7 +54,6 @@ public abstract class SecretContent {
         .add("id", id())
         .add("secretSeriesId", secretSeriesId())
         .add("encryptedContent", "[REDACTED]")
-        .add("version", version().orElse(null))
         .add("createdAt", createdAt())
         .add("createdBy", createdBy())
         .add("updatedAt", updatedAt())
