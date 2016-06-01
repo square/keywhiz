@@ -135,7 +135,6 @@ public class SecretsResourceTest {
     assertThat(response.id).isEqualTo(secret.getId());
     assertThat(response.name).isEqualTo(secret.getName());
     assertThat(response.description).isEqualTo(secret.getDescription());
-    assertThat(response.isVersioned).isTrue();
     assertThat(response.createdAt).isEqualTo(secret.getCreatedAt());
     assertThat(response.createdBy).isEqualTo(secret.getCreatedBy());
     assertThat(response.updatedAt).isEqualTo(secret.getUpdatedAt());

@@ -50,9 +50,6 @@ public class SecretDetailResponse {
   @JsonProperty
   public final String updatedBy;
 
-  @JsonProperty
-  public final boolean isVersioned;
-
   /** Arbitrary key-value data associated with the secret. */
   @JsonProperty
   public final ImmutableMap<String, String> metadata;
@@ -70,7 +67,6 @@ public class SecretDetailResponse {
       @JsonProperty("createdBy") String createdBy,
       @JsonProperty("updatedAt") ApiDate updatedAt,
       @JsonProperty("updatedBy") String updatedBy,
-      @JsonProperty("isVersioned") boolean versioned,
       @JsonProperty("metadata") ImmutableMap<String, String> metadata,
       @JsonProperty("groups") ImmutableList<Group> groups,
       @JsonProperty("clients") ImmutableList<Client> clients) {
@@ -81,7 +77,6 @@ public class SecretDetailResponse {
     this.createdBy = createdBy;
     this.updatedAt = updatedAt;
     this.updatedBy = updatedBy;
-    isVersioned = versioned;
     this.metadata = metadata;
     this.groups = groups;
     this.clients = clients;
@@ -96,7 +91,6 @@ public class SecretDetailResponse {
         secret.getCreatedBy(),
         secret.getUpdatedAt(),
         secret.getUpdatedBy(),
-        !secret.getVersion().isEmpty(),
         secret.getMetadata(),
         groups,
         clients);
@@ -119,7 +113,6 @@ public class SecretDetailResponse {
           Objects.equal(this.createdBy, that.createdBy) &&
           Objects.equal(this.updatedAt, that.updatedAt) &&
           Objects.equal(this.updatedBy, that.updatedBy) &&
-          this.isVersioned == that.isVersioned &&
           Objects.equal(this.metadata, that.metadata) &&
           Objects.equal(this.groups, that.groups) &&
           Objects.equal(this.clients, that.clients)) {
@@ -139,7 +132,6 @@ public class SecretDetailResponse {
         .add("createdBy", createdBy)
         .add("updatedAt", updatedAt)
         .add("updatedBy", updatedBy)
-        .add("isVersioned", isVersioned)
         .add("metadata", metadata)
         .add("groups", "[OMIT]")
         .add("clients", "[OMIT]")
