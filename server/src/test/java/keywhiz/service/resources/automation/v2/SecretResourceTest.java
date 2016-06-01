@@ -167,45 +167,6 @@ public class SecretResourceTest {
     assertThat(groups).containsOnly("group8b", "group8c");
   }
 
-  @Test public void secretVersionInfo_notFound() throws Exception {
-    Request get = clientRequest("/automation/v2/secrets/non-existent/version").get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(404);
-  }
-
-  @Test public void secretVersionInfo_versionNotFound() throws Exception {
-    create(CreateSecretRequestV2.builder()
-        .name("secret9")
-        .content(encoder.encodeToString("supa secret9".getBytes(UTF_8)))
-        .build());
-
-    Request get = clientRequest("/automation/v2/secrets/secret9/blah-version").get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(404);
-  }
-
-  @Test public void secretVersionInfo_successUnVersioned() throws Exception {
-    // Sample secret
-    byte[] secret = "supa secret11".getBytes(UTF_8);
-    create(CreateSecretRequestV2.builder()
-        .name("secret11")
-        .content(encoder.encodeToString(secret))
-        .description("desc")
-        .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
-        .type("password")
-        .build());
-
-    SecretDetailResponseV2 response = versionLookup("secret11", "");
-    assertThat(response.name()).isEqualTo("secret11");
-    assertThat(response.createdBy()).isEqualTo("client");
-    assertThat(response.description()).isEqualTo("desc");
-    assertThat(response.type()).isEqualTo("password");
-
-    assertThat(decoder.decode(response.content())).isEqualTo(secret);
-    assertThat(response.size().longValue()).isEqualTo(secret.length);
-    assertThat(response.metadata()).containsOnly(entry("owner", "root"), entry("mode", "0440"));
-  }
-
   @Test public void deleteSecretSeries_notFound() throws Exception {
     assertThat(deleteSeries("non-existent").code()).isEqualTo(404);
   }
@@ -264,13 +225,6 @@ public class SecretResourceTest {
     return mapper.readValue(httpResponse.body().byteStream(), SecretDetailResponseV2.class);
   }
 
-  SecretDetailResponseV2 versionLookup(String name, String version) throws IOException {
-    Request get = clientRequest(format("/automation/v2/secrets/%s/%s", name, version)).get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), SecretDetailResponseV2.class);
-  }
-
   List<String> groupsListing(String name) throws IOException {
     Request get = clientRequest(format("/automation/v2/secrets/%s/groups", name)).get().build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
@@ -288,11 +242,6 @@ public class SecretResourceTest {
 
   Response deleteSeries(String name) throws IOException {
     Request delete = clientRequest("/automation/v2/secrets/" + name).delete().build();
-    return mutualSslClient.newCall(delete).execute();
-  }
-
-  Response deleteSecretVersion(String name, String version) throws IOException {
-    Request delete = clientRequest(format("/automation/v2/secrets/%s/%s", name, version)).delete().build();
     return mutualSslClient.newCall(delete).execute();
   }
 }

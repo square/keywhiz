@@ -239,29 +239,6 @@ public class SecretResource {
   }
 
   /**
-   * Retrieve information on a version of a secret
-   *
-   * @excludeParams automationClient
-   * @param name Secret series name
-   * @param version Secret version, or empty
-   *
-   * @responseMessage 200 Secret information retrieved
-   * @responseMessage 404 Secret not found
-   */
-  @Timed @ExceptionMetered
-  @GET
-  @Path("{name}/{version:.*}")
-  @Produces(APPLICATION_JSON)
-  public SecretDetailResponseV2 secretVersionInfo(@Auth AutomationClient automationClient,
-      @PathParam("name") String name, @PathParam("version") String version) {
-    logger.error("Deprecated version feature still in use for {}!", name);
-
-    Secret secret = secretController.getSecretByNameAndVersion(name, version)
-        .orElseThrow(NotFoundException::new);
-    return SecretDetailResponseV2.builder().secret(secret).build();
-  }
-
-  /**
    * Delete a secret series
    *
    * @excludeParams automationClient
