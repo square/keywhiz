@@ -112,7 +112,6 @@ public class SecretResourceTest {
     assertThat(response.createdBy()).isEqualTo("client");
     assertThat(response.description()).isEqualTo("desc");
     assertThat(response.type()).isEqualTo("password");
-    assertThat(response.versions()).containsOnly("");
 
     // These values are left out for a series lookup as they pertain to a specific secret.
     assertThat(response.content()).isEmpty();
@@ -201,7 +200,6 @@ public class SecretResourceTest {
     assertThat(response.createdBy()).isEqualTo("client");
     assertThat(response.description()).isEqualTo("desc");
     assertThat(response.type()).isEqualTo("password");
-    assertThat(response.versions()).hasSize(1);
 
     assertThat(decoder.decode(response.content())).isEqualTo(secret);
     assertThat(response.size().longValue()).isEqualTo(secret.length);
