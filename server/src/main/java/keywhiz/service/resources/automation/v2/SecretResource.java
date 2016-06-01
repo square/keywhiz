@@ -111,10 +111,6 @@ public class SecretResource {
 
     UriBuilder uriBuilder = UriBuilder.fromResource(SecretResource.class).path(name);
 
-    if (request.versioned()) {
-      uriBuilder.path(secret.getVersion());
-    }
-
     return Response.created(uriBuilder.build()).build();
   }
 
