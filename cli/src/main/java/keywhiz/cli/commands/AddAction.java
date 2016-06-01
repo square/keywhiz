@@ -107,7 +107,7 @@ public class AddAction implements Runnable {
         ImmutableMap<String, String> metadata = getMetadata();
 
         String version = getVersion(parts);
-        boolean useVersion = (!version.isEmpty()) || addActionConfig.withVersion;
+        boolean useVersion = !version.isEmpty();
 
         createAndAssignSecret(secretName, content, useVersion, version, metadata, getExpiry());
         break;
@@ -184,8 +184,6 @@ public class AddAction implements Runnable {
     String version = "";
     if (parts[1] != null && !parts[1].isEmpty()) {
       version = parts[1];
-    } else if (addActionConfig.withVersion) {
-      version = VersionGenerator.now().toHex();
     }
     return version;
   }

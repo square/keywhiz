@@ -166,27 +166,6 @@ public class AddActionTest {
   }
 
   @Test
-  public void addCanCreateWithVersion() throws Exception {
-    addActionConfig.addType = Arrays.asList("secret");
-    addActionConfig.name = secret.getDisplayName();
-    addActionConfig.withVersion = true;
-
-    byte[] content = base64Decoder.decode(secret.getSecret());
-    addAction.stream = new ByteArrayInputStream(content);
-    when(keywhizClient.getSanitizedSecretByNameAndVersion(secret.getName(), secret.getVersion()))
-        .thenThrow(new NotFoundException()); // Call checks for existence.
-
-    when(keywhizClient.createSecret(secret.getName(), "", content, addActionConfig.withVersion,
-        secret.getMetadata(), 0))
-        .thenReturn(secretDetailResponse);
-
-    addAction.run();
-
-    verify(keywhizClient, times(1))
-        .createSecret(secret.getName(), "", content, true, secret.getMetadata(), 0);
-  }
-
-  @Test
   public void addWithMetadata() throws Exception {
     addActionConfig.addType = Arrays.asList("secret");
     addActionConfig.name = secret.getDisplayName();

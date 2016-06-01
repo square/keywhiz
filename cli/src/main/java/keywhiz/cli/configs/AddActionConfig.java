@@ -31,9 +31,6 @@ public class AddActionConfig {
   @Parameter(names = "--json", description = "Metadata JSON blob")
   public String json;
 
-  @Parameter(names = { "-s", "--with-version" }, description = "Append a version stamp to the name (secrets only)")
-  public boolean withVersion = false;
-
   @Parameter(names = { "-g", "--group" }, description = "Also assign the secret to this group (secrets only)")
   public String group;
 
