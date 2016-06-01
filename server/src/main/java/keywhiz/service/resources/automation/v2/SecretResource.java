@@ -283,30 +283,6 @@ public class SecretResource {
     return Response.noContent().build();
   }
 
-  /**
-   * Delete a version of a secret
-   *
-   * @excludeParams automationClient
-   * @param name Secret series name
-   * @param version Secret version, or empty
-   *
-   * @responseMessage 204 Secret version deleted
-   * @responseMessage 404 Secret version not found
-   */
-  @Timed @ExceptionMetered
-  @DELETE
-  @Path("{name}/{version:.*}")
-  public Response deleteSecretVersion(@Auth AutomationClient automationClient,
-      @PathParam("name") String name, @PathParam("version") String version) {
-
-    logger.error("Deprecated version feature still in use for {}!", name);
-
-    secretController.getSecretByNameAndVersion(name, version)
-        .orElseThrow(NotFoundException::new);
-    secretDAO.deleteSecretByNameAndVersion(name, version);
-    return Response.noContent().build();
-  }
-
   private Stream<Optional<Long>> groupsToGroupIds(Set<String> groupNames) {
     return groupNames.stream()
         .map(groupDAO::getGroup)

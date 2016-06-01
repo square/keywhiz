@@ -226,30 +226,6 @@ public class SecretResourceTest {
     assertThat(deleteSeries("secret12").code()).isEqualTo(404);
   }
 
-  @Test public void deleteSecretVersion_notFound() throws Exception {
-    // Sample secret
-    create(CreateSecretRequestV2.builder()
-        .name("secret13")
-        .content(encoder.encodeToString("supa secret13".getBytes(UTF_8)))
-        .build());
-
-    assertThat(deleteSecretVersion("secret13", "non-existent").code()).isEqualTo(404);
-  }
-
-  @Test public void deleteSecretVersion_successUnVersioned() throws Exception {
-    // Sample secret
-    create(CreateSecretRequestV2.builder()
-        .name("secret15")
-        .content(encoder.encodeToString("supa secret15".getBytes(UTF_8)))
-        .build());
-
-    // Delete works
-    assertThat(deleteSecretVersion("secret15", "").code()).isEqualTo(204);
-
-    // Subsequent deletes can't find the secret version
-    assertThat(deleteSecretVersion("secret15", "").code()).isEqualTo(404);
-  }
-
   @Test public void secretListing_success() throws Exception {
     // Listing without secret16
     assertThat(listing()).doesNotContain("secret16");
