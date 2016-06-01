@@ -82,38 +82,6 @@ public class SecretsResourceIntegrationTest {
         .contains("newSecret");
   }
 
-  @Test public void createsDuplicateSecretWithVersion() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-
-    keywhizClient.createSecret("trapdoor", "v1", "content".getBytes(), true, ImmutableMap.of(), 0);
-
-    List<SanitizedSecret> sanitizedSecrets1 = keywhizClient.allSecrets();
-
-    boolean found1 = false;
-    for (SanitizedSecret secret : sanitizedSecrets1) {
-      if (secret.name().equals("trapdoor")) {
-        assertThat(secret.description().equals("v1"));
-        found1 = true;
-        break;
-      }
-    }
-    assertThat(found1).isTrue();
-
-    keywhizClient.createSecret("trapdoor", "v2", "content".getBytes(), true, ImmutableMap.of(), 0);
-
-    List<SanitizedSecret> sanitizedSecrets2 = keywhizClient.allSecrets();
-
-    boolean found2 = false;
-    for (SanitizedSecret secret : sanitizedSecrets2) {
-      if (secret.name().equals("trapdoor")) {
-        assertThat(secret.description().equals("v2"));
-        found2 = true;
-        break;
-      }
-    }
-    assertThat(found2).isTrue();
-  }
-
   @Test(expected = KeywhizClient.ConflictException.class)
   public void rejectsCreatingDuplicateSecretWithoutVersion() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());

@@ -26,7 +26,6 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
-import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
@@ -80,7 +79,7 @@ public class AclDAOTest {
     group3 = groupDAO.getGroupById(id).get();
 
     SecretFixtures secretFixtures = SecretFixtures.using(secretDAOFactory.readwrite());
-    secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==", VersionGenerator.now().toHex());
+    secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==");
     secret2 = secretFixtures.createSecret("secret2", "c2VjcmV0Mg==");
   }
 

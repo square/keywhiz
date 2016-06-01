@@ -25,7 +25,6 @@ import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
-import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
@@ -48,7 +47,7 @@ public class SecretDAOTest {
 
   final static ContentCryptographer cryptographer = CryptoFixtures.contentCryptographer();
   final static ApiDate date = ApiDate.now();
-  final static String version = VersionGenerator.now().toHex();
+  final static String version = "";
   ImmutableMap<String, String> emptyMetadata = ImmutableMap.of();
 
   SecretSeries series1 = SecretSeries.of(1, "secret1", "desc1", date, "creator", date, "updater", null, null);
@@ -124,7 +123,7 @@ public class SecretDAOTest {
     String name = "newSecret";
     String content = "c2VjcmV0MQ==";
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    String version = VersionGenerator.now().toHex();
+    String version = "";
     long newId = secretDAO.createSecret(name, encryptedContent, version, "creator",
         ImmutableMap.of(), 0, "", null, ImmutableMap.of());
     SecretSeriesAndContent newSecret = secretDAO.getSecretByIdAndVersion(newId, version).get();
@@ -135,35 +134,6 @@ public class SecretDAOTest {
     newSecret = secretDAO.getSecretByNameAndVersion(
         newSecret.series().name(), newSecret.content().version().orElse("")).get();
     assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2, newSecret);
-  }
-
-  @Test public void createTwoVersionsOfASecret() {
-    int secretsBefore = tableSize(SECRETS);
-    int secretContentsBefore = tableSize(SECRETS_CONTENT);
-
-    String name = "newSecret";
-    String content = "c2VjcmV0MQ==";
-    String encryptedContent1 = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    String version = VersionGenerator.fromLong(1234).toHex();
-    long id = secretDAO.createSecret(name, encryptedContent1, version, "creator", ImmutableMap.of(),
-        0, "", null, ImmutableMap.of());
-    SecretSeriesAndContent newSecret1 = secretDAO.getSecretByIdAndVersion(id, version).get();
-
-    content = "amFja2RvcnNrZXkK";
-    String encryptedContent2 = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    version = VersionGenerator.fromLong(4321).toHex();
-    id = secretDAO.createSecret(name, encryptedContent2, version, "creator", ImmutableMap.of(), 0, "",
-        null, ImmutableMap.of());
-    SecretSeriesAndContent newSecret2 = secretDAO.getSecretByIdAndVersion(id, version).get();
-
-    // Only one new secrets entry should be created - there should be 2 secrets_content entries though
-    assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore + 1);
-
-    assertThat(newSecret1.content().encryptedContent()).isEqualTo(encryptedContent1);
-    assertThat(newSecret2.content().encryptedContent()).isEqualTo(encryptedContent2);
-    assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2, newSecret1, newSecret2);
-
-    assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore + 2);
   }
 
   @Test public void getSecretByNameAndVersion() {
@@ -177,41 +147,8 @@ public class SecretDAOTest {
     assertThat(secretDAO.getSecretByNameAndVersion(name, "")).contains(secret2);
   }
 
-  @Test public void getSecretByNameAndVersionWithVersion() {
-    String futureStamp = new VersionGenerator(System.currentTimeMillis() + 100000).toHex();
-    String name = secret1.series().name();
-    String content = "bmV3ZXJTZWNyZXQy";
-    String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    long newId = secretDAO.createSecret(name, encryptedContent, futureStamp, "creator", ImmutableMap.of(), 0, "desc",
-        null, null);
-    SecretSeriesAndContent newerSecret = secretDAO.getSecretByIdAndVersion(newId, futureStamp)
-        .orElseThrow(RuntimeException::new);
-
-    String version = secret1.content().version().orElse("");
-    assertThat(secretDAO.getSecretByNameAndVersion(name, version)).contains(secret1);
-
-    assertThat(secretDAO.getSecretByNameAndVersion(name, futureStamp)).contains(newerSecret);
-  }
-
   @Test public void getSecretByIdAndVersionWithoutVersion() {
     assertThat(secretDAO.getSecretByIdAndVersion(secret2.series().id(), "")).contains(secret2);
-  }
-
-  @Test public void getSecretByIdAndVersionWithVersion() {
-    String futureStamp = new VersionGenerator(System.currentTimeMillis() + 222222).toHex();
-    String name = secret1.series().name();
-    String content = "bmV3ZXJTZWNyZXQy";
-    String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    secretDAO.createSecret(name, encryptedContent, futureStamp, "creator", ImmutableMap.of(), 0, "desc", null, null);
-    SecretSeriesAndContent newerSecret = secretDAO.getSecretByNameAndVersion(name, futureStamp)
-        .orElseThrow(RuntimeException::new);
-
-    long id = secret1.series().id();
-    String secret1Version = secret1.content().version().orElse("");
-    assertThat(secretDAO.getSecretByIdAndVersion(id, secret1Version)).contains(secret1);
-
-    String newerSecretVersion = newerSecret.content().version().orElse("");
-    assertThat(secretDAO.getSecretByIdAndVersion(id, newerSecretVersion)).contains(newerSecret);
   }
 
   @Test public void getSecretById() {

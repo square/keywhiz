@@ -23,7 +23,6 @@ import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
-import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.SecretController;
@@ -74,7 +73,7 @@ public class SecretDeliveryResourceTest {
 
   @Test public void returnsVersionedSecretWhenAllowed() throws Exception {
     String name = "secret_name";
-    String version = VersionGenerator.now().toHex();
+    String version = "";
     Secret versionedSecret = new Secret(2, name, version, null, "U3BpZGVybWFu", NOW, null, NOW,
         null, null, null, null);
 

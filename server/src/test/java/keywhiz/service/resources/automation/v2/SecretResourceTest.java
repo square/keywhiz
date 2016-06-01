@@ -76,41 +76,6 @@ public class SecretResourceTest {
     assertThat(httpResponse.code()).isEqualTo(409);
   }
 
-  @Test public void createSecret_successVersioned() throws Exception {
-    CreateSecretRequestV2 request = CreateSecretRequestV2.builder()
-        .name("secret3")
-        .content(encoder.encodeToString("supa secre3".getBytes(UTF_8)))
-        .description("desc")
-        .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
-        .type("password")
-        .versioned(true)
-        .build();
-    Response httpResponse = create(request);
-    assertThat(httpResponse.code()).isEqualTo(201);
-    URI location = URI.create(httpResponse.header(LOCATION));
-    assertThat(location.getPath()).matches("/automation/v2/secrets/secret3/[a-z0-9]{16}");
-  }
-
-  @Test public void createSecret_duplicateVersioned() throws Exception {
-    CreateSecretRequestV2 request = CreateSecretRequestV2.builder()
-        .name("secret4")
-        .content(encoder.encodeToString("supa secre4".getBytes(UTF_8)))
-        .versioned(true)
-        .build();
-
-    // First secret
-    Response httpResponse = create(request);
-    assertThat(httpResponse.code()).isEqualTo(201);
-    String path = URI.create(httpResponse.header(LOCATION)).getPath();
-    assertThat(path).matches("/automation/v2/secrets/secret4/[a-z0-9]{16}");
-
-    // Duplicate secret w/ different version
-    httpResponse = create(request);
-    assertThat(httpResponse.code()).isEqualTo(201);
-    String path2 = URI.create(httpResponse.header(LOCATION)).getPath();
-    assertThat(path2).matches("/automation/v2/secrets/secret4/[a-z0-9]{16}").isNotEqualTo(path);
-  }
-
   @Ignore
   @Test public void modifySecretSeries_notFound() throws Exception {
     // TODO: need request object
@@ -220,32 +185,6 @@ public class SecretResourceTest {
     assertThat(httpResponse.code()).isEqualTo(404);
   }
 
-  @Test public void secretVersionInfo_successVersioned() throws Exception {
-    // Sample secret
-    byte[] secret = "supa secret10".getBytes(UTF_8);
-    Response httpResponse = create(CreateSecretRequestV2.builder()
-        .name("secret10")
-        .content(encoder.encodeToString(secret))
-        .description("desc")
-        .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
-        .type("password")
-        .versioned(true)
-        .build());
-    URI location = URI.create(httpResponse.header(LOCATION));
-    String version = Iterables.getLast(Splitter.on('/').split(location.getPath()));
-
-    SecretDetailResponseV2 response = versionLookup("secret10", version);
-    assertThat(response.name()).isEqualTo("secret10");
-    assertThat(response.createdBy()).isEqualTo("client");
-    assertThat(response.description()).isEqualTo("desc");
-    assertThat(response.type()).isEqualTo("password");
-    assertThat(response.versions()).hasSize(1);
-
-    assertThat(decoder.decode(response.content())).isEqualTo(secret);
-    assertThat(response.size().longValue()).isEqualTo(secret.length);
-    assertThat(response.metadata()).containsOnly(entry("owner", "root"), entry("mode", "0440"));
-  }
-
   @Test public void secretVersionInfo_successUnVersioned() throws Exception {
     // Sample secret
     byte[] secret = "supa secret11".getBytes(UTF_8);
@@ -295,23 +234,6 @@ public class SecretResourceTest {
         .build());
 
     assertThat(deleteSecretVersion("secret13", "non-existent").code()).isEqualTo(404);
-  }
-
-  @Test public void deleteSecretVersion_success() throws Exception {
-    // Sample secret
-    Response httpResponse = create(CreateSecretRequestV2.builder()
-        .name("secret14")
-        .content(encoder.encodeToString("supa secret14".getBytes(UTF_8)))
-        .versioned(true)
-        .build());
-    URI location = URI.create(httpResponse.header(LOCATION));
-    String version = Iterables.getLast(Splitter.on('/').split(location.getPath()));
-
-    // Delete works
-    assertThat(deleteSecretVersion("secret14", version).code()).isEqualTo(204);
-
-    // Subsequent deletes can't find the secret version
-    assertThat(deleteSecretVersion("secret14", version).code()).isEqualTo(404);
   }
 
   @Test public void deleteSecretVersion_successUnVersioned() throws Exception {

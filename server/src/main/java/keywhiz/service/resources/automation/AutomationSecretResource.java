@@ -41,7 +41,6 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
-import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.SecretController;
@@ -105,10 +104,6 @@ public class AutomationSecretResource {
     SecretController.SecretBuilder builder = secretController.builder(request.name, request.content,
         automationClient.getName(), request.expiry)
         .withDescription(nullToEmpty(request.description));
-
-    if (request.withVersion) {
-      builder.withVersion(VersionGenerator.now().toHex());
-    }
 
     if (request.metadata != null) {
       builder.withMetadata(request.metadata);

@@ -25,7 +25,6 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
-import keywhiz.api.model.VersionGenerator;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretSeriesDAO;
@@ -81,7 +80,7 @@ public class AutomationSecretResourceTest {
 
     Secret secret = new Secret(0, /* Set by DB */
         request.name,
-        VersionGenerator.now().toHex(),
+        "",
         request.description,
         Base64.getUrlEncoder().encodeToString(request.content.getBytes(UTF_8)),
         NOW,

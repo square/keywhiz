@@ -24,7 +24,6 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
-import keywhiz.api.model.VersionGenerator;
 import keywhiz.cli.configs.DeleteActionConfig;
 import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.NotFoundException;
@@ -51,7 +50,7 @@ public class DeleteActionTest {
   DeleteActionConfig deleteActionConfig;
   DeleteAction deleteAction;
 
-  Secret secret = new Secret(0, "secret", VersionGenerator.now().toHex(), null, "c2VjcmV0MQ==", NOW,
+  Secret secret = new Secret(0, "secret", "", null, "c2VjcmV0MQ==", NOW,
       null, NOW, null, null, null, ImmutableMap.of());
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
 

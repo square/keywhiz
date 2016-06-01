@@ -27,7 +27,6 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
-import keywhiz.api.model.VersionGenerator;
 import keywhiz.cli.configs.AddActionConfig;
 import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.NotFoundException;
@@ -56,7 +55,7 @@ public class AddActionTest {
 
   Client client = new Client(4, "newClient", null, null, null, null, null, true, false);
   Group group = new Group(4, "newGroup", null, null, null, null, null);
-  Secret secret = new Secret(15, "newSecret", VersionGenerator.now().toHex(), null, "c2VjcmV0MQ==",
+  Secret secret = new Secret(15, "newSecret", "", null, "c2VjcmV0MQ==",
       NOW, null, NOW, null, null, null, ImmutableMap.of());
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
   SecretDetailResponse secretDetailResponse = SecretDetailResponse.fromSecret(secret, null, null);
@@ -88,12 +87,12 @@ public class AddActionTest {
     when(keywhizClient.getSanitizedSecretByNameAndVersion(secret.getName(), secret.getVersion()))
         .thenThrow(new NotFoundException()); // Call checks for existence.
 
-    when(keywhizClient.createSecret(secret.getName(), "", content, true, secret.getMetadata(), 0))
+    when(keywhizClient.createSecret(secret.getName(), "", content, false, secret.getMetadata(), 0))
         .thenReturn(secretDetailResponse);
 
     addAction.run();
     verify(keywhizClient, times(1))
-        .createSecret(secret.getName(), "", content, true, secret.getMetadata(), 0);
+        .createSecret(secret.getName(), "", content, false, secret.getMetadata(), 0);
   }
 
   @Test
@@ -120,7 +119,7 @@ public class AddActionTest {
     when(keywhizClient.getSanitizedSecretByNameAndVersion(secret.getName(), secret.getVersion()))
         .thenThrow(new NotFoundException()); // Call checks for existence.
 
-    when(keywhizClient.createSecret(secret.getName(), "", content, true, secret.getMetadata(), 0))
+    when(keywhizClient.createSecret(secret.getName(), "", content, false, secret.getMetadata(), 0))
         .thenReturn(secretDetailResponse);
 
     addAction.run();
@@ -147,25 +146,6 @@ public class AddActionTest {
   }
 
   @Test
-  public void addCreatesVersionedSecretWhenVersionInName() throws Exception {
-    addActionConfig.addType = Arrays.asList("secret");
-    addActionConfig.name = secret.getDisplayName(); // Name includes version, e.g. newSecret..df97a
-
-    byte[] content = base64Decoder.decode(secret.getSecret());
-    addAction.stream = new ByteArrayInputStream(content);
-    when(keywhizClient.getSanitizedSecretByNameAndVersion(secret.getName(), secret.getVersion()))
-        .thenThrow(new NotFoundException()); // Call checks for existence.
-
-    when(keywhizClient.createSecret(secret.getName(), "", content, true, secret.getMetadata(), 0))
-        .thenReturn(secretDetailResponse);
-
-    addAction.run();
-
-    verify(keywhizClient, times(1))
-        .createSecret(secret.getName(), "", content, true, secret.getMetadata(), 0);
-  }
-
-  @Test
   public void addWithMetadata() throws Exception {
     addActionConfig.addType = Arrays.asList("secret");
     addActionConfig.name = secret.getDisplayName();
@@ -178,12 +158,12 @@ public class AddActionTest {
 
     ImmutableMap<String,String> expected = ImmutableMap.of("owner", "example-name", "group", "example-group");
 
-    when(keywhizClient.createSecret(secret.getName(), "", content, true, expected, 0))
+    when(keywhizClient.createSecret(secret.getName(), "", content, false, expected, 0))
         .thenReturn(secretDetailResponse);
 
     addAction.run();
 
-    verify(keywhizClient, times(1)).createSecret(secret.getName(), "", content, true, expected, 0);
+    verify(keywhizClient, times(1)).createSecret(secret.getName(), "", content, false, expected, 0);
   }
 
   @Test(expected = IllegalArgumentException.class)

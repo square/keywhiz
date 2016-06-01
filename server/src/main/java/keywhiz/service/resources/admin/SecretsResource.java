@@ -46,7 +46,6 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
-import keywhiz.api.model.VersionGenerator;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
@@ -198,11 +197,6 @@ public class SecretsResource {
 
       if (request.metadata != null) {
         builder.withMetadata(request.metadata);
-      }
-
-      if (request.withVersion) {
-        logger.error("Deprecated version feature still in use for {}!", request.name);
-        builder.withVersion(VersionGenerator.now().toHex());
       }
 
       secret = builder.build();

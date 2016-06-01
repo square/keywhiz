@@ -25,7 +25,6 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
-import keywhiz.api.model.VersionGenerator;
 import keywhiz.cli.configs.AssignActionConfig;
 import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.NotFoundException;
@@ -54,7 +53,7 @@ public class AssignActionTest {
   Group group = new Group(5, "group", null, null, null, null, null);
   GroupDetailResponse groupDetailResponse = GroupDetailResponse.fromGroup(group,
       ImmutableList.<SanitizedSecret>of(), ImmutableList.<Client>of());
-  Secret secret = new Secret(16, "secret", VersionGenerator.now().toHex(), null, "c2VjcmV0MQ==", NOW,
+  Secret secret = new Secret(16, "secret", "", null, "c2VjcmV0MQ==", NOW,
       null, NOW, null, null, null, ImmutableMap.of());
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
 

@@ -25,7 +25,6 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
-import keywhiz.api.model.VersionGenerator;
 import keywhiz.cli.configs.UnassignActionConfig;
 import keywhiz.client.KeywhizClient;
 import org.junit.Before;
@@ -50,7 +49,7 @@ public class UnassignActionTest {
 
   Client client = new Client(11, "client-name", null, null, null, null, null, false, false);
   Group group = new Group(22, "group-name", null, null, null, null, null);
-  Secret secret = new Secret(33, "secret-name", VersionGenerator.now().toHex(), null, "c2VjcmV0MQ==", NOW,
+  Secret secret = new Secret(33, "secret-name", "", null, "c2VjcmV0MQ==", NOW,
       null, NOW, null, null, null, ImmutableMap.of());
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
   GroupDetailResponse groupDetailResponse = GroupDetailResponse.fromGroup(group,
