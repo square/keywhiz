@@ -204,7 +204,6 @@ $ keywhiz.cli add secret --name mySecretName &lt; mySecretFile</pre>
   "name":"example.keytab",
   "description":"example kerberos keytab",
   "content":"a2V5dGFiIGNvbnRlbnQ=",
-  "withVersion":true,
   "metadata":{"owner":"root","group":"root","mode":"0400"}
 }
 $ curl --cert ./server/src/test/resources/clients/client.p12:ponies -H "Content-Type:application/json" -d @request.json https://localhost:4444/automation/secrets/</pre>

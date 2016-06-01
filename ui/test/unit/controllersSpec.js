@@ -558,7 +558,6 @@ describe('KeywhizUI Controllers', function() {
         name: 'fakeSecret',
         content: 'fakeContent',
         description: '',
-        withVersion: false,
         metadata: {}
       };
 
