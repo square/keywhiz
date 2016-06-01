@@ -38,8 +38,6 @@ import static org.apache.commons.lang3.StringUtils.removeEnd;
  * with arguments due to de-serialization.
  */
 public class Secret {
-  public static final String VERSION_DELIMITER = "..";
-
   /** Row id of secret series. */
   private final long id;
 
