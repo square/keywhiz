@@ -156,7 +156,7 @@ public class SecretController {
      * @return an instance of the newly created secret.
      */
     public Secret build() {
-        secretDAO.createSecret(name, encryptedSecret, "", creator, metadata, expiry, description, type,
+        secretDAO.createSecret(name, encryptedSecret, creator, metadata, expiry, description, type,
             generationOptions);
         return transformer.transform(secretDAO.getSecretByNameAndVersion(name, "").get());
     }
