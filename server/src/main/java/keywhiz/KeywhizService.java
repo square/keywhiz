@@ -17,6 +17,7 @@ package keywhiz;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -188,6 +189,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     objectMapper.registerModules(new Jdk8Module());
     objectMapper.registerModules(new JavaTimeModule());
     objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     return objectMapper;
   }
 }
