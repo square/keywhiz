@@ -80,6 +80,22 @@ public class SecretSeriesDAO {
     return r.getId();
   }
 
+  public int setCurrentVersion(long secretId, long secretContentId) {
+    long checkId = dslContext.select(SECRETS_CONTENT.SECRETID)
+        .from(SECRETS_CONTENT)
+        .where(SECRETS_CONTENT.ID.eq(secretContentId))
+        .fetchOne().value1();
+
+    if (checkId != secretId) {
+      throw new IllegalStateException("inconsistent secrets_content");
+    }
+
+    return dslContext.update(SECRETS)
+        .set(SECRETS.CURRENT, secretContentId)
+        .where(SECRETS.ID.eq(secretId))
+        .execute();
+  }
+
   public Optional<SecretSeries> getSecretSeriesById(long id) {
     SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.ID.eq(id));
     return Optional.ofNullable(r).map(secretSeriesMapper::map);

@@ -45,7 +45,8 @@ class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSeries> {
         new ApiDate(r.getUpdatedat()),
         r.getUpdatedby(),
         r.getType(),
-        tryToReadMapValue(r));
+        tryToReadMapValue(r),
+        r.getCurrent());
   }
 
   private Map<String, String> tryToReadMapValue(SecretsRecord r) {

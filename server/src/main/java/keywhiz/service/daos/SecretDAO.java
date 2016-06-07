@@ -79,7 +79,10 @@ public class SecretDAO {
             generationOptions);
       }
 
-      secretContentDAO.createSecretContent(secretId, encryptedSecret, creator, metadata, expiry);
+      long id = secretContentDAO.createSecretContent(secretId, encryptedSecret, creator, metadata, expiry);
+
+      secretSeriesDAO.setCurrentVersion(secretId, id);
+
       return secretId;
     });
   }

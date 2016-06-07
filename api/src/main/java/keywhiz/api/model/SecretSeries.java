@@ -43,10 +43,11 @@ public abstract class SecretSeries {
       ApiDate updatedAt,
       @Nullable String updatedBy,
       @Nullable String type,
-      @Nullable Map<String, String> generationOptions) {
+      @Nullable Map<String, String> generationOptions,
+      @Nullable Long currentVersion) {
     ImmutableMap<String, String> options = (generationOptions == null) ?
         ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
-    return new AutoValue_SecretSeries(id, name, nullToEmpty(description), createdAt, nullToEmpty(createdBy), updatedAt, nullToEmpty(updatedBy), Optional.ofNullable(type), options);
+    return new AutoValue_SecretSeries(id, name, nullToEmpty(description), createdAt, nullToEmpty(createdBy), updatedAt, nullToEmpty(updatedBy), Optional.ofNullable(type), options, Optional.ofNullable(currentVersion));
   }
 
   public abstract long id();
@@ -58,4 +59,5 @@ public abstract class SecretSeries {
   public abstract String updatedBy();
   public abstract Optional<String> type();
   public abstract ImmutableMap<String, String> generationOptions();
+  public abstract Optional<Long> currentVersion();
 }
