@@ -27,6 +27,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Optional;
+
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SecretSeriesDAOTest {
   @Inject DSLContext jooqContext;
   @Inject SecretSeriesDAOFactory secretSeriesDAOFactory;
+  @Inject SecretContentDAO.SecretContentDAOFactory secretContentDAOFactory;
 
   SecretSeriesDAO secretSeriesDAO;
 
@@ -48,7 +51,7 @@ public class SecretSeriesDAOTest {
     long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
         ImmutableMap.of("foo", "bar"));
     SecretSeries expected = SecretSeries.of(id, "newSecretSeries", "desc", now, "creator", now,
-        "creator", null, ImmutableMap.of("foo", "bar"));
+        "creator", null, ImmutableMap.of("foo", "bar"), null);
 
     assertThat(tableSize()).isEqualTo(before + 1);
 
@@ -61,6 +64,26 @@ public class SecretSeriesDAOTest {
         .orElseThrow(RuntimeException::new);
     assertThat(actual).isEqualToComparingOnlyGivenFields(expected,
         "name", "description", "type", "generationOptions");
+  }
+
+  @Test public void setCurrentVersion() {
+    long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", "creator", "", null, null);
+    Optional<SecretSeries> secretSeriesById = secretSeriesDAO.getSecretSeriesById(id);
+    assertThat(secretSeriesById.get().currentVersion().isPresent()).isFalse();
+
+    long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah", "creator", null, 0);
+    secretSeriesDAO.setCurrentVersion(id, contentId);
+    secretSeriesById = secretSeriesDAO.getSecretSeriesById(id);
+    assertThat(secretSeriesById.get().currentVersion().get()).isEqualTo(contentId);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void setCurrentVersion_failsWithIncorrectSecretContent() {
+    long id = secretSeriesDAO.createSecretSeries("someSecret", "creator", "", null, null);
+    long other = secretSeriesDAO.createSecretSeries("someOtherSecret", "creator", "", null, null);
+    long contentId = secretContentDAOFactory.readwrite().createSecretContent(other, "blah", "creator", null, 0);
+
+    secretSeriesDAO.setCurrentVersion(id, contentId);
   }
 
   @Test public void deleteSecretSeriesByName() {

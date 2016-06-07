@@ -111,6 +111,7 @@ public class AutomationSecretResourceTest {
         NOW,
         automation.getName(),
         null,
+        null,
         null);
 
     when(secretSeriesDAO.getSecretSeriesByName(secretSeries.name()))

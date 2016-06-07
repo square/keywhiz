@@ -49,13 +49,13 @@ public class SecretDAOTest {
   final static ApiDate date = ApiDate.now();
   ImmutableMap<String, String> emptyMetadata = ImmutableMap.of();
 
-  SecretSeries series1 = SecretSeries.of(1, "secret1", "desc1", date, "creator", date, "updater", null, null);
+  SecretSeries series1 = SecretSeries.of(1, "secret1", "desc1", date, "creator", date, "updater", null, null, null);
   String content = "c2VjcmV0MQ==";
   String encryptedContent = cryptographer.encryptionKeyDerivedFrom(series1.name()).encrypt(content);
   SecretContent content1 = SecretContent.of(101, 1, encryptedContent, date, "creator", date, "updater", emptyMetadata);
   SecretSeriesAndContent secret1 = SecretSeriesAndContent.of(series1, content1);
 
-  SecretSeries series2 = SecretSeries.of(2, "secret2", "desc2", date, "creator", date, "updater", null, null);
+  SecretSeries series2 = SecretSeries.of(2, "secret2", "desc2", date, "creator", date, "updater", null, null, null);
   SecretContent content2 = SecretContent.of(102, 2, encryptedContent, date, "creator", date, "updater", emptyMetadata);
   SecretSeriesAndContent secret2 = SecretSeriesAndContent.of(series2, content2);
 
