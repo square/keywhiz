@@ -47,11 +47,10 @@ public class PreviewMigrateCommand extends ConfiguredCommand<KeywhizConfig> {
     MigrationInfo current = info.current();
     if (current == null) {
       logger.info("No migrations have been run yet.");
-      return;
+    } else {
+      logger.info("Currently applied migration:");
+      logger.info("* {} - {}", current.getVersion(), current.getDescription());
     }
-
-    logger.info("Currently applied migration:");
-    logger.info("* {} - {}", current.getVersion(), current.getDescription());
 
     if (info.pending().length > 0) {
       logger.info("Pending migrations:");
