@@ -63,6 +63,10 @@ public class SecretDAOTest {
   SecretContent content2b = SecretContent.of(103, 2, "some other content", date, "creator", date, "updater", emptyMetadata);
   SecretSeriesAndContent secret2b = SecretSeriesAndContent.of(series2, content2b);
 
+  SecretSeries series3 = SecretSeries.of(3, "secret3", "desc3", date, "creator", date, "updater", null, null, null);
+  SecretContent content3 = SecretContent.of(104, 3, encryptedContent, date, "creator", date, "updater", emptyMetadata);
+  SecretSeriesAndContent secret3 = SecretSeriesAndContent.of(series3, content3);
+
   SecretDAO secretDAO;
 
   @Before
@@ -122,6 +126,29 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.UPDATEDAT, secret2b.content().updatedAt().toEpochSecond())
         .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret2b.content().metadata()))
         .execute();
+
+    jooqContext.insertInto(SECRETS)
+        .set(SECRETS.ID, series3.id())
+        .set(SECRETS.NAME, series3.name())
+        .set(SECRETS.DESCRIPTION, series3.description())
+        .set(SECRETS.CREATEDBY, series3.createdBy())
+        .set(SECRETS.CREATEDAT, series3.createdAt().toEpochSecond())
+        .set(SECRETS.UPDATEDBY, series3.updatedBy())
+        .set(SECRETS.UPDATEDAT, series3.updatedAt().toEpochSecond())
+        .set(SECRETS.CURRENT, series3.currentVersion().orElse(null))
+        .execute();
+
+    jooqContext.insertInto(SECRETS_CONTENT)
+        .set(SECRETS_CONTENT.ID, secret3.content().id())
+        .set(SECRETS_CONTENT.SECRETID, secret3.series().id())
+        .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret3.content().encryptedContent())
+        .set(SECRETS_CONTENT.CREATEDBY, secret3.content().createdBy())
+        .set(SECRETS_CONTENT.CREATEDAT, secret3.content().createdAt().toEpochSecond())
+        .set(SECRETS_CONTENT.UPDATEDBY, secret3.content().updatedBy())
+        .set(SECRETS_CONTENT.UPDATEDAT, secret3.content().updatedAt().toEpochSecond())
+        .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret3.content().metadata()))
+        .execute();
+
 
     secretDAO = secretDAOFactory.readwrite();
   }
