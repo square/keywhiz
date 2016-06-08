@@ -93,38 +93,24 @@ public class SecretDAO {
 
   /**
    * @param secretId external secret series id to look up secrets by.
-   * @return all Secrets with given id. May be empty or include multiple versions.
-   */
-  @VisibleForTesting ImmutableList<SecretSeriesAndContent> getSecretsById(long secretId) {
-    return dslContext.transactionResult(configuration -> {
-      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
-      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
-
-      ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
-
-      Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesById(secretId);
-      if (series.isPresent()) {
-        ImmutableList<SecretContent> contents =
-            secretContentDAO.getSecretContentsBySecretId(secretId);
-        for (SecretContent content : contents) {
-          secretsBuilder.add(SecretSeriesAndContent.of(series.get(), content));
-        }
-      }
-
-      return secretsBuilder.build();
-    });
-  }
-
-  /**
-   * @param secretId external secret series id to look up secrets by.
    * @return Secret matching input parameters or Optional.absent().
    */
   public Optional<SecretSeriesAndContent> getSecretByIdOne(long secretId) {
-    ImmutableList<SecretSeriesAndContent> r = getSecretsById(secretId);
-    if (r.isEmpty()) {
+    return dslContext.<Optional<SecretSeriesAndContent>>transactionResult(configuration ->  {
+      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
+      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+
+      Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesById(secretId);
+      if (series.isPresent() && series.get().currentVersion().isPresent()) {
+        long secretContentId = series.get().currentVersion().get();
+        Optional<SecretContent> contents = secretContentDAO.getSecretContentById(secretContentId);
+        if (!contents.isPresent()) {
+          throw new IllegalStateException(format("failed to fetch secret %d, content %d not found.", secretId, secretContentId));
+        }
+        return Optional.of(SecretSeriesAndContent.of(series.get(), contents.get()));
+      }
       return Optional.empty();
-    }
-    return Optional.of(r.get(0));
+    });
   }
 
   /**

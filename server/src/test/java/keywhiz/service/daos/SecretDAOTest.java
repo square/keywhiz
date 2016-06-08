@@ -19,6 +19,7 @@ package keywhiz.service.daos;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
@@ -56,8 +57,11 @@ public class SecretDAOTest {
   SecretSeriesAndContent secret1 = SecretSeriesAndContent.of(series1, content1);
 
   SecretSeries series2 = SecretSeries.of(2, "secret2", "desc2", date, "creator", date, "updater", null, null, 102L);
-  SecretContent content2 = SecretContent.of(102, 2, encryptedContent, date, "creator", date, "updater", emptyMetadata);
-  SecretSeriesAndContent secret2 = SecretSeriesAndContent.of(series2, content2);
+  SecretContent content2a = SecretContent.of(102, 2, encryptedContent, date, "creator", date, "updater", emptyMetadata);
+  SecretSeriesAndContent secret2a = SecretSeriesAndContent.of(series2, content2a);
+
+  SecretContent content2b = SecretContent.of(103, 2, "some other content", date, "creator", date, "updater", emptyMetadata);
+  SecretSeriesAndContent secret2b = SecretSeriesAndContent.of(series2, content2b);
 
   SecretDAO secretDAO;
 
@@ -98,14 +102,25 @@ public class SecretDAOTest {
         .execute();
 
     jooqContext.insertInto(SECRETS_CONTENT)
-        .set(SECRETS_CONTENT.ID, secret2.content().id())
-        .set(SECRETS_CONTENT.SECRETID, secret2.series().id())
-        .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret2.content().encryptedContent())
-        .set(SECRETS_CONTENT.CREATEDBY, secret2.content().createdBy())
-        .set(SECRETS_CONTENT.CREATEDAT, secret2.content().createdAt().toEpochSecond())
-        .set(SECRETS_CONTENT.UPDATEDBY, secret2.content().updatedBy())
-        .set(SECRETS_CONTENT.UPDATEDAT, secret2.content().updatedAt().toEpochSecond())
-        .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret2.content().metadata()))
+        .set(SECRETS_CONTENT.ID, secret2a.content().id())
+        .set(SECRETS_CONTENT.SECRETID, secret2a.series().id())
+        .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret2a.content().encryptedContent())
+        .set(SECRETS_CONTENT.CREATEDBY, secret2a.content().createdBy())
+        .set(SECRETS_CONTENT.CREATEDAT, secret2a.content().createdAt().toEpochSecond())
+        .set(SECRETS_CONTENT.UPDATEDBY, secret2a.content().updatedBy())
+        .set(SECRETS_CONTENT.UPDATEDAT, secret2a.content().updatedAt().toEpochSecond())
+        .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret2a.content().metadata()))
+        .execute();
+
+    jooqContext.insertInto(SECRETS_CONTENT)
+        .set(SECRETS_CONTENT.ID, secret2b.content().id())
+        .set(SECRETS_CONTENT.SECRETID, secret2b.series().id())
+        .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret2b.content().encryptedContent())
+        .set(SECRETS_CONTENT.CREATEDBY, secret2b.content().createdBy())
+        .set(SECRETS_CONTENT.CREATEDAT, secret2b.content().createdAt().toEpochSecond())
+        .set(SECRETS_CONTENT.UPDATEDBY, secret2b.content().updatedBy())
+        .set(SECRETS_CONTENT.UPDATEDAT, secret2b.content().updatedAt().toEpochSecond())
+        .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret2b.content().metadata()))
         .execute();
 
     secretDAO = secretDAOFactory.readwrite();
@@ -126,7 +141,7 @@ public class SecretDAOTest {
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore + 1);
 
     newSecret = secretDAO.getSecretByNameOne(newSecret.series().name()).get();
-    assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2, newSecret);
+    assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2a, secret2b, newSecret);
   }
 
   @Test(expected = DataAccessException.class)
@@ -167,24 +182,34 @@ public class SecretDAOTest {
     assertThat(secretDAO.getSecretByNameOne(name)).contains(secret1);
   }
 
-  @Test public void getSecretByIdAndVersionWithoutVersion() {
-    assertThat(secretDAO.getSecretByIdOne(secret2.series().id())).contains(secret2);
+  @Test public void getSecretByIdOne() {
+    assertThat(secretDAO.getSecretByIdOne(series2.id())).isEqualTo(Optional.of(secret2a));
   }
 
-  @Test public void getSecretById() {
-    SecretSeriesAndContent expected = secretDAO.getSecretByNameOne(secret1.series().name())
-        .orElseThrow(RuntimeException::new);
-    List<SecretSeriesAndContent> actual = secretDAO.getSecretsById(expected.series().id());
-    assertThat(actual).containsExactly(expected);
+  @Test public void getSecretByIdOneReturnsEmptyWhenCurrentVersionIsNull() {
+    jooqContext.update(SECRETS)
+        .set(SECRETS.CURRENT, (Long)null)
+        .where(SECRETS.ID.eq(series2.id()))
+        .execute();
+    assertThat(secretDAO.getSecretByIdOne(series2.id())).isEmpty();
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void getSecretByIdOneThrowsExceptionIfCurrentVersionIsInvalid() {
+    jooqContext.update(SECRETS)
+        .set(SECRETS.CURRENT, -1234L)
+        .where(SECRETS.ID.eq(series2.id()))
+        .execute();
+    secretDAO.getSecretByIdOne(series2.id());
   }
 
   @Test public void getNonExistentSecret() {
     assertThat(secretDAO.getSecretByNameOne("non-existent")).isEmpty();
-    assertThat(secretDAO.getSecretsById(-1231)).isEmpty();
+    assertThat(secretDAO.getSecretByIdOne(-1231)).isEmpty();
   }
 
   @Test public void getSecrets() {
-    assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2);
+    assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2a, secret2b);
   }
 
   @Test public void deleteSecretsByName() {
