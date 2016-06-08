@@ -49,13 +49,13 @@ public class SecretDAOTest {
   final static ApiDate date = ApiDate.now();
   ImmutableMap<String, String> emptyMetadata = ImmutableMap.of();
 
-  SecretSeries series1 = SecretSeries.of(1, "secret1", "desc1", date, "creator", date, "updater", null, null, null);
+  SecretSeries series1 = SecretSeries.of(1, "secret1", "desc1", date, "creator", date, "updater", null, null, 101L);
   String content = "c2VjcmV0MQ==";
   String encryptedContent = cryptographer.encryptionKeyDerivedFrom(series1.name()).encrypt(content);
   SecretContent content1 = SecretContent.of(101, 1, encryptedContent, date, "creator", date, "updater", emptyMetadata);
   SecretSeriesAndContent secret1 = SecretSeriesAndContent.of(series1, content1);
 
-  SecretSeries series2 = SecretSeries.of(2, "secret2", "desc2", date, "creator", date, "updater", null, null, null);
+  SecretSeries series2 = SecretSeries.of(2, "secret2", "desc2", date, "creator", date, "updater", null, null, 102L);
   SecretContent content2 = SecretContent.of(102, 2, encryptedContent, date, "creator", date, "updater", emptyMetadata);
   SecretSeriesAndContent secret2 = SecretSeriesAndContent.of(series2, content2);
 
@@ -64,16 +64,18 @@ public class SecretDAOTest {
   @Before
   public void setUp() throws Exception {
     jooqContext.insertInto(SECRETS)
-        .set(SECRETS.ID, secret1.series().id())
-        .set(SECRETS.NAME, secret1.series().name())
-        .set(SECRETS.DESCRIPTION, secret1.series().description())
-        .set(SECRETS.CREATEDBY, secret1.series().createdBy())
-        .set(SECRETS.CREATEDAT, secret1.series().createdAt().toEpochSecond())
-        .set(SECRETS.UPDATEDBY, secret1.series().updatedBy())
-        .set(SECRETS.UPDATEDAT, secret1.series().updatedAt().toEpochSecond())
+        .set(SECRETS.ID, series1.id())
+        .set(SECRETS.NAME, series1.name())
+        .set(SECRETS.DESCRIPTION, series1.description())
+        .set(SECRETS.CREATEDBY, series1.createdBy())
+        .set(SECRETS.CREATEDAT, series1.createdAt().toEpochSecond())
+        .set(SECRETS.UPDATEDBY, series1.updatedBy())
+        .set(SECRETS.UPDATEDAT, series1.updatedAt().toEpochSecond())
+        .set(SECRETS.CURRENT, series1.currentVersion().orElse(null))
         .execute();
 
     jooqContext.insertInto(SECRETS_CONTENT)
+        .set(SECRETS_CONTENT.ID, secret1.content().id())
         .set(SECRETS_CONTENT.SECRETID, secret1.series().id())
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret1.content().encryptedContent())
         .set(SECRETS_CONTENT.CREATEDBY, secret1.content().createdBy())
@@ -85,16 +87,18 @@ public class SecretDAOTest {
         .execute();
 
     jooqContext.insertInto(SECRETS)
-        .set(SECRETS.ID, secret2.series().id())
-        .set(SECRETS.NAME, secret2.series().name())
-        .set(SECRETS.DESCRIPTION, secret2.series().description())
-        .set(SECRETS.CREATEDBY, secret2.series().createdBy())
-        .set(SECRETS.CREATEDAT, secret2.series().createdAt().toEpochSecond())
-        .set(SECRETS.UPDATEDBY, secret2.series().updatedBy())
-        .set(SECRETS.UPDATEDAT, secret2.series().updatedAt().toEpochSecond())
+        .set(SECRETS.ID, series2.id())
+        .set(SECRETS.NAME, series2.name())
+        .set(SECRETS.DESCRIPTION, series2.description())
+        .set(SECRETS.CREATEDBY, series2.createdBy())
+        .set(SECRETS.CREATEDAT, series2.createdAt().toEpochSecond())
+        .set(SECRETS.UPDATEDBY, series2.updatedBy())
+        .set(SECRETS.UPDATEDAT, series2.updatedAt().toEpochSecond())
+        .set(SECRETS.CURRENT, series2.currentVersion().orElse(null))
         .execute();
 
     jooqContext.insertInto(SECRETS_CONTENT)
+        .set(SECRETS_CONTENT.ID, secret2.content().id())
         .set(SECRETS_CONTENT.SECRETID, secret2.series().id())
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret2.content().encryptedContent())
         .set(SECRETS_CONTENT.CREATEDBY, secret2.content().createdBy())
@@ -105,10 +109,6 @@ public class SecretDAOTest {
         .execute();
 
     secretDAO = secretDAOFactory.readwrite();
-
-    // Secrets created in the DB will have different id, updatedAt values.
-    secret1 = secretDAO.getSecretByNameOne(secret1.series().name()).get();
-    secret2 = secretDAO.getSecretByNameOne(secret2.series().name()).get();
   }
 
   @Test public void createSecret() {
