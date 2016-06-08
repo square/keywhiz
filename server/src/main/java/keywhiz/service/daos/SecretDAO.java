@@ -95,7 +95,7 @@ public class SecretDAO {
    * @param secretId external secret series id to look up secrets by.
    * @return all Secrets with given id. May be empty or include multiple versions.
    */
-  public ImmutableList<SecretSeriesAndContent> getSecretsById(long secretId) {
+  @VisibleForTesting ImmutableList<SecretSeriesAndContent> getSecretsById(long secretId) {
     return dslContext.transactionResult(configuration -> {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);

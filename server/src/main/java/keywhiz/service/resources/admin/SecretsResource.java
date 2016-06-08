@@ -212,31 +212,27 @@ public class SecretsResource {
   @Timed @ExceptionMetered
   @DELETE
   public Response deleteSecret(@Auth User user, @PathParam("secretId") LongParam secretId) {
-    List<Secret> secrets = secretController.getSecretsById(secretId.get());
-    if (secrets.isEmpty()) {
-      logger.info("User '{}' tried deleting not found id={}", user, secretId);
+    Optional<Secret> secret = secretController.getSecretByIdOne(secretId.get());
+    if (!secret.isPresent()) {
+      logger.info("User '{}' tried deleting a secret which was not found (id={})", user, secretId.get());
       throw new NotFoundException("Secret not found.");
     }
 
-    for(Secret secret: secrets) {
-      logger.info("User '{}' deleting secret id={}, name='{}'", user, secretId, secret.getDisplayName());
-    }
+    logger.info("User '{}' deleting secret id={}, name='{}'", user, secretId, secret.get().getName());
 
     secretSeriesDAO.deleteSecretSeriesById(secretId.get());
     return Response.noContent().build();
   }
 
   private SecretDetailResponse secretDetailResponseFromId(long secretId) {
-    List<Secret> secrets = secretController.getSecretsById(secretId);
-    if (secrets.isEmpty()) {
+    Optional<Secret> secrets = secretController.getSecretByIdOne(secretId);
+    if (!secrets.isPresent()) {
       throw new NotFoundException("Secret not found.");
     }
 
-    // TODO(justin): API change needed to return all versions.
-    Secret secret = secrets.get(0);
-    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
-    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(secret));
-    return SecretDetailResponse.fromSecret(secret, groups, clients);
+    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(secrets.get()));
+    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(secrets.get()));
+    return SecretDetailResponse.fromSecret(secrets.get(), groups, clients);
   }
 
   private SanitizedSecret sanitizedSecretFromName(String name) {

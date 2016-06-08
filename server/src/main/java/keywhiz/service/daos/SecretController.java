@@ -43,14 +43,6 @@ public class SecretController {
 
   /**
    * @param secretId external secret series id to look up secrets by.
-   * @return all Secrets with given id. May be empty or include multiple versions.
-   */
-  public List<Secret> getSecretsById(long secretId) {
-    return transformer.transform(secretDAO.getSecretsById(secretId));
-  }
-
-  /**
-   * @param secretId external secret series id to look up secrets by.
    * @return Secret matching input parameters or Optional.absent().
    */
   public Optional<Secret> getSecretByIdOne(long secretId) {
