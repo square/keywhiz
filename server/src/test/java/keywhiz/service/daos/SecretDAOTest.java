@@ -129,6 +129,39 @@ public class SecretDAOTest {
     assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2, newSecret);
   }
 
+  @Test(expected = DataAccessException.class)
+  public void createSecretFailsIfSecretExists() {
+    String name = "newSecret";
+    secretDAO.createSecret(name, "some secret", "creator",
+        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+
+    secretDAO.createSecret(name, "some secret", "creator",
+        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+  }
+
+  @Test(expected = DataAccessException.class)
+  public void willNotCreateDuplicateSecret() throws Exception {
+    ImmutableMap<String, String> emptyMap = ImmutableMap.of();
+    secretDAO.createSecret("secret1", "encrypted1", "creator", emptyMap, 0, "", null, emptyMap);
+    secretDAO.createSecret("secret1", "encrypted1", "creator", emptyMap, 0, "", null, emptyMap);
+  }
+
+  @Test public void createSecretSucceedsIfCurrentVersionIsNull() {
+    String name = "newSecret";
+    long firstId = secretDAO.createSecret(name, "some secret", "creator",
+        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+
+    jooqContext.update(SECRETS)
+        .set(SECRETS.CURRENT, (Long)null)
+        .where(SECRETS.ID.eq(firstId))
+        .execute();
+
+
+    long secondId = secretDAO.createSecret(name, "some secret", "creator",
+        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+    assertThat(secondId).isEqualTo(firstId);
+  }
+
   @Test public void getSecretByName() {
     String name = secret1.series().name();
     assertThat(secretDAO.getSecretByNameOne(name)).contains(secret1);
@@ -167,13 +200,6 @@ public class SecretDAOTest {
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore - 1);
     assertThat(secretDAO.getSecretByNameOne("toBeDeleted_deleteSecretsByName"))
         .isEmpty();
-  }
-
-  @Test(expected = DataAccessException.class)
-  public void willNotCreateDuplicateSecret() throws Exception {
-    ImmutableMap<String, String> emptyMap = ImmutableMap.of();
-    secretDAO.createSecret("secret1", "encrypted1", "creator", emptyMap, 0, "", null, emptyMap);
-    secretDAO.createSecret("secret1", "encrypted1", "creator", emptyMap, 0, "", null, emptyMap);
   }
 
   private int tableSize(Table table) {
