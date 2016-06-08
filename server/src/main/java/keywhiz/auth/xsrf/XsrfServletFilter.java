@@ -39,7 +39,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 @Singleton
 public class XsrfServletFilter implements Filter {
   private static final Logger logger = LoggerFactory.getLogger(XsrfServletFilter.class);
-  private static final Set<String> EXCLUDED_PATHS = ImmutableSet.of("/admin/login", "/admin/logout", "/admin/migrate/current");
+  private static final Set<String> EXCLUDED_PATHS = ImmutableSet.of("/admin/login", "/admin/logout");
 
   private final String sessionCookieName;
   private final String xsrfHeaderName;
