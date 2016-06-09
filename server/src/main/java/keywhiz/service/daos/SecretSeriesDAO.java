@@ -109,6 +109,7 @@ public class SecretSeriesDAO {
   public ImmutableList<SecretSeries> getSecretSeries() {
     List<SecretSeries> r = dslContext
         .selectFrom(SECRETS)
+        .where(SECRETS.CURRENT.isNotNull())
         .fetch()
         .map(secretSeriesMapper);
 

@@ -58,9 +58,6 @@ import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Starting point for Keywhiz, an implementation of the Dropwizard Service.
  */
@@ -153,7 +150,6 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(injector.getInstance(AutomationEnrollClientGroupResource.class));
     jersey.register(injector.getInstance(AutomationSecretAccessResource.class));
     jersey.register(injector.getInstance(StatusResource.class));
-    jersey.register(injector.getInstance(MigrateResource.class));
 
     ManualStatusHealthCheck mshc = new ManualStatusHealthCheck();
     environment.healthChecks().register("manualStatus", mshc);

@@ -184,16 +184,14 @@ public class AutomationSecretResource {
       @Auth AutomationClient automationClient,
       @PathParam("secretId") LongParam secretId) {
 
-    List<Secret> secrets = secretController.getSecretsById(secretId.get());
-    if (secrets.isEmpty()) {
+    Optional<Secret> secret = secretController.getSecretByIdOne(secretId.get());
+    if (!secret.isPresent()) {
       throw new NotFoundException("Secret not found.");
     }
 
-    Secret secret = secrets.get(0);
-    ImmutableList<Group> groups =
-        ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
+    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(secret.get()));
 
-    return AutomationSecretResponse.fromSecret(secret, groups);
+    return AutomationSecretResponse.fromSecret(secret.get(), groups);
   }
 
   /**

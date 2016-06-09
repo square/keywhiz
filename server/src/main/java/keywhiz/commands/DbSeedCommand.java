@@ -88,13 +88,14 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
         .execute();
 
     dslContext
-        .insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT, SECRETS.UPDATEDAT)
-        .values(737L, "Nobody_PgPass", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond())
-        .values(738L, "Hacking_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond())
-        .values(739L, "Database_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond())
-        .values(740L, "General_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond())
-        .values(741L, "NonexistentOwner_Pass", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond())
-        .values(742L, "Versioned_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond())
+        .insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT, SECRETS.UPDATEDAT, SECRETS.CURRENT)
+        .values(737L, "Nobody_PgPass", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 937L)
+        .values(738L, "Hacking_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 938L)
+        .values(739L, "Database_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 939L)
+        .values(740L, "General_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 940L)
+        .values(741L, "NonexistentOwner_Pass", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 941L)
+        .values(742L, "Versioned_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 942L)
+        .values(743L, "Deleted_Secret", OffsetDateTime.parse("2016-06-08T02:03:04Z").toEpochSecond(), OffsetDateTime.parse("2016-06-08T02:03:04Z").toEpochSecond(), null)
         .execute();
 
     dslContext
@@ -105,6 +106,10 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
         .values(940L, 740L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:02:06Z").toEpochSecond(), "{\"derivationInfo\":\"General_Password\",\"content\":\"A6kBLXwmx0EVtuIGTzxHiEZ/6yrXgg\",\"iv\":\"e4I0c3fog0TKqTAC2UxYtQ\"}", "")
         .values(941L, 741L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:02:06Z").toEpochSecond(), "{\"derivationInfo\":\"NonexistentOwner_Pass\",\"content\":\"+Pu1B5YgqGRIHzh17s5tPT3AYb+W\",\"iv\":\"ewRV3RhFfLnbWxY5pr401g\"}", "{\"owner\":\"NonExistant\",\"mode\":\"0400\"}")
         .values(942L, 742L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:02:06Z").toEpochSecond(), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
+        .values(943L, 742L, OffsetDateTime.parse("2011-09-29T16:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T16:46:00Z").toEpochSecond(), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
+        .values(944L, 742L, OffsetDateTime.parse("2011-09-29T17:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T17:46:00Z").toEpochSecond(), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
+        .values(945L, 742L, OffsetDateTime.parse("2011-09-29T18:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T18:46:00Z").toEpochSecond(), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
+        .values(946L, 743L, OffsetDateTime.parse("2016-06-08T02:03:04Z").toEpochSecond(), OffsetDateTime.parse("2016-06-08T02:03:04Z").toEpochSecond(), "{\"derivationInfo\":\"Deleted_Secret\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
         .execute();
 
     dslContext

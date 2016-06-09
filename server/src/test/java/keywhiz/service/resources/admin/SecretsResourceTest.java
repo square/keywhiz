@@ -89,7 +89,7 @@ public class SecretsResourceTest {
 
   @Test
   public void createsSecret() throws Exception {
-    when(secretController.getSecretsById(secret.getId())).thenReturn(ImmutableList.of(secret));
+    when(secretController.getSecretByIdOne(secret.getId())).thenReturn(Optional.of(secret));
 
     SecretController.SecretBuilder secretBuilder = mock(SecretController.SecretBuilder.class);
     when(secretController.builder(secret.getName(), secret.getSecret(), user.getName(), 0))
@@ -106,7 +106,7 @@ public class SecretsResourceTest {
   }
 
   @Test public void canDelete() {
-    when(secretController.getSecretsById(0xdeadbeef)).thenReturn(ImmutableList.of(secret));
+    when(secretController.getSecretByIdOne(0xdeadbeef)).thenReturn(Optional.of(secret));
 
     Response response = resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)));
     verify(secretSeriesDAO).deleteSecretSeriesById(0xdeadbeef);
@@ -126,7 +126,7 @@ public class SecretsResourceTest {
 
   @Test
   public void includesTheSecret() {
-    when(secretController.getSecretsById(22)).thenReturn(ImmutableList.of(secret));
+    when(secretController.getSecretByIdOne(22)).thenReturn(Optional.of(secret));
     when(aclDAO.getGroupsFor(secret)).thenReturn(Collections.emptySet());
     when(aclDAO.getClientsFor(secret)).thenReturn(Collections.emptySet());
 
@@ -144,7 +144,7 @@ public class SecretsResourceTest {
 
   @Test
   public void handlesNoAssociations() {
-    when(secretController.getSecretsById(22)).thenReturn(ImmutableList.of(secret));
+    when(secretController.getSecretByIdOne(22)).thenReturn(Optional.of(secret));
     when(aclDAO.getGroupsFor(secret)).thenReturn(Collections.emptySet());
     when(aclDAO.getClientsFor(secret)).thenReturn(Collections.emptySet());
 
@@ -159,7 +159,7 @@ public class SecretsResourceTest {
     Group group1 = new Group(0, "group1", null, null, null, null, null);
     Group group2 = new Group(0, "group2", null, null, null, null, null);
 
-    when(secretController.getSecretsById(22)).thenReturn(ImmutableList.of(secret));
+    when(secretController.getSecretByIdOne(22)).thenReturn(Optional.of(secret));
     when(aclDAO.getGroupsFor(secret)).thenReturn(Sets.newHashSet(group1, group2));
     when(aclDAO.getClientsFor(secret)).thenReturn(Sets.newHashSet(client));
 
@@ -170,7 +170,7 @@ public class SecretsResourceTest {
 
   @Test(expected = NotFoundException.class)
   public void badIdNotFound() {
-    when(secretController.getSecretsById(0xbad1d)).thenReturn(ImmutableList.of());
+    when(secretController.getSecretByIdOne(0xbad1d)).thenReturn(Optional.empty());
     resource.retrieveSecret(user, new LongParam(Long.toString(0xbad1d)));
   }
 
