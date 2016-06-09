@@ -261,15 +261,10 @@ public class SecretDAOTest {
     secretDAO.createSecret("toBeDeleted_deleteSecretsByName", "encryptedShhh", "creator",
         ImmutableMap.of(), 0, "", null, null);
 
-    int secretsBefore = tableSize(SECRETS);
-    int secretContentsBefore = tableSize(SECRETS_CONTENT);
-
     secretDAO.deleteSecretsByName("toBeDeleted_deleteSecretsByName");
 
-    assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore - 1);
-    assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore - 1);
-    assertThat(secretDAO.getSecretByNameOne("toBeDeleted_deleteSecretsByName"))
-        .isEmpty();
+    Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByNameOne("toBeDeleted_deleteSecretsByName");
+    assertThat(secret.isPresent()).isFalse();
   }
 
   private int tableSize(Table table) {

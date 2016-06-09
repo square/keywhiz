@@ -87,26 +87,23 @@ public class SecretSeriesDAOTest {
   }
 
   @Test public void deleteSecretSeriesByName() {
-    secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", "creator", "", null, null);
-
-    int secretsBefore = tableSize();
+    long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", "creator", "", null, null);
+    long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah", "creator", null, 0);
+    secretSeriesDAO.setCurrentVersion(id, contentId);
+    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName").get().currentVersion().isPresent()).isTrue();
 
     secretSeriesDAO.deleteSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName");
-
-    assertThat(tableSize()).isEqualTo(secretsBefore - 1);
-    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName"))
-        .isEmpty();
+    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName").get().currentVersion().isPresent()).isFalse();
   }
 
   @Test public void deleteSecretSeriesById() {
     long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesById", "creator", "", null, null);
-
-    int secretsBefore = tableSize();
+    long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah", "creator", null, 0);
+    secretSeriesDAO.setCurrentVersion(id, contentId);
+    assertThat(secretSeriesDAO.getSecretSeriesById(id).get().currentVersion().isPresent()).isTrue();
 
     secretSeriesDAO.deleteSecretSeriesById(id);
-
-    assertThat(tableSize()).isEqualTo(secretsBefore - 1);
-    assertThat(secretSeriesDAO.getSecretSeriesById(id)).isEmpty();
+    assertThat(secretSeriesDAO.getSecretSeriesById(id).get().currentVersion().isPresent()).isFalse();
   }
 
   @Test public void getNonExistentSecretSeries() {
