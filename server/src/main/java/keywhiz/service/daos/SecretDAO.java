@@ -135,16 +135,15 @@ public class SecretDAO {
     SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
 
     Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
-    if (!secretSeries.isPresent()) {
-      return Optional.empty();
-    }
+    if (secretSeries.isPresent() && secretSeries.get().currentVersion().isPresent()) {
+      Optional<SecretContent> secretContent = secretContentDAO.getSecretContentBySecretIdOne(secretSeries.get().id());
+      if (!secretContent.isPresent()) {
+        return Optional.empty();
+      }
 
-    Optional<SecretContent> secretContent = secretContentDAO.getSecretContentBySecretIdOne(secretSeries.get().id());
-    if (!secretContent.isPresent()) {
-      return Optional.empty();
+      return Optional.of(SecretSeriesAndContent.of(secretSeries.get(), secretContent.get()));
     }
-
-    return Optional.of(SecretSeriesAndContent.of(secretSeries.get(), secretContent.get()));
+    return Optional.empty();
   }
 
   /** @return all existing secrets. */
@@ -170,6 +169,7 @@ public class SecretDAO {
   public ImmutableList<SimpleEntry<Long, String>> getSecretsNameOnly() {
     List<SimpleEntry<Long, String>> results = dslContext.select(SECRETS.ID, SECRETS.NAME)
         .from(SECRETS)
+        .where(SECRETS.CURRENT.isNotNull())
         .fetchInto(Secrets.SECRETS)
         .map(r -> new SimpleEntry<>(r.getId(), r.getName()));
     return ImmutableList.copyOf(results);
