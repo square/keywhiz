@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.validation.Valid;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -50,8 +49,8 @@ import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.SecretController;
-import keywhiz.service.daos.SecretSeriesDAO;
-import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
+import keywhiz.service.daos.SecretDAO;
+import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
@@ -73,20 +72,18 @@ public class SecretsResource {
 
   private final SecretController secretController;
   private final AclDAO aclDAO;
-  private final SecretSeriesDAO secretSeriesDAO;
+  private final SecretDAO secretDAO;
 
-  @Inject public SecretsResource(SecretController secretController, AclDAOFactory aclDAOFactory,
-      SecretSeriesDAOFactory secretSeriesDAOFactory) {
+  @Inject public SecretsResource(SecretController secretController, AclDAOFactory aclDAOFactory, SecretDAOFactory secretDAOFactory) {
     this.secretController = secretController;
     this.aclDAO = aclDAOFactory.readwrite();
-    this.secretSeriesDAO = secretSeriesDAOFactory.readwrite();
+    this.secretDAO = secretDAOFactory.readwrite();
   }
 
-  @VisibleForTesting SecretsResource(SecretController secretController, AclDAO aclDAO,
-      SecretSeriesDAO secretSeriesDAO) {
+  @VisibleForTesting SecretsResource(SecretController secretController, AclDAO aclDAO, SecretDAO secretDAO) {
     this.secretController = secretController;
     this.aclDAO = aclDAO;
-    this.secretSeriesDAO = secretSeriesDAO;
+    this.secretDAO = secretDAO;
   }
 
   /**
@@ -220,7 +217,7 @@ public class SecretsResource {
 
     logger.info("User '{}' deleting secret id={}, name='{}'", user, secretId, secret.get().getName());
 
-    secretSeriesDAO.deleteSecretSeriesById(secretId.get());
+    secretDAO.deleteSecretsByName(secret.get().getName());
     return Response.noContent().build();
   }
 

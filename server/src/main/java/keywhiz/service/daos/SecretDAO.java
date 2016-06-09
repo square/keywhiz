@@ -185,7 +185,7 @@ public class SecretDAO {
     checkArgument(!name.isEmpty());
 
     secretSeriesDAOFactory.using(dslContext.configuration())
-            .deleteSecretSeriesByName(name);
+        .deleteSecretSeriesByName(name);
   }
 
   public static class SecretDAOFactory implements DAOFactory<SecretDAO> {
