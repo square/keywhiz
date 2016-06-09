@@ -18,7 +18,8 @@ package keywhiz.service.daos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import java.util.List;
+
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
@@ -204,10 +205,21 @@ public class SecretDAOTest {
     assertThat(secondId).isEqualTo(firstId);
   }
 
-  @Test public void getSecretByName() {
+  @Test public void getSecretByNameOne() {
     String name = secret1.series().name();
     assertThat(secretDAO.getSecretByNameOne(name)).contains(secret1);
   }
+
+  @Test public void getSecretByNameOneReturnsEmptyWhenCurrentVersionIsNull() {
+    String name = secret1.series().name();
+
+    jooqContext.update(SECRETS)
+        .set(SECRETS.CURRENT, (Long)null)
+        .where(SECRETS.ID.eq(series1.id()))
+        .execute();
+    assertThat(secretDAO.getSecretByNameOne(name)).isEmpty();
+  }
+
 
   @Test public void getSecretByIdOne() {
     assertThat(secretDAO.getSecretByIdOne(series2.id())).isEqualTo(Optional.of(secret2a));
@@ -237,6 +249,12 @@ public class SecretDAOTest {
 
   @Test public void getSecrets() {
     assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2a, secret2b);
+  }
+
+  @Test public void getSecretsByNameOnly() {
+    assertThat(secretDAO.getSecretsNameOnly()).containsOnly(
+        new SimpleEntry<>(series1.id(), series1.name()),
+        new SimpleEntry<>(series2.id(), series2.name()));
   }
 
   @Test public void deleteSecretsByName() {
