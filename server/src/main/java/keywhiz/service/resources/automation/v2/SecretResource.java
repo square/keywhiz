@@ -4,7 +4,6 @@ import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.google.common.collect.Sets;
 import io.dropwizard.auth.Auth;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -24,11 +23,7 @@ import javax.ws.rs.core.UriBuilder;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
-import keywhiz.api.model.AutomationClient;
-import keywhiz.api.model.Group;
-import keywhiz.api.model.SanitizedSecret;
-import keywhiz.api.model.Secret;
-import keywhiz.api.model.SecretSeries;
+import keywhiz.api.model.*;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.GroupDAO;
@@ -37,10 +32,7 @@ import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretController.SecretBuilder;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
-import keywhiz.service.daos.SecretSeriesDAO;
-import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
-import org.apache.commons.lang3.NotImplementedException;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,16 +53,13 @@ public class SecretResource {
   private final AclDAO aclDAO;
   private final GroupDAO groupDAO;
   private final SecretDAO secretDAO;
-  private final SecretSeriesDAO secretSeriesDAO;
 
   @Inject public SecretResource(SecretController secretController, AclDAOFactory aclDAOFactory,
-      GroupDAOFactory groupDAOFactory, SecretDAOFactory secretDAOFactory,
-      SecretSeriesDAOFactory secretSeriesDAOFactory) {
+      GroupDAOFactory groupDAOFactory, SecretDAOFactory secretDAOFactory) {
     this.secretController = secretController;
     this.aclDAO = aclDAOFactory.readwrite();
     this.groupDAO = groupDAOFactory.readwrite();
     this.secretDAO = secretDAOFactory.readwrite();
-    this.secretSeriesDAO = secretSeriesDAOFactory.readwrite();
   }
 
   /**
@@ -130,27 +119,6 @@ public class SecretResource {
   }
 
   /**
-   * Modify a secret series
-   *
-   * @excludeParams automationClient
-   *
-   * @responseMessage 201 Secret series modified successfully
-   * @responseMessage 404 Secret series not found
-   */
-  @Timed @ExceptionMetered
-  @POST
-  @Path("{name}")
-  @Produces(APPLICATION_JSON)
-  public SecretDetailResponseV2 modifySecretSeries(@Auth AutomationClient automationClient,
-      @PathParam("name") String name) {
-    SecretSeries secret = secretSeriesDAO.getSecretSeriesByName(name)
-        .orElseThrow(NotFoundException::new);
-    // TODO: DAO to mutate metadata, name
-    throw new NotImplementedException("Need to implement mutation methods in DAO for secret " +
-        secret.name());
-  }
-
-  /**
    * Retrieve information on a secret series
    *
    * @excludeParams automationClient
@@ -165,10 +133,10 @@ public class SecretResource {
   @Produces(APPLICATION_JSON)
   public SecretDetailResponseV2 secretInfo(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    SecretSeries secret = secretSeriesDAO.getSecretSeriesByName(name)
+    SecretSeriesAndContent secret = secretDAO.getSecretByNameOne(name)
         .orElseThrow(NotFoundException::new);
     return SecretDetailResponseV2.builder()
-        .series(secret)
+        .series(secret.series())
         .build();
   }
 
@@ -252,7 +220,7 @@ public class SecretResource {
   @Path("{name}")
   public Response deleteSecretSeries(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    secretSeriesDAO.getSecretSeriesByName(name)
+    secretDAO.getSecretByNameOne(name)
         .orElseThrow(NotFoundException::new);
     secretDAO.deleteSecretsByName(name);
     return Response.noContent().build();

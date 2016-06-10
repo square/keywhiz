@@ -41,7 +41,7 @@ import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 /**
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
  */
-public class SecretSeriesDAO {
+class SecretSeriesDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretSeriesMapper secretSeriesMapper;

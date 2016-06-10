@@ -21,13 +21,10 @@ import java.util.Optional;
 import keywhiz.api.ApiDate;
 import keywhiz.api.AutomationSecretResponse;
 import keywhiz.api.CreateSecretRequest;
-import keywhiz.api.model.AutomationClient;
-import keywhiz.api.model.Client;
-import keywhiz.api.model.Secret;
-import keywhiz.api.model.SecretSeries;
+import keywhiz.api.model.*;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
-import keywhiz.service.daos.SecretSeriesDAO;
+import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.exceptions.ConflictException;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
@@ -56,14 +53,14 @@ public class AutomationSecretResourceTest {
   @Mock SecretController secretController;
   @Mock SecretController.SecretBuilder secretBuilder;
   @Mock AclDAO aclDAO;
-  @Mock SecretSeriesDAO secretSeriesDAO;
+  @Mock SecretDAO secretDAO;
 
   AutomationClient automation = AutomationClient.of(
       new Client(1, "automation", "Automation client", NOW, "test", NOW, "test", true, true));
 
   @Before
   public void setUp() {
-    resource = new AutomationSecretResource(secretController, secretSeriesDAO, aclDAO);
+    resource = new AutomationSecretResource(secretController, secretDAO, aclDAO);
 
     when(secretController.builder(anyString(), anyString(), anyString(), anyLong())).thenReturn(secretBuilder);
     when(secretBuilder.withDescription(anyString())).thenReturn(secretBuilder);
@@ -114,11 +111,11 @@ public class AutomationSecretResourceTest {
         null,
         null);
 
-    when(secretSeriesDAO.getSecretSeriesByName(secretSeries.name()))
-        .thenReturn(Optional.of(secretSeries));
+    when(secretDAO.getSecretByNameOne(secretSeries.name()))
+        .thenReturn(Optional.of(SecretSeriesAndContent.of(secretSeries, SecretContent.of(123, secretSeries.id(), "meh", NOW, null, NOW, null, ImmutableMap.of()))));
 
     resource.deleteSecretSeries(automation, "mySecret");
-    verify(secretSeriesDAO).deleteSecretSeriesByName(secretSeries.name());
+    verify(secretDAO).deleteSecretsByName(secretSeries.name());
   }
 
   @Test(expected = ConflictException.class)
