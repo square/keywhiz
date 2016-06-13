@@ -121,17 +121,15 @@ class SecretSeriesDAO {
       SecretsRecord r = DSL.using(configuration).fetchOne(SECRETS, SECRETS.NAME.eq(name));
       if (r != null) {
         DSL.using(configuration)
-                .delete(SECRETS)
-                .where(SECRETS.ID.eq(r.getId()))
-                .execute();
+            .update(SECRETS)
+            .set(SECRETS.CURRENT, (Long) null)
+            .where(SECRETS.ID.eq(r.getId()))
+            .execute();
+
         DSL.using(configuration)
-                .delete(SECRETS_CONTENT)
-                .where(SECRETS_CONTENT.SECRETID.eq(r.getId()))
-                .execute();
-        DSL.using(configuration)
-                .delete(ACCESSGRANTS)
-                .where(ACCESSGRANTS.SECRETID.eq(r.getId()))
-                .execute();
+            .delete(ACCESSGRANTS)
+            .where(ACCESSGRANTS.SECRETID.eq(r.getId()))
+            .execute();
       }
     });
   }
@@ -139,18 +137,16 @@ class SecretSeriesDAO {
   public void deleteSecretSeriesById(long id) {
     dslContext.transaction(configuration -> {
       DSL.using(configuration)
-              .delete(SECRETS)
-              .where(SECRETS.ID.eq(id))
-              .execute();
-      DSL.using(configuration)
-              .delete(SECRETS_CONTENT)
-              .where(SECRETS_CONTENT.SECRETID.eq(id))
-              .execute();
-      DSL.using(configuration)
-              .delete(ACCESSGRANTS)
-              .where(ACCESSGRANTS.SECRETID.eq(id))
-              .execute();
-    });
+          .update(SECRETS)
+          .set(SECRETS.CURRENT, (Long)null)
+          .where(SECRETS.ID.eq(id))
+          .execute();
+
+       DSL.using(configuration)
+           .delete(ACCESSGRANTS)
+           .where(ACCESSGRANTS.SECRETID.eq(id))
+           .execute();
+      });
   }
 
   public static class SecretSeriesDAOFactory implements DAOFactory<SecretSeriesDAO> {
