@@ -30,6 +30,7 @@ import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.GroupDetailResponse;
 import keywhiz.api.LoginRequest;
 import keywhiz.api.SecretDetailResponse;
+import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -152,6 +153,22 @@ public class KeywhizClient {
     String b64Content = Base64.getEncoder().encodeToString(content);
     CreateSecretRequest request = new CreateSecretRequest(name, description, b64Content, metadata, expiry);
     String response = httpPost(baseUrl.resolve("/admin/secrets"), request);
+    return mapper.readValue(response, SecretDetailResponse.class);
+  }
+
+  public SecretDetailResponse createOrUpdateSecret(String name, String description, byte[] content,
+                                           ImmutableMap<String, String> metadata, long expiry) throws IOException {
+    checkArgument(!name.isEmpty());
+    checkArgument(content.length > 0, "Content must not be empty");
+
+    String b64Content = Base64.getEncoder().encodeToString(content);
+    CreateOrUpdateSecretRequestV2 request = CreateOrUpdateSecretRequestV2.builder()
+        .description(description)
+        .content(b64Content)
+        .metadata(metadata)
+        .expiry(expiry)
+        .build();
+    String response = httpPost(baseUrl.resolve(format("/admin/secrets/%s", name)), request);
     return mapper.readValue(response, SecretDetailResponse.class);
   }
 

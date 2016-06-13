@@ -30,6 +30,7 @@ import javax.ws.rs.core.Response;
 import keywhiz.api.ApiDate;
 import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.SecretDetailResponse;
+import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -48,6 +49,8 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -94,7 +97,7 @@ public class SecretsResourceTest {
     SecretController.SecretBuilder secretBuilder = mock(SecretController.SecretBuilder.class);
     when(secretController.builder(secret.getName(), secret.getSecret(), user.getName(), 0))
         .thenReturn(secretBuilder);
-    when(secretBuilder.build()).thenReturn(secret);
+    when(secretBuilder.create()).thenReturn(secret);
 
     CreateSecretRequest req = new CreateSecretRequest(secret.getName(),
         secret.getDescription(), secret.getSecret(), emptyMap, 0);
@@ -104,6 +107,31 @@ public class SecretsResourceTest {
     assertThat(response.getMetadata().get(HttpHeaders.LOCATION))
         .containsExactly(new URI("/admin/secrets/" + secret.getId()));
   }
+
+  @Test
+  public void createOrUpdateSecret() throws Exception {
+    when(secretController.getSecretByIdOne(secret.getId())).thenReturn(Optional.of(secret));
+
+    SecretController.SecretBuilder secretBuilder = mock(SecretController.SecretBuilder.class);
+    when(secretController.builder(secret.getName(), secret.getSecret(), user.getName(), 0))
+        .thenReturn(secretBuilder);
+    when(secretBuilder.withDescription(any())).thenReturn(secretBuilder);
+    when(secretBuilder.withMetadata(any())).thenReturn(secretBuilder);
+    when(secretBuilder.withType(any())).thenReturn(secretBuilder);
+    when(secretBuilder.createOrUpdate()).thenReturn(secret);
+
+    CreateOrUpdateSecretRequestV2 req = CreateOrUpdateSecretRequestV2.builder()
+        .description(secret.getDescription())
+        .content(secret.getSecret())
+        .build();
+
+    Response response = resource.createOrUpdateSecret(user, secret.getName(), req);
+
+    assertThat(response.getStatus()).isEqualTo(201);
+    assertThat(response.getMetadata().get(HttpHeaders.LOCATION))
+        .containsExactly(new URI("/admin/secrets/" + secret.getName()));
+  }
+
 
   @Test public void canDelete() {
     when(secretController.getSecretByIdOne(0xdeadbeef)).thenReturn(Optional.of(secret));
@@ -118,7 +146,7 @@ public class SecretsResourceTest {
     SecretController.SecretBuilder secretBuilder = mock(SecretController.SecretBuilder.class);
     when(secretController.builder("name", "content", user.getName(), 0)).thenReturn(secretBuilder);
     DataAccessException exception = new DataAccessException("");
-    doThrow(exception).when(secretBuilder).build();
+    doThrow(exception).when(secretBuilder).create();
 
     CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", emptyMap, 0);
     resource.createSecret(user, req);

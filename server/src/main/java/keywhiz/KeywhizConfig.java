@@ -179,7 +179,7 @@ public class KeywhizConfig extends Configuration {
       }
     }
 
-    // Sets the evaluated password before calling the parent's build method.
+    // Sets the evaluated password before calling the parent's create method.
     @Override public ManagedDataSource build(MetricRegistry metricRegistry, String name) {
       setPassword(getPassword());
       return super.build(metricRegistry, name);

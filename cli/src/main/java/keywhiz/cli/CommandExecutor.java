@@ -29,19 +29,9 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import keywhiz.cli.commands.AddAction;
-import keywhiz.cli.commands.AssignAction;
-import keywhiz.cli.commands.DeleteAction;
-import keywhiz.cli.commands.DescribeAction;
-import keywhiz.cli.commands.ListAction;
-import keywhiz.cli.commands.UnassignAction;
-import keywhiz.cli.configs.AddActionConfig;
-import keywhiz.cli.configs.AssignActionConfig;
-import keywhiz.cli.configs.CliConfiguration;
-import keywhiz.cli.configs.DeleteActionConfig;
-import keywhiz.cli.configs.DescribeActionConfig;
-import keywhiz.cli.configs.ListActionConfig;
-import keywhiz.cli.configs.UnassignActionConfig;
+
+import keywhiz.cli.commands.*;
+import keywhiz.cli.configs.*;
 import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.UnauthorizedException;
 import okhttp3.HttpUrl;
@@ -52,9 +42,9 @@ import static com.google.common.base.StandardSystemProperty.USER_NAME;
 import static java.lang.String.format;
 
 public class CommandExecutor {
-  public static final String APP_VERSION = "2.0";
+  public static final String APP_VERSION = "2.1";
 
-  public enum Command { LOGIN, LIST, DESCRIBE, ADD, DELETE, ASSIGN, UNASSIGN }
+  public enum Command { LOGIN, LIST, DESCRIBE, ADD, UPDATE, DELETE, ASSIGN, UNASSIGN }
 
   private final Path cookieDir = Paths.get(USER_HOME.value());
 
@@ -142,6 +132,10 @@ public class CommandExecutor {
 
       case ADD:
         new AddAction((AddActionConfig) commands.get(command), client, mapper).run();
+        break;
+
+      case UPDATE:
+        new CreateOrUpdateAction((CreateOrUpdateActionConfig) commands.get(command), client, mapper).run();
         break;
 
       case DELETE:

@@ -111,7 +111,7 @@ public class AutomationSecretResource {
 
     Secret secret;
     try {
-      secret = builder.build();
+      secret = builder.create();
     } catch (DataAccessException e) {
       logger.warn("Cannot create secret {}: {}", request.name, e);
       throw new ConflictException(format("Cannot create secret %s.", request.name));

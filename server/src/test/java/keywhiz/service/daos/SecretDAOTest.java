@@ -154,6 +154,10 @@ public class SecretDAOTest {
     secretDAO = secretDAOFactory.readwrite();
   }
 
+  //---------------------------------------------------------------------------------------
+  // createSecret
+  //---------------------------------------------------------------------------------------
+
   @Test public void createSecret() {
     int secretsBefore = tableSize(SECRETS);
     int secretContentsBefore = tableSize(SECRETS_CONTENT);
@@ -175,18 +179,8 @@ public class SecretDAOTest {
   @Test(expected = DataAccessException.class)
   public void createSecretFailsIfSecretExists() {
     String name = "newSecret";
-    secretDAO.createSecret(name, "some secret", "creator",
-        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
-
-    secretDAO.createSecret(name, "some secret", "creator",
-        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
-  }
-
-  @Test(expected = DataAccessException.class)
-  public void willNotCreateDuplicateSecret() throws Exception {
-    ImmutableMap<String, String> emptyMap = ImmutableMap.of();
-    secretDAO.createSecret("secret1", "encrypted1", "creator", emptyMap, 0, "", null, emptyMap);
-    secretDAO.createSecret("secret1", "encrypted1", "creator", emptyMap, 0, "", null, emptyMap);
+    secretDAO.createSecret(name, "some secret", "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+    secretDAO.createSecret(name, "some secret", "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
   }
 
   @Test public void createSecretSucceedsIfCurrentVersionIsNull() {
@@ -213,6 +207,49 @@ public class SecretDAOTest {
     assertThat(newSecret.content().metadata()).isEqualTo(ImmutableMap.of("foo2", "bar2"));
   }
 
+  //---------------------------------------------------------------------------------------
+  // createOrUpdateSecret
+  //---------------------------------------------------------------------------------------
+
+  @Test public void createOrUpdateSecretWhenSecretDoesNotExist() {
+    int secretsBefore = tableSize(SECRETS);
+    int secretContentsBefore = tableSize(SECRETS_CONTENT);
+
+    String name = "newSecret";
+    String content = "c2VjcmV0MQ==";
+    String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
+    long newId = secretDAO.createOrUpdateSecret(name, encryptedContent, "creator",
+        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+    SecretSeriesAndContent newSecret = secretDAO.getSecretByIdOne(newId).get();
+
+    assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore + 1);
+    assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore + 1);
+
+    newSecret = secretDAO.getSecretByNameOne(newSecret.series().name()).get();
+    assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2a, secret2b, newSecret);
+  }
+
+  @Test public void createOrUpdateSecretWhenSecretExists() {
+    String name = "newSecret";
+    long firstId = secretDAO.createSecret(name, "content1", "creator1",
+        ImmutableMap.of("foo", "bar"), 1000, "description1", "type1", ImmutableMap.of());
+
+    long secondId = secretDAO.createOrUpdateSecret(name, "content2", "creator2",
+        ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
+    assertThat(secondId).isEqualTo(firstId);
+
+    SecretSeriesAndContent newSecret = secretDAO.getSecretByIdOne(firstId).get();
+    assertThat(newSecret.series().createdBy()).isEqualTo("creator1");
+    assertThat(newSecret.series().updatedBy()).isEqualTo("creator2");
+    assertThat(newSecret.series().description()).isEqualTo("description2");
+    assertThat(newSecret.series().type().get()).isEqualTo("type2");
+    assertThat(newSecret.content().createdBy()).isEqualTo("creator2");
+    assertThat(newSecret.content().encryptedContent()).isEqualTo("content2");
+    assertThat(newSecret.content().metadata()).isEqualTo(ImmutableMap.of("foo2", "bar2"));
+  }
+
+  //---------------------------------------------------------------------------------------
+
   @Test public void getSecretByNameOne() {
     String name = secret1.series().name();
     assertThat(secretDAO.getSecretByNameOne(name)).contains(secret1);
@@ -228,6 +265,21 @@ public class SecretDAOTest {
     assertThat(secretDAO.getSecretByNameOne(name)).isEmpty();
   }
 
+  @Test public void getSecretByNameOneReturnsEmptyWhenRowIsMissing() {
+    String name = "nonExistantSecret";
+    assertThat(secretDAO.getSecretByNameOne(name).isPresent()).isFalse();
+
+    long newId = secretDAO.createSecret(name, "content", "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+    SecretSeriesAndContent newSecret = secretDAO.getSecretByIdOne(newId).get();
+
+    assertThat(secretDAO.getSecretByNameOne(name).isPresent()).isTrue();
+
+    jooqContext.deleteFrom(SECRETS_CONTENT)
+        .where(SECRETS_CONTENT.ID.eq(newSecret.content().id()))
+        .execute();
+
+    assertThat(secretDAO.getSecretByNameOne(name).isPresent()).isFalse();
+  }
 
   @Test public void getSecretByIdOne() {
     assertThat(secretDAO.getSecretByIdOne(series2.id())).isEqualTo(Optional.of(secret2a));
