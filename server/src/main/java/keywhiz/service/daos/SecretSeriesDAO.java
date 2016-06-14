@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+
+import com.google.common.collect.ImmutableMap;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
@@ -54,7 +56,7 @@ class SecretSeriesDAO {
 
   long createSecretSeries(String name, String creator, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
-    SecretsRecord r =  dslContext.newRecord(SECRETS);
+    SecretsRecord r = dslContext.newRecord(SECRETS);
 
     long now = OffsetDateTime.now().toEpochSecond();
 
@@ -78,6 +80,29 @@ class SecretSeriesDAO {
     r.store();
 
     return r.getId();
+  }
+
+  void updateSecretSeries(long secretId, String name, String creator, String description, @Nullable String type,
+                          @Nullable Map<String, String> generationOptions) {
+    long now = OffsetDateTime.now().toEpochSecond();
+    if (generationOptions == null) {
+      generationOptions = ImmutableMap.of();
+    }
+
+    try {
+      dslContext.update(SECRETS)
+          .set(SECRETS.NAME, name)
+          .set(SECRETS.DESCRIPTION, description)
+          .set(SECRETS.UPDATEDBY, creator)
+          .set(SECRETS.UPDATEDAT, now)
+          .set(SECRETS.TYPE, type)
+          .set(SECRETS.OPTIONS, mapper.writeValueAsString(generationOptions))
+          .where(SECRETS.ID.eq(secretId))
+          .execute();
+    } catch (JsonProcessingException e) {
+      // Serialization of a Map<String, String> can never fail.
+      throw Throwables.propagate(e);
+    }
   }
 
   public int setCurrentVersion(long secretId, long secretContentId) {
