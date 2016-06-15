@@ -191,18 +191,26 @@ public class SecretDAOTest {
 
   @Test public void createSecretSucceedsIfCurrentVersionIsNull() {
     String name = "newSecret";
-    long firstId = secretDAO.createSecret(name, "some secret", "creator",
-        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+    long firstId = secretDAO.createSecret(name, "content1", "creator1",
+        ImmutableMap.of("foo", "bar"), 1000, "description1", "type1", ImmutableMap.of());
 
     jooqContext.update(SECRETS)
         .set(SECRETS.CURRENT, (Long)null)
         .where(SECRETS.ID.eq(firstId))
         .execute();
 
-
-    long secondId = secretDAO.createSecret(name, "some secret", "creator",
-        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+    long secondId = secretDAO.createSecret(name, "content2", "creator2",
+        ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
     assertThat(secondId).isEqualTo(firstId);
+
+    SecretSeriesAndContent newSecret = secretDAO.getSecretByIdOne(firstId).get();
+    assertThat(newSecret.series().createdBy()).isEqualTo("creator1");
+    assertThat(newSecret.series().updatedBy()).isEqualTo("creator2");
+    assertThat(newSecret.series().description()).isEqualTo("description2");
+    assertThat(newSecret.series().type().get()).isEqualTo("type2");
+    assertThat(newSecret.content().createdBy()).isEqualTo("creator2");
+    assertThat(newSecret.content().encryptedContent()).isEqualTo("content2");
+    assertThat(newSecret.content().metadata()).isEqualTo(ImmutableMap.of("foo2", "bar2"));
   }
 
   @Test public void getSecretByNameOne() {

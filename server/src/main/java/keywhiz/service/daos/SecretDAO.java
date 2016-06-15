@@ -73,11 +73,12 @@ public class SecretDAO {
       Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
       long secretId;
       if (secretSeries.isPresent()) {
-        if (secretSeries.get().currentVersion().isPresent()) {
+        SecretSeries secretSeries1 = secretSeries.get();
+        if (secretSeries1.currentVersion().isPresent()) {
           throw new DataAccessException(format("secret already present: %s", name));
-        } else {
-          secretId = secretSeries.get().id();
         }
+        secretId = secretSeries1.id();
+        secretSeriesDAO.updateSecretSeries(secretId, name, creator, description, type, generationOptions);
       } else {
         secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type,
             generationOptions);
