@@ -64,8 +64,6 @@ public class SecretDAO {
   public long createSecret(String name, String encryptedSecret,
       String creator, Map<String, String> metadata, long expiry, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
-    // TODO(jlfwong): Should the description be updated...?
-
     return dslContext.transactionResult(configuration -> {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
@@ -84,13 +82,38 @@ public class SecretDAO {
             generationOptions);
       }
 
-      long id = secretContentDAO.createSecretContent(secretId, encryptedSecret, creator, metadata, expiry);
-
-      secretSeriesDAO.setCurrentVersion(secretId, id);
+      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, creator, metadata, expiry);
+      secretSeriesDAO.setCurrentVersion(secretId, secretContentId);
 
       return secretId;
     });
   }
+
+  @VisibleForTesting
+  public long createOrUpdateSecret(String name, String encryptedSecret, String creator, Map<String, String> metadata,
+                                   long expiry, String description, @Nullable String type,
+                                   @Nullable Map<String, String> generationOptions) {
+    return dslContext.transactionResult(configuration -> {
+      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
+      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+
+      Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
+      long secretId;
+      if (secretSeries.isPresent()) {
+        SecretSeries secretSeries1 = secretSeries.get();
+        secretId = secretSeries1.id();
+        secretSeriesDAO.updateSecretSeries(secretId, name, creator, description, type, generationOptions);
+      } else {
+        secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type, generationOptions);
+      }
+
+      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, creator, metadata, expiry);
+      secretSeriesDAO.setCurrentVersion(secretId, secretContentId);
+
+      return secretId;
+    });
+  }
+
 
   /**
    * @param secretId external secret series id to look up secrets by.

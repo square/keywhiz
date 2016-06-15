@@ -86,7 +86,7 @@ public class AutomationSecretResourceTest {
         null,
         null);
 
-    when(secretBuilder.build()).thenReturn(secret);
+    when(secretBuilder.create()).thenReturn(secret);
 
     when(secretController.getSecretByNameOne(eq(request.name)))
         .thenReturn(Optional.of(secret));
@@ -123,7 +123,7 @@ public class AutomationSecretResourceTest {
     DataAccessException exception = new DataAccessException("");
     ImmutableMap<String,String> emptyMap = ImmutableMap.of();
 
-    doThrow(exception).when(secretBuilder).build();
+    doThrow(exception).when(secretBuilder).create();
 
     CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", emptyMap, 0);
     resource.createSecret(automation, req);

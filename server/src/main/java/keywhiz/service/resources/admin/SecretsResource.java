@@ -41,6 +41,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.SecretDetailResponse;
+import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -52,6 +53,7 @@ import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
+import keywhiz.service.resources.automation.v2.SecretResource;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -160,7 +162,7 @@ public class SecretsResource {
         builder.withMetadata(request.metadata);
       }
 
-      secret = builder.build();
+      secret = builder.create();
     } catch (DataAccessException e) {
       logger.warn("Cannot create secret {}: {}", request.name, e);
       throw new ConflictException(format("Cannot create secret %s.", request.name));
@@ -172,6 +174,35 @@ public class SecretsResource {
         .entity(secretDetailResponseFromId(secret.getId()))
         .build();
   }
+
+  /**
+   * Create or update secret
+   *
+   * @excludeParams user
+   * @param request the JSON client request used to formulate the Secret
+   *
+   * @responseMessage 200 Successfully created Secret
+   */
+  @Path("{name}")
+  @Timed @ExceptionMetered
+  @POST
+  @Consumes(APPLICATION_JSON)
+  public Response createOrUpdateSecret(@Auth User user, @PathParam("name") String secretName, @Valid CreateOrUpdateSecretRequestV2 request) {
+
+    logger.info("User '{}' createOrUpdate secret '{}'.", user, secretName);
+
+    Secret secret = secretController
+        .builder(secretName, request.content(), user.getName(), request.expiry())
+        .withDescription(request.description())
+        .withMetadata(request.metadata())
+        .withType(request.type())
+        .createOrUpdate();
+
+    URI uri = UriBuilder.fromResource(SecretsResource.class).path(secretName).build();
+
+    return Response.created(uri).entity(secretDetailResponseFromId(secret.getId())).build();
+  }
+
 
   /**
    * Retrieve Secret by ID

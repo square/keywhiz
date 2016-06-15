@@ -20,6 +20,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+
+import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
@@ -87,7 +89,7 @@ public class SecretResource {
 
     Secret secret;
     try {
-      secret = builder.build();
+      secret = builder.create();
     } catch (DataAccessException e) {
       logger.warn("Cannot create secret {}: {}", name, e);
       throw new ConflictException(format("Cannot create secret %s.", name));
@@ -97,6 +99,34 @@ public class SecretResource {
     groupsToGroupIds(request.groups())
         .forEach((maybeGroupId) -> maybeGroupId.ifPresent(
             (groupId) -> aclDAO.findAndAllowAccess(secretId, groupId)));
+
+    UriBuilder uriBuilder = UriBuilder.fromResource(SecretResource.class).path(name);
+
+    return Response.created(uriBuilder.build()).build();
+  }
+
+  /**
+   * Creates or updates (if it exists) a secret.
+   *
+   * @excludeParams automationClient
+   * @param request JSON request to create a secret
+   *
+   * @responseMessage 201 Created secret and assigned to given groups
+   */
+  @Timed @ExceptionMetered
+  @Path("{name}")
+  @POST
+  @Consumes(APPLICATION_JSON)
+  public Response createOrUpdateSecret(@Auth AutomationClient automationClient,
+                                       @PathParam("name") String name,
+                                       @Valid CreateOrUpdateSecretRequestV2 request) {
+    SecretBuilder builder = secretController
+        .builder(name, request.content(), automationClient.getName(), request.expiry())
+        .withDescription(request.description())
+        .withMetadata(request.metadata())
+        .withType(request.type());
+
+    builder.createOrUpdate();
 
     UriBuilder uriBuilder = UriBuilder.fromResource(SecretResource.class).path(name);
 
