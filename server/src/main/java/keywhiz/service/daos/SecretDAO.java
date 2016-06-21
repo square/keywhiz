@@ -158,14 +158,15 @@ public class SecretDAO {
     SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
     SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
 
-    Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
-    if (secretSeries.isPresent() && secretSeries.get().currentVersion().isPresent()) {
-      Optional<SecretContent> secretContent = secretContentDAO.getSecretContentBySecretIdOne(secretSeries.get().id());
+    Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesByName(name);
+    if (series.isPresent() && series.get().currentVersion().isPresent()) {
+      long secretContentId = series.get().currentVersion().get();
+      Optional<SecretContent> secretContent = secretContentDAO.getSecretContentById(secretContentId);
       if (!secretContent.isPresent()) {
         return Optional.empty();
       }
 
-      return Optional.of(SecretSeriesAndContent.of(secretSeries.get(), secretContent.get()));
+      return Optional.of(SecretSeriesAndContent.of(series.get(), secretContent.get()));
     }
     return Optional.empty();
   }

@@ -57,7 +57,7 @@ public class SecretDAOTest {
   SecretContent content1 = SecretContent.of(101, 1, encryptedContent, date, "creator", date, "updater", emptyMetadata);
   SecretSeriesAndContent secret1 = SecretSeriesAndContent.of(series1, content1);
 
-  SecretSeries series2 = SecretSeries.of(2, "secret2", "desc2", date, "creator", date, "updater", null, null, 102L);
+  SecretSeries series2 = SecretSeries.of(2, "secret2", "desc2", date, "creator", date, "updater", null, null, 103L);
   SecretContent content2a = SecretContent.of(102, 2, encryptedContent, date, "creator", date, "updater", emptyMetadata);
   SecretSeriesAndContent secret2a = SecretSeriesAndContent.of(series2, content2a);
 
@@ -251,8 +251,8 @@ public class SecretDAOTest {
   //---------------------------------------------------------------------------------------
 
   @Test public void getSecretByNameOne() {
-    String name = secret1.series().name();
-    assertThat(secretDAO.getSecretByNameOne(name)).contains(secret1);
+    String name = secret2b.series().name();
+    assertThat(secretDAO.getSecretByNameOne(name)).contains(secret2b);
   }
 
   @Test public void getSecretByNameOneReturnsEmptyWhenCurrentVersionIsNull() {
@@ -282,7 +282,7 @@ public class SecretDAOTest {
   }
 
   @Test public void getSecretByIdOne() {
-    assertThat(secretDAO.getSecretByIdOne(series2.id())).isEqualTo(Optional.of(secret2a));
+    assertThat(secretDAO.getSecretByIdOne(series2.id())).isEqualTo(Optional.of(secret2b));
   }
 
   @Test public void getSecretByIdOneReturnsEmptyWhenCurrentVersionIsNull() {
