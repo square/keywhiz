@@ -179,10 +179,9 @@ public class AclDAO {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
 
       for (SecretSeries series : getSecretSeriesFor(configuration, group)) {
-        for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.id())) {
-          SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
-          set.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
-        }
+        SecretContent content = secretContentDAO.getSecretContentById(series.currentVersion().get()).get();
+        SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
+        set.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
       }
 
       return set.build();
@@ -244,10 +243,9 @@ public class AclDAO {
     ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
 
     for (SecretSeries series : getSecretSeriesFor(dslContext.configuration(), client)) {
-      for (SecretContent content : secretContentDAO.getSecretContentsBySecretId(series.id())) {
-        SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
-        sanitizedSet.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
-      }
+      SecretContent content = secretContentDAO.getSecretContentById(series.currentVersion().get()).get();
+      SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
+      sanitizedSet.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
     }
     return sanitizedSet.build();
   }
@@ -360,7 +358,7 @@ public class AclDAO {
         .from(SECRETS)
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .join(GROUPS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
-        .where(GROUPS.NAME.eq(group.getName()))
+        .where(GROUPS.NAME.eq(group.getName()).and(SECRETS.CURRENT.isNotNull()))
         .fetchInto(SECRETS)
         .map(secretSeriesMapper);
     return ImmutableSet.copyOf(r);
@@ -373,7 +371,7 @@ public class AclDAO {
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
         .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
-        .where(CLIENTS.NAME.eq(client.getName()))
+        .where(CLIENTS.NAME.eq(client.getName()).and(SECRETS.CURRENT.isNotNull()))
         .fetchInto(SECRETS)
         .map(secretSeriesMapper);
     return ImmutableSet.copyOf(r);
@@ -381,20 +379,20 @@ public class AclDAO {
 
   /**
    * @param client client to access secrets
-   * @param name name of SecretSeries
+   * @param secretName name of SecretSeries
    * @return Optional.absent() when secret unauthorized or not found.
    * The query doesn't distinguish between these cases. If result absent, a followup call on clients
    * table should be used to determine the exception.
    */
-  protected Optional<SecretSeries> getSecretSeriesFor(Configuration configuration, Client client, String name) {
+  protected Optional<SecretSeries> getSecretSeriesFor(Configuration configuration, Client client, String secretName) {
+    // TODO: We need to set limit(1) because we are using joins. We should probably change the join type.
     SecretsRecord r = DSL.using(configuration)
         .select(SECRETS.fields())
         .from(SECRETS)
-        .join(SECRETS_CONTENT).on(SECRETS.ID.eq(SECRETS_CONTENT.SECRETID))
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
         .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
-        .where(SECRETS.NAME.eq(name).and(CLIENTS.NAME.eq(client.getName())))
+        .where(SECRETS.NAME.eq(secretName).and(CLIENTS.NAME.eq(client.getName())).and(SECRETS.CURRENT.isNotNull()))
         .limit(1)
         .fetchOneInto(SECRETS);
     return Optional.ofNullable(r).map(secretSeriesMapper::map);

@@ -83,16 +83,6 @@ class SecretContentDAO {
     return Optional.ofNullable(r).map(secretContentMapper::map);
   }
 
-  public ImmutableList<SecretContent> getSecretContentsBySecretId(long secretId) {
-    List<SecretContent> r = dslContext
-        .selectFrom(SECRETS_CONTENT)
-        .where(SECRETS_CONTENT.SECRETID.eq(secretId))
-        .fetch()
-        .map(secretContentMapper);
-
-    return ImmutableList.copyOf(r);
-  }
-
   public static class SecretContentDAOFactory implements DAOFactory<SecretContentDAO> {
     private final DSLContext jooq;
     private final DSLContext readonlyJooq;

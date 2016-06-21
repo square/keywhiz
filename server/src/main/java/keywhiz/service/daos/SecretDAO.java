@@ -180,9 +180,8 @@ public class SecretDAO {
       ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
 
       secretSeriesDAO.getSecretSeries()
-          .forEach((series) -> secretContentDAO.getSecretContentsBySecretId(series.id())
-              .forEach(
-                  (content) -> secretsBuilder.add(SecretSeriesAndContent.of(series, content))));
+          .forEach((series) -> secretsBuilder.add(SecretSeriesAndContent.of(
+              series, secretContentDAO.getSecretContentById(series.currentVersion().get()).get())));
 
       return secretsBuilder.build();
     });
