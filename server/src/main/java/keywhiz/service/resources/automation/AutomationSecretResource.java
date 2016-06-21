@@ -142,7 +142,7 @@ public class AutomationSecretResource {
     ImmutableList.Builder<AutomationSecretResponse> responseBuilder = ImmutableList.builder();
 
     if (name != null) {
-      Optional<Secret> optionalSecret = secretController.getSecretByNameOne(name);
+      Optional<Secret> optionalSecret = secretController.getSecretByName(name);
       if (!optionalSecret.isPresent()) {
         throw new NotFoundException("Secret not found.");
       }
@@ -155,7 +155,7 @@ public class AutomationSecretResource {
       List<SanitizedSecret> secrets = secretController.getSanitizedSecrets();
 
       for (SanitizedSecret sanitizedSecret : secrets) {
-        Secret secret = secretController.getSecretByIdOne(sanitizedSecret.id()).orElseThrow(() ->
+        Secret secret = secretController.getSecretById(sanitizedSecret.id()).orElseThrow(() ->
             new IllegalStateException(format("Cannot find record related to %s", sanitizedSecret)));
 
         ImmutableList<Group> groups =
@@ -184,7 +184,7 @@ public class AutomationSecretResource {
       @Auth AutomationClient automationClient,
       @PathParam("secretId") LongParam secretId) {
 
-    Optional<Secret> secret = secretController.getSecretByIdOne(secretId.get());
+    Optional<Secret> secret = secretController.getSecretById(secretId.get());
     if (!secret.isPresent()) {
       throw new NotFoundException("Secret not found.");
     }
@@ -211,7 +211,7 @@ public class AutomationSecretResource {
       @Auth AutomationClient automationClient,
       @PathParam("secretName") String secretName) {
 
-    secretDAO.getSecretByNameOne(secretName)
+    secretDAO.getSecretByName(secretName)
         .orElseThrow(() -> new NotFoundException("Secret series not found."));
     secretDAO.deleteSecretsByName(secretName);
 

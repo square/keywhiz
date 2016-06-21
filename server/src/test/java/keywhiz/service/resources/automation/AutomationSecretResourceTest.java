@@ -88,7 +88,7 @@ public class AutomationSecretResourceTest {
 
     when(secretBuilder.create()).thenReturn(secret);
 
-    when(secretController.getSecretByNameOne(eq(request.name)))
+    when(secretController.getSecretByName(eq(request.name)))
         .thenReturn(Optional.of(secret));
 
     AutomationSecretResponse response = resource.createSecret(automation, request);
@@ -111,7 +111,7 @@ public class AutomationSecretResourceTest {
         null,
         null);
 
-    when(secretDAO.getSecretByNameOne(secretSeries.name()))
+    when(secretDAO.getSecretByName(secretSeries.name()))
         .thenReturn(Optional.of(SecretSeriesAndContent.of(secretSeries, SecretContent.of(123, secretSeries.id(), "meh", NOW, null, NOW, null, ImmutableMap.of()))));
 
     resource.deleteSecretSeries(automation, "mySecret");

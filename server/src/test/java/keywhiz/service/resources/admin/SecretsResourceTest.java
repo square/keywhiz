@@ -50,7 +50,6 @@ import org.mockito.junit.MockitoRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -92,7 +91,7 @@ public class SecretsResourceTest {
 
   @Test
   public void createsSecret() throws Exception {
-    when(secretController.getSecretByIdOne(secret.getId())).thenReturn(Optional.of(secret));
+    when(secretController.getSecretById(secret.getId())).thenReturn(Optional.of(secret));
 
     SecretController.SecretBuilder secretBuilder = mock(SecretController.SecretBuilder.class);
     when(secretController.builder(secret.getName(), secret.getSecret(), user.getName(), 0))
@@ -110,7 +109,7 @@ public class SecretsResourceTest {
 
   @Test
   public void createOrUpdateSecret() throws Exception {
-    when(secretController.getSecretByIdOne(secret.getId())).thenReturn(Optional.of(secret));
+    when(secretController.getSecretById(secret.getId())).thenReturn(Optional.of(secret));
 
     SecretController.SecretBuilder secretBuilder = mock(SecretController.SecretBuilder.class);
     when(secretController.builder(secret.getName(), secret.getSecret(), user.getName(), 0))
@@ -134,7 +133,7 @@ public class SecretsResourceTest {
 
 
   @Test public void canDelete() {
-    when(secretController.getSecretByIdOne(0xdeadbeef)).thenReturn(Optional.of(secret));
+    when(secretController.getSecretById(0xdeadbeef)).thenReturn(Optional.of(secret));
 
     Response response = resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)));
     verify(secretDAO).deleteSecretsByName("name");
@@ -154,7 +153,7 @@ public class SecretsResourceTest {
 
   @Test
   public void includesTheSecret() {
-    when(secretController.getSecretByIdOne(22)).thenReturn(Optional.of(secret));
+    when(secretController.getSecretById(22)).thenReturn(Optional.of(secret));
     when(aclDAO.getGroupsFor(secret)).thenReturn(Collections.emptySet());
     when(aclDAO.getClientsFor(secret)).thenReturn(Collections.emptySet());
 
@@ -172,7 +171,7 @@ public class SecretsResourceTest {
 
   @Test
   public void handlesNoAssociations() {
-    when(secretController.getSecretByIdOne(22)).thenReturn(Optional.of(secret));
+    when(secretController.getSecretById(22)).thenReturn(Optional.of(secret));
     when(aclDAO.getGroupsFor(secret)).thenReturn(Collections.emptySet());
     when(aclDAO.getClientsFor(secret)).thenReturn(Collections.emptySet());
 
@@ -187,7 +186,7 @@ public class SecretsResourceTest {
     Group group1 = new Group(0, "group1", null, null, null, null, null);
     Group group2 = new Group(0, "group2", null, null, null, null, null);
 
-    when(secretController.getSecretByIdOne(22)).thenReturn(Optional.of(secret));
+    when(secretController.getSecretById(22)).thenReturn(Optional.of(secret));
     when(aclDAO.getGroupsFor(secret)).thenReturn(Sets.newHashSet(group1, group2));
     when(aclDAO.getClientsFor(secret)).thenReturn(Sets.newHashSet(client));
 
@@ -198,12 +197,12 @@ public class SecretsResourceTest {
 
   @Test(expected = NotFoundException.class)
   public void badIdNotFound() {
-    when(secretController.getSecretByIdOne(0xbad1d)).thenReturn(Optional.empty());
+    when(secretController.getSecretById(0xbad1d)).thenReturn(Optional.empty());
     resource.retrieveSecret(user, new LongParam(Long.toString(0xbad1d)));
   }
 
   @Test public void findSecretByNameAndVersion() {
-    when(secretController.getSecretByNameOne(secret.getName()))
+    when(secretController.getSecretByName(secret.getName()))
         .thenReturn(Optional.of(secret));
     assertThat(resource.retrieveSecret(user, "name"))
         .isEqualTo(SanitizedSecret.fromSecret(secret));
@@ -211,7 +210,7 @@ public class SecretsResourceTest {
 
   @Test(expected = NotFoundException.class)
   public void badNameNotFound() {
-    when(secretController.getSecretByNameOne("non-existent")).thenReturn(Optional.empty());
+    when(secretController.getSecretByName("non-existent")).thenReturn(Optional.empty());
     resource.retrieveSecret(user, "non-existent");
   }
 }

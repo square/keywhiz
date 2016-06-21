@@ -81,15 +81,6 @@ public class SecretContentDAOTest {
     assertThat(secretContentDAO.getSecretContentById(secretContent1.id())).contains(secretContent1);
   }
 
-  @Test public void getSecretContentsBySecretId() {
-    List<Long> actualIds = secretContentDAO.getSecretContentsBySecretId(secretContent1.secretSeriesId())
-        .stream()
-        .map((content) -> (content == null) ? 0 : content.id())
-        .collect(toList());
-
-    assertThat(actualIds).containsExactly(secretContent1.id());
-  }
-
   private int tableSize() {
     return jooqContext.fetchCount(SECRETS_CONTENT);
   }

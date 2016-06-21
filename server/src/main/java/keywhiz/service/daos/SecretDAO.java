@@ -119,7 +119,7 @@ public class SecretDAO {
    * @param secretId external secret series id to look up secrets by.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<SecretSeriesAndContent> getSecretByIdOne(long secretId) {
+  public Optional<SecretSeriesAndContent> getSecretById(long secretId) {
     return dslContext.<Optional<SecretSeriesAndContent>>transactionResult(configuration ->  {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
@@ -141,7 +141,7 @@ public class SecretDAO {
    * @param name of secret series to look up secrets by.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<SecretSeriesAndContent> getSecretByNameOne(String name) {
+  public Optional<SecretSeriesAndContent> getSecretByName(String name) {
     checkArgument(!name.isEmpty());
 
     // In the past, the two data fetches below were wrapped in a transaction. The transaction was
@@ -158,14 +158,15 @@ public class SecretDAO {
     SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
     SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
 
-    Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
-    if (secretSeries.isPresent() && secretSeries.get().currentVersion().isPresent()) {
-      Optional<SecretContent> secretContent = secretContentDAO.getSecretContentBySecretIdOne(secretSeries.get().id());
+    Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesByName(name);
+    if (series.isPresent() && series.get().currentVersion().isPresent()) {
+      long secretContentId = series.get().currentVersion().get();
+      Optional<SecretContent> secretContent = secretContentDAO.getSecretContentById(secretContentId);
       if (!secretContent.isPresent()) {
         return Optional.empty();
       }
 
-      return Optional.of(SecretSeriesAndContent.of(secretSeries.get(), secretContent.get()));
+      return Optional.of(SecretSeriesAndContent.of(series.get(), secretContent.get()));
     }
     return Optional.empty();
   }
@@ -179,9 +180,8 @@ public class SecretDAO {
       ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
 
       secretSeriesDAO.getSecretSeries()
-          .forEach((series) -> secretContentDAO.getSecretContentsBySecretId(series.id())
-              .forEach(
-                  (content) -> secretsBuilder.add(SecretSeriesAndContent.of(series, content))));
+          .forEach((series) -> secretsBuilder.add(SecretSeriesAndContent.of(
+              series, secretContentDAO.getSecretContentById(series.currentVersion().get()).get())));
 
       return secretsBuilder.build();
     });
