@@ -86,6 +86,8 @@ readonlyDatabase:
 migrationsDir:
   db/postgres/migration
 
+statusCacheExpiry: PT1S
+
 userAuth:
   type: bcrypt
 

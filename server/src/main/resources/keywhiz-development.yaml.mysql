@@ -88,6 +88,8 @@ readonlyDatabase:
 migrationsDir:
   db/mysql/migration
 
+statusCacheExpiry: PT1S
+
 userAuth:
   type: bcrypt
 

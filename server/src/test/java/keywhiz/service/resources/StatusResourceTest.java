@@ -3,9 +3,13 @@ package keywhiz.service.resources;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import io.dropwizard.setup.Environment;
+
+import java.time.Duration;
 import java.util.TreeMap;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.core.Response;
+
+import keywhiz.KeywhizConfig;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,18 +17,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class StatusResponseTest {
+public class StatusResourceTest {
   HealthCheckRegistry registry;
   Environment environment;
   StatusResource status;
+  KeywhizConfig keywhizConfig;
 
   @Before
   public void setUp() throws Exception {
     this.registry = mock(HealthCheckRegistry.class);
     this.environment = mock(Environment.class);
-    this.status = new StatusResource(environment);
+    this.keywhizConfig = mock(KeywhizConfig.class);
 
     when(environment.healthChecks()).thenReturn(registry);
+    when(keywhizConfig.getStatusCacheExpiry()).thenReturn(Duration.ofSeconds(1));
+
+    this.status = new StatusResource(keywhizConfig, environment);
   }
 
   @Test

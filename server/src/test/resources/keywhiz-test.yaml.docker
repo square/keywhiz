@@ -72,6 +72,8 @@ readonlyDatabase:
 migrationsDir:
   db/h2/migration
 
+statusCacheExpiry: PT3S
+
 userAuth:
   type: bcrypt
 
