@@ -283,11 +283,12 @@ public class AclDAO {
     SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
 
     Optional<SecretSeries> secretSeries = getSecretSeriesFor(dslContext.configuration(), client, name);
-    if (!secretSeries.isPresent()) {
+    if (!secretSeries.isPresent() || !secretSeries.get().currentVersion().isPresent()) {
       return Optional.empty();
     }
 
-    Optional<SecretContent> secretContent = secretContentDAO.getSecretContentBySecretIdOne(secretSeries.get().id());
+    long contentId = secretSeries.get().currentVersion().get();
+    Optional<SecretContent> secretContent = secretContentDAO.getSecretContentById(contentId);
     if (!secretContent.isPresent()) {
       return Optional.empty();
     }

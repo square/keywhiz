@@ -83,14 +83,6 @@ class SecretContentDAO {
     return Optional.ofNullable(r).map(secretContentMapper::map);
   }
 
-  public Optional<SecretContent> getSecretContentBySecretIdOne(long secretId) {
-    ImmutableList<SecretContent> r = getSecretContentsBySecretId(secretId);
-    if (r.isEmpty()) {
-      return Optional.empty();
-    }
-    return Optional.of(r.get(0));
-  }
-
   public ImmutableList<SecretContent> getSecretContentsBySecretId(long secretId) {
     List<SecretContent> r = dslContext
         .selectFrom(SECRETS_CONTENT)
