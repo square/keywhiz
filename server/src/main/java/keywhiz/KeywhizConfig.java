@@ -21,6 +21,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.db.ManagedDataSource;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -81,6 +82,9 @@ public class KeywhizConfig extends Configuration {
   @JsonProperty
   private String migrationsDir;
 
+  @JsonProperty
+  private String statusCacheExpiry;
+
   public String getEnvironment() {
     return environment;
   }
@@ -124,6 +128,14 @@ public class KeywhizConfig extends Configuration {
       return "db/migration";
     }
     return migrationsDir;
+  }
+
+  public Duration getStatusCacheExpiry() {
+    if ((statusCacheExpiry == null) || (statusCacheExpiry.isEmpty())) {
+      // Default to 1 second
+      return Duration.ofSeconds(1);
+    }
+    return Duration.parse(statusCacheExpiry);
   }
 
   /** @return LDAP configuration to authenticate admin users. Absent if fakeLdap is true. */
