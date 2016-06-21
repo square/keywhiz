@@ -63,7 +63,7 @@ public class SecretDeliveryResourceTest {
 
     when(aclDAO.getSanitizedSecretFor(client, name))
         .thenReturn(Optional.of(sanitizedSecret));
-    when(secretController.getSecretByNameOne(name))
+    when(secretController.getSecretByName(name))
         .thenReturn(Optional.of(secret));
 
     SecretDeliveryResponse response = secretDeliveryResource.getSecret(sanitizedSecret.name(), client);
@@ -77,7 +77,7 @@ public class SecretDeliveryResourceTest {
 
     when(aclDAO.getSanitizedSecretFor(client, name))
         .thenReturn(Optional.of(SanitizedSecret.fromSecret(versionedSecret)));
-    when(secretController.getSecretByNameOne(name))
+    when(secretController.getSecretByName(name))
         .thenReturn(Optional.of(versionedSecret));
 
     String displayName = versionedSecret.getDisplayName();
@@ -89,7 +89,7 @@ public class SecretDeliveryResourceTest {
   public void returnsNotFoundWhenClientDoesNotExist() throws Exception {
     when(aclDAO.getSanitizedSecretFor(client, secret.getName())).thenReturn(Optional.empty());
     when(clientDAO.getClient(client.getName())).thenReturn(Optional.empty());
-    when(secretController.getSecretByNameOne(secret.getName()))
+    when(secretController.getSecretByName(secret.getName()))
         .thenReturn(Optional.of(secret));
 
     secretDeliveryResource.getSecret(secret.getName(), client);
@@ -99,7 +99,7 @@ public class SecretDeliveryResourceTest {
   public void returnsNotFoundWhenSecretDoesNotExist() throws Exception {
     when(aclDAO.getSanitizedSecretFor(client, "secret_name")).thenReturn(Optional.empty());
     when(clientDAO.getClient(client.getName())).thenReturn(Optional.of(client));
-    when(secretController.getSecretByNameOne("secret_name"))
+    when(secretController.getSecretByName("secret_name"))
         .thenReturn(Optional.empty());
 
     secretDeliveryResource.getSecret("secret_name", client);
@@ -109,7 +109,7 @@ public class SecretDeliveryResourceTest {
   public void returnsUnauthorizedWhenDenied() throws Exception {
     when(aclDAO.getSanitizedSecretFor(client, secret.getName())).thenReturn(Optional.empty());
     when(clientDAO.getClient(client.getName())).thenReturn(Optional.of(client));
-    when(secretController.getSecretByNameOne(secret.getName()))
+    when(secretController.getSecretByName(secret.getName()))
         .thenReturn(Optional.of(secret));
 
     secretDeliveryResource.getSecret(secret.getName(), client);
@@ -120,7 +120,7 @@ public class SecretDeliveryResourceTest {
 
     when(aclDAO.getSanitizedSecretFor(client, name))
         .thenReturn(Optional.of(SanitizedSecret.fromSecret(secretBase64)));
-    when(secretController.getSecretByNameOne(name))
+    when(secretController.getSecretByName(name))
         .thenReturn(Optional.of(secretBase64));
 
     SecretDeliveryResponse response = secretDeliveryResource.getSecret(secretBase64.getName(), client);

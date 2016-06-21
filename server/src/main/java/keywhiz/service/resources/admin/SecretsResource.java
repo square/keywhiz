@@ -53,7 +53,6 @@ import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
-import keywhiz.service.resources.automation.v2.SecretResource;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -240,7 +239,7 @@ public class SecretsResource {
   @Timed @ExceptionMetered
   @DELETE
   public Response deleteSecret(@Auth User user, @PathParam("secretId") LongParam secretId) {
-    Optional<Secret> secret = secretController.getSecretByIdOne(secretId.get());
+    Optional<Secret> secret = secretController.getSecretById(secretId.get());
     if (!secret.isPresent()) {
       logger.info("User '{}' tried deleting a secret which was not found (id={})", user, secretId.get());
       throw new NotFoundException("Secret not found.");
@@ -253,7 +252,7 @@ public class SecretsResource {
   }
 
   private SecretDetailResponse secretDetailResponseFromId(long secretId) {
-    Optional<Secret> secrets = secretController.getSecretByIdOne(secretId);
+    Optional<Secret> secrets = secretController.getSecretById(secretId);
     if (!secrets.isPresent()) {
       throw new NotFoundException("Secret not found.");
     }
@@ -264,7 +263,7 @@ public class SecretsResource {
   }
 
   private SanitizedSecret sanitizedSecretFromName(String name) {
-    Optional<Secret> optionalSecret = secretController.getSecretByNameOne(name);
+    Optional<Secret> optionalSecret = secretController.getSecretByName(name);
     if (!optionalSecret.isPresent()) {
       throw new NotFoundException("Secret not found.");
     }

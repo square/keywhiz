@@ -45,16 +45,16 @@ public class SecretController {
    * @param secretId external secret series id to look up secrets by.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<Secret> getSecretByIdOne(long secretId) {
-    return secretDAO.getSecretByIdOne(secretId).map(transformer::transform);
+  public Optional<Secret> getSecretById(long secretId) {
+    return secretDAO.getSecretById(secretId).map(transformer::transform);
   }
 
   /**
    * @param name of secret series to look up secrets by.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<Secret> getSecretByNameOne(String name) {
-    return secretDAO.getSecretByNameOne(name).map(transformer::transform);
+  public Optional<Secret> getSecretByName(String name) {
+    return secretDAO.getSecretByName(name).map(transformer::transform);
   }
 
   /** @return all existing sanitized secrets. */
@@ -148,13 +148,13 @@ public class SecretController {
     public Secret create() {
         secretDAO.createSecret(name, encryptedSecret, creator, metadata, expiry, description, type,
             generationOptions);
-        return transformer.transform(secretDAO.getSecretByNameOne(name).get());
+        return transformer.transform(secretDAO.getSecretByName(name).get());
     }
 
     public Secret createOrUpdate() {
       secretDAO.createOrUpdateSecret(name, encryptedSecret, creator, metadata, expiry, description, type,
           generationOptions);
-      return transformer.transform(secretDAO.getSecretByNameOne(name).get());
+      return transformer.transform(secretDAO.getSecretByName(name).get());
     }
   }
 }

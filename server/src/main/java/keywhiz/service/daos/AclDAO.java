@@ -287,8 +287,8 @@ public class AclDAO {
       return Optional.empty();
     }
 
-    long contentId = secretSeries.get().currentVersion().get();
-    Optional<SecretContent> secretContent = secretContentDAO.getSecretContentById(contentId);
+    long secretContentId = secretSeries.get().currentVersion().get();
+    Optional<SecretContent> secretContent = secretContentDAO.getSecretContentById(secretContentId);
     if (!secretContent.isPresent()) {
       return Optional.empty();
     }

@@ -119,7 +119,7 @@ public class SecretDAO {
    * @param secretId external secret series id to look up secrets by.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<SecretSeriesAndContent> getSecretByIdOne(long secretId) {
+  public Optional<SecretSeriesAndContent> getSecretById(long secretId) {
     return dslContext.<Optional<SecretSeriesAndContent>>transactionResult(configuration ->  {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
@@ -141,7 +141,7 @@ public class SecretDAO {
    * @param name of secret series to look up secrets by.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<SecretSeriesAndContent> getSecretByNameOne(String name) {
+  public Optional<SecretSeriesAndContent> getSecretByName(String name) {
     checkArgument(!name.isEmpty());
 
     // In the past, the two data fetches below were wrapped in a transaction. The transaction was

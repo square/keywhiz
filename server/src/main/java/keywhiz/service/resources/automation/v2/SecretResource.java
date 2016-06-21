@@ -163,7 +163,7 @@ public class SecretResource {
   @Produces(APPLICATION_JSON)
   public SecretDetailResponseV2 secretInfo(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    SecretSeriesAndContent secret = secretDAO.getSecretByNameOne(name)
+    SecretSeriesAndContent secret = secretDAO.getSecretByName(name)
         .orElseThrow(NotFoundException::new);
     return SecretDetailResponseV2.builder()
         .series(secret.series())
@@ -185,7 +185,7 @@ public class SecretResource {
   public Iterable<String> secretGroupsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     // TODO: Use latest version instead of non-versioned
-    Secret secret = secretController.getSecretByNameOne(name)
+    Secret secret = secretController.getSecretByName(name)
         .orElseThrow(NotFoundException::new);
     return aclDAO.getGroupsFor(secret).stream()
         .map(Group::getName)
@@ -210,7 +210,7 @@ public class SecretResource {
   public Iterable<String> modifySecretGroups(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @Valid ModifyGroupsRequestV2 request) {
     // TODO: Use latest version instead of non-versioned
-    Secret secret = secretController.getSecretByNameOne(name)
+    Secret secret = secretController.getSecretByName(name)
         .orElseThrow(NotFoundException::new);
 
     long secretId = secret.getId();
@@ -250,7 +250,7 @@ public class SecretResource {
   @Path("{name}")
   public Response deleteSecretSeries(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    secretDAO.getSecretByNameOne(name)
+    secretDAO.getSecretByName(name)
         .orElseThrow(NotFoundException::new);
     secretDAO.deleteSecretsByName(name);
     return Response.noContent().build();

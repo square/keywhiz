@@ -167,12 +167,12 @@ public class SecretDAOTest {
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
     long newId = secretDAO.createSecret(name, encryptedContent, "creator",
         ImmutableMap.of(), 0, "", null, ImmutableMap.of());
-    SecretSeriesAndContent newSecret = secretDAO.getSecretByIdOne(newId).get();
+    SecretSeriesAndContent newSecret = secretDAO.getSecretById(newId).get();
 
     assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore + 1);
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore + 1);
 
-    newSecret = secretDAO.getSecretByNameOne(newSecret.series().name()).get();
+    newSecret = secretDAO.getSecretByName(newSecret.series().name()).get();
     assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2a, secret2b, newSecret);
   }
 
@@ -197,7 +197,7 @@ public class SecretDAOTest {
         ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
     assertThat(secondId).isEqualTo(firstId);
 
-    SecretSeriesAndContent newSecret = secretDAO.getSecretByIdOne(firstId).get();
+    SecretSeriesAndContent newSecret = secretDAO.getSecretById(firstId).get();
     assertThat(newSecret.series().createdBy()).isEqualTo("creator1");
     assertThat(newSecret.series().updatedBy()).isEqualTo("creator2");
     assertThat(newSecret.series().description()).isEqualTo("description2");
@@ -220,12 +220,12 @@ public class SecretDAOTest {
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
     long newId = secretDAO.createOrUpdateSecret(name, encryptedContent, "creator",
         ImmutableMap.of(), 0, "", null, ImmutableMap.of());
-    SecretSeriesAndContent newSecret = secretDAO.getSecretByIdOne(newId).get();
+    SecretSeriesAndContent newSecret = secretDAO.getSecretById(newId).get();
 
     assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore + 1);
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore + 1);
 
-    newSecret = secretDAO.getSecretByNameOne(newSecret.series().name()).get();
+    newSecret = secretDAO.getSecretByName(newSecret.series().name()).get();
     assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2a, secret2b, newSecret);
   }
 
@@ -238,7 +238,7 @@ public class SecretDAOTest {
         ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
     assertThat(secondId).isEqualTo(firstId);
 
-    SecretSeriesAndContent newSecret = secretDAO.getSecretByIdOne(firstId).get();
+    SecretSeriesAndContent newSecret = secretDAO.getSecretById(firstId).get();
     assertThat(newSecret.series().createdBy()).isEqualTo("creator1");
     assertThat(newSecret.series().updatedBy()).isEqualTo("creator2");
     assertThat(newSecret.series().description()).isEqualTo("description2");
@@ -250,9 +250,9 @@ public class SecretDAOTest {
 
   //---------------------------------------------------------------------------------------
 
-  @Test public void getSecretByNameOne() {
+  @Test public void getSecretByName() {
     String name = secret2b.series().name();
-    assertThat(secretDAO.getSecretByNameOne(name)).contains(secret2b);
+    assertThat(secretDAO.getSecretByName(name)).contains(secret2b);
   }
 
   @Test public void getSecretByNameOneReturnsEmptyWhenCurrentVersionIsNull() {
@@ -262,27 +262,27 @@ public class SecretDAOTest {
         .set(SECRETS.CURRENT, (Long)null)
         .where(SECRETS.ID.eq(series1.id()))
         .execute();
-    assertThat(secretDAO.getSecretByNameOne(name)).isEmpty();
+    assertThat(secretDAO.getSecretByName(name)).isEmpty();
   }
 
   @Test public void getSecretByNameOneReturnsEmptyWhenRowIsMissing() {
     String name = "nonExistantSecret";
-    assertThat(secretDAO.getSecretByNameOne(name).isPresent()).isFalse();
+    assertThat(secretDAO.getSecretByName(name).isPresent()).isFalse();
 
     long newId = secretDAO.createSecret(name, "content", "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
-    SecretSeriesAndContent newSecret = secretDAO.getSecretByIdOne(newId).get();
+    SecretSeriesAndContent newSecret = secretDAO.getSecretById(newId).get();
 
-    assertThat(secretDAO.getSecretByNameOne(name).isPresent()).isTrue();
+    assertThat(secretDAO.getSecretByName(name).isPresent()).isTrue();
 
     jooqContext.deleteFrom(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.ID.eq(newSecret.content().id()))
         .execute();
 
-    assertThat(secretDAO.getSecretByNameOne(name).isPresent()).isFalse();
+    assertThat(secretDAO.getSecretByName(name).isPresent()).isFalse();
   }
 
-  @Test public void getSecretByIdOne() {
-    assertThat(secretDAO.getSecretByIdOne(series2.id())).isEqualTo(Optional.of(secret2b));
+  @Test public void getSecretById() {
+    assertThat(secretDAO.getSecretById(series2.id())).isEqualTo(Optional.of(secret2b));
   }
 
   @Test public void getSecretByIdOneReturnsEmptyWhenCurrentVersionIsNull() {
@@ -290,7 +290,7 @@ public class SecretDAOTest {
         .set(SECRETS.CURRENT, (Long)null)
         .where(SECRETS.ID.eq(series2.id()))
         .execute();
-    assertThat(secretDAO.getSecretByIdOne(series2.id())).isEmpty();
+    assertThat(secretDAO.getSecretById(series2.id())).isEmpty();
   }
 
   @Test(expected = IllegalStateException.class)
@@ -299,12 +299,12 @@ public class SecretDAOTest {
         .set(SECRETS.CURRENT, -1234L)
         .where(SECRETS.ID.eq(series2.id()))
         .execute();
-    secretDAO.getSecretByIdOne(series2.id());
+    secretDAO.getSecretById(series2.id());
   }
 
   @Test public void getNonExistentSecret() {
-    assertThat(secretDAO.getSecretByNameOne("non-existent")).isEmpty();
-    assertThat(secretDAO.getSecretByIdOne(-1231)).isEmpty();
+    assertThat(secretDAO.getSecretByName("non-existent")).isEmpty();
+    assertThat(secretDAO.getSecretById(-1231)).isEmpty();
   }
 
   @Test public void getSecrets() {
@@ -323,7 +323,7 @@ public class SecretDAOTest {
 
     secretDAO.deleteSecretsByName("toBeDeleted_deleteSecretsByName");
 
-    Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByNameOne("toBeDeleted_deleteSecretsByName");
+    Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName("toBeDeleted_deleteSecretsByName");
     assertThat(secret.isPresent()).isFalse();
   }
 
