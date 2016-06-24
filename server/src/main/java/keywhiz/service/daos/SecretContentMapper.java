@@ -45,11 +45,10 @@ class SecretContentMapper implements RecordMapper<SecretsContentRecord, SecretCo
         r.getCreatedby(),
         new ApiDate(r.getUpdatedat()),
         r.getUpdatedby(),
-        tryToReadMapFromMetadata(r));
+        tryToReadMapFromMetadata(r.getMetadata()));
   }
 
-  private ImmutableMap<String, String> tryToReadMapFromMetadata(SecretsContentRecord r) {
-    String value = r.getMetadata();
+  public ImmutableMap<String, String> tryToReadMapFromMetadata(String value) {
     if (!value.isEmpty()) {
       try {
         return ImmutableMap.copyOf(mapper.readValue(value, MAP_STRING_STRING_TYPE));

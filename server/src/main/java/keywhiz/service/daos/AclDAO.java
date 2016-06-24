@@ -16,6 +16,7 @@
 
 package keywhiz.service.daos;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ImmutableSet;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -23,6 +24,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -38,6 +41,8 @@ import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.Record;
+import org.jooq.SelectQuery;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toSet;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
@@ -63,11 +69,12 @@ public class AclDAO {
   private final ClientMapper clientMapper;
   private final GroupMapper groupMapper;
   private final SecretSeriesMapper secretSeriesMapper;
+  private final SecretContentMapper secretContentMapper;
 
   private AclDAO(DSLContext dslContext, ClientDAOFactory clientDAOFactory,
       GroupDAOFactory groupDAOFactory, SecretContentDAOFactory secretContentDAOFactory,
       SecretSeriesDAOFactory secretSeriesDAOFactory, ClientMapper clientMapper,
-      GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper) {
+      GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper, SecretContentMapper secretContentMapper) {
     this.dslContext = dslContext;
     this.clientDAOFactory = clientDAOFactory;
     this.groupDAOFactory = groupDAOFactory;
@@ -76,6 +83,7 @@ public class AclDAO {
     this.clientMapper = clientMapper;
     this.groupMapper = groupMapper;
     this.secretSeriesMapper = secretSeriesMapper;
+    this.secretContentMapper = secretContentMapper;
   }
 
   public void findAndAllowAccess(long secretId, long groupId) {
@@ -225,6 +233,18 @@ public class AclDAO {
   }
 
   public ImmutableSet<SanitizedSecret> getSanitizedSecretsFor(Client client) {
+    ImmutableSet<SanitizedSecret> s1 = getSanitizedSecretsForSlow(client);
+    ImmutableSet<SanitizedSecret> s2 = getSanitizedSecretsForFast(client);
+    if (!s1.equals(s2)) {
+      logger.error(format("getSanitizedSecretsForSlow != getSanitizedSecretsForFast. %s. %s.",
+          s1.stream().map(s -> s.name()).collect(toSet()),
+          s2.stream().map(s -> s.name()).collect(toSet())));
+    }
+    return s1;
+  }
+
+  @Timed
+  private ImmutableSet<SanitizedSecret> getSanitizedSecretsForSlow(Client client) {
     checkNotNull(client);
 
     // In the past, the two data fetches below were wrapped in a transaction. The transaction was
@@ -247,6 +267,44 @@ public class AclDAO {
       SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
       sanitizedSet.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
     }
+    return sanitizedSet.build();
+  }
+
+  @Timed
+  private ImmutableSet<SanitizedSecret> getSanitizedSecretsForFast(Client client) {
+    checkNotNull(client);
+
+    ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
+
+    SelectQuery<Record> query = dslContext.select(SECRETS.fields())
+        .from(SECRETS)
+        .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
+        .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
+        .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
+        .join(SECRETS_CONTENT).on(SECRETS_CONTENT.ID.eq(SECRETS.CURRENT))
+        .where(CLIENTS.NAME.eq(client.getName()).and(SECRETS.CURRENT.isNotNull()))
+        .getQuery();
+    query.addSelect(SECRETS_CONTENT.CREATEDBY);
+    query.addSelect(SECRETS_CONTENT.UPDATEDAT);
+    query.addSelect(SECRETS_CONTENT.UPDATEDBY);
+    query.addSelect(SECRETS_CONTENT.METADATA);
+    query.fetch()
+        .map(row -> {
+          SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
+          return SanitizedSecret.of(
+              series.id(),
+              series.name(),
+              series.description(),
+              new ApiDate(row.getValue(SECRETS_CONTENT.CREATEDAT)),
+              row.getValue(SECRETS_CONTENT.CREATEDBY),
+              new ApiDate(row.getValue(SECRETS_CONTENT.UPDATEDAT)),
+              row.getValue(SECRETS_CONTENT.UPDATEDBY),
+              secretContentMapper.tryToReadMapFromMetadata(row.getValue(SECRETS_CONTENT.METADATA)),
+              series.type().orElse(null),
+              series.generationOptions());
+        })
+        .forEach(row -> sanitizedSet.add(row));
+
     return sanitizedSet.build();
   }
 
@@ -408,12 +466,13 @@ public class AclDAO {
     private final ClientMapper clientMapper;
     private final GroupMapper groupMapper;
     private final SecretSeriesMapper secretSeriesMapper;
+    private final SecretContentMapper secretContentMapper;
 
     @Inject public AclDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
         ClientDAOFactory clientDAOFactory, GroupDAOFactory groupDAOFactory,
         SecretContentDAOFactory secretContentDAOFactory,
         SecretSeriesDAOFactory secretSeriesDAOFactory, ClientMapper clientMapper,
-        GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper) {
+        GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper, SecretContentMapper secretContentMapper) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.clientDAOFactory = clientDAOFactory;
@@ -423,22 +482,23 @@ public class AclDAO {
       this.clientMapper = clientMapper;
       this.groupMapper = groupMapper;
       this.secretSeriesMapper = secretSeriesMapper;
+      this.secretContentMapper = secretContentMapper;
     }
 
     @Override public AclDAO readwrite() {
       return new AclDAO(jooq, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper);
+          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper);
     }
 
     @Override public AclDAO readonly() {
       return new AclDAO(readonlyJooq, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper);
+          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper);
     }
 
     @Override public AclDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
       return new AclDAO(dslContext, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper);
+          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper);
     }
   }
 }
