@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 
+import com.google.common.collect.Sets;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
@@ -235,10 +236,13 @@ public class AclDAO {
   public ImmutableSet<SanitizedSecret> getSanitizedSecretsFor(Client client) {
     ImmutableSet<SanitizedSecret> s1 = getSanitizedSecretsForSlow(client);
     ImmutableSet<SanitizedSecret> s2 = getSanitizedSecretsForFast(client);
+
     if (!s1.equals(s2)) {
-      logger.error(format("getSanitizedSecretsForSlow != getSanitizedSecretsForFast. %s. %s.",
+      Set<SanitizedSecret> diff = Sets.symmetricDifference(s1, s2);
+      logger.warn(format("getSanitizedSecretsForSlow != getSanitizedSecretsForFast%ns1=%s%ns2=%s%ndiff=%s",
           s1.stream().map(s -> s.name()).collect(toSet()),
-          s2.stream().map(s -> s.name()).collect(toSet())));
+          s2.stream().map(s -> s.name()).collect(toSet()),
+          diff));
     }
     return s1;
   }
