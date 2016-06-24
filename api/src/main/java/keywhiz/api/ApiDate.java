@@ -30,6 +30,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
+import static java.lang.String.format;
+
 /**
  * This is a wrapper for the date class used in API responses so we can have a custom JSON serializer and deserializer
  */
@@ -70,6 +72,11 @@ public class ApiDate {
 
   public static ApiDate now() {
     return new ApiDate(OffsetDateTime.now().toEpochSecond());
+  }
+
+  @Override
+  public String toString() {
+    return format("ApiDate[%d]", epochSecond);
   }
 
   @Override

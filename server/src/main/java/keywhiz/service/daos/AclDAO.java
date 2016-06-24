@@ -297,6 +297,7 @@ public class AclDAO {
         .join(SECRETS_CONTENT).on(SECRETS_CONTENT.ID.eq(SECRETS.CURRENT))
         .where(CLIENTS.NAME.eq(client.getName()).and(SECRETS.CURRENT.isNotNull()))
         .getQuery();
+    query.addSelect(SECRETS_CONTENT.CREATEDAT);
     query.addSelect(SECRETS_CONTENT.CREATEDBY);
     query.addSelect(SECRETS_CONTENT.UPDATEDAT);
     query.addSelect(SECRETS_CONTENT.UPDATEDBY);
