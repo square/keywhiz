@@ -286,7 +286,7 @@ public class AclDAO {
     Optional<SanitizedSecret> s2 = getSanitizedSecretForFast(client, name);
 
     if (s1 != s2) {
-      logger.info("getSanitizedSecretForSlow != getSanitizedSecretForFast: s1=%s, s2=%s", s1, s2);
+      logger.info(format("getSanitizedSecretForSlow != getSanitizedSecretForFast: s1=%s, s2=%s", s1, s2));
     }
 
     return s1;
