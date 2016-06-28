@@ -15,8 +15,9 @@
  */
 package keywhiz.api.model;
 
-import java.text.ParseException;
 import java.util.Base64;
+
+import keywhiz.api.ApiDate;
 import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -24,6 +25,8 @@ import static keywhiz.api.model.Secret.decodedLength;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SecretTest {
+  int called = 0;
+
   @Test public void decodedLengthCalculates() {
     Base64.Encoder encoder = Base64.getEncoder();
     String base64 = encoder.encodeToString("31337".getBytes(UTF_8));
@@ -39,5 +42,11 @@ public class SecretTest {
     assertThat(decodedLength(longerBase64)).isEqualTo(15);
 
     assertThat(decodedLength("")).isZero();
+  }
+
+  @Test public void callsDecryptOnlyOnce() {
+    Secret s = new Secret(42, "toto", null, () -> String.valueOf(++called), ApiDate.now(), "", ApiDate.now(), "", null, null, null);
+    assertThat(s.getSecret()).isEqualTo("1");
+    assertThat(s.getSecret()).isEqualTo("1");
   }
 }

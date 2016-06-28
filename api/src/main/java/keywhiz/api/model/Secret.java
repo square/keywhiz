@@ -18,7 +18,6 @@ package keywhiz.api.model;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
-import java.text.ParseException;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -27,7 +26,6 @@ import keywhiz.api.ApiDate;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.nullToEmpty;
-import static java.util.regex.Pattern.quote;
 import static org.apache.commons.lang3.StringUtils.chomp;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 
@@ -47,7 +45,8 @@ public class Secret {
   private final String description;
 
   /** Base64-encoded content of this version of the secret. */
-  private final String secret;
+  private String secret;
+  private final LazyString encryptedSecret;
 
   private final ApiDate createdAt;
   private final String createdBy;
@@ -61,22 +60,22 @@ public class Secret {
   private final ImmutableMap<String, String> generationOptions;
 
   public Secret(long id,
-      String name,
-      @Nullable String description,
-      String secret,
-      ApiDate createdAt,
-      @Nullable String createdBy,
-      ApiDate updatedAt,
-      @Nullable String updatedBy,
-      @Nullable Map<String, String> metadata,
-      @Nullable String type,
-      @Nullable Map<String, String> generationOptions) {
+                String name,
+                @Nullable String description,
+                LazyString encryptedSecret,
+                ApiDate createdAt,
+                @Nullable String createdBy,
+                ApiDate updatedAt,
+                @Nullable String updatedBy,
+                @Nullable Map<String, String> metadata,
+                @Nullable String type,
+                @Nullable Map<String, String> generationOptions) {
 
     checkArgument(!name.isEmpty());
     this.id = id;
     this.name = name;
     this.description = nullToEmpty(description);
-    this.secret = checkNotNull(secret); /* Expected empty when sanitized. */
+    this.encryptedSecret = checkNotNull(encryptedSecret);
     this.createdAt = checkNotNull(createdAt);
     this.createdBy = nullToEmpty(createdBy);
     this.updatedAt = checkNotNull(updatedAt);
@@ -106,6 +105,9 @@ public class Secret {
   }
 
   public String getSecret() {
+    if (secret == null) {
+      secret = checkNotNull(encryptedSecret.decrypt());
+    }
     return secret;
   }
 
@@ -152,7 +154,7 @@ public class Secret {
       if (Objects.equal(this.id, that.id) &&
           Objects.equal(this.name, that.name) &&
           Objects.equal(this.description, that.description) &&
-          Objects.equal(this.secret, that.secret) &&
+          Objects.equal(this.getSecret(), that.getSecret()) &&
           Objects.equal(this.createdAt, that.createdAt) &&
           Objects.equal(this.createdBy, that.createdBy) &&
           Objects.equal(this.updatedAt, that.updatedAt) &&
@@ -167,7 +169,7 @@ public class Secret {
   }
 
   @Override public int hashCode() {
-    return Objects.hashCode(id, name, description, secret, createdAt, createdBy, updatedAt,
+    return Objects.hashCode(id, name, description, getSecret(), createdAt, createdBy, updatedAt,
         updatedBy, metadata, type, generationOptions);
   }
 
@@ -186,5 +188,9 @@ public class Secret {
         .add("type", type)
         .add("generationOptions", generationOptions)
         .toString();
+  }
+
+  public interface LazyString {
+    String decrypt();
   }
 }

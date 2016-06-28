@@ -16,8 +16,6 @@
 
 package keywhiz.service.crypto;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
@@ -44,13 +42,11 @@ public class SecretTransformer {
     SecretSeries series = seriesAndContent.series();
     SecretContent content = seriesAndContent.content();
 
-    final String secretContent = cryptographer.decrypt(content.encryptedContent());
-
     return new Secret(
         series.id(),
         series.name(),
         series.description(),
-        secretContent,
+        () -> cryptographer.decrypt(content.encryptedContent()),
         content.createdAt(),
         content.createdBy(),
         content.updatedAt(),
@@ -58,12 +54,5 @@ public class SecretTransformer {
         content.metadata(),
         series.type().orElse(null),
         series.generationOptions());
-  }
-
-  /**
-   * Transform a list of DB content to Secret models.
-   */
-  public List<Secret> transform(List<SecretSeriesAndContent> seriesAndContents) {
-    return seriesAndContents.stream().map(this::transform).collect(Collectors.toList());
   }
 }

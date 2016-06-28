@@ -48,8 +48,8 @@ public class DescribeActionTest {
 
   DescribeActionConfig describeActionConfig;
   DescribeAction describeAction;
-  Secret secret = new Secret(0, "secret", null, "c2VjcmV0MQ==", NOW,
-      null, NOW, null, null, null, ImmutableMap.of());
+  Secret secret = new Secret(0, "secret", null, () ->  "c2VjcmV0MQ==", NOW, null, NOW, null, null, null,
+      ImmutableMap.of());
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
 
   @Before

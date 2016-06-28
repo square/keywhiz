@@ -30,8 +30,8 @@ public class SecretDeliveryResponseTest {
   private static final ImmutableMap<String, String> metadata =
       ImmutableMap.of("key1", "value1", "key2", "value2");
   private static final ApiDate NOW = ApiDate.now();
-  private static final Secret secret = new Secret(0, "name", null,
-      "YWJj", NOW, null, NOW, null, metadata, "upload", null);
+  private static final Secret secret = new Secret(0, "name", null, () -> "YWJj", NOW, null, NOW, null, metadata,
+      "upload", null);
 
   @Test
   public void setsLength() {
