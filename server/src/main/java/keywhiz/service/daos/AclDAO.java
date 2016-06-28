@@ -282,6 +282,17 @@ public class AclDAO {
   }
 
   public Optional<SanitizedSecret> getSanitizedSecretFor(Client client, String name) {
+    Optional<SanitizedSecret> s1 = getSanitizedSecretForSlow(client, name);
+    Optional<SanitizedSecret> s2 = getSanitizedSecretForFast(client, name);
+
+    if (s1 != s2) {
+      logger.info("getSanitizedSecretForSlow != getSanitizedSecretForFast: s1=%s, s2=%s", s1, s2);
+    }
+
+    return s1;
+  }
+
+  private Optional<SanitizedSecret> getSanitizedSecretForSlow(Client client, String name) {
     checkNotNull(client);
     checkArgument(!name.isEmpty());
 
@@ -312,6 +323,43 @@ public class AclDAO {
     SecretSeriesAndContent seriesAndContent =
         SecretSeriesAndContent.of(secretSeries.get(), secretContent.get());
     return Optional.of(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
+  }
+
+  private Optional<SanitizedSecret> getSanitizedSecretForFast(Client client, String secretName) {
+    checkNotNull(client);
+    checkArgument(!secretName.isEmpty());
+
+    SelectQuery<Record> query = dslContext.select(SECRETS.fields())
+        .from(SECRETS)
+        .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
+        .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
+        .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
+        .join(SECRETS_CONTENT).on(SECRETS_CONTENT.ID.eq(SECRETS.CURRENT))
+        .where(CLIENTS.NAME.eq(client.getName())
+            .and(SECRETS.CURRENT.isNotNull())
+            .and(SECRETS.NAME.eq(secretName)))
+        .limit(1)
+        .getQuery();
+    query.addSelect(SECRETS_CONTENT.CREATEDAT);
+    query.addSelect(SECRETS_CONTENT.CREATEDBY);
+    query.addSelect(SECRETS_CONTENT.UPDATEDAT);
+    query.addSelect(SECRETS_CONTENT.UPDATEDBY);
+    query.addSelect(SECRETS_CONTENT.METADATA);
+    return Optional.ofNullable(query.fetchOne())
+        .map(row -> {
+          SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
+          return SanitizedSecret.of(
+              series.id(),
+              series.name(),
+              series.description(),
+              new ApiDate(row.getValue(SECRETS_CONTENT.CREATEDAT)),
+              row.getValue(SECRETS_CONTENT.CREATEDBY),
+              new ApiDate(row.getValue(SECRETS_CONTENT.UPDATEDAT)),
+              row.getValue(SECRETS_CONTENT.UPDATEDBY),
+              secretContentMapper.tryToReadMapFromMetadata(row.getValue(SECRETS_CONTENT.METADATA)),
+              series.type().orElse(null),
+              series.generationOptions());
+        });
   }
 
   protected void allowAccess(Configuration configuration, long secretId, long groupId) {

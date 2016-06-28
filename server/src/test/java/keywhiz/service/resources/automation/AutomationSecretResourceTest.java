@@ -77,7 +77,7 @@ public class AutomationSecretResourceTest {
     Secret secret = new Secret(0, /* Set by DB */
         request.name,
         request.description,
-        Base64.getUrlEncoder().encodeToString(request.content.getBytes(UTF_8)),
+        () -> Base64.getUrlEncoder().encodeToString(request.content.getBytes(UTF_8)),
         NOW,
         automation.getName(),
         NOW, /* updatedAt set by DB */

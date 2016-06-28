@@ -50,8 +50,8 @@ public class DeleteActionTest {
   DeleteActionConfig deleteActionConfig;
   DeleteAction deleteAction;
 
-  Secret secret = new Secret(0, "secret", null, "c2VjcmV0MQ==", NOW,
-      null, NOW, null, null, null, ImmutableMap.of());
+  Secret secret = new Secret(0, "secret", null, () -> "c2VjcmV0MQ==", NOW, null, NOW, null, null, null,
+      ImmutableMap.of());
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
 
   ByteArrayInputStream yes;
