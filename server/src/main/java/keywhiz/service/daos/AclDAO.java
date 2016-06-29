@@ -281,51 +281,7 @@ public class AclDAO {
     return new HashSet<>(r);
   }
 
-  public Optional<SanitizedSecret> getSanitizedSecretFor(Client client, String name) {
-    Optional<SanitizedSecret> s1 = getSanitizedSecretForSlow(client, name);
-    Optional<SanitizedSecret> s2 = getSanitizedSecretForFast(client, name);
-
-    if (!s1.equals(s2)) {
-      logger.info(format("getSanitizedSecretForSlow != getSanitizedSecretForFast: s1=%s, s2=%s", s1, s2));
-    }
-
-    return s1;
-  }
-
-  private Optional<SanitizedSecret> getSanitizedSecretForSlow(Client client, String name) {
-    checkNotNull(client);
-    checkArgument(!name.isEmpty());
-
-    // In the past, the two data fetches below were wrapped in a transaction. The transaction was
-    // removed because jOOQ transactions doesn't play well with MySQL readonly connections
-    // (see https://github.com/jOOQ/jOOQ/issues/3955).
-    //
-    // A possible work around is to write a transaction manager (see http://git.io/vkuFM)
-    //
-    // Removing the transaction however seems to be simpler and safe. The first data fetch's
-    // secret.id is used for the second data fetch.
-    //
-    // A third way to work around this issue is to write a SQL join. Jooq makes it relatively easy,
-    // but such joins hurt code re-use.
-    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
-
-    Optional<SecretSeries> secretSeries = getSecretSeriesFor(dslContext.configuration(), client, name);
-    if (!secretSeries.isPresent() || !secretSeries.get().currentVersion().isPresent()) {
-      return Optional.empty();
-    }
-
-    long secretContentId = secretSeries.get().currentVersion().get();
-    Optional<SecretContent> secretContent = secretContentDAO.getSecretContentById(secretContentId);
-    if (!secretContent.isPresent()) {
-      return Optional.empty();
-    }
-
-    SecretSeriesAndContent seriesAndContent =
-        SecretSeriesAndContent.of(secretSeries.get(), secretContent.get());
-    return Optional.of(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
-  }
-
-  private Optional<SanitizedSecret> getSanitizedSecretForFast(Client client, String secretName) {
+  public Optional<SanitizedSecret> getSanitizedSecretFor(Client client, String secretName) {
     checkNotNull(client);
     checkArgument(!secretName.isEmpty());
 
@@ -425,19 +381,6 @@ public class AclDAO {
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .join(GROUPS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
         .where(GROUPS.NAME.eq(group.getName()).and(SECRETS.CURRENT.isNotNull()))
-        .fetchInto(SECRETS)
-        .map(secretSeriesMapper);
-    return ImmutableSet.copyOf(r);
-  }
-
-  protected ImmutableSet<SecretSeries> getSecretSeriesFor(Configuration configuration, Client client) {
-    List<SecretSeries> r = DSL.using(configuration)
-        .select(SECRETS.fields())
-        .from(SECRETS)
-        .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
-        .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
-        .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
-        .where(CLIENTS.NAME.eq(client.getName()).and(SECRETS.CURRENT.isNotNull()))
         .fetchInto(SECRETS)
         .map(secretSeriesMapper);
     return ImmutableSet.copyOf(r);
