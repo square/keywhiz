@@ -113,7 +113,7 @@ public class SecretDeliveryResource {
     try {
       return SecretDeliveryResponse.fromSecret(secret.get());
     } catch (IllegalArgumentException e) {
-      logger.error("Failed creating response for secret {}: {}", secretName, e);
+      logger.error(format("Failed creating response for secret %s", secretName), e);
       throw new InternalServerErrorException();
     }
   }
