@@ -45,18 +45,19 @@ public abstract class SanitizedSecret {
       @JsonProperty("updatedBy") @Nullable String updatedBy,
       @JsonProperty("metadata") @Nullable Map<String, String> metadata,
       @JsonProperty("type") @Nullable String type,
-      @JsonProperty("generationOptions") @Nullable Map<String, String> generationOptions) {
+      @JsonProperty("generationOptions") @Nullable Map<String, String> generationOptions,
+      @JsonProperty("expiry") long expiry) {
     ImmutableMap<String, String> meta =
         (metadata == null) ? ImmutableMap.of() : ImmutableMap.copyOf(metadata);
     ImmutableMap<String, String> genOptions =
         (generationOptions == null) ? ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
     return new AutoValue_SanitizedSecret(id, name, nullToEmpty(description), createdAt,
         nullToEmpty(createdBy), updatedAt, nullToEmpty(updatedBy), meta, Optional.ofNullable(type),
-        genOptions);
+        genOptions, expiry);
   }
 
   public static SanitizedSecret of(long id, String name) {
-    return of(id, name, null, new ApiDate(0), null, new ApiDate(0), null, null, null, null);
+    return of(id, name, null, new ApiDate(0), null, new ApiDate(0), null, null, null, null, 0);
   }
 
   public static SanitizedSecret fromSecretSeriesAndContent(SecretSeriesAndContent seriesAndContent) {
@@ -72,7 +73,8 @@ public abstract class SanitizedSecret {
         content.updatedBy(),
         content.metadata(),
         series.type().orElse(null),
-        series.generationOptions());
+        series.generationOptions(),
+        content.expiry());
   }
 
   /**
@@ -93,19 +95,8 @@ public abstract class SanitizedSecret {
         secret.getUpdatedBy(),
         secret.getMetadata(),
         secret.getType().orElse(null),
-        secret.getGenerationOptions());
-  }
-
-  /**
-   * Helper method to convert a collection of secrets to a list of sanitized secrets.
-   */
-  public static List<SanitizedSecret> fromSecrets(List<Secret> secrets) {
-    checkNotNull(secrets);
-    ImmutableList.Builder<SanitizedSecret> sanitized = ImmutableList.builder();
-    for (Secret secret : secrets) {
-      sanitized.add(fromSecret(secret));
-    }
-    return sanitized.build();
+        secret.getGenerationOptions(),
+        secret.getExpiry());
   }
 
   @JsonProperty public abstract long id();
@@ -118,6 +109,7 @@ public abstract class SanitizedSecret {
   @JsonProperty public abstract ImmutableMap<String, String> metadata();
   @JsonProperty public abstract Optional<String> type();
   @JsonProperty public abstract ImmutableMap<String, String> generationOptions();
+  @JsonProperty public abstract long expiry();
 
   /** @return Name to serialize for clients. */
   public static String displayName(SanitizedSecret sanitizedSecret) {

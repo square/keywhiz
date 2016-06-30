@@ -248,6 +248,7 @@ public class AclDAO {
     query.addSelect(SECRETS_CONTENT.UPDATEDAT);
     query.addSelect(SECRETS_CONTENT.UPDATEDBY);
     query.addSelect(SECRETS_CONTENT.METADATA);
+    query.addSelect(SECRETS_CONTENT.EXPIRY);
     query.fetch()
         .map(row -> {
           SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
@@ -261,7 +262,8 @@ public class AclDAO {
               row.getValue(SECRETS_CONTENT.UPDATEDBY),
               secretContentMapper.tryToReadMapFromMetadata(row.getValue(SECRETS_CONTENT.METADATA)),
               series.type().orElse(null),
-              series.generationOptions());
+              series.generationOptions(),
+              row.getValue(SECRETS_CONTENT.EXPIRY));
         })
         .forEach(row -> sanitizedSet.add(row));
 
@@ -301,6 +303,7 @@ public class AclDAO {
     query.addSelect(SECRETS_CONTENT.UPDATEDAT);
     query.addSelect(SECRETS_CONTENT.UPDATEDBY);
     query.addSelect(SECRETS_CONTENT.METADATA);
+    query.addSelect(SECRETS_CONTENT.EXPIRY);
     return Optional.ofNullable(query.fetchOne())
         .map(row -> {
           SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
@@ -314,7 +317,8 @@ public class AclDAO {
               row.getValue(SECRETS_CONTENT.UPDATEDBY),
               secretContentMapper.tryToReadMapFromMetadata(row.getValue(SECRETS_CONTENT.METADATA)),
               series.type().orElse(null),
-              series.generationOptions());
+              series.generationOptions(),
+              row.getValue(SECRETS_CONTENT.EXPIRY));
         });
   }
 

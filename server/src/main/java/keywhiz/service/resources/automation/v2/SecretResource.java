@@ -167,6 +167,7 @@ public class SecretResource {
         .orElseThrow(NotFoundException::new);
     return SecretDetailResponseV2.builder()
         .series(secret.series())
+        .expiry(secret.content().expiry())
         .build();
   }
 

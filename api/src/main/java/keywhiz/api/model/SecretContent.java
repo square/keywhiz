@@ -32,12 +32,12 @@ import static com.google.common.base.Strings.nullToEmpty;
  */
 @AutoValue
 public abstract class SecretContent {
-  public static SecretContent of(long id, long secretSeriesId, String encryptedContent,
-      ApiDate createdAt, @Nullable String createdBy,
-      ApiDate updatedAt, @Nullable String updatedBy, ImmutableMap<String, String> metadata) {
+  public static SecretContent of(long id, long secretSeriesId, String encryptedContent, ApiDate createdAt,
+                                 @Nullable String createdBy, ApiDate updatedAt, @Nullable String updatedBy,
+                                 ImmutableMap<String, String> metadata, long expiry) {
     return new AutoValue_SecretContent(id, secretSeriesId, encryptedContent,
         createdAt, nullToEmpty(createdBy), updatedAt,
-        nullToEmpty(updatedBy), metadata);
+        nullToEmpty(updatedBy), metadata, expiry);
   }
 
   public abstract long id();
@@ -48,6 +48,7 @@ public abstract class SecretContent {
   public abstract ApiDate updatedAt();
   public abstract String updatedBy();
   @JsonAnyGetter public abstract  ImmutableMap<String, String> metadata();
+  public abstract long expiry();
 
   @Override public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -59,6 +60,7 @@ public abstract class SecretContent {
         .add("updatedAt", updatedAt())
         .add("updatedBy", updatedBy())
         .add("metadata", metadata())
+        .add("expiry", expiry())
         .omitNullValues().toString();
   }
 }

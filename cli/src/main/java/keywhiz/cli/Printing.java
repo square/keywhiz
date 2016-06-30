@@ -18,7 +18,9 @@ package keywhiz.cli;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import javax.inject.Inject;
 import keywhiz.api.ClientDetailResponse;
@@ -114,6 +116,11 @@ public class Printing {
       System.out.println("\tMetadata:");
       if(!secret.metadata().isEmpty()) {
         System.out.println(INDENT + secret.metadata().toString());
+      }
+      if (secret.expiry() > 0) {
+        System.out.println("\tExpiry:");
+        Date d = new Date(secret.expiry() * 1000);
+        System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
       }
     }
   }

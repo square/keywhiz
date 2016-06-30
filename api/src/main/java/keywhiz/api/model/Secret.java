@@ -59,6 +59,8 @@ public class Secret {
   private final String type;
   private final ImmutableMap<String, String> generationOptions;
 
+  private final long expiry;
+
   public Secret(long id,
                 String name,
                 @Nullable String description,
@@ -69,7 +71,8 @@ public class Secret {
                 @Nullable String updatedBy,
                 @Nullable Map<String, String> metadata,
                 @Nullable String type,
-                @Nullable Map<String, String> generationOptions) {
+                @Nullable Map<String, String> generationOptions,
+                long expiry) {
 
     checkArgument(!name.isEmpty());
     this.id = id;
@@ -85,6 +88,7 @@ public class Secret {
     this.type = type;
     this.generationOptions = (generationOptions == null) ?
         ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
+    this.expiry = expiry;
   }
 
   public long getId() {
@@ -139,6 +143,10 @@ public class Secret {
     return generationOptions;
   }
 
+  public long getExpiry() {
+    return expiry;
+  }
+
   /** Slightly hokey way of calculating the decoded-length without bothering to decode. */
   public static int decodedLength(String secret) {
     checkNotNull(secret);
@@ -161,7 +169,8 @@ public class Secret {
           Objects.equal(this.updatedBy, that.updatedBy) &&
           Objects.equal(this.metadata, that.metadata) &&
           Objects.equal(this.type, that.type) &&
-          Objects.equal(this.generationOptions, that.generationOptions)) {
+          Objects.equal(this.generationOptions, that.generationOptions) &&
+          this.expiry == that.expiry) {
         return true;
       }
     }
@@ -170,7 +179,7 @@ public class Secret {
 
   @Override public int hashCode() {
     return Objects.hashCode(id, name, description, getSecret(), createdAt, createdBy, updatedAt,
-        updatedBy, metadata, type, generationOptions);
+        updatedBy, metadata, type, generationOptions, expiry);
   }
 
   @Override
@@ -187,6 +196,7 @@ public class Secret {
         .add("metadata", metadata)
         .add("type", type)
         .add("generationOptions", generationOptions)
+        .add("expiry", expiry)
         .toString();
   }
 

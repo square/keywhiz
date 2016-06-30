@@ -34,6 +34,7 @@ public class SecretDetailResponseV2Test {
         .createdBy("creator-user")
         .type("text/plain")
         .metadata(ImmutableMap.of("owner", "root"))
+        .expiry(1136214245)
         .build();
 
     assertThat(asJson(secretDetailResponse))

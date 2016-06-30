@@ -44,7 +44,7 @@ public class SecretContentDAOTest {
   ImmutableMap<String, String> metadata = ImmutableMap.of("foo", "bar");
 
   SecretContent secretContent1 = SecretContent.of(11, 22, "[crypted]", date, "creator", date,
-      "creator", metadata);
+      "creator", metadata, 1136214245);
 
   SecretContentDAO secretContentDAO;
 
@@ -67,13 +67,14 @@ public class SecretContentDAOTest {
         .set(SECRETS_CONTENT.UPDATEDAT, secretContent1.updatedAt().toEpochSecond())
         .set(SECRETS_CONTENT.UPDATEDBY, secretContent1.updatedBy())
         .set(SECRETS_CONTENT.METADATA, JSONObject.toJSONString(secretContent1.metadata()))
+        .set(SECRETS_CONTENT.EXPIRY, 1136214245L)
         .execute();
   }
 
   @Test public void createSecretContent() {
     int before = tableSize();
     secretContentDAO.createSecretContent(secretContent1.secretSeriesId()+1, "encrypted", "creator",
-        metadata, 0);
+        metadata, 1136214245);
     assertThat(tableSize()).isEqualTo(before + 1);
   }
 
