@@ -93,7 +93,7 @@ public class CreateOrUpdateAction implements Runnable {
       } catch (NumberFormatException e) {
       }
       DateTime dt = new DateTime(expiry);
-      return dt.getMillis();
+      return dt.getMillis()/1000;
     }
     return 0;
   }

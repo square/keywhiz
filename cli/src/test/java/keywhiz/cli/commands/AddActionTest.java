@@ -81,18 +81,18 @@ public class AddActionTest {
   public void addCallsAddForSecret() throws Exception {
     addActionConfig.addType = Arrays.asList("secret");
     addActionConfig.name = secret.getDisplayName();
+    addActionConfig.expiry = "2006-01-02T15:04:05Z";
 
     byte[] content = base64Decoder.decode(secret.getSecret());
     addAction.stream = new ByteArrayInputStream(content);
     when(keywhizClient.getSanitizedSecretByName(secret.getName()))
         .thenThrow(new NotFoundException()); // Call checks for existence.
 
-    when(keywhizClient.createSecret(secret.getName(), "", content, secret.getMetadata(), 0))
+    when(keywhizClient.createSecret(secret.getName(), "", content, secret.getMetadata(), 1136214245))
         .thenReturn(secretDetailResponse);
 
     addAction.run();
-    verify(keywhizClient, times(1))
-        .createSecret(secret.getName(), "", content, secret.getMetadata(), 0);
+    verify(keywhizClient, times(1)).createSecret(secret.getName(), "", content, secret.getMetadata(), 1136214245);
   }
 
   @Test
