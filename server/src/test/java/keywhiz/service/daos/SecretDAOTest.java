@@ -54,18 +54,22 @@ public class SecretDAOTest {
   SecretSeries series1 = SecretSeries.of(1, "secret1", "desc1", date, "creator", date, "updater", null, null, 101L);
   String content = "c2VjcmV0MQ==";
   String encryptedContent = cryptographer.encryptionKeyDerivedFrom(series1.name()).encrypt(content);
-  SecretContent content1 = SecretContent.of(101, 1, encryptedContent, date, "creator", date, "updater", emptyMetadata);
+  SecretContent content1 = SecretContent.of(101, 1, encryptedContent, date, "creator", date, "updater", emptyMetadata,
+      0);
   SecretSeriesAndContent secret1 = SecretSeriesAndContent.of(series1, content1);
 
   SecretSeries series2 = SecretSeries.of(2, "secret2", "desc2", date, "creator", date, "updater", null, null, 103L);
-  SecretContent content2a = SecretContent.of(102, 2, encryptedContent, date, "creator", date, "updater", emptyMetadata);
+  SecretContent content2a = SecretContent.of(102, 2, encryptedContent, date, "creator", date, "updater", emptyMetadata,
+      0);
   SecretSeriesAndContent secret2a = SecretSeriesAndContent.of(series2, content2a);
 
-  SecretContent content2b = SecretContent.of(103, 2, "some other content", date, "creator", date, "updater", emptyMetadata);
+  SecretContent content2b = SecretContent.of(103, 2, "some other content", date, "creator", date, "updater",
+      emptyMetadata, 0);
   SecretSeriesAndContent secret2b = SecretSeriesAndContent.of(series2, content2b);
 
   SecretSeries series3 = SecretSeries.of(3, "secret3", "desc3", date, "creator", date, "updater", null, null, null);
-  SecretContent content3 = SecretContent.of(104, 3, encryptedContent, date, "creator", date, "updater", emptyMetadata);
+  SecretContent content3 = SecretContent.of(104, 3, encryptedContent, date, "creator", date, "updater", emptyMetadata,
+      0);
   SecretSeriesAndContent secret3 = SecretSeriesAndContent.of(series3, content3);
 
   SecretDAO secretDAO;

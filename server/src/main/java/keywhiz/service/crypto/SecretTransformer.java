@@ -53,6 +53,7 @@ public class SecretTransformer {
         content.updatedBy(),
         content.metadata(),
         series.type().orElse(null),
-        series.generationOptions());
+        series.generationOptions(),
+        content.expiry());
   }
 }

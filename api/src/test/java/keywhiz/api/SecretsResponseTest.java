@@ -38,7 +38,8 @@ public class SecretsResponseTest {
             "keywhizAdmin",
             ImmutableMap.of("owner", "the king"),
             "password",
-            ImmutableMap.of("param1", "value1")),
+            ImmutableMap.of("param1", "value1"),
+            1136214245),
         SanitizedSecret.of(
             768,
             "anotherSecret",
@@ -49,7 +50,8 @@ public class SecretsResponseTest {
             "keywhizAdmin",
             null,
             "upload",
-            null)
+            null,
+            1136214245)
     ));
 
     assertThat(asJson(secretsResponse))

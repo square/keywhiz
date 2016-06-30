@@ -54,7 +54,7 @@ public class AssignActionTest {
   GroupDetailResponse groupDetailResponse = GroupDetailResponse.fromGroup(group,
       ImmutableList.<SanitizedSecret>of(), ImmutableList.<Client>of());
   Secret secret = new Secret(16, "secret", null, () -> "c2VjcmV0MQ==", NOW, null, NOW, null, null, null,
-      ImmutableMap.of());
+      ImmutableMap.of(), 0);
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
 
   @Before

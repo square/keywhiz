@@ -27,16 +27,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SanitizedSecretTest {
   @Test public void serializesCorrectly() throws Exception {
     SanitizedSecret sanitizedSecret = SanitizedSecret.of(
-      767,
-      "trapdoor",
-      "v1",
-      ApiDate.parse("2013-03-28T21:42:42.573Z"),
-      "keywhizAdmin",
-      ApiDate.parse("2013-03-28T21:42:42.573Z"),
-      "keywhizAdmin",
-      ImmutableMap.of("owner", "the king"),
-      "password",
-      ImmutableMap.of("favoriteFood", "PB&J sandwich"));
+        767,
+        "trapdoor",
+        "v1",
+        ApiDate.parse("2013-03-28T21:42:42.573Z"),
+        "keywhizAdmin",
+        ApiDate.parse("2013-03-28T21:42:42.573Z"),
+        "keywhizAdmin",
+        ImmutableMap.of("owner", "the king"),
+        "password",
+        ImmutableMap.of("favoriteFood", "PB&J sandwich"),
+        1136214245);
 
     assertThat(asJson(sanitizedSecret))
         .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));

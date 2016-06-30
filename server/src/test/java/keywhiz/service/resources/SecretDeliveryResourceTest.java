@@ -48,16 +48,17 @@ public class SecretDeliveryResourceTest {
 
   final Client client = new Client(0, "principal", null, null, null, null, null, false, false);
   final Secret secret = new Secret(0, "secret_name", null, () -> "secret_value", NOW, null, NOW, null,
-      null, null, null);
+      null, null, null, 0);
   final Secret secretBase64 = new Secret(1, "Base64With=", null, () -> "SGVsbG8=", NOW, null, NOW,
-      null, null, null, null);
+      null, null, null, null, 0);
 
   @Before public void setUp() {
     secretDeliveryResource = new SecretDeliveryResource(secretController, aclDAO, clientDAO);
   }
 
   @Test public void returnsSecretWhenAllowed() throws Exception {
-    Secret secret = new Secret(0, "secret_name", null, () -> "unused_secret", NOW, null, NOW, null, null, null, null);
+    Secret secret = new Secret(0, "secret_name", null, () -> "unused_secret", NOW, null, NOW, null, null, null,
+        null, 0);
     SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
     String name = sanitizedSecret.name();
 
@@ -73,7 +74,7 @@ public class SecretDeliveryResourceTest {
   @Test public void returnsVersionedSecretWhenAllowed() throws Exception {
     String name = "secret_name";
     Secret versionedSecret = new Secret(2, name, null, () -> "U3BpZGVybWFu", NOW, null, NOW,
-        null, null, null, null);
+        null, null, null, null, 0);
 
     when(aclDAO.getSanitizedSecretFor(client, name))
         .thenReturn(Optional.of(SanitizedSecret.fromSecret(versionedSecret)));

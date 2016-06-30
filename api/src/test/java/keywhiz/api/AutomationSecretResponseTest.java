@@ -34,7 +34,7 @@ public class AutomationSecretResponseTest {
       ImmutableMap.of("key1", "value1", "key2", "value2");
   private static final ApiDate NOW = ApiDate.now();
   private static final Secret secret = new Secret(0, "name", null, () -> "YWJj", NOW, null, NOW, null, metadata,
-      "upload", null);
+      "upload", null, 1136214245);
 
   @Test
   public void setsLength() {
@@ -61,19 +61,10 @@ public class AutomationSecretResponseTest {
         secret,
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
         ImmutableMap.of(),
-        ImmutableList.of());
+        ImmutableList.of(),
+        1136214245);
     assertThat(asJson(automationSecretResponse))
         .isEqualTo(jsonFixture("fixtures/automationSecretResponse.json"));
-
-    AutomationSecretResponse automationSecretResponseWithVersion = AutomationSecretResponse.create(
-        33,
-        "General_Password",
-        secret,
-        ApiDate.parse("2011-09-29T15:46:00.000Z"),
-        ImmutableMap.of(),
-        ImmutableList.of());
-    assertThat(asJson(automationSecretResponseWithVersion))
-        .isEqualTo(jsonFixture("fixtures/automationSecretResponseWithVersion.json"));
 
     AutomationSecretResponse automationSecretResponseWithMetadata = AutomationSecretResponse.create(
         66,
@@ -81,7 +72,8 @@ public class AutomationSecretResponseTest {
         secret,
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
         ImmutableMap.of("mode", "0400", "owner", "nobody"),
-        ImmutableList.of());
+        ImmutableList.of(),
+        1136214245);
     assertThat(asJson(automationSecretResponseWithMetadata))
         .isEqualTo(jsonFixture("fixtures/automationSecretResponseWithMetadata.json"));
   }

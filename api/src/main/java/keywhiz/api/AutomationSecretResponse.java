@@ -38,9 +38,9 @@ public abstract class AutomationSecretResponse {
 
   public static AutomationSecretResponse create(long id, String name, String secret,
       ApiDate creationDate,
-      ImmutableMap<String, String> metadata, ImmutableList<Group> groups) {
+      ImmutableMap<String, String> metadata, ImmutableList<Group> groups, long expiry) {
     return new AutoValue_AutomationSecretResponse(id, name, secret, decodedLength(secret),
-        creationDate, groups, metadata);
+        creationDate, groups, metadata, expiry);
   }
 
   public static AutomationSecretResponse fromSecret(Secret secret, ImmutableList<Group> groups) {
@@ -51,7 +51,8 @@ public abstract class AutomationSecretResponse {
         secret.getSecret(),
         secret.getCreatedAt(),
         secret.getMetadata(),
-        groups);
+        groups,
+        secret.getExpiry());
   }
 
   @JsonProperty("id") public abstract long id();
@@ -61,4 +62,5 @@ public abstract class AutomationSecretResponse {
   @JsonProperty("creationDate") public abstract ApiDate creationDate();
   @JsonProperty("groups") public abstract ImmutableList<Group> groups();
   @JsonAnyGetter @JsonProperty("metadata") public abstract Map<String, String> metadata();
+  @JsonProperty("expiry") public abstract long expiry();
 }

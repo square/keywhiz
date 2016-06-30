@@ -41,6 +41,7 @@ import static keywhiz.api.model.Secret.decodedLength;
     public abstract Builder createdAtSeconds(long createdAt);
     public abstract Builder createdBy(String person);
     public abstract Builder type(@Nullable String type);
+    public abstract Builder expiry(long expiry);
 
     public Builder metadata(Map<String, String> metadata) {
       return metadata(ImmutableMap.copyOf(metadata));
@@ -87,7 +88,8 @@ import static keywhiz.api.model.Secret.decodedLength;
       @JsonProperty("createdAtSeconds") long createdAtSeconds,
       @JsonProperty("createdBy") String createdBy,
       @JsonProperty("type") @Nullable String type,
-      @JsonProperty("metadata") @Nullable Map<String, String> metadata) {
+      @JsonProperty("metadata") @Nullable Map<String, String> metadata,
+      @JsonProperty("expiry") @Nullable long expiry) {
     return builder()
         .name(name)
         .description(nullToEmpty(description))
@@ -97,6 +99,7 @@ import static keywhiz.api.model.Secret.decodedLength;
         .createdBy(createdBy)
         .type(type)
         .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
+        .expiry(expiry)
         .build();
   }
 
@@ -109,6 +112,7 @@ import static keywhiz.api.model.Secret.decodedLength;
   @JsonProperty("createdBy") public abstract String createdBy();
   @JsonProperty("type") @Nullable public abstract String type();
   @JsonProperty("metadata") public abstract ImmutableMap<String, String> metadata();
+  @JsonProperty("expiry") public abstract long expiry();
 
   @Override public final String toString() {
     return MoreObjects.toStringHelper(this)
@@ -120,6 +124,7 @@ import static keywhiz.api.model.Secret.decodedLength;
         .add("createdBy", createdBy())
         .add("type", type())
         .add("metadata", metadata())
+        .add("expiry", expiry())
         .omitNullValues()
         .toString();
   }
