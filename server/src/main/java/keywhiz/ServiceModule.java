@@ -25,6 +25,7 @@ import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.db.ManagedDataSource;
 import io.dropwizard.java8.auth.Authenticator;
 import io.dropwizard.setup.Environment;
+import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.time.Clock;
 import keywhiz.auth.BouncyCastle;
@@ -41,18 +42,24 @@ import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.utility.DSLContexts;
 import org.jooq.DSLContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Base64.getEncoder;
 import static keywhiz.JooqHealthCheck.OnFailure.LOG_ONLY;
 import static keywhiz.JooqHealthCheck.OnFailure.RETURN_UNHEALTHY;
 
 public class ServiceModule extends AbstractModule {
+  private static final Logger logger = LoggerFactory.getLogger(ServiceModule.class);
   private final Environment environment;
   private final KeywhizConfig config;
+  private final SecureRandom random;
 
   public ServiceModule(KeywhizConfig config, Environment environment) {
     this.config = checkNotNull(config);
     this.environment = checkNotNull(environment);
+    this.random = new SecureRandom();
   }
 
   @Override protected void configure() {
@@ -61,7 +68,12 @@ public class ServiceModule extends AbstractModule {
 
     bind(Clock.class).toInstance(Clock.systemUTC());
 
-    install(new CookieModule(config.getCookieKey()));
+    String cookieKey = config.getCookieKey();
+    if (cookieKey == null) {
+      cookieKey = generateCookieKey();
+      logger.warn("No cookieKey set in config, generating a random cookieKey for use: %s", cookieKey);
+    }
+    install(new CookieModule(cookieKey));
     install(new CryptoModule(config.getDerivationProviderClass(), config.getContentKeyStore()));
 
     bind(CookieConfig.class).annotatedWith(SessionCookie.class)
@@ -73,6 +85,14 @@ public class ServiceModule extends AbstractModule {
     bind(Environment.class).toInstance(environment);
     bind(Configuration.class).toInstance(config);
     bind(KeywhizConfig.class).toInstance(config);
+  }
+
+  private String generateCookieKey() {
+    String cookieKey;
+    byte[] cookieKeyBytes = new byte[32];
+    random.nextBytes(cookieKeyBytes);
+    cookieKey = new String(getEncoder().encode(cookieKeyBytes));
+    return cookieKey;
   }
 
   // ManagedDataSource
