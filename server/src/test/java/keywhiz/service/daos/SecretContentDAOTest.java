@@ -18,7 +18,6 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
-import java.util.List;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
@@ -30,9 +29,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
+import static keywhiz.service.daos.SecretContentDAO.PRUNE_CUTOFF_ITEMS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(KeywhizTestRunner.class)
@@ -53,8 +52,7 @@ public class SecretContentDAOTest {
     secretContentDAO = secretContentDAOFactory.readwrite();
     long now = OffsetDateTime.now().toEpochSecond();
 
-    jooqContext.insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT,
-        SECRETS.UPDATEDAT)
+    jooqContext.insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT, SECRETS.UPDATEDAT)
         .values(secretContent1.secretSeriesId(), "secretName", now, now)
         .execute();
 
@@ -76,6 +74,87 @@ public class SecretContentDAOTest {
     secretContentDAO.createSecretContent(secretContent1.secretSeriesId()+1, "encrypted", "creator",
         metadata, 1136214245);
     assertThat(tableSize()).isEqualTo(before + 1);
+  }
+
+  @Test public void pruneOldContents() throws Exception {
+    long now = OffsetDateTime.now().toEpochSecond();
+    long secretSeriesId = 666;
+
+    jooqContext.insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT, SECRETS.UPDATEDAT)
+        .values(secretSeriesId, "secretForPruneTest1", now, now)
+        .execute();
+
+    int before = tableSize();
+
+    // Create contents
+    long[] ids = new long[15];
+    for (int i = 0; i < ids.length; i++) {
+      long id = secretContentDAO.createSecretContent(
+          secretSeriesId, "encrypted", "creator", metadata, 1136214245);
+      ids[i] = id;
+    }
+
+    assertThat(tableSize()).isEqualTo(before + ids.length);
+
+    // Update created_at to make all secrets older than cutoff
+    jooqContext.update(SECRETS_CONTENT)
+        .set(SECRETS_CONTENT.CREATEDAT, 0L)
+        .execute();
+
+    // Make most recent id be the current version for the secret series and prune
+    jooqContext.update(SECRETS)
+        .set(SECRETS.CURRENT, ids[ids.length-1])
+        .where(SECRETS.ID.eq(secretSeriesId))
+        .execute();
+
+    secretContentDAO.pruneOldContents(secretSeriesId);
+
+    // Last ten secrets in series should have survived (plus the current one)
+    assertThat(tableSize()).isEqualTo(before + PRUNE_CUTOFF_ITEMS + 1);
+
+    for (int i = 0; i < (ids.length - PRUNE_CUTOFF_ITEMS - 1); i++) {
+      assertThat(secretContentDAO.getSecretContentById(ids[i]).isPresent()).isFalse();
+    }
+    for (int i = (ids.length - PRUNE_CUTOFF_ITEMS - 1); i < ids.length; i++) {
+      assertThat(secretContentDAO.getSecretContentById(ids[i]).isPresent()).isTrue();
+    }
+
+    // Other secrets contents left intact
+    assertThat(secretContentDAO.getSecretContentById(secretContent1.id()).isPresent()).isTrue();
+  }
+
+  @Test public void pruneIgnores45DaysOrLess() throws Exception {
+    long now = OffsetDateTime.now().toEpochSecond();
+    long secretSeriesId = 666;
+
+    jooqContext.insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT, SECRETS.UPDATEDAT)
+        .values(secretSeriesId, "secretForPruneTest2", now, now)
+        .execute();
+
+    int before = tableSize();
+
+    // Create contents
+    long[] ids = new long[15];
+    for (int i = 0; i < ids.length; i++) {
+      long id = secretContentDAO.createSecretContent(
+          secretSeriesId, "encrypted", "creator", metadata, 1136214245);
+      ids[i] = id;
+    }
+
+    assertThat(tableSize()).isEqualTo(before + ids.length);
+
+    // Make most recent id be the current version for the secret series and prune
+    jooqContext.update(SECRETS)
+        .set(SECRETS.CURRENT, ids[ids.length-1])
+        .where(SECRETS.ID.eq(secretSeriesId))
+        .execute();
+
+    secretContentDAO.pruneOldContents(secretSeriesId);
+
+    // Nothing pruned
+    for (int i = 0; i < ids.length; i++) {
+      assertThat(secretContentDAO.getSecretContentById(ids[i]).isPresent()).isTrue();
+    }
   }
 
   @Test public void getSecretContentById() {
