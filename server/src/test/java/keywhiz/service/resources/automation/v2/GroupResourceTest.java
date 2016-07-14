@@ -12,7 +12,10 @@ import keywhiz.KeywhizService;
 import keywhiz.TestClients;
 import keywhiz.api.automation.v2.CreateClientRequestV2;
 import keywhiz.api.automation.v2.CreateGroupRequestV2;
+import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.GroupDetailResponseV2;
+import keywhiz.api.model.Client;
+import keywhiz.api.model.SanitizedSecret;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -83,6 +86,32 @@ public class GroupResourceTest {
     assertThat(groupDetail.description()).isEqualTo("desc");
   }
 
+  @Test public void secretDetailForGroup() throws Exception {
+    // Sample group
+    create(CreateGroupRequestV2.builder().name("groupWithSecrets").description("desc").build());
+
+    // Sample client
+    createSecret("groupWithSecrets", "test-secret");
+
+    Set<SanitizedSecret> secrets = secretsInfo("groupWithSecrets");
+
+    assertThat(secrets).hasSize(1);
+    assertThat(secrets.iterator().next().name()).isEqualTo("test-secret");
+  }
+
+  @Test public void clientDetailForGroup() throws Exception {
+    // Sample group
+    create(CreateGroupRequestV2.builder().name("groupWithClients").description("desc").build());
+
+    // Sample client
+    createClient("test-client", "groupWithClients");
+
+    Set<Client> clients = clientsInfo("groupWithClients");
+
+    assertThat(clients).hasSize(1);
+    assertThat(clients.iterator().next().getName()).isEqualTo("test-client");
+  }
+
   @Test public void groupListing() throws Exception {
     Set<String> groupsBefore = listing();
     Set<String> expected = ImmutableSet.<String>builder()
@@ -109,8 +138,19 @@ public class GroupResourceTest {
   private Response createClient(String client, String... groups) throws IOException {
     ClientResourceTest clientResourceTest = new ClientResourceTest();
     clientResourceTest.mutualSslClient = mutualSslClient;
-    return clientResourceTest.create(
+    Response response = clientResourceTest.create(
         CreateClientRequestV2.builder().name(client).groups(groups).build());
+    assertThat(response.code()).isEqualTo(201);
+    return response;
+  }
+
+  private Response createSecret(String group, String secret) throws IOException {
+    SecretResourceTest secretResourceTest = new SecretResourceTest();
+    secretResourceTest.mutualSslClient = mutualSslClient;
+    Response response = secretResourceTest.create(
+        CreateSecretRequestV2.builder().name(secret).content("test").groups(group).build());
+    assertThat(response.code()).isEqualTo(201);
+    return response;
   }
 
   Response create(CreateGroupRequestV2 request) throws IOException {
@@ -124,6 +164,20 @@ public class GroupResourceTest {
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
     return mapper.readValue(httpResponse.body().byteStream(), GroupDetailResponseV2.class);
+  }
+
+  Set<SanitizedSecret> secretsInfo(String group) throws IOException {
+    Request get = clientRequest("/automation/v2/groups/" + group + "/secrets").get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<Set<SanitizedSecret>>(){});
+  }
+
+  Set<Client> clientsInfo(String group) throws IOException {
+    Request get = clientRequest("/automation/v2/groups/" + group + "/clients").get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<Set<Client>>(){});
   }
 
   Set<String> listing() throws IOException {

@@ -1,7 +1,7 @@
 package keywhiz.service.resources.automation.v2;
 
-import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
 import java.util.Set;
@@ -124,6 +124,48 @@ public class GroupResource {
         .secrets(secrets)
         .clients(clients)
         .build();
+  }
+
+  /**
+   * Retrieve metadata for secrets in a particular group.
+   *
+   * @excludeParams automationClient
+   * @param name Group name
+   *
+   * @responseMessage 200 Group information retrieved
+   * @responseMessage 404 Group not found
+   */
+  @Timed @ExceptionMetered
+  @GET
+  @Path("{name}/secrets")
+  @Produces(APPLICATION_JSON)
+  public Set<SanitizedSecret> secretDetailForGroup(@Auth AutomationClient automationClient,
+      @PathParam("name") String name) {
+    Group group = groupDAO.getGroup(name)
+        .orElseThrow(NotFoundException::new);
+
+    return aclDAO.getSanitizedSecretsFor(group);
+  }
+
+  /**
+   * Retrieve metadata for clients in a particular group.
+   *
+   * @excludeParams automationClient
+   * @param name Group name
+   *
+   * @responseMessage 200 Group information retrieved
+   * @responseMessage 404 Group not found
+   */
+  @Timed @ExceptionMetered
+  @GET
+  @Path("{name}/clients")
+  @Produces(APPLICATION_JSON)
+  public Set<Client> clientDetailForGroup(@Auth AutomationClient automationClient,
+      @PathParam("name") String name) {
+    Group group = groupDAO.getGroup(name)
+        .orElseThrow(NotFoundException::new);
+
+    return aclDAO.getClientsFor(group);
   }
 
   /**
