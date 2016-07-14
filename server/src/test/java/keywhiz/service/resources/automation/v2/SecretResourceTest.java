@@ -2,9 +2,7 @@ package keywhiz.service.resources.automation.v2;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.net.URI;
@@ -15,7 +13,11 @@ import java.util.List;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
-import keywhiz.api.automation.v2.*;
+import keywhiz.api.automation.v2.CreateGroupRequestV2;
+import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
+import keywhiz.api.automation.v2.CreateSecretRequestV2;
+import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
+import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -32,7 +34,6 @@ import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static keywhiz.TestClients.clientRequest;
 import static keywhiz.client.KeywhizClient.JSON;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.data.MapEntry.entry;
 
 public class SecretResourceTest {
   private static final ObjectMapper mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
