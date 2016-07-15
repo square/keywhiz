@@ -113,10 +113,9 @@ a.dl:hover {
 }
 
 h3 {
-  font-weight: 300;
-  font-style: italic;
+  font-weight: 100;
   color: #888;
-  font-size: 20px;
+  font-size: 30px;
   padding-top: 115px;
   margin-top: 0;
 }
@@ -147,6 +146,15 @@ pre, code {
 code {
   border: 0;
   background-color: transparent;
+}
+
+#slides {
+  position: relative; border: 1px solid #a0a0a0; padding: 10px; width: 870px; height: 540px;
+}
+#slides object {
+  position: absolute; bottom: 0px;
+  width: 750px;
+  margin: auto 60px;
 }
 
 /* Widescreen desktop. */
