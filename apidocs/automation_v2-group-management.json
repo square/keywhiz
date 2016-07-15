@@ -78,6 +78,60 @@
         "message" : "Group not found"
       } ]
     } ]
+  }, {
+    "path" : "/automation/v2/groups/{name}/clients",
+    "operations" : [ {
+      "method" : "GET",
+      "nickname" : "clientDetailForGroup",
+      "type" : "array",
+      "items" : {
+        "$ref" : "Client"
+      },
+      "uniqueItems" : true,
+      "parameters" : [ {
+        "type" : "string",
+        "description" : "Group name",
+        "paramType" : "path",
+        "name" : "name",
+        "required" : true
+      } ],
+      "summary" : "Retrieve metadata for clients in a particular group.",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Group information retrieved"
+      }, {
+        "code" : 404,
+        "message" : "Group not found"
+      } ],
+      "produces" : [ "application/json" ]
+    } ]
+  }, {
+    "path" : "/automation/v2/groups/{name}/secrets",
+    "operations" : [ {
+      "method" : "GET",
+      "nickname" : "secretDetailForGroup",
+      "type" : "array",
+      "items" : {
+        "$ref" : "SanitizedSecret"
+      },
+      "uniqueItems" : true,
+      "parameters" : [ {
+        "type" : "string",
+        "description" : "Group name",
+        "paramType" : "path",
+        "name" : "name",
+        "required" : true
+      } ],
+      "summary" : "Retrieve metadata for secrets in a particular group.",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Group information retrieved"
+      }, {
+        "code" : 404,
+        "message" : "Group not found"
+      } ],
+      "produces" : [ "application/json" ]
+    } ]
   } ],
   "models" : {
     "GroupDetailResponseV2" : {
@@ -116,6 +170,52 @@
             "type" : "string"
           },
           "uniqueItems" : true
+        }
+      }
+    },
+    "SanitizedSecret" : {
+      "id" : "SanitizedSecret",
+      "properties" : { }
+    },
+    "ApiDate" : {
+      "id" : "ApiDate",
+      "properties" : {
+        "epochSecond" : {
+          "type" : "integer",
+          "format" : "int64"
+        }
+      }
+    },
+    "Client" : {
+      "id" : "Client",
+      "properties" : {
+        "id" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "name" : {
+          "type" : "string"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "createdAt" : {
+          "type" : "ApiDate"
+        },
+        "createdBy" : {
+          "type" : "string"
+        },
+        "updatedAt" : {
+          "type" : "ApiDate"
+        },
+        "updatedBy" : {
+          "type" : "string"
+        },
+        "enabled" : {
+          "type" : "boolean"
+        },
+        "automationAllowed" : {
+          "type" : "boolean"
         }
       }
     },
