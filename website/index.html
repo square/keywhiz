@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <title>Keywhiz</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="A system for distributing and managing secrets">
+    <meta name="description" content="A file-based secret management and distribution system">
     <link href="static/bootstrap-combined.min.css" rel="stylesheet">
     <link href="static/app.css" rel="stylesheet">
     <link href="static/app-theme.css" rel="stylesheet">
@@ -18,6 +18,15 @@
         <div class="row">
           <div class="span5">
             <h1>Keywhiz</h1>
+          </div>
+          <div class="span7">
+            <menu>
+              <ul>
+                <li><a href="#download" class="menu download">Download <span class="version-tag">Latest</span></a></li>
+                <li><a href="https://github.com/square/keywhiz" data-title="View GitHub Project" class="menu github"><img src="static/icon-github.png" alt="GitHub"/></a></li>
+                <li><a href="https://square.github.io/" data-title="Square Open Source Portal" class="menu square"><img src="static/icon-square.png" alt="Square"/></a></li>
+              </ul>
+            </menu>
           </div>
         </div>
       </div>
@@ -35,27 +44,240 @@
       <div class="container">
         <div class="row">
           <div class="span9">
-            <h3 id="overview">Overview</h3>
+            <h3 id="overview">Keywhiz</h3>
+            <p>Keywhiz is a <strong>system for managing and distributing secrets</strong>. It can
+                fit well with a service oriented architecture (SOA).
+                <a href="presentation.html">Here is an overview in presentation format</a></p>
 
-            <div id="slides">
-            </div>
-
-            <h3 id="getting_started">Getting Started</h3>
-            <p>We are working on improving our documentation. In the meantime, you
-              can access our <a href="single_page.html">original docs</a>.</p>
-            <!--
-            <p>We recommend you read the following documentation:</P
+            <p>Every organization has services or systems that require secrets. Secrets like:</p>
             <ul>
-              <li><p>How to setup a demo instance using Docket.</p></li>
-              <li><p>Running Keywhiz: everything a system admin needs to know.</p></li>
-              <li><p>Read more about Keywhiz and its internals.</p></li>
-              <li><p>Information for developers/contributors.</p></li>
+              <li>TLS certificates/keys</li>
+              <li>GPG keys</li>
+              <li>API tokens</li>
+              <li>database credentials</li>
             </ul>
-            -->
-            <p>Feel free to join and post questions on our <a href="https://groups.google.com/forum/#!forum/keywhiz-users">mailing list</a>,
-              we &#x2665; new users!</p>
-            <h3 id="source">Source code</h3>
-            <p>Keywhiz is open source and available on <a href="https://github.com/square/keywhiz">github.com/square/keywhiz</a>.</p>
+
+            <p>Common practices include putting secrets in config files next to code or copying
+                files to servers out-of-band. The former is likely to be leaked and the latter
+                difficult to track.</p>
+
+            <p>Keywhiz makes managing secrets easier and more secure. Keywhiz servers in a cluster
+                centrally store secrets encrypted in a database. Clients use mutually authenticated
+                TLS (mTLS) to retrieve secrets they have access to. Authenticated users administer
+                Keywhiz via CLI or web app UI. To enable workflows, Keywhiz has automation APIs over
+                mTLS and support for simple secret generation plugins.</p>
+
+            <p><em>Keywhiz should be considered alpha at this point. Upcoming changes may break API
+                backward compatibility. See our <a href="#roadmap">roadmap</a>.</em></p>
+
+            <h3 id="components">System components</h3>
+            <h4>Keywhiz Server</h4>
+            <p>Keywhiz Server provides <a href="apidocs">JSON APIs</a> for accessing and
+                managing secrets. It is written in Java and based on
+                <a href="http://dropwizard.io/">Dropwizard</a>.</p>
+
+            <h4>KeywhizFs</h4>
+            <p><a href="https://github.com/square/keywhiz-fs">KeywhizFs</a> is a
+                <a href="http://fuse.sourceforge.net/">FUSE</a>-based file system, providing secrets
+                as if they are files in a directory. Transparently, secrets are retrieved from a
+                Keywhiz Server using mTLS with a client certificate.<p>
+
+            <p>Presenting secrets as files makes Keywhiz compatible with nearly all software.
+                Outside of Keywhiz administration, consumers of secrets only have to know how to
+                read a file.</p>
+
+            <p>KeywhizFs stores all secrets in memory only and never persisted to disk. If KeywhizFs
+                is unmounted or the server loses power, all secrets will be safely removed from that
+                server.</p>
+
+            <p>To mitigate a Keywhiz Server outage, KeywhizFs maintains a local cache of previously
+                accessed secrets. Unless the server is rebooted or KeywhizFs unmounted, applications
+                can happily continue accessing secrets previously accessed.</p>
+
+            <h4>Keywhiz CLI</h4>
+            <p>Keywhiz CLI is a Java program for Keywhiz administration. Clients, secrets, and
+                groups can be queried, added, removed, or associated with each other.
+                <a href="#model">Users</a> can authenticate and use the CLI.</p>
+
+            <h4>Keywhiz UI</h4>
+            <p>Keywhiz UI is web app for Keywhiz administration, similiar to Keywhiz CLI. The UI is
+                built with <a href="https://angularjs.org/">AngularJS</a>.
+                <a href="#model">Users</a> can authenticate and use the UI.</p>
+
+            <h4>Public Key Infrastructure</h4>
+            <p>Keywhiz makes heavy use of mTLS and X509 certificates. It can even help distribute
+                and rotate them for other services! There is the assumption of a PKI system though.
+                If one does not exist or a PKI is wanted for development consider
+                <a href="https://github.com/square/certstrap">certstrap</a> for a simple, initial
+                PKI.</p>
+
+            <h3 id="model">Data model</h3>
+            <p>The data model is composed of clients, secrets, groups, and users.</p>
+
+            <p><strong>Clients</strong> are identified by a client certificate. A database entry can
+                enable/disable access or escalate automation privileges.</p>
+
+            <p><strong>Secrets</strong> have a globally unique name and can contain any binary
+                content. For example, <code>helloworldsrv-database.yml</code>. Secrets are
+                immutable, but multiple ordered versions can exist at once. Arbitrary key-value
+                metadata can be added for extensibility.</p>
+
+            <p><strong>Groups</strong> are the glue binding clients and secrets. Clients are
+                assigned membership into groups (e.g. for the service-on-host, service, etc.).
+                Secrets are also assigned to groups. If a client and secret share any group, the
+                client will have access to the secret. Groups are not hierarchical and cannot be in
+                other groups.</p>
+
+            <p><strong>Users</strong> are authenticated Keywhiz administrators. Authentication is
+                customizable with LDAP and bcrypt-hashed passwords currently supported. After
+                initial authentication subsequent requests require an encrypted cookie from Keywhiz
+                Server.</p>
+
+            <h3 id="setup">Setup</h3>
+            <p>Source code for the Server, CLI, and UI is available in
+                <a href="https://github.com/square/keywhiz">square/keywhiz</a>. KeywhizFs source is
+                in <a href="https://github.com/square/keywhiz-fs">square/keywhiz-fs</a>. To checkout
+                the Keywhiz source code:</p>
+            <pre class="prettyprint">$ git clone https://github.com/square/keywhiz.git &amp;&amp; cd keywhiz</pre>
+
+            <h4>Starting the Server</h4>
+            <p>Keywhiz can store data in PostgreSQL, MySQL or H2. H2 is the
+              simplest database for development purpose and all the data
+              is stored in <code>/tmp/h2_data/keywhizdb_development</code>. For
+              production systems you should use PostgreSQL or MySQL.</p>
+
+            <p>From the base of the keywhiz repository, build the server:</p>
+            <pre class="prettyprint">$ mvn package -am -pl server -P h2</pre>
+
+            <p>Run any migrations:</p>
+            <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar preview-migrate server/src/main/resources/keywhiz-development.yaml
+$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar migrate server/src/main/resources/keywhiz-development.yaml</pre>
+
+            <p>(Optional) Import some development data:</p>
+            <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar db-seed server/src/main/resources/keywhiz-development.yaml</pre>
+
+            <p>Start the server:</p>
+            <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar server server/src/main/resources/keywhiz-development.yaml</pre>
+
+            <p>Access the UI by opening
+                <a href="https://localhost:4444/">https://localhost:4444/</a> in a browser. The development
+                data provides a keywhizAdmin:adminPass account.</p>
+
+            <h4>Building the CLI</h4>
+            <p>From the base of the keywhiz repository:</p>
+            <pre class="prettyprint">$ mvn package -am -pl cli</pre>
+
+            <p>Run the CLI and get a usage statement:</p>
+            <pre class="prettyprint">$ ./cli/target/keywhiz-cli-*-SNAPSHOT-shaded.jar</pre>
+
+            <p>In development, you can use <code>--devTrustStore</code>, e.g.:</p>
+            <pre class="prettyprint">$ ./cli/target/keywhiz-cli-*-SNAPSHOT-shaded.jar --devTrustStore --user keywhizAdmin list groups</pre>
+
+            <p>You may want to alias this command for convenience:</p>
+            <pre class="prettyprint">$ alias keywhiz.cli="/path/to/keywhiz-cli-*-SNAPSHOT-shaded.jar"</pre>
+
+            <h4>Mounting KeywhizFs</h4>
+            <p>Refer to the KeywhizFs <a href="https://github.com/square/keywhiz-fs/blob/master/README.md">README</a>.</p>
+
+            <h3 id="examples">Examples</h3>
+            <p>More examples are available in the
+                <a href="https://github.com/square/keywhiz/wiki">Wiki</a>, but here are a few.</p>
+            <p>In development, you can use <code>--devTrustStore</code> and these examples
+              assume that you want to use the default <code>keywhizAdmin</code> user.</p>
+            <p>In production, you will want to create your own users and make sure
+              that your certificates are properly signed and trusted.</p>
+
+            <h4>Adding a Secret</h4>
+            <h5>Using Keywhiz CLI</h5>
+            <pre class="prettyprint">$ keywhiz.cli --devTrustStore --user keywhizAdmin login
+$ keywhiz.cli add secret --name mySecretName &lt; mySecretFile</pre>
+
+            <h5>Using Keywhiz automation API</h5>
+            <p>
+              The automation API requires a client certificate and
+              <code>automationAllowed=true</code> in the clients DB table. For
+              development purpose, you can use the pre-generated <code>client.p12</code>
+              keystore:
+            </p>
+
+            <pre class="prettyprint">$ cat request.json
+{
+  "name":"example.keytab",
+  "description":"example kerberos keytab",
+  "content":"a2V5dGFiIGNvbnRlbnQ=",
+  "metadata":{"owner":"root","group":"root","mode":"0400"}
+}
+$ curl --cert ./server/src/test/resources/clients/client.p12:ponies -H "Content-Type:application/json" -d @request.json https://localhost:4444/automation/secrets/</pre>
+
+            <h4>Assigning a Secret to a Group</h4>
+            <h5>Using Keywhiz CLI</h5>
+            <pre class="prettyprint">$ keywhiz.cli --devTrustStore --user keywhizAdmin assign secret --name example.keytab --group kerberos</pre>
+
+            <h5>Using Keywhiz automation API</h5>
+            <pre class="prettyprint">$ curl --cert ./server/src/test/resources/clients/client.p12:ponies -X PUT "https://localhost:4444/automation/secrets/$SECRET_ID/groups/$GROUP_ID"</pre>
+
+            <h3 id="download">Download</h3>
+            <p><a href="https://search.maven.org/#search|ga|1|g:com.squareup.keywhiz" class="dl version-href">&darr; <span class="version-tag">Latest</span> JARs</a></p>
+
+            <p>Source code for Keywhiz and this website is
+                <a href="https://github.com/square/keywhiz">available on GitHub</a>.</p>
+
+            <h3 id="roadmap">Roadmap</h3>
+            <h4>Beta release:</h4>
+            <ul>
+              <li>Expose secret versions in KeywhizFs</li>
+              <li>New client API for secret versions</li>
+              <li><del>Migrate from JDBI to JOOQ</del></li>
+              <li><del>Support MySQL in addition to PostgreSQL</del></li>
+            </ul>
+
+            <h3 id="contributing">Contributing</h3>
+
+            <p>If you would like to contribute code to Keywhiz you can do so through GitHub by
+            forking the repository and sending a pull request.</p>
+
+            <p>When submitting code, please make every effort to follow existing conventions
+            and style in order to keep the code as readable as possible. Please also make
+            sure your code compiles and passes tests by running <code>mvn clean verify</code>.
+
+            <p>Before your code can be accepted into the project you must also sign the
+            <a href="https://spreadsheets.google.com/spreadsheet/viewform?formkey=dDViT2xzUHAwRkI3X3k5Z0lQM091OGc6MQ&ndplr=1">Individual Contributor License Agreement (CLA)</a>.
+
+            <h3 id="license">License</h3>
+            <pre>Copyright 2015 Square, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</pre>
+          </div>
+          <div class="span3">
+            <div class="content-nav" data-spy="affix" data-offset-top="80">
+              <ul class="nav nav-tabs nav-stacked primary">
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#components">Components</a></li>
+                <li><a href="#model">Data model</a></li>
+                <li><a href="#setup">Setup</a></li>
+                <li><a href="#examples">Examples</a></li>
+                <li><a href="#download">Download</a></li>
+                <li><a href="#roadmap">Roadmap</a></li>
+                <li><a href="#contributing">Contributing</a></li>
+                <li><a href="#license">License</a></li>
+              </ul>
+              <ul class="nav nav-pills nav-stacked secondary">
+                <li><a href="https://github.com/square/keywhiz/wiki">Wiki</a></li>
+                <li><a href="apidocs">API</a></li>
+                <li><a href="https://groups.google.com/forum/#!forum/keywhiz-users">Google Group</a></li>
+                <li><a href="https://stackoverflow.com/questions/tagged/keywhiz?sort=active">StackOverflow</a></li>
+              </ul>
+            </div>
           </div>
         </div>
         <div class="row">
@@ -65,12 +287,11 @@
         </div>
       </div>
     </section>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script src="static/bootstrap.min.js"></script>
     <script src="static/jquery.smooth-scroll.min.js"></script>
     <script src="static/jquery-maven-artifact.min.js"></script>
     <script src="static/prettify.js"></script>
-    <script src="slides/slides.js"></script>
     <script type="text/javascript">
       $(function() {
         // Syntax highlight code blocks.
