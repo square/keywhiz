@@ -117,7 +117,7 @@ public class SecretsResource {
 
   protected List<SanitizedSecret> listSecrets(@Auth User user) {
     logger.info("User '{}' listing secrets.", user);
-    return secretController.getSanitizedSecrets();
+    return secretController.getSanitizedSecrets(null, null);
   }
 
   protected List<SanitizedSecret> listSecretsNameOnly(@Auth User user) {

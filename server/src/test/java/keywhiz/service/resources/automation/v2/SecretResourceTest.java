@@ -225,6 +225,53 @@ public class SecretResourceTest {
     assertThat(listing()).contains("secret16");
   }
 
+  @Test public void secretListingExpiry_success() throws Exception {
+    // Listing without secret17,18,19
+    List<String> s = listing();
+    assertThat(s).doesNotContain("secret17");
+    assertThat(s).doesNotContain("secret18");
+    assertThat(s).doesNotContain("secret19");
+
+    // create groups
+    createGroup("group15a");
+    createGroup("group15b");
+
+    // add some secrets
+    create(CreateSecretRequestV2.builder()
+        .name("secret17")
+        .content(encoder.encodeToString("supa secret17".getBytes(UTF_8)))
+        .expiry(1470096000)
+        .groups("group15a", "group15b")
+        .build());
+
+    create(CreateSecretRequestV2.builder()
+        .name("secret18")
+        .content(encoder.encodeToString("supa secret18".getBytes(UTF_8)))
+        .expiry(1469923200)
+        .groups("group15a")
+        .build());
+
+    create(CreateSecretRequestV2.builder()
+        .name("secret19")
+        .content(encoder.encodeToString("supa secret19".getBytes(UTF_8)))
+        .expiry(1470009600)
+        .groups("group15b")
+        .build());
+
+    // check limiting by group and expiry
+    List<String> s1 = listExpiring(1470355200L, "group15a");
+    assertThat(s1).contains("secret17");
+    assertThat(s1).contains("secret18");
+
+    List<String> s2 = listExpiring(1470355200L, "group15b");
+    assertThat(s2).contains("secret19");
+    assertThat(s2).doesNotContain("secret18");
+
+    List<String> s3 = listExpiring(1470009600L, null);
+    assertThat(s3).contains("secret18");
+    assertThat(s3).doesNotContain("secret17");
+  }
+
   private Response createGroup(String name) throws IOException {
     GroupResourceTest groupResourceTest = new GroupResourceTest();
     groupResourceTest.mutualSslClient = mutualSslClient;
@@ -245,6 +292,20 @@ public class SecretResourceTest {
 
   List<String> listing() throws IOException {
     Request get = clientRequest("/automation/v2/secrets").get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>(){});
+  }
+
+  List<String> listExpiring(Long time, String groupName) throws IOException {
+    String requestURL = "/automation/v2/secrets/expiring/";
+    if (time != null && time > 0) {
+      requestURL += time.toString() + "/";
+    }
+    if (groupName != null && groupName.length() > 0) {
+      requestURL += groupName;
+    }
+    Request get = clientRequest(requestURL).get().build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
     return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>(){});

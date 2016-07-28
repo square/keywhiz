@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.google.common.collect.Sets;
 import io.dropwizard.auth.Auth;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -134,16 +135,58 @@ public class SecretResource {
   }
 
   /**
-   * Retrieve listing of secret names
+   * Retrieve listing of secrets and metadata
    *
    * @excludeParams automationClient
-   * @responseMessage 200 List of secret names
+   * @responseMessage 200 List of secrets and metadata
    */
   @Timed @ExceptionMetered
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> secretListing(@Auth AutomationClient automationClient) {
-    return secretController.getSanitizedSecrets().stream()
+    return secretController.getSanitizedSecrets(null, null).stream()
+        .map(SanitizedSecret::name)
+        .collect(toSet());
+  }
+
+  /**
+   * Retrieve listing of secrets expiring soon
+   *
+   * @excludeParams automationClient
+   * @param time timestamp for farthest expiry to include
+   *
+   * @responseMessage 200 List of secrets expiring soon
+   */
+  @Timed @ExceptionMetered
+  @Path("expiring/{time}")
+  @GET
+  @Produces(APPLICATION_JSON)
+  public Iterable<String> secretListingExpiring(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
+    List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(time, null);
+    return secrets.stream()
+        .map(SanitizedSecret::name)
+        .collect(toSet());
+  }
+
+  /**
+   * Retrieve listing of secrets expiring soon in a group
+   *
+   * @excludeParams automationClient
+   * @param time timestamp for farthest expiry to include
+   * @param name Group name
+   *
+   * @responseMessage 200 List of secrets expiring soon in group
+   */
+  @Timed @ExceptionMetered
+  @Path("expiring/{time}/{name}")
+  @GET
+  @Produces(APPLICATION_JSON)
+  public Iterable<String> secretListingExpiringForGroup(@Auth AutomationClient automationClient,
+      @PathParam("time") Long time, @PathParam("name") String name) {
+    Group group = groupDAO.getGroup(name).orElseThrow(NotFoundException::new);
+
+    List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(time, group);
+    return secrets.stream()
         .map(SanitizedSecret::name)
         .collect(toSet());
   }

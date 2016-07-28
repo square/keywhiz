@@ -20,10 +20,15 @@ import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+
+import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.SecretTransformer;
+
+import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -57,14 +62,18 @@ public class SecretController {
     return secretDAO.getSecretByName(name).map(transformer::transform);
   }
 
-  /** @return all existing sanitized secrets. */
-  public List<SanitizedSecret> getSanitizedSecrets() {
-    return secretDAO.getSecrets().stream()
+  /**
+   * @param expireMaxTime timestamp for farthest expiry to include
+   * @param group limit results to secrets assigned to this group, if provided.
+   * @return all existing sanitized secrets matching criteria.
+   * */
+  public List<SanitizedSecret> getSanitizedSecrets(@Nullable Long expireMaxTime, Group group) {
+    return secretDAO.getSecrets(expireMaxTime, group).stream()
         .map(SanitizedSecret::fromSecretSeriesAndContent)
         .collect(toList());
   }
 
-  /** @return all existing sanitized secrets. */
+  /** @return names of all existing sanitized secrets. */
   public List<SanitizedSecret> getSecretsNameOnly() {
     return secretDAO.getSecretsNameOnly()
         .stream()
