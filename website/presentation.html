@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<!-- TODO: add this to square.github.io/repos.json, invoke generator.py -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Keywhiz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A system for distributing and managing secrets">
+    <link href="static/bootstrap-combined.min.css" rel="stylesheet">
+    <link href="static/app.css" rel="stylesheet">
+    <link href="static/app-theme.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,300italic,100,100italic,300" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="static/html5shiv.min.js"></script><![endif]-->
+  </head>
+  <body data-target=".content-nav">
+    <header>
+      <div class="container">
+        <div class="row">
+          <div class="span5">
+            <h1>Keywhiz</h1>
+          </div>
+        </div>
+      </div>
+    </header>
+    <section id="subtitle">
+      <div class="container">
+        <div class="row">
+          <div class="span12">
+            <h2>A system for distributing and managing secrets</h2>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="body">
+      <div class="container">
+        <div class="row">
+          <div class="span9">
+            <h3 id="overview">Overview</h3>
+
+            <div id="slides">
+            </div>
+
+            <h3 id="getting_started">Getting Started</h3>
+            <!--
+            <p>We recommend you read the following documentation:</P
+            <ul>
+              <li><p>How to setup a demo instance using Docket.</p></li>
+              <li><p>Running Keywhiz: everything a system admin needs to know.</p></li>
+              <li><p>Read more about Keywhiz and its internals.</p></li>
+              <li><p>Information for developers/contributors.</p></li>
+            </ul>
+            -->
+            <p>Feel free to join and post questions on our <a href="https://groups.google.com/forum/#!forum/keywhiz-users">mailing list</a>,
+              we &#x2665; new users!</p>
+            <h3 id="source">Source code</h3>
+            <p>Keywhiz is open source and available on <a href="https://github.com/square/keywhiz">github.com/square/keywhiz</a>.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="span12 logo">
+            <a href="https://squareup.com"><img src="static/logo-square.png" alt="Square, Inc."/></a>
+          </div>
+        </div>
+      </div>
+    </section>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="static/bootstrap.min.js"></script>
+    <script src="static/jquery.smooth-scroll.min.js"></script>
+    <script src="static/jquery-maven-artifact.min.js"></script>
+    <script src="static/prettify.js"></script>
+    <script src="slides/slides.js"></script>
+    <script type="text/javascript">
+      $(function() {
+        // Syntax highlight code blocks.
+        prettyPrint();
+
+        // Spy on scroll position for real-time updating of current section.
+        $('body').scrollspy();
+
+        // Use smooth-scroll for internal links.
+        $('a').smoothScroll();
+
+        // Enable tooltips on the header nav image items.
+        $('.menu').tooltip({
+          placement: 'bottom',
+          trigger: 'hover',
+          container: 'body',
+          delay: {
+            show: 500,
+            hide: 0
+          }
+        });
+
+        // Look up the latest version of the library.
+        $.fn.artifactVersion({
+          'groupId': 'com.squareup.keywhiz',
+          'artifactId': 'keywhiz'
+        }, function(version, url) {
+          $('.version').text(version);
+          $('.version-tag').text('v' + version);
+          $('.version-href').attr('href', url);
+        });
+      });
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-40704740-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>
