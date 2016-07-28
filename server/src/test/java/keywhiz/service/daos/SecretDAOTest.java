@@ -177,7 +177,7 @@ public class SecretDAOTest {
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore + 1);
 
     newSecret = secretDAO.getSecretByName(newSecret.series().name()).get();
-    assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2b, newSecret);
+    assertThat(secretDAO.getSecrets(null, null)).containsOnly(secret1, secret2b, newSecret);
   }
 
   @Test(expected = DataAccessException.class)
@@ -230,7 +230,7 @@ public class SecretDAOTest {
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore + 1);
 
     newSecret = secretDAO.getSecretByName(newSecret.series().name()).get();
-    assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2b, newSecret);
+    assertThat(secretDAO.getSecrets(null, null)).containsOnly(secret1, secret2b, newSecret);
   }
 
   @Test public void createOrUpdateSecretWhenSecretExists() {
@@ -312,7 +312,7 @@ public class SecretDAOTest {
   }
 
   @Test public void getSecrets() {
-    assertThat(secretDAO.getSecrets()).containsOnly(secret1, secret2b);
+    assertThat(secretDAO.getSecrets(null, null)).containsOnly(secret1, secret2b);
   }
 
   @Test public void getSecretsByNameOnly() {

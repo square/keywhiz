@@ -152,7 +152,7 @@ public class AutomationSecretResource {
           ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
       responseBuilder.add(AutomationSecretResponse.fromSecret(secret, groups));
     } else {
-      List<SanitizedSecret> secrets = secretController.getSanitizedSecrets();
+      List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(null, null);
 
       for (SanitizedSecret sanitizedSecret : secrets) {
         Secret secret = secretController.getSecretById(sanitizedSecret.id()).orElseThrow(() ->

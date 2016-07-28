@@ -24,10 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import keywhiz.api.model.Secret;
-import keywhiz.api.model.SecretContent;
-import keywhiz.api.model.SecretSeries;
-import keywhiz.api.model.SecretSeriesAndContent;
+import keywhiz.api.model.*;
 import keywhiz.jooq.tables.Secrets;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
@@ -171,17 +168,19 @@ public class SecretDAO {
     return Optional.empty();
   }
 
-  /** @return all existing secrets. */
-  public ImmutableList<SecretSeriesAndContent> getSecrets() {
+  /** @return list of secrets. can limit/sort by expiry, and for group if given */
+  public ImmutableList<SecretSeriesAndContent> getSecrets(@Nullable Long expireMaxTime, Group group) {
     return dslContext.transactionResult(configuration -> {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
 
       ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
 
-      secretSeriesDAO.getSecretSeries()
-          .forEach((series) -> secretsBuilder.add(SecretSeriesAndContent.of(
-              series, secretContentDAO.getSecretContentById(series.currentVersion().get()).get())));
+      for (SecretSeries series : secretSeriesDAO.getSecretSeries(expireMaxTime, group)) {
+        SecretContent content = secretContentDAO.getSecretContentById(series.currentVersion().get()).get();
+        SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
+        secretsBuilder.add(seriesAndContent);
+      }
 
       return secretsBuilder.build();
     });

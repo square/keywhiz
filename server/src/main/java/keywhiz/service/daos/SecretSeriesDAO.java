@@ -28,15 +28,19 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 import com.google.common.collect.ImmutableMap;
+import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.Record;
+import org.jooq.SelectQuery;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
+import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
@@ -131,13 +135,24 @@ class SecretSeriesDAO {
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
-  public ImmutableList<SecretSeries> getSecretSeries() {
-    List<SecretSeries> r = dslContext
-        .selectFrom(SECRETS)
-        .where(SECRETS.CURRENT.isNotNull())
-        .fetch()
-        .map(secretSeriesMapper);
+  public ImmutableList<SecretSeries> getSecretSeries(@Nullable Long expireMaxTime, Group group) {
+    SelectQuery<Record> select = dslContext
+        .select().from(SECRETS).join(SECRETS_CONTENT).on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID))
+        .where(SECRETS.CURRENT.isNotNull()).getQuery();
 
+    if (expireMaxTime != null && expireMaxTime > 0) {
+      select.addOrderBy(SECRETS_CONTENT.EXPIRY.asc().nullsLast());
+      long now = System.currentTimeMillis() / 1000L;
+      select.addConditions(SECRETS_CONTENT.EXPIRY.greaterThan(now));
+      select.addConditions(SECRETS_CONTENT.EXPIRY.lessOrEqual(expireMaxTime));
+    }
+
+    if (group != null) {
+      select.addJoin(ACCESSGRANTS, SECRETS.ID.eq(ACCESSGRANTS.SECRETID));
+      select.addJoin(GROUPS, GROUPS.ID.eq(ACCESSGRANTS.GROUPID));
+      select.addConditions(GROUPS.NAME.eq(group.getName()));
+    }
+    List<SecretSeries> r = select.fetchInto(SECRETS).map(secretSeriesMapper);
     return ImmutableList.copyOf(r);
   }
 
