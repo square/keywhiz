@@ -215,6 +215,28 @@ public class SecretResource {
   }
 
   /**
+   * Retrieve latest version of a secret
+   *
+   * @excludeParams automationClient
+   * @param name Secret series name
+   *
+   * @responseMessage 200 Secret series information retrieved
+   * @responseMessage 404 Secret series not found
+   */
+  @Timed @ExceptionMetered
+  @GET
+  @Path("{name}/current")
+  @Produces(APPLICATION_JSON)
+  public SecretDetailResponseV2 secretContent(@Auth AutomationClient automationClient,
+      @PathParam("name") String name) {
+    Secret secret = secretController.getSecretByName(name)
+        .orElseThrow(NotFoundException::new);
+    return SecretDetailResponseV2.builder()
+        .secret(secret)
+        .build();
+  }
+
+  /**
    * Listing of groups a secret is assigned to
    *
    * @excludeParams automationClient
