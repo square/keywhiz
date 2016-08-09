@@ -236,38 +236,41 @@ public class SecretResourceTest {
     createGroup("group15a");
     createGroup("group15b");
 
+    // get current time to calculate timestamps off for expiry
+    long now = System.currentTimeMillis() / 1000L;
+
     // add some secrets
     create(CreateSecretRequestV2.builder()
         .name("secret17")
         .content(encoder.encodeToString("supa secret17".getBytes(UTF_8)))
-        .expiry(1470096000)
+        .expiry(now+86400*3)
         .groups("group15a", "group15b")
         .build());
 
     create(CreateSecretRequestV2.builder()
         .name("secret18")
         .content(encoder.encodeToString("supa secret18".getBytes(UTF_8)))
-        .expiry(1469923200)
+        .expiry(now+86400)
         .groups("group15a")
         .build());
 
     create(CreateSecretRequestV2.builder()
         .name("secret19")
         .content(encoder.encodeToString("supa secret19".getBytes(UTF_8)))
-        .expiry(1470009600)
+        .expiry(now+86400*2)
         .groups("group15b")
         .build());
 
     // check limiting by group and expiry
-    List<String> s1 = listExpiring(1470355200L, "group15a");
+    List<String> s1 = listExpiring(now+86400*4, "group15a");
     assertThat(s1).contains("secret17");
     assertThat(s1).contains("secret18");
 
-    List<String> s2 = listExpiring(1470355200L, "group15b");
+    List<String> s2 = listExpiring(now+86400*4, "group15b");
     assertThat(s2).contains("secret19");
     assertThat(s2).doesNotContain("secret18");
 
-    List<String> s3 = listExpiring(1470009600L, null);
+    List<String> s3 = listExpiring(now+86400*2, null);
     assertThat(s3).contains("secret18");
     assertThat(s3).doesNotContain("secret17");
   }
