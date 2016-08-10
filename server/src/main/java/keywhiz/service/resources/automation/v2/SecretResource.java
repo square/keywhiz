@@ -226,6 +226,7 @@ public class SecretResource {
   @Timed @ExceptionMetered
   @GET
   @Path("{name}/groups")
+  @Produces(APPLICATION_JSON)
   public Iterable<String> secretGroupsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     // TODO: Use latest version instead of non-versioned
