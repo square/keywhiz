@@ -198,6 +198,33 @@ public class SecretDAO {
     return ImmutableList.copyOf(results);
   }
 
+  /**
+   * @param name of secret series to look up secrets by.
+   * @param newestIdx the first index to select in a list of versions sorted by creation time
+   * @param oldestIdx the last index to select in a list of versions sorted by creation time
+   * @return Versions of a secret matching input parameters or Optional.absent().
+   */
+  public Optional<SecretSeriesAndVersions> getSecretVersionsByName(String name, int newestIdx,
+      int oldestIdx) {
+    checkArgument(!name.isEmpty());
+    checkArgument(newestIdx >= 0);
+    checkArgument(oldestIdx >= 0);
+
+    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+
+    Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesByName(name);
+    if (series.isPresent()) {
+      long secretId = series.get().id();
+      Optional<ImmutableList<SecretContent>> contents =
+          secretContentDAO.getSecretVersionsBySecretId(secretId, newestIdx, oldestIdx);
+      if (contents.isPresent()) {
+        return Optional.of(SecretSeriesAndVersions.of(series.get(), contents.get()));
+      }
+    }
+    return Optional.empty();
+  }
+
 
   /**
    * Deletes the series and all associated version of the given secret series name.

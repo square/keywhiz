@@ -12,9 +12,11 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 
 import static com.google.common.base.Strings.nullToEmpty;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static keywhiz.api.model.Secret.decodedLength;
 
 @AutoValue public abstract class SecretDetailResponseV2 {
@@ -36,6 +38,7 @@ import static keywhiz.api.model.Secret.decodedLength;
     abstract SecretDetailResponseV2 autoBuild();
 
     public abstract Builder name(String name);
+    public abstract Builder version(@Nullable long version); // Unique ID in secrets_content table
     public abstract Builder content(String secret);
     public abstract Builder description(String description);
     public abstract Builder createdAtSeconds(long createdAt);
@@ -50,6 +53,7 @@ import static keywhiz.api.model.Secret.decodedLength;
     public Builder series(SecretSeries series) {
       return this
           .name(series.name())
+          .version(series.currentVersion().orElse(null))
           .description(series.description())
           .createdAtSeconds(series.createdAt().toEpochSecond())
           .createdBy(series.createdBy())
@@ -67,6 +71,17 @@ import static keywhiz.api.model.Secret.decodedLength;
           .metadata(secret.getMetadata());
     }
 
+    public Builder secretContent(SecretContent secretContent) {
+      return this
+          .version(secretContent.id())
+          .content("")
+          .createdAtSeconds(secretContent.createdAt().toEpochSecond())
+          .createdBy(secretContent.createdBy())
+          .metadata(secretContent.metadata())
+          .expiry(secretContent.expiry());
+
+    }
+
     public SecretDetailResponseV2 build() {
       // throws IllegalArgumentException if content not base64
       Base64.getDecoder().decode(content());
@@ -82,6 +97,7 @@ import static keywhiz.api.model.Secret.decodedLength;
   @SuppressWarnings("unused")
   @JsonCreator public static SecretDetailResponseV2 fromParts(
       @JsonProperty("name") String name,
+      @JsonProperty("version") @Nullable long version,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("content") String content,
       @JsonProperty("size") UnsignedLong size,
@@ -92,6 +108,7 @@ import static keywhiz.api.model.Secret.decodedLength;
       @JsonProperty("expiry") @Nullable long expiry) {
     return builder()
         .name(name)
+        .version(version)
         .description(nullToEmpty(description))
         .content(content)
         .size(size)
@@ -105,6 +122,7 @@ import static keywhiz.api.model.Secret.decodedLength;
 
   // TODO: Consider Optional values in place of Nullable.
   @JsonProperty("name") public abstract String name();
+  @JsonProperty("version") @Nullable public abstract long version();
   @JsonProperty("description") public abstract String description();
   @JsonProperty("content") public abstract String content();
   @JsonProperty("size") public abstract UnsignedLong size();
@@ -117,6 +135,7 @@ import static keywhiz.api.model.Secret.decodedLength;
   @Override public final String toString() {
     return MoreObjects.toStringHelper(this)
         .add("name", name())
+        .add("version", version())   // TODO: Should we remove this so it's not as exposed to the user?
         .add("description", description())
         .add("content", "[REDACTED]")
         .add("size", size())

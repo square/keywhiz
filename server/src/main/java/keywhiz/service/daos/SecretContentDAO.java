@@ -20,17 +20,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.api.model.SecretContent;
+import keywhiz.jooq.tables.SecretsContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.Result;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -128,6 +131,30 @@ class SecretContentDAO {
   public Optional<SecretContent> getSecretContentById(long id) {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT, SECRETS_CONTENT.ID.eq(id));
     return Optional.ofNullable(r).map(secretContentMapper::map);
+  }
+
+  public Optional<ImmutableList<SecretContent>> getSecretVersionsBySecretId(long id, int newestIdx,
+      int oldestIdx) {
+    // Calculate how many rows to retrieve
+    if (oldestIdx == 0) {
+      // Retrieve all rows from newestIdx to the end
+      oldestIdx =
+          Integer.MAX_VALUE - 1; // -1 to compensate for + 1 in calculating range to retrieve
+    }
+
+    Result<SecretsContentRecord> r = dslContext.selectFrom(SECRETS_CONTENT)
+        .where(SECRETS_CONTENT.SECRETID.eq(id))
+        .orderBy(SECRETS_CONTENT.CREATEDAT.desc())
+        .limit(newestIdx, oldestIdx - newestIdx + 1)
+        .fetch();
+
+    if (r != null && r.isNotEmpty()) {
+      ImmutableList.Builder<SecretContent> b = new ImmutableList.Builder<>();
+      b.addAll(r.map(secretContentMapper::map));
+      return Optional.of(b.build());
+    } else {
+      return Optional.empty();
+    }
   }
 
   public static class SecretContentDAOFactory implements DAOFactory<SecretContentDAO> {

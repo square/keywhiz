@@ -10,6 +10,7 @@ import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
 import java.util.List;
+import javax.annotation.Nullable;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
@@ -29,6 +30,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 
 import static java.lang.String.format;
+import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static keywhiz.TestClients.clientRequest;
@@ -275,6 +277,88 @@ public class SecretResourceTest {
     assertThat(s3).doesNotContain("secret17");
   }
 
+  @Test public void secretVersionListing_notFound() throws Exception {
+    Request put = clientRequest("/automation/v2/secrets/non-existent/versions/0-0").build();
+    Response httpResponse = mutualSslClient.newCall(put).execute();
+    assertThat(httpResponse.code()).isEqualTo(404);
+  }
+
+  @Test public void secretVersionListing_success() throws Exception {
+    int totalVersions = 6;
+    int sleepInterval = 1000; // Delay so secrets have different creation timestamps
+    List<SecretDetailResponseV2> versions = null;
+    assertThat(listing()).doesNotContain("secret20");
+
+    // get current time to calculate timestamps off for expiry
+    long now = System.currentTimeMillis() / 1000L;
+
+    // Create secrets 1 second apart, so their creation order is deterministic
+    for (int i = 0; i < totalVersions; i++) {
+      createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
+          .content(encoder.encodeToString(format("supa secret20_v%d", i).getBytes(UTF_8)))
+          .description(format("secret20, version %d", i))
+          .expiry(now + 86400 * 2)
+          .metadata(ImmutableMap.of("version", Integer.toString(i)))
+          .build(), "secret20");
+      sleep(sleepInterval);
+    }
+
+    // List all secrets with this version
+    versions = listVersions("secret20", 0, 0);
+
+    checkSecretVersions(versions, "secret20", totalVersions, 0, 0);
+
+    // List the newest half of the secrets with this version
+    versions = listVersions("secret20", 0, totalVersions / 2);
+
+    checkSecretVersions(versions, "secret20", totalVersions, 0, totalVersions / 2);
+
+    // List the oldest half of the secrets with this version
+    versions = listVersions("secret20", totalVersions / 2, 0);
+
+    checkSecretVersions(versions, "secret20", totalVersions, totalVersions / 2, 0);
+
+    // List the middle half of the secrets with this version
+    versions = listVersions("secret20", totalVersions / 4, 3 * totalVersions / 4);
+
+    checkSecretVersions(versions, "secret20", totalVersions, totalVersions / 4,
+        3 * totalVersions / 4);
+  }
+
+  /**
+   * Iterates over the given list of secret versions to verify that they are sorted from most
+   * recent creation date to least recent, that they have the expected version numbers,
+   * and that they have the correct secret name.
+   *
+   * @param versions a list of information on versions of secrets
+   * @param name of the secret series
+   * @param totalVersions the number of versions created
+   * @param newestIdx the index in the overall version list of the newest version taken
+   * @param oldestIdx the index in the overall version list of the oldest version taken
+   */
+  private void checkSecretVersions(List<SecretDetailResponseV2> versions, String name,
+      int totalVersions, int newestIdx, int oldestIdx) {
+    long creationTime = System.currentTimeMillis() / 1000L;
+    int versionIdx = totalVersions - newestIdx - 1;
+    int expectedVersions = (oldestIdx == 0) ? totalVersions - newestIdx
+        : Math.min(totalVersions, oldestIdx + 1) - newestIdx;
+    // Check that we retrieved as many secrets as possible
+    assertThat(versions.size()).isEqualTo(expectedVersions);
+
+    for (SecretDetailResponseV2 version : versions) {
+      // Check creation ordering
+      assertThat(version.createdAtSeconds() < creationTime);
+      creationTime = version.createdAtSeconds();
+
+      // Check version number
+      assertThat(version.metadata()).isEqualTo(
+          ImmutableMap.of("version", Integer.toString(versionIdx--)));
+
+      // Check secret name
+      assertThat(version.name()).isEqualTo(name);
+    }
+  }
+
   private Response createGroup(String name) throws IOException {
     GroupResourceTest groupResourceTest = new GroupResourceTest();
     groupResourceTest.mutualSslClient = mutualSslClient;
@@ -312,6 +396,18 @@ public class SecretResourceTest {
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
     return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>(){});
+  }
+
+  List<SecretDetailResponseV2> listVersions(String name, int newestIdx, int oldestIdx)
+      throws IOException {
+    Request get = clientRequest(
+        format("/automation/v2/secrets/%s/versions/%d-%d", name, newestIdx, oldestIdx)).get()
+        .build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(),
+        new TypeReference<List<SecretDetailResponseV2>>() {
+        });
   }
 
   SecretDetailResponseV2 lookup(String name) throws IOException {

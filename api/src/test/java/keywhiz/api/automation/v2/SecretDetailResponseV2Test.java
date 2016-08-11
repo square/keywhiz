@@ -28,6 +28,7 @@ public class SecretDetailResponseV2Test {
   @Test public void serializesCorrectly() throws Exception {
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .name("secret-name")
+        .version(1)
         .description("secret-description")
         .content("YXNkZGFz")
         .createdAtSeconds(OffsetDateTime.parse("2013-03-28T21:23:04.159Z").toEpochSecond())

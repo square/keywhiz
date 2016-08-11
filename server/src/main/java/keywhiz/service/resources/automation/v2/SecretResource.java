@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -212,6 +213,33 @@ public class SecretResource {
         .series(secret.series())
         .expiry(secret.content().expiry())
         .build();
+  }
+
+  /**
+   * Retrieve the given range of versions of this secret, sorted from newest to
+   * oldest update time and ranging from "newestIdx" to "oldestIdx", inclusive.  Leaving
+   * "newestIdx" at 0 will retrieve "oldestIdx" versions starting from the
+   * current version; leaving "oldestIdx" at 0 will retrieve all versions after
+   * "newestIdx".
+   *
+   * @param name Secret series name
+   * @param newestIdx The index in the list of versions of the first version to retrieve
+   * @param oldestIdx The index in the list of versions of the last version to retrieve
+   * @excludeParams automationClient
+   */
+  @Timed @ExceptionMetered
+  @GET
+  @Path("{name}/versions/{newestIdx}-{oldestIdx}")
+  @Produces(APPLICATION_JSON)
+  public Iterable<SecretDetailResponseV2> secretVersions(@Auth AutomationClient automationClient,
+      @PathParam("name") String name, @PathParam("newestIdx") int newestIdx,
+      @PathParam("oldestIdx") int oldestIdx) {
+    SecretSeriesAndVersions secret = secretDAO.getSecretVersionsByName(name, newestIdx, oldestIdx)
+        .orElseThrow(NotFoundException::new);
+
+    return secret.content().stream()
+        .map(c -> SecretDetailResponseV2.builder().name(name).secretContent(c).build())
+        .collect(toList());
   }
 
   /**
