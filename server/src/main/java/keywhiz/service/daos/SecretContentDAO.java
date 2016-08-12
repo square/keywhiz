@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.api.model.SecretContent;
-import keywhiz.jooq.tables.SecretsContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
@@ -133,24 +132,18 @@ class SecretContentDAO {
     return Optional.ofNullable(r).map(secretContentMapper::map);
   }
 
-  public Optional<ImmutableList<SecretContent>> getSecretVersionsBySecretId(long id, int newestIdx,
-      int oldestIdx) {
-    // Calculate how many rows to retrieve
-    if (oldestIdx == 0) {
-      // Retrieve all rows from newestIdx to the end
-      oldestIdx =
-          Integer.MAX_VALUE - 1; // -1 to compensate for + 1 in calculating range to retrieve
-    }
-
+  public Optional<ImmutableList<SecretContent>> getSecretVersionsBySecretId(long id,
+      int versionIdx,
+      int numVersions) {
     Result<SecretsContentRecord> r = dslContext.selectFrom(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.SECRETID.eq(id))
         .orderBy(SECRETS_CONTENT.CREATEDAT.desc())
-        .limit(newestIdx, oldestIdx - newestIdx + 1)
+        .limit(versionIdx, numVersions)
         .fetch();
 
     if (r != null && r.isNotEmpty()) {
       ImmutableList.Builder<SecretContent> b = new ImmutableList.Builder<>();
-      b.addAll(r.map(secretContentMapper::map));
+      b.addAll(r.map(secretContentMapper));
       return Optional.of(b.build());
     } else {
       return Optional.empty();

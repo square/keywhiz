@@ -286,7 +286,7 @@ public class SecretResourceTest {
   @Test public void secretVersionListing_success() throws Exception {
     int totalVersions = 6;
     int sleepInterval = 1000; // Delay so secrets have different creation timestamps
-    List<SecretDetailResponseV2> versions = null;
+    List<SecretDetailResponseV2> versions;
     assertThat(listing()).doesNotContain("secret20");
 
     // get current time to calculate timestamps off for expiry
@@ -304,9 +304,9 @@ public class SecretResourceTest {
     }
 
     // List all secrets with this version
-    versions = listVersions("secret20", 0, 0);
+    versions = listVersions("secret20", 0, 1000);
 
-    checkSecretVersions(versions, "secret20", totalVersions, 0, 0);
+    checkSecretVersions(versions, "secret20", totalVersions, 0, 1000);
 
     // List the newest half of the secrets with this version
     versions = listVersions("secret20", 0, totalVersions / 2);
@@ -314,15 +314,15 @@ public class SecretResourceTest {
     checkSecretVersions(versions, "secret20", totalVersions, 0, totalVersions / 2);
 
     // List the oldest half of the secrets with this version
-    versions = listVersions("secret20", totalVersions / 2, 0);
+    versions = listVersions("secret20", totalVersions / 2, totalVersions);
 
-    checkSecretVersions(versions, "secret20", totalVersions, totalVersions / 2, 0);
+    checkSecretVersions(versions, "secret20", totalVersions, totalVersions / 2, totalVersions);
 
     // List the middle half of the secrets with this version
-    versions = listVersions("secret20", totalVersions / 4, 3 * totalVersions / 4);
+    versions = listVersions("secret20", totalVersions / 4, totalVersions / 2);
 
     checkSecretVersions(versions, "secret20", totalVersions, totalVersions / 4,
-        3 * totalVersions / 4);
+        totalVersions / 2);
   }
 
   /**
@@ -333,15 +333,14 @@ public class SecretResourceTest {
    * @param versions a list of information on versions of secrets
    * @param name of the secret series
    * @param totalVersions the number of versions created
-   * @param newestIdx the index in the overall version list of the newest version taken
-   * @param oldestIdx the index in the overall version list of the oldest version taken
+   * @param versionIdx the index in the overall version list of the newest version taken
+   * @param numVersions the maximum number of versions taken
    */
   private void checkSecretVersions(List<SecretDetailResponseV2> versions, String name,
-      int totalVersions, int newestIdx, int oldestIdx) {
+      int totalVersions, int versionIdx, int numVersions) {
     long creationTime = System.currentTimeMillis() / 1000L;
-    int versionIdx = totalVersions - newestIdx - 1;
-    int expectedVersions = (oldestIdx == 0) ? totalVersions - newestIdx
-        : Math.min(totalVersions, oldestIdx + 1) - newestIdx;
+    int startIdx = totalVersions - versionIdx - 1;
+    int expectedVersions = Math.min(numVersions, totalVersions - versionIdx);
     // Check that we retrieved as many secrets as possible
     assertThat(versions.size()).isEqualTo(expectedVersions);
 
@@ -352,7 +351,7 @@ public class SecretResourceTest {
 
       // Check version number
       assertThat(version.metadata()).isEqualTo(
-          ImmutableMap.of("version", Integer.toString(versionIdx--)));
+          ImmutableMap.of("version", Integer.toString(startIdx--)));
 
       // Check secret name
       assertThat(version.name()).isEqualTo(name);

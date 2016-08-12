@@ -217,28 +217,37 @@ public class SecretResource {
 
   /**
    * Retrieve the given range of versions of this secret, sorted from newest to
-   * oldest update time and ranging from "newestIdx" to "oldestIdx", inclusive.  Leaving
-   * "newestIdx" at 0 will retrieve "oldestIdx" versions starting from the
-   * current version; leaving "oldestIdx" at 0 will retrieve all versions after
-   * "newestIdx".
+   * oldest update time.  If versionIdx is nonzero, then numVersions versions,
+   * starting from versionIdx in the list and increasing in index, will be
+   * returned (set numVersions to a very large number to retrieve all versions).
+   * For instance, versionIdx = 5 and numVersions = 10 will retrieve entries
+   * at indices 5 through 14.
    *
    * @param name Secret series name
-   * @param newestIdx The index in the list of versions of the first version to retrieve
-   * @param oldestIdx The index in the list of versions of the last version to retrieve
+   * @param versionIdx The index in the list of versions of the first version to retrieve
+   * @param numVersions The number of versions to retrieve
    * @excludeParams automationClient
+   * @responseMessage 200 Secret series information retrieved
+   * @responseMessage 404 Secret series not found
    */
   @Timed @ExceptionMetered
   @GET
-  @Path("{name}/versions/{newestIdx}-{oldestIdx}")
+  @Path("{name}/versions/{versionIdx}-{numVersions}")
   @Produces(APPLICATION_JSON)
   public Iterable<SecretDetailResponseV2> secretVersions(@Auth AutomationClient automationClient,
-      @PathParam("name") String name, @PathParam("newestIdx") int newestIdx,
-      @PathParam("oldestIdx") int oldestIdx) {
-    SecretSeriesAndVersions secret = secretDAO.getSecretVersionsByName(name, newestIdx, oldestIdx)
-        .orElseThrow(NotFoundException::new);
+      @PathParam("name") String name, @PathParam("versionIdx") int versionIdx,
+      @PathParam("numVersions") int numVersions) {
+    SecretSeriesAndVersions secret =
+        secretDAO.getSecretVersionsByName(name, versionIdx, numVersions)
+            .orElseThrow(NotFoundException::new);
 
+    // Note it's necessary to call "series" before "secretContent", as "secretContent"
+    // resets some fields with version-specific information
     return secret.content().stream()
-        .map(c -> SecretDetailResponseV2.builder().name(name).secretContent(c).build())
+        .map(c -> SecretDetailResponseV2.builder()
+            .series(secret.series())
+            .secretContent(c)
+            .build())
         .collect(toList());
   }
 

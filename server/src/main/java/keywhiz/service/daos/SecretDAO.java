@@ -200,15 +200,16 @@ public class SecretDAO {
 
   /**
    * @param name of secret series to look up secrets by.
-   * @param newestIdx the first index to select in a list of versions sorted by creation time
-   * @param oldestIdx the last index to select in a list of versions sorted by creation time
+   * @param versionIdx the first index to select in a list of versions sorted by creation time
+   * @param numVersions the number of versions after versionIdx to select in the list of versions
    * @return Versions of a secret matching input parameters or Optional.absent().
    */
-  public Optional<SecretSeriesAndVersions> getSecretVersionsByName(String name, int newestIdx,
-      int oldestIdx) {
+  public Optional<SecretSeriesAndVersions> getSecretVersionsByName(String name,
+      int versionIdx,
+      int numVersions) {
     checkArgument(!name.isEmpty());
-    checkArgument(newestIdx >= 0);
-    checkArgument(oldestIdx >= 0);
+    checkArgument(versionIdx >= 0);
+    checkArgument(numVersions >= 0);
 
     SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
     SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
@@ -217,7 +218,7 @@ public class SecretDAO {
     if (series.isPresent()) {
       long secretId = series.get().id();
       Optional<ImmutableList<SecretContent>> contents =
-          secretContentDAO.getSecretVersionsBySecretId(secretId, newestIdx, oldestIdx);
+          secretContentDAO.getSecretVersionsBySecretId(secretId, versionIdx, numVersions);
       if (contents.isPresent()) {
         return Optional.of(SecretSeriesAndVersions.of(series.get(), contents.get()));
       }

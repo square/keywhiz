@@ -75,7 +75,6 @@ import static keywhiz.api.model.Secret.decodedLength;
     public Builder secretContent(SecretContent secretContent) {
       return this
           .version(secretContent.id())
-          .content("")
           .createdAtSeconds(secretContent.createdAt().toEpochSecond())
           .createdBy(secretContent.createdBy())
           .metadata(secretContent.metadata())
@@ -136,7 +135,6 @@ import static keywhiz.api.model.Secret.decodedLength;
   @Override public final String toString() {
     return MoreObjects.toStringHelper(this)
         .add("name", name())
-        .add("version", version())   // TODO: Should we remove this so it's not as exposed to the user?
         .add("description", description())
         .add("content", "[REDACTED]")
         .add("size", size())
