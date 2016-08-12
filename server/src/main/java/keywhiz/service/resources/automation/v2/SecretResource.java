@@ -251,6 +251,28 @@ public class SecretResource {
         .collect(toList());
   }
 
+
+  /**
+   * Reset the current version of the given secret to the given version index.
+   *
+   * @param name Secret series name
+   * @param versionId The desired current version
+   * @excludeParams automationClient
+   * @responseMessage 200 Secret series current version updated successfully
+   * @responseMessage 404 Secret series not found
+   */
+  @Timed @ExceptionMetered
+  @Path("{name}/setversion/{versionId}")
+  @POST
+  public Response resetSecretVersion(@Auth AutomationClient automationClient,
+      @PathParam("name") String name, @PathParam("versionId") long versionId) {
+    int found = secretDAO.setCurrentSecretVersionByName(name, versionId);
+    if (found != 0) {
+      throw new NotFoundException();
+    }
+    return Response.status(Response.Status.OK).build();
+  }
+
   /**
    * Listing of groups a secret is assigned to
    *

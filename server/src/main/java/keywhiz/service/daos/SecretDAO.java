@@ -226,6 +226,24 @@ public class SecretDAO {
     return Optional.empty();
   }
 
+  /**
+   * @param name of secret series for which to reset secret version
+   * @param versionId The identifier for the desired current version
+   * @return 0 for success, non-zero for failure (secret series not found)
+   */
+  public int setCurrentSecretVersionByName(String name, long versionId) {
+    checkArgument(!name.isEmpty());
+    checkArgument(versionId >= 0);
+
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+    Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesByName(name);
+    if (series.isPresent()) {
+      secretSeriesDAO.setCurrentVersion(series.get().id(), versionId);
+      return 0;
+    }
+    return 1; // Secret series not found
+  }
+
 
   /**
    * Deletes the series and all associated version of the given secret series name.
