@@ -68,6 +68,7 @@ import static keywhiz.api.model.Secret.decodedLength;
           .createdAtSeconds(secret.getCreatedAt().toEpochSecond())
           .createdBy(secret.getCreatedBy())
           .type(secret.getType().orElse(null))
+          .expiry(secret.getExpiry())
           .metadata(secret.getMetadata());
     }
 

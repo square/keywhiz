@@ -18,6 +18,11 @@ package keywhiz.api.automation.v2;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
+import javax.ws.rs.ext.ParamConverter;
+import keywhiz.api.ApiDate;
+import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretContent;
+import keywhiz.api.model.SecretSeries;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
@@ -36,6 +41,55 @@ public class SecretDetailResponseV2Test {
         .type("text/plain")
         .metadata(ImmutableMap.of("owner", "root"))
         .expiry(1136214245)
+        .build();
+
+    assertThat(asJson(secretDetailResponse))
+        .isEqualTo(jsonFixture("fixtures/v2/secretDetailResponse.json"));
+  }
+
+  @Test public void formsCorrectlyFromSecretSeries() throws Exception {
+    SecretSeries series = SecretSeries.of(1, "secret-name", "secret-description",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user", "text/plain", null,
+        1L);
+    SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
+        .series(series)
+        .content("YXNkZGFz")
+        .metadata(ImmutableMap.of("owner", "root"))
+        .expiry(1136214245)
+        .build();
+
+    assertThat(asJson(secretDetailResponse))
+        .isEqualTo(jsonFixture("fixtures/v2/secretDetailResponse.json"));
+  }
+
+  @Test public void formsCorrectlyFromSecret() throws Exception {
+    Secret secret = new Secret(1, "secret-name", "secret-description", () -> "",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ImmutableMap.of("owner", "root"), "text/plain", null,
+        1136214245);
+    SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
+        .secret(secret)
+        .content("YXNkZGFz")
+        .version(1)
+        .build();
+
+    assertThat(asJson(secretDetailResponse))
+        .isEqualTo(jsonFixture("fixtures/v2/secretDetailResponse.json"));
+  }
+
+  @Test public void formsCorrectlyFromSecretContents() throws Exception {
+    SecretContent secretContent = SecretContent.of(1, 1, "",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ImmutableMap.of("owner", "root"), 1136214245);
+    SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
+        .secretContent(secretContent)
+        .name("secret-name")
+        .description("secret-description")
+        .content("YXNkZGFz")
+        .type("text/plain")
         .build();
 
     assertThat(asJson(secretDetailResponse))
