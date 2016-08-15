@@ -22,8 +22,10 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import keywhiz.api.model.*;
 import keywhiz.jooq.tables.Secrets;
 import keywhiz.service.config.Readonly;
@@ -37,6 +39,7 @@ import org.jooq.impl.DSL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 
 /**
@@ -204,7 +207,7 @@ public class SecretDAO {
    * @param numVersions the number of versions after versionIdx to select in the list of versions
    * @return Versions of a secret matching input parameters or Optional.absent().
    */
-  public Optional<SecretSeriesAndVersions> getSecretVersionsByName(String name,
+  public Optional<ImmutableList<SecretVersion>> getSecretVersionsByName(String name,
       int versionIdx,
       int numVersions) {
     checkArgument(!name.isEmpty());
@@ -216,32 +219,39 @@ public class SecretDAO {
 
     Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesByName(name);
     if (series.isPresent()) {
-      long secretId = series.get().id();
+      SecretSeries s = series.get();
+      long secretId = s.id();
       Optional<ImmutableList<SecretContent>> contents =
           secretContentDAO.getSecretVersionsBySecretId(secretId, versionIdx, numVersions);
       if (contents.isPresent()) {
-        return Optional.of(SecretSeriesAndVersions.of(series.get(), contents.get()));
+        ImmutableList.Builder<SecretVersion> b = new ImmutableList.Builder<>();
+        b.addAll(contents.get()
+            .stream()
+            .map(c -> SecretVersion.of(s.id(), c.id(), s.name(), s.description(), c.createdAt(),
+                c.createdBy(), c.updatedAt(), c.updatedBy(), c.metadata(), s.type().orElse(""),
+                c.expiry()))
+            .collect(toList()));
+
+        return Optional.of(b.build());
       }
     }
+
     return Optional.empty();
   }
 
   /**
    * @param name of secret series for which to reset secret version
    * @param versionId The identifier for the desired current version
-   * @return 0 for success, non-zero for failure (secret series not found)
+   * @throws NotFoundException if secret not found
    */
-  public int setCurrentSecretVersionByName(String name, long versionId) {
+  public void setCurrentSecretVersionByName(String name, long versionId) {
     checkArgument(!name.isEmpty());
     checkArgument(versionId >= 0);
 
     SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
-    Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesByName(name);
-    if (series.isPresent()) {
-      secretSeriesDAO.setCurrentVersion(series.get().id(), versionId);
-      return 0;
-    }
-    return 1; // Secret series not found
+    SecretSeries series = secretSeriesDAO.getSecretSeriesByName(name).orElseThrow(
+        NotFoundException::new);
+    secretSeriesDAO.setCurrentVersion(series.id(), versionId);
   }
 
 

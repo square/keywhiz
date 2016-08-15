@@ -294,7 +294,8 @@ public class SecretResourceTest {
     // get current time to calculate timestamps off for expiry
     long now = System.currentTimeMillis() / 1000L;
 
-    // Create secrets 1 second apart, so their version order is deterministic
+    // Create secrets 1 second apart, so that the order of the versions, which
+    // will be listed by creation time, is fixed
     for (int i = 0; i < totalVersions; i++) {
       createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
           .content(encoder.encodeToString(format("supa secret20_v%d", i).getBytes(UTF_8)))

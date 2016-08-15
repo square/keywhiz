@@ -4,19 +4,16 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.UnsignedLong;
 import java.util.Base64;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import keywhiz.api.model.Secret;
-import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.api.model.SecretVersion;
 
 import static com.google.common.base.Strings.nullToEmpty;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static keywhiz.api.model.Secret.decodedLength;
 
 @AutoValue public abstract class SecretDetailResponseV2 {
@@ -72,13 +69,16 @@ import static keywhiz.api.model.Secret.decodedLength;
           .metadata(secret.getMetadata());
     }
 
-    public Builder secretContent(SecretContent secretContent) {
+    public Builder secretVersion(SecretVersion secretVersion) {
       return this
-          .version(secretContent.id())
-          .createdAtSeconds(secretContent.createdAt().toEpochSecond())
-          .createdBy(secretContent.createdBy())
-          .metadata(secretContent.metadata())
-          .expiry(secretContent.expiry());
+          .name(secretVersion.name())
+          .version(secretVersion.versionId())
+          .description(secretVersion.description())
+          .createdAtSeconds(secretVersion.createdAt().toEpochSecond())
+          .createdBy(secretVersion.createdBy())
+          .type(secretVersion.type())
+          .expiry(secretVersion.expiry())
+          .metadata(secretVersion.metadata());
 
     }
 
@@ -147,3 +147,4 @@ import static keywhiz.api.model.Secret.decodedLength;
         .toString();
   }
 }
+

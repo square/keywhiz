@@ -2,6 +2,7 @@ package keywhiz.service.resources.automation.v2;
 
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import io.dropwizard.auth.Auth;
 import java.util.List;
@@ -237,16 +238,13 @@ public class SecretResource {
   public Iterable<SecretDetailResponseV2> secretVersions(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @PathParam("versionIdx") int versionIdx,
       @PathParam("numVersions") int numVersions) {
-    SecretSeriesAndVersions secret =
+    ImmutableList<SecretVersion> versions =
         secretDAO.getSecretVersionsByName(name, versionIdx, numVersions)
             .orElseThrow(NotFoundException::new);
 
-    // Note it's necessary to call "series" before "secretContent", as "secretContent"
-    // resets some fields with version-specific information
-    return secret.content().stream()
-        .map(c -> SecretDetailResponseV2.builder()
-            .series(secret.series())
-            .secretContent(c)
+    return versions.stream()
+        .map(v -> SecretDetailResponseV2.builder()
+            .secretVersion(v)
             .build())
         .collect(toList());
   }
@@ -266,10 +264,9 @@ public class SecretResource {
   @POST
   public Response resetSecretVersion(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @PathParam("versionId") long versionId) {
-    int found = secretDAO.setCurrentSecretVersionByName(name, versionId);
-    if (found != 0) {
-      throw new NotFoundException();
-    }
+    secretDAO.setCurrentSecretVersionByName(name, versionId);
+
+    // If the secret wasn't found, setCurrentSecretVersionByName already threw a NotFoundException
     return Response.status(Response.Status.OK).build();
   }
 
