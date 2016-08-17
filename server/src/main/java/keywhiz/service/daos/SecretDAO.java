@@ -22,8 +22,10 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import keywhiz.api.model.*;
 import keywhiz.jooq.tables.Secrets;
 import keywhiz.service.config.Readonly;
@@ -37,6 +39,7 @@ import org.jooq.impl.DSL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 
 /**
@@ -196,6 +199,59 @@ public class SecretDAO {
         .fetchInto(Secrets.SECRETS)
         .map(r -> new SimpleEntry<>(r.getId(), r.getName()));
     return ImmutableList.copyOf(results);
+  }
+
+  /**
+   * @param name of secret series to look up secrets by.
+   * @param versionIdx the first index to select in a list of versions sorted by creation time
+   * @param numVersions the number of versions after versionIdx to select in the list of versions
+   * @return Versions of a secret matching input parameters or Optional.absent().
+   */
+  public Optional<ImmutableList<SecretVersion>> getSecretVersionsByName(String name,
+      int versionIdx,
+      int numVersions) {
+    checkArgument(!name.isEmpty());
+    checkArgument(versionIdx >= 0);
+    checkArgument(numVersions >= 0);
+
+    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+
+    Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesByName(name);
+    if (series.isPresent()) {
+      SecretSeries s = series.get();
+      long secretId = s.id();
+      Optional<ImmutableList<SecretContent>> contents =
+          secretContentDAO.getSecretVersionsBySecretId(secretId, versionIdx, numVersions);
+      if (contents.isPresent()) {
+        ImmutableList.Builder<SecretVersion> b = new ImmutableList.Builder<>();
+        b.addAll(contents.get()
+            .stream()
+            .map(c -> SecretVersion.of(s.id(), c.id(), s.name(), s.description(), c.createdAt(),
+                c.createdBy(), c.updatedAt(), c.updatedBy(), c.metadata(), s.type().orElse(""),
+                c.expiry()))
+            .collect(toList()));
+
+        return Optional.of(b.build());
+      }
+    }
+
+    return Optional.empty();
+  }
+
+  /**
+   * @param name of secret series for which to reset secret version
+   * @param versionId The identifier for the desired current version
+   * @throws NotFoundException if secret not found
+   */
+  public void setCurrentSecretVersionByName(String name, long versionId) {
+    checkArgument(!name.isEmpty());
+    checkArgument(versionId >= 0);
+
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+    SecretSeries series = secretSeriesDAO.getSecretSeriesByName(name).orElseThrow(
+        NotFoundException::new);
+    secretSeriesDAO.setCurrentVersion(series.id(), versionId);
   }
 
 
