@@ -46,7 +46,7 @@ public class UtilitiesTest {
     assertThat(validName("bad\tI-am-secret.yml")).isFalse();
 
     List<String> specialCharacters = Arrays.asList("&", "|", "(", ")", "[", "]", "{", "}", "^",
-        ";", ",", "\\", "/", "<", ">", "\t", "\n", "\r", "`", "'", "\"", "?", ":", "#", "%",
+        ";", ",", "\\", "/", "<", ">", "\t", "\n", "\r", "`", "'", "\"", "?", "#", "%",
         "*", "+", "=", "\0", "\u0002", "\000");
 
     for (String name : specialCharacters) {

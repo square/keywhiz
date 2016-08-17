@@ -17,7 +17,7 @@ package keywhiz.cli;
 
 public class Utilities {
 
-  public static final String VALID_NAME_PATTERN = "^[a-zA-Z_0-9\\-.]+$";
+  public static final String VALID_NAME_PATTERN = "^[a-zA-Z_0-9\\-.:]+$";
 
   public static boolean validName(String name) {
     // "." is allowed at any position but the first.
