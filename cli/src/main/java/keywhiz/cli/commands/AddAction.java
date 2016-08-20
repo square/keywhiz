@@ -189,9 +189,9 @@ public class AddAction implements Runnable {
           throw new IllegalArgumentException(
               format("Illegal metadata key %s: custom metadata keys must start with an underscore", key));
         }
-        if(!key.matches("^[a-zA-Z0-9_]*$")) {
+        if(!key.matches("^[a-zA-Z_0-9\\-.:]+$")) {
           throw new IllegalArgumentException(
-              format("Illegal metadata key %s: metadata keys can only contain letters, numbers, and underscores", key));
+              format("Illegal metadata key %s: metadata keys can only contain: a-z A-Z 0-9 _ - . :", key));
         }
       }
 
