@@ -2,6 +2,7 @@ package keywhiz.service.resources.automation.v2;
 
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import io.dropwizard.auth.Auth;
 import java.util.List;
@@ -41,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -215,6 +217,60 @@ public class SecretResource {
   }
 
   /**
+   * Retrieve the given range of versions of this secret, sorted from newest to
+   * oldest update time.  If versionIdx is nonzero, then numVersions versions,
+   * starting from versionIdx in the list and increasing in index, will be
+   * returned (set numVersions to a very large number to retrieve all versions).
+   * For instance, versionIdx = 5 and numVersions = 10 will retrieve entries
+   * at indices 5 through 14.
+   *
+   * @param name Secret series name
+   * @param versionIdx The index in the list of versions of the first version to retrieve
+   * @param numVersions The number of versions to retrieve
+   * @excludeParams automationClient
+   * @responseMessage 200 Secret series information retrieved
+   * @responseMessage 404 Secret series not found
+   */
+  @Timed @ExceptionMetered
+  @GET
+  @Path("{name}/versions/{versionIdx}-{numVersions}")
+  @Produces(APPLICATION_JSON)
+  public Iterable<SecretDetailResponseV2> secretVersions(@Auth AutomationClient automationClient,
+      @PathParam("name") String name, @PathParam("versionIdx") int versionIdx,
+      @PathParam("numVersions") int numVersions) {
+    ImmutableList<SecretVersion> versions =
+        secretDAO.getSecretVersionsByName(name, versionIdx, numVersions)
+            .orElseThrow(NotFoundException::new);
+
+    return versions.stream()
+        .map(v -> SecretDetailResponseV2.builder()
+            .secretVersion(v)
+            .build())
+        .collect(toList());
+  }
+
+
+  /**
+   * Reset the current version of the given secret to the given version index.
+   *
+   * @param name Secret series name
+   * @param versionId The desired current version
+   * @excludeParams automationClient
+   * @responseMessage 200 Secret series current version updated successfully
+   * @responseMessage 404 Secret series not found
+   */
+  @Timed @ExceptionMetered
+  @Path("{name}/setversion/{versionId}")
+  @POST
+  public Response resetSecretVersion(@Auth AutomationClient automationClient,
+      @PathParam("name") String name, @PathParam("versionId") long versionId) {
+    secretDAO.setCurrentSecretVersionByName(name, versionId);
+
+    // If the secret wasn't found, setCurrentSecretVersionByName already threw a NotFoundException
+    return Response.status(Response.Status.OK).build();
+  }
+
+  /**
    * Listing of groups a secret is assigned to
    *
    * @excludeParams automationClient
@@ -226,6 +282,7 @@ public class SecretResource {
   @Timed @ExceptionMetered
   @GET
   @Path("{name}/groups")
+  @Produces(APPLICATION_JSON)
   public Iterable<String> secretGroupsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     // TODO: Use latest version instead of non-versioned

@@ -4,15 +4,14 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.UnsignedLong;
 import java.util.Base64;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.api.model.SecretVersion;
 
 import static com.google.common.base.Strings.nullToEmpty;
 import static keywhiz.api.model.Secret.decodedLength;
@@ -36,6 +35,7 @@ import static keywhiz.api.model.Secret.decodedLength;
     abstract SecretDetailResponseV2 autoBuild();
 
     public abstract Builder name(String name);
+    public abstract Builder version(@Nullable long version); // Unique ID in secrets_content table
     public abstract Builder content(String secret);
     public abstract Builder description(String description);
     public abstract Builder createdAtSeconds(long createdAt);
@@ -50,6 +50,7 @@ import static keywhiz.api.model.Secret.decodedLength;
     public Builder series(SecretSeries series) {
       return this
           .name(series.name())
+          .version(series.currentVersion().orElse(null))
           .description(series.description())
           .createdAtSeconds(series.createdAt().toEpochSecond())
           .createdBy(series.createdBy())
@@ -64,7 +65,21 @@ import static keywhiz.api.model.Secret.decodedLength;
           .createdAtSeconds(secret.getCreatedAt().toEpochSecond())
           .createdBy(secret.getCreatedBy())
           .type(secret.getType().orElse(null))
+          .expiry(secret.getExpiry())
           .metadata(secret.getMetadata());
+    }
+
+    public Builder secretVersion(SecretVersion secretVersion) {
+      return this
+          .name(secretVersion.name())
+          .version(secretVersion.versionId())
+          .description(secretVersion.description())
+          .createdAtSeconds(secretVersion.createdAt().toEpochSecond())
+          .createdBy(secretVersion.createdBy())
+          .type(secretVersion.type())
+          .expiry(secretVersion.expiry())
+          .metadata(secretVersion.metadata());
+
     }
 
     public SecretDetailResponseV2 build() {
@@ -82,6 +97,7 @@ import static keywhiz.api.model.Secret.decodedLength;
   @SuppressWarnings("unused")
   @JsonCreator public static SecretDetailResponseV2 fromParts(
       @JsonProperty("name") String name,
+      @JsonProperty("version") @Nullable long version,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("content") String content,
       @JsonProperty("size") UnsignedLong size,
@@ -92,6 +108,7 @@ import static keywhiz.api.model.Secret.decodedLength;
       @JsonProperty("expiry") @Nullable long expiry) {
     return builder()
         .name(name)
+        .version(version)
         .description(nullToEmpty(description))
         .content(content)
         .size(size)
@@ -105,6 +122,7 @@ import static keywhiz.api.model.Secret.decodedLength;
 
   // TODO: Consider Optional values in place of Nullable.
   @JsonProperty("name") public abstract String name();
+  @JsonProperty("version") @Nullable public abstract long version();
   @JsonProperty("description") public abstract String description();
   @JsonProperty("content") public abstract String content();
   @JsonProperty("size") public abstract UnsignedLong size();
@@ -129,3 +147,4 @@ import static keywhiz.api.model.Secret.decodedLength;
         .toString();
   }
 }
+

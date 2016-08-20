@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.Result;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -128,6 +130,24 @@ class SecretContentDAO {
   public Optional<SecretContent> getSecretContentById(long id) {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT, SECRETS_CONTENT.ID.eq(id));
     return Optional.ofNullable(r).map(secretContentMapper::map);
+  }
+
+  public Optional<ImmutableList<SecretContent>> getSecretVersionsBySecretId(long id,
+      int versionIdx,
+      int numVersions) {
+    Result<SecretsContentRecord> r = dslContext.selectFrom(SECRETS_CONTENT)
+        .where(SECRETS_CONTENT.SECRETID.eq(id))
+        .orderBy(SECRETS_CONTENT.CREATEDAT.desc())
+        .limit(versionIdx, numVersions)
+        .fetch();
+
+    if (r != null && r.isNotEmpty()) {
+      ImmutableList.Builder<SecretContent> b = new ImmutableList.Builder<>();
+      b.addAll(r.map(secretContentMapper));
+      return Optional.of(b.build());
+    } else {
+      return Optional.empty();
+    }
   }
 
   public static class SecretContentDAOFactory implements DAOFactory<SecretContentDAO> {
