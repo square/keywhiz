@@ -117,7 +117,14 @@ public class CreateOrUpdateAction implements Runnable {
 
       // We want to perform strong validation of the metadata to make sure it is well formed.
       if (!key.matches("(owner|group|mode)")) {
-        throw new IllegalArgumentException(format("Illegal metadata key %s", key));
+        if(!key.startsWith("_")) {
+          throw new IllegalArgumentException(
+              format("Illegal metadata key %s: custom metadata keys must start with an underscore", key));
+        }
+        if(!key.matches("^[a-zA-Z0-9_]*$")) {
+          throw new IllegalArgumentException(
+              format("Illegal metadata key %s: metadata keys can only contain letters, numbers, and underscores", key));
+        }
       }
 
       if (key.equals("mode") && !value.matches("0[0-7]+")) {
