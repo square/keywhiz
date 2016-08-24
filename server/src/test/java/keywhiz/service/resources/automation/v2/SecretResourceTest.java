@@ -10,6 +10,7 @@ import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
@@ -330,15 +331,8 @@ public class SecretResourceTest {
 
   @Test public void secretChangeVersion_notFound() throws Exception {
     Request post =
-        clientRequest("/automation/v2/secrets/non-existent/setversion/0").post(new RequestBody() {
-          @Override public MediaType contentType() {
-            return MediaType.parse("JSON");
-          }
-
-          @Override public void writeTo(BufferedSink bufferedSink) throws IOException {
-
-          }
-        })
+        clientRequest("/automation/v2/secrets/non-existent/setversion/0").post(
+            RequestBody.create(JSON, mapper.writeValueAsString(null)))
             .build();
     Response httpResponse = mutualSslClient.newCall(post).execute();
     assertThat(httpResponse.code()).isEqualTo(404);
@@ -384,6 +378,54 @@ public class SecretResourceTest {
     finalCurrentVersion = lookup(name);
     assertThat(finalCurrentVersion.equals(versions.get(0)));
     assertThat(!finalCurrentVersion.equals(initialCurrentVersion));
+  }
+
+  @Test public void secretChangeVersion_invalidVersion() throws Exception {
+    int totalVersions = 3;
+    String name = "secret22";
+    List<SecretDetailResponseV2> versions;
+    SecretDetailResponseV2 initialCurrentVersion;
+    SecretDetailResponseV2 finalCurrentVersion;
+
+    assertThat(listing()).doesNotContain(name);
+
+    // get current time to calculate timestamps off for expiry
+    long now = System.currentTimeMillis() / 1000L;
+
+    // Create secrets
+    for (int i = 0; i < totalVersions; i++) {
+      createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
+          .content(encoder.encodeToString(format("supa secret21_v%d", i).getBytes(UTF_8)))
+          .description(format("%s, version %d", name, i))
+          .expiry(now + 86400 * 2)
+          .metadata(ImmutableMap.of("version", Integer.toString(i)))
+          .build(), name);
+    }
+
+    // Get the current version (the last version created)
+    initialCurrentVersion = lookup(name);
+    assertThat(initialCurrentVersion.name().equals(name));
+    assertThat(
+        initialCurrentVersion.description().equals(format("%s, version %d", name, totalVersions)));
+
+    // Get an invalid version of this secret
+    versions = listVersions(name, 0, totalVersions);
+    Optional<Long> maxValidVersion = versions.stream().map(v -> v.version()).max(Long::compare);
+
+    if (maxValidVersion.isPresent()) {
+
+      // Reset the current version to this version
+      Request post = clientRequest(
+          format("/automation/v2/secrets/%s/setversion/%d", name, maxValidVersion.get() + 1)).post(
+          RequestBody.create(JSON, mapper.writeValueAsString(null)))
+          .build();
+      Response httpResponse = mutualSslClient.newCall(post).execute();
+      assertThat(httpResponse.code()).isEqualTo(400);
+
+      // Get the current version, which should not have changed
+      finalCurrentVersion = lookup(name);
+      assertThat(finalCurrentVersion.equals(initialCurrentVersion));
+    }
   }
 
   /**
@@ -473,15 +515,8 @@ public class SecretResourceTest {
   private void setCurrentVersion(String name, long versionId)
       throws IOException {
     Request post = clientRequest(
-        format("/automation/v2/secrets/%s/setversion/%d", name, versionId)).post(new RequestBody() {
-      @Override public MediaType contentType() {
-        return MediaType.parse("JSON");
-      }
-
-      @Override public void writeTo(BufferedSink bufferedSink) throws IOException {
-
-      }
-    })
+        format("/automation/v2/secrets/%s/setversion/%d", name, versionId)).post(
+        RequestBody.create(JSON, mapper.writeValueAsString(null)))
         .build();
     Response httpResponse = mutualSslClient.newCall(post).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
