@@ -257,6 +257,7 @@ public class SecretResource {
    * @param versionId The desired current version
    * @excludeParams automationClient
    * @responseMessage 200 Secret series current version updated successfully
+   * @responseMessage 400 Invalid secret version specified
    * @responseMessage 404 Secret series not found
    */
   @Timed @ExceptionMetered
@@ -266,7 +267,8 @@ public class SecretResource {
       @PathParam("name") String name, @PathParam("versionId") long versionId) {
     secretDAO.setCurrentSecretVersionByName(name, versionId);
 
-    // If the secret wasn't found, setCurrentSecretVersionByName already threw a NotFoundException
+    // If the secret wasn't found or the request was misformed, setCurrentSecretVersionByName
+    // already threw an exception
     return Response.status(Response.Status.OK).build();
   }
 

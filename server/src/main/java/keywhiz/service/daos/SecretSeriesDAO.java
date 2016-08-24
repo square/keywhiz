@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 import com.google.common.collect.ImmutableMap;
+import javax.ws.rs.BadRequestException;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
@@ -35,6 +36,7 @@ import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Record;
+import org.jooq.Record1;
 import org.jooq.SelectQuery;
 import org.jooq.impl.DSL;
 
@@ -110,11 +112,18 @@ class SecretSeriesDAO {
   }
 
   public int setCurrentVersion(long secretId, long secretContentId) {
-    long checkId = dslContext.select(SECRETS_CONTENT.SECRETID)
+    long checkId;
+    Record1<Long> r = dslContext.select(SECRETS_CONTENT.SECRETID)
         .from(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.ID.eq(secretContentId))
-        .fetchOne().value1();
+        .fetchOne();
+    if (r == null) {
+      throw new BadRequestException(
+          String.format("The requested version %d is not a known version of this secret",
+              secretContentId));
+    }
 
+    checkId = r.value1();
     if (checkId != secretId) {
       throw new IllegalStateException("inconsistent secrets_content");
     }
