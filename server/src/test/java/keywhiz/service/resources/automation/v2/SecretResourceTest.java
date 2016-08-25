@@ -20,6 +20,7 @@ import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
+import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -41,7 +42,8 @@ import static keywhiz.client.KeywhizClient.JSON;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SecretResourceTest {
-  private static final ObjectMapper mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
+  private static final ObjectMapper mapper =
+      KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
   private static final Encoder encoder = Base64.getEncoder();
   private static final Decoder decoder = Base64.getDecoder();
 
@@ -248,34 +250,34 @@ public class SecretResourceTest {
     create(CreateSecretRequestV2.builder()
         .name("secret17")
         .content(encoder.encodeToString("supa secret17".getBytes(UTF_8)))
-        .expiry(now+86400*3)
+        .expiry(now + 86400 * 3)
         .groups("group15a", "group15b")
         .build());
 
     create(CreateSecretRequestV2.builder()
         .name("secret18")
         .content(encoder.encodeToString("supa secret18".getBytes(UTF_8)))
-        .expiry(now+86400)
+        .expiry(now + 86400)
         .groups("group15a")
         .build());
 
     create(CreateSecretRequestV2.builder()
         .name("secret19")
         .content(encoder.encodeToString("supa secret19".getBytes(UTF_8)))
-        .expiry(now+86400*2)
+        .expiry(now + 86400 * 2)
         .groups("group15b")
         .build());
 
     // check limiting by group and expiry
-    List<String> s1 = listExpiring(now+86400*4, "group15a");
+    List<String> s1 = listExpiring(now + 86400 * 4, "group15a");
     assertThat(s1).contains("secret17");
     assertThat(s1).contains("secret18");
 
-    List<String> s2 = listExpiring(now+86400*4, "group15b");
+    List<String> s2 = listExpiring(now + 86400 * 4, "group15b");
     assertThat(s2).contains("secret19");
     assertThat(s2).doesNotContain("secret18");
 
-    List<String> s3 = listExpiring(now+86400*2, null);
+    List<String> s3 = listExpiring(now + 86400 * 2, null);
     assertThat(s3).contains("secret18");
     assertThat(s3).doesNotContain("secret17");
   }
@@ -331,8 +333,9 @@ public class SecretResourceTest {
 
   @Test public void secretChangeVersion_notFound() throws Exception {
     Request post =
-        clientRequest("/automation/v2/secrets/non-existent/setversion/0").post(
-            RequestBody.create(JSON, mapper.writeValueAsString(null)))
+        clientRequest("/automation/v2/secrets/non-existent/setversion").post(
+            RequestBody.create(JSON, mapper.writeValueAsString(
+                SetSecretVersionRequestV2.builder().name("non-existent").version(0).build())))
             .build();
     Response httpResponse = mutualSslClient.newCall(post).execute();
     assertThat(httpResponse.code()).isEqualTo(404);
@@ -372,7 +375,8 @@ public class SecretResourceTest {
     assertThat(!versions.get(0).equals(initialCurrentVersion));
 
     // Reset the current version to this version
-    setCurrentVersion(name, versions.get(0).version());
+    setCurrentVersion(
+        SetSecretVersionRequestV2.builder().name(name).version(versions.get(0).version()).build());
 
     // Get the current version
     finalCurrentVersion = lookup(name);
@@ -395,7 +399,7 @@ public class SecretResourceTest {
     // Create secrets
     for (int i = 0; i < totalVersions; i++) {
       createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
-          .content(encoder.encodeToString(format("supa secret21_v%d", i).getBytes(UTF_8)))
+          .content(encoder.encodeToString(format("supa secret22_v%d", i).getBytes(UTF_8)))
           .description(format("%s, version %d", name, i))
           .expiry(now + 86400 * 2)
           .metadata(ImmutableMap.of("version", Integer.toString(i)))
@@ -413,12 +417,12 @@ public class SecretResourceTest {
     Optional<Long> maxValidVersion = versions.stream().map(v -> v.version()).max(Long::compare);
 
     if (maxValidVersion.isPresent()) {
-
       // Reset the current version to this version
-      Request post = clientRequest(
-          format("/automation/v2/secrets/%s/setversion/%d", name, maxValidVersion.get() + 1)).post(
-          RequestBody.create(JSON, mapper.writeValueAsString(null)))
-          .build();
+      Request post = clientRequest("/automation/v2/secrets/secret22/setversion").post(
+          RequestBody.create(JSON, mapper.writeValueAsString(SetSecretVersionRequestV2.builder()
+              .name(name)
+              .version(maxValidVersion.get() + 1)
+              .build()))).build();
       Response httpResponse = mutualSslClient.newCall(post).execute();
       assertThat(httpResponse.code()).isEqualTo(400);
 
@@ -483,7 +487,8 @@ public class SecretResourceTest {
     Request get = clientRequest("/automation/v2/secrets").get().build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>(){});
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>() {
+    });
   }
 
   List<String> listExpiring(Long time, String groupName) throws IOException {
@@ -497,7 +502,8 @@ public class SecretResourceTest {
     Request get = clientRequest(requestURL).get().build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>(){});
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>() {
+    });
   }
 
   private List<SecretDetailResponseV2> listVersions(String name, int versionIdx, int numVersions)
@@ -512,12 +518,12 @@ public class SecretResourceTest {
         });
   }
 
-  private void setCurrentVersion(String name, long versionId)
+  private void setCurrentVersion(SetSecretVersionRequestV2 request)
       throws IOException {
-    Request post = clientRequest(
-        format("/automation/v2/secrets/%s/setversion/%d", name, versionId)).post(
-        RequestBody.create(JSON, mapper.writeValueAsString(null)))
-        .build();
+    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
+    Request post =
+        clientRequest(format("/automation/v2/secrets/%s/setversion", request.name())).post(body)
+            .build();
     Response httpResponse = mutualSslClient.newCall(post).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
   }
@@ -533,7 +539,8 @@ public class SecretResourceTest {
     Request get = clientRequest(format("/automation/v2/secrets/%s/groups", name)).get().build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>(){});
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>() {
+    });
   }
 
   List<String> modifyGroups(String name, ModifyGroupsRequestV2 request) throws IOException {
@@ -541,7 +548,8 @@ public class SecretResourceTest {
     Request put = clientRequest(format("/automation/v2/secrets/%s/groups", name)).put(body).build();
     Response httpResponse = mutualSslClient.newCall(put).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>(){});
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>() {
+    });
   }
 
   Response deleteSeries(String name) throws IOException {
