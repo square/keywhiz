@@ -333,7 +333,7 @@ public class SecretResourceTest {
 
   @Test public void secretChangeVersion_notFound() throws Exception {
     Request post =
-        clientRequest("/automation/v2/secrets/setversion").post(
+        clientRequest("/automation/v2/secrets/non-existent/setversion").post(
             RequestBody.create(JSON, mapper.writeValueAsString(
                 SetSecretVersionRequestV2.builder().name("non-existent").version(0).build())))
             .build();
@@ -418,7 +418,7 @@ public class SecretResourceTest {
 
     if (maxValidVersion.isPresent()) {
       // Reset the current version to this version
-      Request post = clientRequest("/automation/v2/secrets/setversion").post(
+      Request post = clientRequest("/automation/v2/secrets/secret22/setversion").post(
           RequestBody.create(JSON, mapper.writeValueAsString(SetSecretVersionRequestV2.builder()
               .name(name)
               .version(maxValidVersion.get() + 1)
@@ -521,7 +521,9 @@ public class SecretResourceTest {
   private void setCurrentVersion(SetSecretVersionRequestV2 request)
       throws IOException {
     RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
-    Request post = clientRequest("/automation/v2/secrets/setversion").post(body).build();
+    Request post =
+        clientRequest(format("/automation/v2/secrets/%s/setversion", request.name())).post(body)
+            .build();
     Response httpResponse = mutualSslClient.newCall(post).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
   }
