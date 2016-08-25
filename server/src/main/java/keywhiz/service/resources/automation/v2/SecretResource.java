@@ -27,6 +27,7 @@ import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
+import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.*;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
@@ -253,19 +254,18 @@ public class SecretResource {
   /**
    * Reset the current version of the given secret to the given version index.
    *
-   * @param name Secret series name
-   * @param versionId The desired current version
+   * @param request A request to update a given secret
    * @excludeParams automationClient
    * @responseMessage 200 Secret series current version updated successfully
    * @responseMessage 400 Invalid secret version specified
    * @responseMessage 404 Secret series not found
    */
   @Timed @ExceptionMetered
-  @Path("{name}/setversion/{versionId}")
+  @Path("{name}/setversion")
   @POST
   public Response resetSecretVersion(@Auth AutomationClient automationClient,
-      @PathParam("name") String name, @PathParam("versionId") long versionId) {
-    secretDAO.setCurrentSecretVersionByName(name, versionId);
+      @Valid SetSecretVersionRequestV2 request) {
+    secretDAO.setCurrentSecretVersionByName(request.name(), request.version());
 
     // If the secret wasn't found or the request was misformed, setCurrentSecretVersionByName
     // already threw an exception
