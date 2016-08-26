@@ -43,10 +43,10 @@ For example, to run Keywhiz with an H2 database in development mode:
 
     # Run server
     java -jar $SERVER_JAR server $KEYWHIZ_CONFIG
+    
+The default username and password in development mode is `keywhizAdmin:adminPass`.    
 
-Keywhiz uses [jOOQ](http://www.jooq.org/) to talk to its database.
-
-If you made changes to the database model and want to regenerate sources:
+Keywhiz uses [jOOQ](http://www.jooq.org/) to talk to its database. If you made changes to the database model (by adding a new migration), you will have to regenerate some source files:
 
     mvn install -pl model/ -Pgenerate-jooq-sources
 
