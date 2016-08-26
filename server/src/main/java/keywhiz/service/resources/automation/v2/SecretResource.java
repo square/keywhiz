@@ -256,7 +256,7 @@ public class SecretResource {
    *
    * @param request A request to update a given secret
    * @excludeParams automationClient
-   * @responseMessage 200 Secret series current version updated successfully
+   * @responseMessage 201 Secret series current version updated successfully
    * @responseMessage 400 Invalid secret version specified
    * @responseMessage 404 Secret series not found
    */
@@ -269,7 +269,7 @@ public class SecretResource {
 
     // If the secret wasn't found or the request was misformed, setCurrentSecretVersionByName
     // already threw an exception
-    return Response.status(Response.Status.OK).build();
+    return Response.status(Response.Status.CREATED).build();
   }
 
   /**
