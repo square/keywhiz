@@ -480,7 +480,8 @@ public class SecretResourceTest {
   Response createOrUpdate(CreateOrUpdateSecretRequestV2 request, String name) throws IOException {
     RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
     Request post = clientRequest(format("/automation/v2/secrets/%s", name)).post(body).build();
-    return mutualSslClient.newCall(post).execute();
+    Response httpResponse = mutualSslClient.newCall(post).execute();
+    return httpResponse;
   }
 
   List<String> listing() throws IOException {
@@ -525,7 +526,7 @@ public class SecretResourceTest {
         clientRequest(format("/automation/v2/secrets/%s/setversion", request.name())).post(body)
             .build();
     Response httpResponse = mutualSslClient.newCall(post).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
+    assertThat(httpResponse.code()).isEqualTo(201);
   }
 
   SecretDetailResponseV2 lookup(String name) throws IOException {
