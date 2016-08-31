@@ -163,7 +163,7 @@ public class SecretsResource {
 
       secret = builder.create();
     } catch (DataAccessException e) {
-      logger.warn(format("Cannot create secret %s", request.name), e);
+      logger.info(format("Cannot create secret %s", request.name), e);
       throw new ConflictException(format("Cannot create secret %s.", request.name));
     }
 
