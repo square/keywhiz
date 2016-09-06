@@ -17,9 +17,9 @@
 #   Create a persistent data volume:
 #     docker volume create --name keywhiz-db-devel
 #
-#   Initialize the database, apply migrations, and add seed data:
+#   Initialize the database, apply migrations, and add administrative user:
 #     docker run -v keywhiz-db-devel:/data square/keywhiz migrate
-#     docker run -v keywhiz-db-devel:/data square/keywhiz db-seed
+#     docker run -v keywhiz-db-devel:/data square/keywhiz add-user
 #
 #   Finally, run the server with the default development config:
 #     docker run -it -p 4444:4444 -v keywhiz-db-devel:/data square/keywhiz server

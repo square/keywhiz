@@ -26,7 +26,7 @@ Run Keywhiz:
 
     java -jar server/target/keywhiz-server-*-shaded.jar [COMMAND] [OPTIONS] 
 
-Useful commands to get started are `migrate`, `db-seed` and `server`. Use with
+Useful commands to get started are `migrate`, `add-user` and `server`. Use with
 `--help` for a list of all available commands. Use with `[COMMAND] --help` to
 get help on a particular command.
 
@@ -38,8 +38,8 @@ For example, to run Keywhiz with an H2 database in development mode:
     # Initialize dev database (H2)
     java -jar $SERVER_JAR migrate $KEYWHIZ_CONFIG
 
-    # Seed database with development data
-    java -jar $SERVER_JAR db-seed $KEYWHIZ_CONFIG
+    # Add an administrative user
+    java -jar $SERVER_JAR add-user $KEYWHIZ_CONFIG
 
     # Run server
     java -jar $SERVER_JAR server $KEYWHIZ_CONFIG
