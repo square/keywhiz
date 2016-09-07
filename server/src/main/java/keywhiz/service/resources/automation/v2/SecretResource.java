@@ -168,7 +168,25 @@ public class SecretResource {
     List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(time, null);
     return secrets.stream()
         .map(SanitizedSecret::name)
-        .collect(toSet());
+        .collect(toList());
+  }
+
+  /**
+   * Retrieve listing of secrets expiring soon
+   *
+   * @excludeParams automationClient
+   * @param time timestamp for farthest expiry to include
+   *
+   * @responseMessage 200 List of secrets expiring soon
+   */
+  @Timed @ExceptionMetered
+  @Path("expiring/v2/{time}")
+  @GET
+  @Produces(APPLICATION_JSON)
+  public Iterable<SanitizedSecret> secretListingExpiringV2(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
+    List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(time, null);
+    return secrets.stream()
+        .collect(toList());
   }
 
   /**
