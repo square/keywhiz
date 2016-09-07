@@ -11,7 +11,6 @@ import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
@@ -21,12 +20,11 @@ import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
-import okhttp3.MediaType;
+import keywhiz.api.model.SanitizedSecret;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okio.BufferedSink;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -280,6 +278,13 @@ public class SecretResourceTest {
     List<String> s3 = listExpiring(now + 86400 * 2, null);
     assertThat(s3).contains("secret18");
     assertThat(s3).doesNotContain("secret17");
+
+    List<SanitizedSecret> s4 = listExpiringV2(now + 86400 * 2, null);
+    assertThat(s4).hasSize(2);
+    assertThat(s4.get(0).name()).isEqualTo("secret18");
+    assertThat(s4.get(0).expiry()).isEqualTo(now + 86400);
+    assertThat(s4.get(1).name()).isEqualTo("secret19");
+    assertThat(s4.get(1).expiry()).isEqualTo(now + 86400 * 2);
   }
 
   @Test public void secretVersionListing_notFound() throws Exception {
@@ -504,6 +509,21 @@ public class SecretResourceTest {
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
     return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>() {
+    });
+  }
+
+  List<SanitizedSecret> listExpiringV2(Long time, String groupName) throws IOException {
+    String requestURL = "/automation/v2/secrets/expiring/v2/";
+    if (time != null && time > 0) {
+      requestURL += time.toString() + "/";
+    }
+    if (groupName != null && groupName.length() > 0) {
+      requestURL += groupName;
+    }
+    Request get = clientRequest(requestURL).get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<SanitizedSecret>>() {
     });
   }
 
