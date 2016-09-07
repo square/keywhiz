@@ -113,6 +113,7 @@ class SecretSeriesDAO {
 
   public int setCurrentVersion(long secretId, long secretContentId) {
     long checkId;
+    long now = OffsetDateTime.now().toEpochSecond();
     Record1<Long> r = dslContext.select(SECRETS_CONTENT.SECRETID)
         .from(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.ID.eq(secretContentId))
@@ -130,6 +131,7 @@ class SecretSeriesDAO {
 
     return dslContext.update(SECRETS)
         .set(SECRETS.CURRENT, secretContentId)
+        .set(SECRETS.UPDATEDAT, now)
         .where(SECRETS.ID.eq(secretId))
         .execute();
   }
@@ -166,12 +168,14 @@ class SecretSeriesDAO {
   }
 
   public void deleteSecretSeriesByName(String name) {
+    long now = OffsetDateTime.now().toEpochSecond();
     dslContext.transaction(configuration -> {
       SecretsRecord r = DSL.using(configuration).fetchOne(SECRETS, SECRETS.NAME.eq(name));
       if (r != null) {
         DSL.using(configuration)
             .update(SECRETS)
             .set(SECRETS.CURRENT, (Long) null)
+            .set(SECRETS.UPDATEDAT, now)
             .where(SECRETS.ID.eq(r.getId()))
             .execute();
 
@@ -184,10 +188,12 @@ class SecretSeriesDAO {
   }
 
   public void deleteSecretSeriesById(long id) {
+    long now = OffsetDateTime.now().toEpochSecond();
     dslContext.transaction(configuration -> {
       DSL.using(configuration)
           .update(SECRETS)
           .set(SECRETS.CURRENT, (Long)null)
+          .set(SECRETS.UPDATEDAT, now)
           .where(SECRETS.ID.eq(id))
           .execute();
 
