@@ -20,14 +20,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-
-import com.google.common.collect.ImmutableMap;
 import javax.ws.rs.BadRequestException;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
@@ -35,6 +35,7 @@ import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.SelectQuery;
@@ -45,6 +46,9 @@ import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
+import static org.jooq.impl.DSL.decode;
+import static org.jooq.impl.DSL.least;
+import static org.jooq.impl.DSL.val;
 
 /**
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
@@ -109,6 +113,17 @@ class SecretSeriesDAO {
       // Serialization of a Map<String, String> can never fail.
       throw Throwables.propagate(e);
     }
+  }
+
+  public int setExpiration(long secretContentId, Instant expiration) {
+    Field<Long> minExpiration = decode()
+        .when(SECRETS_CONTENT.EXPIRY.eq(0L), val(expiration.getEpochSecond()))
+        .otherwise(least(SECRETS_CONTENT.EXPIRY, val(expiration.getEpochSecond())));
+
+    return dslContext.update(SECRETS_CONTENT)
+        .set(SECRETS_CONTENT.EXPIRY, minExpiration)
+        .where(SECRETS_CONTENT.ID.eq(secretContentId))
+        .execute();
   }
 
   public int setCurrentVersion(long secretId, long secretContentId) {

@@ -1,10 +1,12 @@
 package keywhiz.service.resources.automation.v2;
 
-import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import io.dropwizard.auth.Auth;
+import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -22,13 +24,17 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
-import keywhiz.api.model.*;
+import keywhiz.api.model.AutomationClient;
+import keywhiz.api.model.Group;
+import keywhiz.api.model.SanitizedSecret;
+import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretSeriesAndContent;
+import keywhiz.api.model.SecretVersion;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.GroupDAO;
@@ -187,6 +193,37 @@ public class SecretResource {
     List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(time, null);
     return secrets.stream()
         .collect(toList());
+  }
+
+  /**
+   * Backfill expiration for this secret.
+   */
+  @Timed @ExceptionMetered
+  @Path("{name}/backfill-expiration")
+  @POST
+  public boolean backfillExpiration(@Auth AutomationClient automationClient, @PathParam("name") String name) {
+    Optional<Secret> secretOptional = secretController.getSecretByName(name);
+    if (!secretOptional.isPresent()) {
+      throw new NotFoundException("No such secret: " + name);
+    }
+
+    Secret secret = secretOptional.get();
+    byte[] content = Base64.getDecoder().decode(secret.getSecret());
+
+    Instant expiry = null;
+    if (secret.getName().endsWith(".crt") || secret.getName().endsWith(".pem")) {
+      expiry = ExpirationExtractor.expirationFromEncodedCertificateChain(content);
+    } else if (secret.getName().endsWith(".gpg") || secret.getName().endsWith(".pgp")) {
+      expiry = ExpirationExtractor.expirationFromOpenPGP(content);
+    }
+
+    if (expiry != null) {
+      logger.info("Found expiry for secret {}: {}", secret.getName(), expiry.getEpochSecond());
+      return secretDAO.setExpiration(name, expiry);
+    }
+
+    logger.info("Unable to determine expiry for secret {}", secret.getName());
+    return false;
   }
 
   /**
