@@ -18,15 +18,20 @@ package keywhiz.service.daos;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
-import keywhiz.api.model.*;
+import keywhiz.api.model.Group;
+import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretContent;
+import keywhiz.api.model.SecretSeries;
+import keywhiz.api.model.SecretSeriesAndContent;
+import keywhiz.api.model.SecretVersion;
 import keywhiz.jooq.tables.Secrets;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
@@ -114,6 +119,20 @@ public class SecretDAO {
     });
   }
 
+  public boolean setExpiration(String name, Instant expiration) {
+    return dslContext.transactionResult(configuration -> {
+      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+
+      Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
+      if (secretSeries.isPresent()) {
+        Optional<Long> currentVersion = secretSeries.get().currentVersion();
+        if (currentVersion.isPresent()) {
+          return secretSeriesDAO.setExpiration(currentVersion.get(), expiration) > 0;
+        }
+      }
+      return false;
+    });
+  }
 
   /**
    * @param secretId external secret series id to look up secrets by.
