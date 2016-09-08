@@ -16,6 +16,8 @@ import org.bouncycastle.openpgp.jcajce.JcaPGPPublicKeyRingCollection;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /** Helper class to extract expirations from secrets contents (best effort) */
 public final class ExpirationExtractor {
   private ExpirationExtractor() {}
@@ -62,7 +64,7 @@ public final class ExpirationExtractor {
   }
 
   public static Instant expirationFromEncodedCertificateChain(byte[] content) {
-    PemReader reader = new PemReader(new InputStreamReader(new ByteArrayInputStream(content)));
+    PemReader reader = new PemReader(new InputStreamReader(new ByteArrayInputStream(content), UTF_8));
 
     PemObject object;
     try {
