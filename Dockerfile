@@ -18,11 +18,11 @@
 #     docker volume create --name keywhiz-db-devel
 #
 #   Initialize the database, apply migrations, and add administrative user:
-#     scripts/start-dev migrate
-#     scripts/start-dev add-user
+#     scripts/start-dev.sh migrate
+#     scripts/start-dev.sh add-user
 #
 #   Finally, run the server with the default development config:
-#     scripts/start-dev server 
+#     scripts/start-dev.sh server 
 #
 # *** Production setup wizard ***
 #   For production deployments, we have setup wizard that will initialize
