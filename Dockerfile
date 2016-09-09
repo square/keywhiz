@@ -18,11 +18,11 @@
 #     docker volume create --name keywhiz-db-devel
 #
 #   Initialize the database, apply migrations, and add administrative user:
-#     docker run -v keywhiz-db-devel:/data square/keywhiz migrate
-#     docker run -v keywhiz-db-devel:/data square/keywhiz add-user
+#     scripts/start-dev.sh migrate
+#     scripts/start-dev.sh add-user
 #
 #   Finally, run the server with the default development config:
-#     docker run -it -p 4444:4444 -v keywhiz-db-devel:/data square/keywhiz server
+#     scripts/start-dev.sh server 
 #
 # *** Production setup wizard ***
 #   For production deployments, we have setup wizard that will initialize
