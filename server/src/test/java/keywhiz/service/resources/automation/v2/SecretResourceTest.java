@@ -2,6 +2,7 @@ package keywhiz.service.resources.automation.v2;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import io.dropwizard.jackson.Jackson;
@@ -235,6 +236,8 @@ public class SecretResourceTest {
   public void backfillExpirationTest() throws Exception {
     byte[] certs = Resources.toByteArray(Resources.getResource("fixtures/expiring-certificates.crt"));
     byte[] pubring = Resources.toByteArray(Resources.getResource("fixtures/expiring-pubring.gpg"));
+    byte[] p12 = Resources.toByteArray(Resources.getResource("fixtures/expiring-keystore.p12"));
+    byte[] jceks = Resources.toByteArray(Resources.getResource("fixtures/expiring-keystore.jceks"));
 
     create(CreateSecretRequestV2.builder()
         .name("certificate-chain.crt")
@@ -246,10 +249,26 @@ public class SecretResourceTest {
         .content(encoder.encodeToString(pubring))
         .build());
 
-    Response response = backfillExpiration("certificate-chain.crt");
+    create(CreateSecretRequestV2.builder()
+        .name("keystore.p12")
+        .content(encoder.encodeToString(p12))
+        .build());
+
+    create(CreateSecretRequestV2.builder()
+        .name("keystore.jceks")
+        .content(encoder.encodeToString(jceks))
+        .build());
+
+    Response response = backfillExpiration("certificate-chain.crt", ImmutableList.of());
     assertThat(response.isSuccessful()).isTrue();
 
-    response = backfillExpiration("public-keyring.gpg");
+    response = backfillExpiration("public-keyring.gpg", ImmutableList.of());
+    assertThat(response.isSuccessful()).isTrue();
+
+    response = backfillExpiration("keystore.p12", ImmutableList.of("password"));
+    assertThat(response.isSuccessful()).isTrue();
+
+    response = backfillExpiration("keystore.jceks", ImmutableList.of("password"));
     assertThat(response.isSuccessful()).isTrue();
 
     SecretDetailResponseV2 details = lookup("certificate-chain.crt");
@@ -257,6 +276,12 @@ public class SecretResourceTest {
 
     details = lookup("public-keyring.gpg");
     assertThat(details.expiry()).isEqualTo(1536442365);
+
+    details = lookup("keystore.p12");
+    assertThat(details.expiry()).isEqualTo(1681596851);
+
+    details = lookup("keystore.jceks");
+    assertThat(details.expiry()).isEqualTo(1681596851);
   }
 
   @Test public void secretListingExpiry_success() throws Exception {
@@ -511,8 +536,8 @@ public class SecretResourceTest {
     return mutualSslClient.newCall(post).execute();
   }
 
-  Response backfillExpiration(String name) throws IOException {
-    RequestBody body = RequestBody.create(null, new byte[0]);
+  Response backfillExpiration(String name, List<String> passwords) throws IOException {
+    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(passwords));
     Request post = clientRequest(String.format("/automation/v2/secrets/%s/backfill-expiration", name)).post(body).build();
     return mutualSslClient.newCall(post).execute();
   }
