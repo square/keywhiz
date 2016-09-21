@@ -17,6 +17,7 @@
 package keywhiz.api.model;
 
 import com.google.common.collect.ImmutableMap;
+import java.util.Collections;
 import keywhiz.api.ApiDate;
 import org.junit.Test;
 
@@ -37,7 +38,8 @@ public class SanitizedSecretTest {
         ImmutableMap.of("owner", "the king"),
         "password",
         ImmutableMap.of("favoriteFood", "PB&J sandwich"),
-        1136214245);
+        1136214245,
+        Collections.singletonList("empire"));
 
     assertThat(asJson(sanitizedSecret))
         .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
