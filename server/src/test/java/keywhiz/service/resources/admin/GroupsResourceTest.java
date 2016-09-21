@@ -17,6 +17,7 @@ package keywhiz.service.resources.admin;
 
 import com.google.common.collect.ImmutableSet;
 import io.dropwizard.jersey.params.LongParam;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.BadRequestException;
@@ -90,8 +91,9 @@ public class GroupsResourceTest {
   @Test public void getSpecificIncludesAllTheThings() {
     when(groupDAO.getGroupById(4444)).thenReturn(Optional.of(group));
 
-    SanitizedSecret secret = SanitizedSecret.of(1, "name", null, now, "creator", now, "creator", null, null, null,
-        1136214245);
+    SanitizedSecret secret =
+        SanitizedSecret.of(1, "name", null, now, "creator", now, "creator", null, null, null,
+            1136214245, Collections.emptyList());
     when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of(secret));
 
     Client client = new Client(1, "client", "desc", now, "creator", now, "creator", true, false);

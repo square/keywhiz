@@ -18,6 +18,8 @@ package keywhiz.api;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Arrays;
+import java.util.Collections;
 import keywhiz.api.model.SanitizedSecret;
 import org.junit.Test;
 
@@ -39,7 +41,8 @@ public class SecretsResponseTest {
             ImmutableMap.of("owner", "the king"),
             "password",
             ImmutableMap.of("param1", "value1"),
-            1136214245),
+            1136214245,
+            Collections.singletonList("empire")),
         SanitizedSecret.of(
             768,
             "anotherSecret",
@@ -51,7 +54,8 @@ public class SecretsResponseTest {
             null,
             "upload",
             null,
-            1136214245)
+            1136214245,
+            Collections.singletonList("empire"))
     ));
 
     assertThat(asJson(secretsResponse))

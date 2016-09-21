@@ -19,6 +19,7 @@ package keywhiz.service.resources.automation;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.dropwizard.jersey.params.LongParam;
+import java.util.Collections;
 import java.util.Optional;
 import javax.ws.rs.core.Response;
 import keywhiz.api.ApiDate;
@@ -80,13 +81,16 @@ public class AutomationGroupResourceTest {
   }
 
   @Test public void groupIncludesClientsAndSecrets() {
-    Group group = new Group(50, "testGroup", "testing group", now, "automation client", now, "automation client");
+    Group group = new Group(50, "testGroup", "testing group", now, "automation client", now,
+        "automation client");
     Client groupClient =
         new Client(1, "firstClient", "Group client", now, "test", now, "test", true, true);
     SanitizedSecret firstGroupSecret =
-        SanitizedSecret.of(1, "name1", "desc", now, "test", now, "test", null, "", null, 1136214245);
+        SanitizedSecret.of(1, "name1", "desc", now, "test", now, "test", null, "", null, 1136214245,
+            Collections.emptyList());
     SanitizedSecret secondGroupSecret =
-        SanitizedSecret.of(2, "name2", "desc", now, "test", now, "test", null, "", null, 1136214245);
+        SanitizedSecret.of(2, "name2", "desc", now, "test", now, "test", null, "", null, 1136214245,
+            Collections.emptyList());
 
     when(groupDAO.getGroup("testGroup")).thenReturn(Optional.of(group));
     when(aclDAO.getClientsFor(group)).thenReturn(ImmutableSet.of(groupClient));

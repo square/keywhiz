@@ -18,10 +18,12 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import keywhiz.api.ApiDate;
@@ -29,6 +31,7 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
+import keywhiz.api.model.Secret.LazyString;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
@@ -195,12 +198,16 @@ public class AclDAO {
   }
 
   public Set<Group> getGroupsFor(Secret secret) {
+    return getGroupsFor(secret.getName());
+  }
+
+  public Set<Group> getGroupsFor(String secretName) {
     List<Group> r = dslContext
         .select(GROUPS.fields())
         .from(GROUPS)
         .join(ACCESSGRANTS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
         .join(SECRETS).on(ACCESSGRANTS.SECRETID.eq(SECRETS.ID))
-        .where(SECRETS.NAME.eq(secret.getName()))
+        .where(SECRETS.NAME.eq(secretName))
         .fetchInto(GROUPS)
         .map(groupMapper);
     return new HashSet<>(r);
@@ -252,7 +259,7 @@ public class AclDAO {
     query.fetch()
         .map(row -> {
           SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
-          return SanitizedSecret.of(
+          SanitizedSecret secret = SanitizedSecret.of(
               series.id(),
               series.name(),
               series.description(),
@@ -263,7 +270,13 @@ public class AclDAO {
               secretContentMapper.tryToReadMapFromMetadata(row.getValue(SECRETS_CONTENT.METADATA)),
               series.type().orElse(null),
               series.generationOptions(),
-              row.getValue(SECRETS_CONTENT.EXPIRY));
+              row.getValue(SECRETS_CONTENT.EXPIRY),
+              Collections.emptyList()
+          );
+          Set<Group> groups = getGroupsFor(secret.name());
+          List<String> groupNames = groups.stream().map(Group::getName).collect(
+              Collectors.toList());
+          return SanitizedSecret.fromSecretWithGroups(secret, groupNames);
         })
         .forEach(row -> sanitizedSet.add(row));
 
@@ -307,7 +320,7 @@ public class AclDAO {
     return Optional.ofNullable(query.fetchOne())
         .map(row -> {
           SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
-          return SanitizedSecret.of(
+          SanitizedSecret secret = SanitizedSecret.of(
               series.id(),
               series.name(),
               series.description(),
@@ -318,7 +331,12 @@ public class AclDAO {
               secretContentMapper.tryToReadMapFromMetadata(row.getValue(SECRETS_CONTENT.METADATA)),
               series.type().orElse(null),
               series.generationOptions(),
-              row.getValue(SECRETS_CONTENT.EXPIRY));
+              row.getValue(SECRETS_CONTENT.EXPIRY),
+              Collections.emptyList());
+          Set<Group> groups = getGroupsFor(secret.name());
+          List<String> groupNames = groups.stream().map(Group::getName).collect(
+              Collectors.toList());
+          return SanitizedSecret.fromSecretWithGroups(secret, groupNames);
         });
   }
 
