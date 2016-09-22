@@ -64,7 +64,7 @@ public class DescribeAction implements Runnable {
       case "group":
         try {
           Group group = keywhizClient.getGroupByName(name);
-          printing.printGroupWithDetails(group, Arrays.asList("clients", "secrets"));
+          printing.printGroupWithDetails(group);
         } catch (NotFoundException e) {
           throw new AssertionError("Group not found.");
         } catch (IOException e) {
@@ -75,7 +75,7 @@ public class DescribeAction implements Runnable {
       case "client":
         try {
           Client client = keywhizClient.getClientByName(name);
-          printing.printClientWithDetails(client, Arrays.asList("groups", "secrets"));
+          printing.printClientWithDetails(client);
         } catch (NotFoundException e) {
           throw new AssertionError("Client not found.");
         } catch (IOException e) {
@@ -88,8 +88,7 @@ public class DescribeAction implements Runnable {
         try {
           sanitizedSecret = keywhizClient.getSanitizedSecretByName(name);
 
-          printing.printSanitizedSecretWithDetails(sanitizedSecret,
-              Arrays.asList("groups", "clients", "metadata"));
+          printing.printSanitizedSecretWithDetails(sanitizedSecret);
         } catch (NotFoundException e) {
           throw new AssertionError("Secret not found.");
         } catch (IOException e) {
