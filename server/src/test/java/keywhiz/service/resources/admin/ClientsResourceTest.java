@@ -108,8 +108,8 @@ public class ClientsResourceTest {
   }
 
   @Test public void includesAssociations() {
-    Group group1 = new Group(0, "group1", null, null, null, null, null);
-    Group group2 = new Group(0, "group2", null, null, null, null, null);
+    Group group1 = new Group(0, "group1", null, null, null, null, null, null);
+    Group group2 = new Group(0, "group2", null, null, null, null, null, null);
     Secret secret = new Secret(15, "secret", null, () -> "supersecretdata", now, "creator", now,
         "updater", null, null, null, 0);
 

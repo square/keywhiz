@@ -63,7 +63,7 @@ public class DescribeActionTest {
     describeActionConfig.describeType = Arrays.asList("group");
     describeActionConfig.name = "Web";
 
-    Group group = new Group(0, describeActionConfig.name, null, null, null, null, null);
+    Group group = new Group(0, describeActionConfig.name, null, null, null, null, null, null);
     when(keywhizClient.getGroupByName(anyString())).thenReturn(group);
 
     describeAction.run();

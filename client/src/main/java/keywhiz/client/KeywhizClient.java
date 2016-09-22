@@ -125,9 +125,9 @@ public class KeywhizClient {
     return mapper.readValue(response, new TypeReference<List<Group>>() {});
   }
 
-  public GroupDetailResponse createGroup(String name, String description) throws IOException {
+  public GroupDetailResponse createGroup(String name, String description, ImmutableMap<String, String> metadata) throws IOException {
     checkArgument(!name.isEmpty());
-    String response = httpPost(baseUrl.resolve("/admin/groups"), new CreateGroupRequest(name, description));
+    String response = httpPost(baseUrl.resolve("/admin/groups"), new CreateGroupRequest(name, description, metadata));
     return mapper.readValue(response, GroupDetailResponse.class);
   }
 

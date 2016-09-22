@@ -16,6 +16,7 @@
 
 package keywhiz.api.automation.v2;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.time.OffsetDateTime;
 import org.junit.Test;
@@ -35,6 +36,7 @@ public class GroupDetailResponseV2Test {
         .updatedBy("updater-user")
         .secrets(ImmutableSet.of("secret1", "secret2"))
         .clients(ImmutableSet.of("client1", "client2"))
+        .metadata(ImmutableMap.of("app", "keywhiz"))
         .build();
 
     assertThat(asJson(groupDetailResponse))

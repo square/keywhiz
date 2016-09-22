@@ -134,7 +134,7 @@ public class GroupsResource {
     }
 
     long groupId = groupDAO.createGroup(request.name, user.getName(),
-        nullToEmpty(request.description));
+        nullToEmpty(request.description), request.metadata);
     URI uri = UriBuilder.fromResource(GroupsResource.class).build(groupId);
     return Response
         .created(uri)

@@ -183,8 +183,8 @@ public class SecretsResourceTest {
   @Test
   public void includesAssociations() {
     Client client = new Client(0, "client", null, null, null, null, null, false, false);
-    Group group1 = new Group(0, "group1", null, null, null, null, null);
-    Group group2 = new Group(0, "group2", null, null, null, null, null);
+    Group group1 = new Group(0, "group1", null, null, null, null, null, null);
+    Group group2 = new Group(0, "group2", null, null, null, null, null, null);
 
     when(secretController.getSecretById(22)).thenReturn(Optional.of(secret));
     when(aclDAO.getGroupsFor(secret)).thenReturn(Sets.newHashSet(group1, group2));

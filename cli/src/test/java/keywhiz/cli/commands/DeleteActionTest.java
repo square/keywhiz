@@ -72,7 +72,7 @@ public class DeleteActionTest {
     deleteActionConfig.deleteType = Arrays.asList("group");
     deleteActionConfig.name = "Web";
 
-    Group group = new Group(0, deleteActionConfig.name, null, null, null, null, null);
+    Group group = new Group(0, deleteActionConfig.name, null, null, null, null, null, null);
     when(keywhizClient.getGroupByName(deleteActionConfig.name)).thenReturn(group);
 
     deleteAction.run();

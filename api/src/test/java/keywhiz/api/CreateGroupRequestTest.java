@@ -16,6 +16,7 @@
 
 package keywhiz.api;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.fromJson;
@@ -25,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class CreateGroupRequestTest {
   @Test public void deserializesCorrectly() throws Exception {
     CreateGroupRequest createGroupRequest =
-        new CreateGroupRequest("groupName", "groupDesc");
+        new CreateGroupRequest("groupName", "groupDesc", ImmutableMap.of("app", "groupApp"));
     assertThat(fromJson(
         jsonFixture("fixtures/createGroupRequest.json"), CreateGroupRequest.class))
         .isEqualTo(createGroupRequest);

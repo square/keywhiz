@@ -18,6 +18,7 @@ package keywhiz.service.resources.automation;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import io.dropwizard.jackson.Jackson;
 import java.util.List;
 import javax.ws.rs.core.HttpHeaders;
@@ -91,7 +92,7 @@ public class AutomationGroupResourceIntegrationTest {
   }
 
   @Test public void createGroup() throws Exception {
-    CreateGroupRequest request = new CreateGroupRequest("newgroup", "group-description");
+    CreateGroupRequest request = new CreateGroupRequest("newgroup", "group-description", ImmutableMap.of("app", "new"));
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
@@ -105,7 +106,7 @@ public class AutomationGroupResourceIntegrationTest {
   }
 
   @Test public void createGroupRedundant() throws Exception {
-    CreateGroupRequest request = new CreateGroupRequest("Web", "group-description");
+    CreateGroupRequest request = new CreateGroupRequest("Web", "group-description", ImmutableMap.of("app", "Web"));
     String body = mapper.writeValueAsString(request);
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
@@ -120,7 +121,7 @@ public class AutomationGroupResourceIntegrationTest {
 
   @Test public void deleteGroup() throws Exception {
     String body = mapper.writeValueAsString(
-        new CreateGroupRequest("short-lived", "group-description"));
+        new CreateGroupRequest("short-lived", "group-description", ImmutableMap.of("app", "short")));
     Request post = new Request.Builder()
         .post(RequestBody.create(KeywhizClient.JSON, body))
         .url(testUrl("/automation/groups"))

@@ -3,7 +3,10 @@ package keywhiz.api.automation.v2;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.util.Map;
+import javax.annotation.Nullable;
 import keywhiz.api.model.Group;
 
 @AutoValue public abstract class GroupDetailResponseV2 {
@@ -23,6 +26,7 @@ import keywhiz.api.model.Group;
     abstract Builder updatedBy(String person);
     abstract Builder secrets(ImmutableSet<String> secrets);
     abstract Builder clients(ImmutableSet<String> clients);
+    abstract Builder metadata(ImmutableMap<String, String> metadata);
 
     public Builder group(Group group) {
       return this
@@ -31,7 +35,8 @@ import keywhiz.api.model.Group;
           .createdAtSeconds(group.getCreatedAt().toEpochSecond())
           .updatedAtSeconds(group.getUpdatedAt().toEpochSecond())
           .createdBy(group.getCreatedBy())
-          .updatedBy(group.getUpdatedBy());
+          .updatedBy(group.getUpdatedBy())
+          .metadata(group.getMetadata());
     }
 
     public Builder secrets(Iterable<String> secrets) {
@@ -57,7 +62,8 @@ import keywhiz.api.model.Group;
       @JsonProperty("createdBy") String createdBy,
       @JsonProperty("updatedBy") String updatedBy,
       @JsonProperty("secrets") Iterable<String> secrets,
-      @JsonProperty("clients") Iterable<String> clients) {
+      @JsonProperty("clients") Iterable<String> clients,
+      @JsonProperty("metadata") @Nullable Map<String, String> metadata) {
     return builder()
         .name(name)
         .description(description)
@@ -67,6 +73,7 @@ import keywhiz.api.model.Group;
         .updatedBy(updatedBy)
         .secrets(secrets)
         .clients(clients)
+        .metadata(ImmutableMap.copyOf(metadata == null ? ImmutableMap.of() : metadata))
         .build();
   }
 
@@ -78,4 +85,5 @@ import keywhiz.api.model.Group;
   @JsonProperty("updatedBy") public abstract String updatedBy();
   @JsonProperty("secrets") public abstract ImmutableSet<String> secrets();
   @JsonProperty("clients") public abstract ImmutableSet<String> clients();
+  @JsonProperty("metadata") public abstract ImmutableMap<String, String> metadata();
 }

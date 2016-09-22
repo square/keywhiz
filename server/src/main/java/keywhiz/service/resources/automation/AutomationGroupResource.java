@@ -163,7 +163,7 @@ public class AutomationGroupResource {
     }
 
     long id = groupDAO.createGroup(groupRequest.name, automationClient.getName(),
-        nullToEmpty(groupRequest.description));
+        nullToEmpty(groupRequest.description), groupRequest.metadata);
     return groupDAO.getGroupById(id).get();
   }
 

@@ -15,6 +15,7 @@
  */
 package keywhiz.service.resources.admin;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.dropwizard.jersey.params.LongParam;
 import java.util.List;
@@ -50,7 +51,8 @@ public class GroupsResourceTest {
 
   User user = User.named("user");
   ApiDate now = ApiDate.now();
-  Group group = new Group(1, "group", "desc", now, "creator", now, "creator");
+  Group group =
+      new Group(1, "group", "desc", now, "creator", now, "creator", ImmutableMap.of("app", "app"));
 
   GroupsResource resource;
 
@@ -59,8 +61,10 @@ public class GroupsResourceTest {
   }
 
   @Test public void listingOfGroups() {
-    Group group1 = new Group(1, "group1", "desc", now, "creator", now, "updater");
-    Group group2 = new Group(2, "group2", "desc", now, "creator", now, "updater");
+    Group group1 = new Group(1, "group1", "desc", now, "creator", now, "updater", ImmutableMap.of(
+        "app", "app"));
+    Group group2 = new Group(2, "group2", "desc", now, "creator", now, "updater",
+        ImmutableMap.of("app", "app"));
     when(groupDAO.getGroups()).thenReturn(ImmutableSet.of(group1, group2));
 
     List<Group> response = resource.listGroups(user);
@@ -68,9 +72,11 @@ public class GroupsResourceTest {
   }
 
   @Test public void createsGroup() {
-    CreateGroupRequest request = new CreateGroupRequest("newGroup", "description");
+    CreateGroupRequest request =
+        new CreateGroupRequest("newGroup", "description", ImmutableMap.of("app", "app"));
     when(groupDAO.getGroup("newGroup")).thenReturn(Optional.empty());
-    when(groupDAO.createGroup("newGroup", "user", "description")).thenReturn(55L);
+    when(groupDAO.createGroup("newGroup", "user", "description",
+        ImmutableMap.of("app", "app"))).thenReturn(55L);
     when(groupDAO.getGroupById(55L)).thenReturn(Optional.of(group));
     when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of());
 
@@ -80,8 +86,10 @@ public class GroupsResourceTest {
 
   @Test(expected = BadRequestException.class)
   public void rejectsWhenGroupExists() {
-    CreateGroupRequest request = new CreateGroupRequest("newGroup", "description");
-    Group group = new Group(3, "newGroup", "desc", now, "creator", now, "updater");
+    CreateGroupRequest request =
+        new CreateGroupRequest("newGroup", "description", ImmutableMap.of("app", "app"));
+    Group group = new Group(3, "newGroup", "desc", now, "creator", now, "updater",
+        ImmutableMap.of("app", "app"));
     when(groupDAO.getGroup("newGroup")).thenReturn(Optional.of(group));
 
     resource.createGroup(user, request);

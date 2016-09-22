@@ -54,7 +54,7 @@ public class AddActionTest {
   AddAction addAction;
 
   Client client = new Client(4, "newClient", null, null, null, null, null, true, false);
-  Group group = new Group(4, "newGroup", null, null, null, null, null);
+  Group group = new Group(4, "newGroup", null, null, null, null, null, null);
   Secret secret = new Secret(15, "newSecret", null, () -> "c2VjcmV0MQ==", NOW, null, NOW, null, null, null,
       ImmutableMap.of(), 0);
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
@@ -74,7 +74,7 @@ public class AddActionTest {
     when(keywhizClient.getGroupByName(group.getName())).thenThrow(new NotFoundException());
 
     addAction.run();
-    verify(keywhizClient).createGroup(addActionConfig.name, null);
+    verify(keywhizClient).createGroup(addActionConfig.name, null, null);
   }
 
   @Test

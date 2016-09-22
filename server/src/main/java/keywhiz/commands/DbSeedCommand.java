@@ -79,12 +79,12 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
    */
   public static void doImport(DSLContext dslContext) {
     dslContext
-        .insertInto(GROUPS, GROUPS.ID, GROUPS.NAME, GROUPS.CREATEDAT, GROUPS.UPDATEDAT)
-        .values(916L, "Blackops", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(917L, "Security", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(918L, "Web", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(919L, "iOS", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(920L, "DeprecatedGroup", OffsetDateTime.parse("2013-03-12T11:23:43Z").toEpochSecond(), OffsetDateTime.parse("2013-03-12T11:23:43Z").toEpochSecond())
+        .insertInto(GROUPS, GROUPS.ID, GROUPS.NAME, GROUPS.CREATEDAT, GROUPS.UPDATEDAT, GROUPS.METADATA)
+        .values(916L, "Blackops", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), "{\"app\" : \"Blackops\"}")
+        .values(917L, "Security", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), "{\"app\" : \"Security\"}")
+        .values(918L, "Web", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), "{\"app\" : \"Web\"}")
+        .values(919L, "iOS", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), "{\"app\" : \"iOSDev\"}")
+        .values(920L, "DeprecatedGroup", OffsetDateTime.parse("2013-03-12T11:23:43Z").toEpochSecond(), OffsetDateTime.parse("2013-03-12T11:23:43Z").toEpochSecond(), "{\"app\" : \"DeprecatedApp\"}")
         .execute();
 
     dslContext

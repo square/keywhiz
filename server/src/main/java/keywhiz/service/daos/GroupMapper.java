@@ -16,12 +16,26 @@
 
 package keywhiz.service.daos;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
+import java.util.Map;
+import javax.inject.Inject;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Group;
 import keywhiz.jooq.tables.records.GroupsRecord;
 import org.jooq.RecordMapper;
 
 class GroupMapper implements RecordMapper<GroupsRecord, Group> {
+  private static final TypeReference MAP_STRING_STRING_TYPE =
+      new TypeReference<Map<String, String>>() {};
+  private final ObjectMapper mapper;
+
+  @Inject public GroupMapper(ObjectMapper mapper) {
+    this.mapper = mapper;
+  }
+
   public Group map(GroupsRecord r) {
     return new Group(
         r.getId(),
@@ -30,6 +44,19 @@ class GroupMapper implements RecordMapper<GroupsRecord, Group> {
         new ApiDate(r.getCreatedat()),
         r.getCreatedby(),
         new ApiDate(r.getUpdatedat()),
-        r.getUpdatedby());
+        r.getUpdatedby(),
+        tryToReadMapFromMetadata(r.getMetadata()));
+  }
+
+  private ImmutableMap<String, String> tryToReadMapFromMetadata(String value) {
+    if (!value.isEmpty()) {
+      try {
+        return ImmutableMap.copyOf(mapper.readValue(value, MAP_STRING_STRING_TYPE));
+      } catch (IOException e) {
+        throw new RuntimeException(
+            "Failed to create a Map from data. Bad json in metadata column?", e);
+      }
+    }
+    return ImmutableMap.of();
   }
 }

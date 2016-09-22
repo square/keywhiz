@@ -16,6 +16,7 @@
 
 package keywhiz.service.daos;
 
+import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import java.util.List;
 import javax.inject.Inject;
@@ -46,9 +47,9 @@ public class GroupDAOTest {
     long now = OffsetDateTime.now().toEpochSecond();
 
     jooqContext.insertInto(GROUPS, GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDBY,
-        GROUPS.UPDATEDBY, GROUPS.CREATEDAT, GROUPS.UPDATEDAT)
-        .values("group1", "desc1", "creator1", "updater1", now, now)
-        .values("group2", "desc2", "creator2", "updater2", now, now)
+        GROUPS.UPDATEDBY, GROUPS.CREATEDAT, GROUPS.UPDATEDAT, GROUPS.METADATA)
+        .values("group1", "desc1", "creator1", "updater1", now, now, "{\"app\": \"app1\"}")
+        .values("group2", "desc2", "creator2", "updater2", now, now, "{\"app\": \"app2\"}")
         .execute();
 
     group1 = groupDAO.getGroup("group1").get();
@@ -57,7 +58,7 @@ public class GroupDAOTest {
 
   @Test public void createGroup() {
     int before = tableSize();
-    groupDAO.createGroup("newGroup", "creator3", "");
+    groupDAO.createGroup("newGroup", "creator3", "", ImmutableMap.of());
     assertThat(tableSize()).isEqualTo(before + 1);
 
     List<String> names = groupDAO.getGroups()
@@ -98,7 +99,7 @@ public class GroupDAOTest {
 
   @Test(expected = DataAccessException.class)
   public void willNotCreateDuplicateGroup() throws Exception {
-    groupDAO.createGroup("group1", "creator1", "");
+    groupDAO.createGroup("group1", "creator1", "", ImmutableMap.of());
   }
 
   private int tableSize() {
