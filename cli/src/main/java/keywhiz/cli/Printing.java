@@ -15,6 +15,8 @@
  */
 package keywhiz.cli;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import java.io.IOException;
@@ -41,7 +43,7 @@ public class Printing {
     this.keywhizClient = keywhizClient;
   }
 
-  public void printClientWithDetails(Client client, List<String> options) {
+  public void printClientWithDetails(Client client) {
     System.out.println(client.getName());
     ClientDetailResponse clientDetails;
     try {
@@ -50,22 +52,18 @@ public class Printing {
       throw Throwables.propagate(e);
     }
 
-    if (options.contains("groups")) {
-      System.out.println("\tGroups:");
-      clientDetails.groups.stream()
-          .sorted(Comparator.comparing(Group::getName))
-          .forEach(g -> System.out.println(INDENT + g.getName()));
-    }
+    System.out.println("\tGroups:");
+    clientDetails.groups.stream()
+        .sorted(Comparator.comparing(Group::getName))
+        .forEach(g -> System.out.println(INDENT + g.getName()));
 
-    if (options.contains("secrets")) {
-      System.out.println("\tSecrets:");
-      clientDetails.secrets.stream()
-          .sorted(Comparator.comparing(SanitizedSecret::name))
-          .forEach(s -> System.out.println(INDENT + SanitizedSecret.displayName(s)));
-    }
+    System.out.println("\tSecrets:");
+    clientDetails.secrets.stream()
+        .sorted(Comparator.comparing(SanitizedSecret::name))
+        .forEach(s -> System.out.println(INDENT + SanitizedSecret.displayName(s)));
   }
 
-  public void printGroupWithDetails(Group group, List<String> options) {
+  public void printGroupWithDetails(Group group) {
     System.out.println(group.getName());
     GroupDetailResponse groupDetails;
     try {
@@ -74,22 +72,18 @@ public class Printing {
       throw Throwables.propagate(e);
     }
 
-    if (options.contains("clients")) {
-      System.out.println("\tClients:");
-      groupDetails.getClients().stream()
-          .sorted(Comparator.comparing(Client::getName))
-          .forEach(c -> System.out.println(INDENT + c.getName()));
-      }
+    System.out.println("\tClients:");
+    groupDetails.getClients().stream()
+        .sorted(Comparator.comparing(Client::getName))
+        .forEach(c -> System.out.println(INDENT + c.getName()));
 
-    if (options.contains("secrets")) {
-      System.out.println("\tSecrets:");
-      groupDetails.getSecrets().stream()
-          .sorted(Comparator.comparing(SanitizedSecret::name))
-          .forEach(s -> System.out.println(INDENT + SanitizedSecret.displayName(s)));
-    }
+    System.out.println("\tSecrets:");
+    groupDetails.getSecrets().stream()
+        .sorted(Comparator.comparing(SanitizedSecret::name))
+        .forEach(s -> System.out.println(INDENT + SanitizedSecret.displayName(s)));
   }
 
-  public void printSanitizedSecretWithDetails(SanitizedSecret secret, List<String> options) {
+  public void printSanitizedSecretWithDetails(SanitizedSecret secret) {
     System.out.println(SanitizedSecret.displayName(secret));
     SecretDetailResponse secretDetails;
     try {
@@ -98,31 +92,55 @@ public class Printing {
       throw Throwables.propagate(e);
     }
 
-    if (options.contains("groups")) {
-      System.out.println("\tGroups:");
-      secretDetails.groups.stream()
-          .sorted(Comparator.comparing(Group::getName))
-          .forEach(g -> System.out.println(INDENT + g.getName()));
+    System.out.println("\tGroups:");
+    secretDetails.groups.stream()
+        .sorted(Comparator.comparing(Group::getName))
+        .forEach(g -> System.out.println(INDENT + g.getName()));
+
+    System.out.println("\tClients:");
+    secretDetails.clients.stream()
+        .sorted(Comparator.comparing(Client::getName))
+        .forEach(c -> System.out.println(INDENT + c.getName()));
+
+    System.out.println("\tMetadata:");
+    if (!secret.metadata().isEmpty()) {
+      String metadata;
+      try {
+        metadata = new ObjectMapper().writeValueAsString(secret.metadata());
+      } catch (JsonProcessingException e) {
+        throw Throwables.propagate(e);
+      }
+      System.out.println(INDENT + metadata);
     }
 
-    if (options.contains("clients")) {
-      System.out.println("\tClients:");
-      secretDetails.clients.stream()
-          .sorted(Comparator.comparing(Client::getName))
-          .forEach(c -> System.out.println(INDENT + c.getName()));
+    if (secret.expiry() > 0) {
+      System.out.println("\tExpiry:");
+      Date d = new Date(secret.expiry() * 1000);
+      System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
     }
 
-    if (options.contains("metadata")) {
-      System.out.println("\tMetadata:");
-      if(!secret.metadata().isEmpty()) {
-        System.out.println(INDENT + secret.metadata().toString());
-      }
-      if (secret.expiry() > 0) {
-        System.out.println("\tExpiry:");
-        Date d = new Date(secret.expiry() * 1000);
-        System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
-      }
+    if (!secret.description().isEmpty()) {
+      System.out.println("\tDescription:");
+      System.out.println(INDENT + secret.description());
     }
+
+    if (!secret.createdBy().isEmpty()) {
+      System.out.println("\tCreated by:");
+      System.out.println(INDENT + secret.createdBy());
+    }
+
+    System.out.println("\tCreated at:");
+    Date d = new Date(secret.createdAt().toEpochSecond() * 1000);
+    System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
+
+    if (!secret.updatedBy().isEmpty()) {
+      System.out.println("\tUpdated by:");
+      System.out.println(INDENT + secret.updatedBy());
+    }
+
+    System.out.println("\tUpdated at:");
+    d = new Date(secret.createdAt().toEpochSecond() * 1000);
+    System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
   }
 
   public void printAllClients(List<Client> clients) {
