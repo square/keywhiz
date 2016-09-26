@@ -19,6 +19,7 @@ package keywhiz.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -47,6 +48,9 @@ public class GroupDetailResponse {
   private final String updatedBy;
 
   @JsonProperty
+  private final ImmutableMap<String, String> metadata;
+
+  @JsonProperty
   private final ImmutableList<SanitizedSecret> secrets;
 
   @JsonProperty
@@ -59,6 +63,7 @@ public class GroupDetailResponse {
       @JsonProperty("updateDate") ApiDate updateDate,
       @JsonProperty("createdBy") String createdBy,
       @JsonProperty("updatedBy") String updatedBy,
+      @JsonProperty("metadata") ImmutableMap<String, String> metadata,
       @JsonProperty("secrets") ImmutableList<SanitizedSecret> secrets,
       @JsonProperty("clients") ImmutableList<Client> clients) {
     this.id = id;
@@ -68,6 +73,7 @@ public class GroupDetailResponse {
     this.updateDate = updateDate;
     this.createdBy = createdBy;
     this.updatedBy = updatedBy;
+    this.metadata = metadata;
     this.secrets = secrets;
     this.clients = clients;
   }
@@ -81,6 +87,7 @@ public class GroupDetailResponse {
         group.getUpdatedAt(),
         group.getCreatedBy(),
         group.getUpdatedBy(),
+        group.getMetadata(),
         secrets,
         clients);
   }
@@ -113,6 +120,8 @@ public class GroupDetailResponse {
     return updatedBy;
   }
 
+  public ImmutableMap<String, String> getMetadata() { return metadata; }
+
   /** @return List of secrets the group has access to. The secrets do not contain content. */
   public ImmutableList<SanitizedSecret> getSecrets() {
     return secrets;
@@ -124,7 +133,7 @@ public class GroupDetailResponse {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, name, description, creationDate, updateDate, createdBy, updatedBy, secrets, clients);
+    return Objects.hashCode(id, name, description, creationDate, updateDate, createdBy, updatedBy, metadata, secrets, clients);
   }
 
   @Override
@@ -138,6 +147,7 @@ public class GroupDetailResponse {
           Objects.equal(this.updateDate, that.updateDate) &&
           Objects.equal(this.createdBy, that.createdBy) &&
           Objects.equal(this.updatedBy, that.updatedBy) &&
+          Objects.equal(this.metadata, that.metadata) &&
           Objects.equal(this.secrets, that.secrets) &&
           Objects.equal(this.clients, that.clients)) {
         return true;

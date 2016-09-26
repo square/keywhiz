@@ -81,6 +81,40 @@ public class Printing {
     groupDetails.getSecrets().stream()
         .sorted(Comparator.comparing(SanitizedSecret::name))
         .forEach(s -> System.out.println(INDENT + SanitizedSecret.displayName(s)));
+
+    System.out.println("\tMetadata:");
+    if (!groupDetails.getMetadata().isEmpty()) {
+      String metadata;
+      try {
+        metadata = new ObjectMapper().writeValueAsString(groupDetails.getMetadata());
+      } catch (JsonProcessingException e) {
+        throw Throwables.propagate(e);
+      }
+      System.out.println(INDENT + metadata);
+    }
+
+    if (!groupDetails.getDescription().isEmpty()) {
+      System.out.println("\tDescription:");
+      System.out.println(INDENT + groupDetails.getDescription());
+    }
+
+    if (!groupDetails.getCreatedBy().isEmpty()) {
+      System.out.println("\tCreated by:");
+      System.out.println(INDENT + groupDetails.getCreatedBy());
+    }
+
+    System.out.println("\tCreated at:");
+    Date d = new Date(groupDetails.getCreationDate().toEpochSecond() * 1000);
+    System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
+
+    if (!groupDetails.getUpdatedBy().isEmpty()) {
+      System.out.println("\tUpdated by:");
+      System.out.println(INDENT + groupDetails.getUpdatedBy());
+    }
+
+    System.out.println("\tUpdated at:");
+    d = new Date(groupDetails.getUpdateDate().toEpochSecond() * 1000);
+    System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
   }
 
   public void printSanitizedSecretWithDetails(SanitizedSecret secret) {
