@@ -48,6 +48,9 @@ public class Client {
   @JsonProperty
   private final String updatedBy;
 
+  @JsonProperty
+  private final ApiDate lastSeen;
+
   /** True if client is enabled to retrieve secrets. */
   @JsonProperty
   private final boolean enabled;
@@ -63,6 +66,7 @@ public class Client {
       @JsonProperty("createdBy") @Nullable String createdBy,
       @JsonProperty("updatedAt") ApiDate updatedAt,
       @JsonProperty("updatedBy") @Nullable String updatedBy,
+      @JsonProperty("lastSeen") @Nullable ApiDate lastSeen,
       @JsonProperty("enabled") boolean enabled,
       @JsonProperty("automationAllowed") boolean automationAllowed) {
     this.id = id;
@@ -72,6 +76,7 @@ public class Client {
     this.createdBy = nullToEmpty(createdBy);
     this.updatedAt = updatedAt;
     this.updatedBy = nullToEmpty(updatedBy);
+    this.lastSeen = lastSeen;
     this.enabled = enabled;
     this.automationAllowed = automationAllowed;
   }
@@ -104,6 +109,10 @@ public class Client {
     return updatedBy;
   }
 
+  public ApiDate getLastSeen() {
+    return lastSeen;
+  }
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -123,6 +132,7 @@ public class Client {
           Objects.equal(this.createdBy, that.createdBy) &&
           Objects.equal(this.updatedAt, that.updatedAt) &&
           Objects.equal(this.updatedBy, that.updatedBy) &&
+          Objects.equal(this.lastSeen, that.lastSeen) &&
           this.enabled == that.enabled &&
           this.automationAllowed == that.automationAllowed) {
         return true;
@@ -134,7 +144,7 @@ public class Client {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, name, description, createdAt, createdBy, updatedAt, updatedBy,
+    return Objects.hashCode(id, name, description, createdAt, createdBy, updatedAt, updatedBy, lastSeen,
         enabled, automationAllowed);
   }
 
@@ -148,6 +158,7 @@ public class Client {
         .add("createdBy", createdBy)
         .add("updatedAt", updatedAt)
         .add("updatedBy", updatedBy)
+        .add("lastSeen", lastSeen)
         .add("enabled", enabled)
         .add("automationAllowed", automationAllowed)
         .toString();

@@ -77,7 +77,6 @@ public class ClientResource {
   @Consumes(APPLICATION_JSON)
   public Response createClient(@Auth AutomationClient automationClient,
       @Valid CreateClientRequestV2 request) {
-
     String creator = automationClient.getName();
     String client = request.name();
 

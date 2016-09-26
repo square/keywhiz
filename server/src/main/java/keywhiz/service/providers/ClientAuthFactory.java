@@ -100,6 +100,7 @@ public class ClientAuthFactory {
       Optional<Client> optionalClient = clientDAO.getClient(name);
       if (optionalClient.isPresent()) {
         Client client = optionalClient.get();
+        clientDAO.sawClient(client);
         if (client.isEnabled()) {
           return optionalClient;
         } else {

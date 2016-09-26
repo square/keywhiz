@@ -20,6 +20,7 @@ import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import org.jooq.RecordMapper;
+import java.util.Optional;
 
 /**
  * Jooq has the ability to map records to classes using Reflection. We however need a mapper because
@@ -29,6 +30,14 @@ import org.jooq.RecordMapper;
  */
 class ClientMapper implements RecordMapper<ClientsRecord, Client> {
   public Client map(ClientsRecord r) {
+    Long lastSeen = r.getLastseen();
+    ApiDate dateLastSeen;
+    if (lastSeen == null) {
+      dateLastSeen = null;
+    } else {
+      dateLastSeen = new ApiDate(lastSeen);
+    }
+
     return new Client(
         r.getId(),
         r.getName(),
@@ -37,7 +46,9 @@ class ClientMapper implements RecordMapper<ClientsRecord, Client> {
         r.getCreatedby(),
         new ApiDate(r.getUpdatedat()),
         r.getUpdatedby(),
+        dateLastSeen,
         r.getEnabled(),
-        r.getAutomationallowed());
+        r.getAutomationallowed()
+    );
   }
 }

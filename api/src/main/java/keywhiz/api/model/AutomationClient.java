@@ -22,8 +22,8 @@ import javax.annotation.Nullable;
 public class AutomationClient extends Client {
   private AutomationClient(Client client) {
     super(client.getId(), client.getName(), client.getDescription(), client.getCreatedAt(),
-        client.getCreatedBy(), client.getUpdatedAt(), client.getUpdatedBy(), client.isEnabled(),
-        true);
+        client.getCreatedBy(), client.getUpdatedAt(), client.getUpdatedBy(), client.getLastSeen(), client.isEnabled(), true
+    );
   }
 
   @Nullable public static AutomationClient of(Client client) {

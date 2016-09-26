@@ -182,9 +182,19 @@ public class SecretsResourceTest {
 
   @Test
   public void includesAssociations() {
+<<<<<<< HEAD
     Client client = new Client(0, "client", null, null, null, null, null, false, false);
     Group group1 = new Group(0, "group1", null, null, null, null, null, null);
     Group group2 = new Group(0, "group2", null, null, null, null, null, null);
+||||||| parent of e9dd3c7... Adds a lastSeen field to clients, and updates it when client is seen in ClientAuthFactory
+    Client client = new Client(0, "client", null, null, null, null, null, false, false);
+    Group group1 = new Group(0, "group1", null, null, null, null, null);
+    Group group2 = new Group(0, "group2", null, null, null, null, null);
+=======
+    Client client = new Client(0, "client", null, null, null, null, null, null, false, false);
+    Group group1 = new Group(0, "group1", null, null, null, null, null, null);
+    Group group2 = new Group(0, "group2", null, null, null, null, null, null);
+>>>>>>> e9dd3c7... Adds a lastSeen field to clients, and updates it when client is seen in ClientAuthFactory
 
     when(secretController.getSecretById(22)).thenReturn(Optional.of(secret));
     when(aclDAO.getGroupsFor(secret)).thenReturn(Sets.newHashSet(group1, group2));

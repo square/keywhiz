@@ -51,6 +51,7 @@ public class ClientDAO {
     r.setCreatedat(now);
     r.setUpdatedby(user);
     r.setUpdatedat(now);
+    r.setLastseen(null);
     r.setDescription(description);
     r.setEnabled(true);
     r.setAutomationallowed(false);
@@ -69,6 +70,18 @@ public class ClientDAO {
       DSL.using(configuration)
           .delete(MEMBERSHIPS)
           .where(MEMBERSHIPS.CLIENTID.eq(client.getId()))
+          .execute();
+    });
+  }
+
+  public void sawClient(Client client) {
+    long now = OffsetDateTime.now().toEpochSecond();
+
+    dslContext.transaction(configuration -> {
+      DSL.using(configuration)
+          .update(CLIENTS)
+          .set(CLIENTS.LASTSEEN, now)
+          .where(CLIENTS.ID.eq(client.getId()))
           .execute();
     });
   }

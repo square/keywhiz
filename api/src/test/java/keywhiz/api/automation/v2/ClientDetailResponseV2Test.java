@@ -17,6 +17,12 @@
 package keywhiz.api.automation.v2;
 
 import java.time.OffsetDateTime;
+import java.util.Date;
+import java.util.Optional;
+
+import keywhiz.api.ApiDate;
+import keywhiz.api.model.Client;
+import org.joda.time.DateTime;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
@@ -31,9 +37,23 @@ public class ClientDetailResponseV2Test {
         OffsetDateTime.parse("2012-08-01T13:15:30Z").toEpochSecond(),
         OffsetDateTime.parse("2012-09-10T03:15:30Z").toEpochSecond(),
         "creator-user",
-        "updater-user");
+        "updater-user",
+        Optional.of(OffsetDateTime.parse("2012-09-10T03:15:30Z").toEpochSecond())
+        );
 
     assertThat(asJson(clientDetailResponse))
         .isEqualTo(jsonFixture("fixtures/v2/clientDetailResponse.json"));
+  }
+
+  @Test public void serializesNullLastSeenCorrectly() throws Exception {
+    ApiDate createdAt = new ApiDate(1343826930);
+    ApiDate updatedAt = new ApiDate(1347246930);
+
+    Client client = new Client(0, "Client Name", "Client Description", createdAt, "creator-user",
+        updatedAt, "updater-user", null, true, false);
+    ClientDetailResponseV2 clientDetailResponse = ClientDetailResponseV2.fromClient(client);
+
+    assertThat(asJson(clientDetailResponse))
+        .isEqualTo(jsonFixture("fixtures/v2/clientDetailResponse_LastSeenNull.json"));
   }
 }

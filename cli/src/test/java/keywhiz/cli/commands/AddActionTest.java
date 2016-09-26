@@ -53,8 +53,16 @@ public class AddActionTest {
   AddActionConfig addActionConfig;
   AddAction addAction;
 
+<<<<<<< HEAD
   Client client = new Client(4, "newClient", null, null, null, null, null, true, false);
   Group group = new Group(4, "newGroup", null, null, null, null, null, null);
+||||||| parent of e9dd3c7... Adds a lastSeen field to clients, and updates it when client is seen in ClientAuthFactory
+  Client client = new Client(4, "newClient", null, null, null, null, null, true, false);
+  Group group = new Group(4, "newGroup", null, null, null, null, null);
+=======
+  Client client = new Client(4, "newClient", null, null, null, null, null, null, true, false);
+  Group group = new Group(4, "newGroup", null, null, null, null, null, null);
+>>>>>>> e9dd3c7... Adds a lastSeen field to clients, and updates it when client is seen in ClientAuthFactory
   Secret secret = new Secret(15, "newSecret", null, () -> "c2VjcmV0MQ==", NOW, null, NOW, null, null, null,
       ImmutableMap.of(), 0);
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);

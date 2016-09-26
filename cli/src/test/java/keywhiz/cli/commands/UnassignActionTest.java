@@ -47,8 +47,16 @@ public class UnassignActionTest {
   UnassignActionConfig unassignActionConfig;
   UnassignAction unassignAction;
 
+<<<<<<< HEAD
   Client client = new Client(11, "client-name", null, null, null, null, null, false, false);
   Group group = new Group(22, "group-name", null, null, null, null, null, null);
+||||||| parent of e9dd3c7... Adds a lastSeen field to clients, and updates it when client is seen in ClientAuthFactory
+  Client client = new Client(11, "client-name", null, null, null, null, null, false, false);
+  Group group = new Group(22, "group-name", null, null, null, null, null);
+=======
+  Client client = new Client(11, "client-name", null, null, null, null, null, null, false, false);
+  Group group = new Group(22, "group-name", null, null, null, null, null, null);
+>>>>>>> e9dd3c7... Adds a lastSeen field to clients, and updates it when client is seen in ClientAuthFactory
   Secret secret = new Secret(33, "secret-name", null, () -> "c2VjcmV0MQ==", NOW, null, NOW, null, null, null,
       ImmutableMap.of(), 0);
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
