@@ -48,7 +48,7 @@ public abstract class SanitizedSecret {
       @JsonProperty("type") @Nullable String type,
       @JsonProperty("generationOptions") @Nullable Map<String, String> generationOptions,
       @JsonProperty("expiry") long expiry,
-      @JsonProperty("groups") List<String> groups) {
+      @JsonProperty("groups") @Nullable List<String> groups) {
     ImmutableMap<String, String> meta =
         (metadata == null) ? ImmutableMap.of() : ImmutableMap.copyOf(metadata);
     ImmutableMap<String, String> genOptions =
