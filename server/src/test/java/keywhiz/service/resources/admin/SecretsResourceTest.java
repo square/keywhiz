@@ -80,9 +80,9 @@ public class SecretsResourceTest {
   @Test
   public void listSecrets() {
     SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc", NOW, "user", NOW, "user",
-        emptyMap, null, null, 1136214245, Collections.emptyList());
+        emptyMap, null, null, 1136214245);
     SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "desc", NOW, "user", NOW, "user",
-        emptyMap, null, null, 1136214245, Collections.emptyList());
+        emptyMap, null, null, 1136214245);
     when(secretController.getSanitizedSecrets(null, null)).thenReturn(ImmutableList.of(secret1, secret2));
 
     List<SanitizedSecret> response = resource.listSecrets(user);
