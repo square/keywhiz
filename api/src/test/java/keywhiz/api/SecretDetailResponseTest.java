@@ -43,7 +43,8 @@ public class SecretDetailResponseTest {
                       ApiDate.parse("2013-03-28T21:29:27.465Z"),
                       "keywhizAdmin",
                       ApiDate.parse("2013-03-28T21:29:27.465Z"),
-                      "keywhizAdmin")
+                      "keywhizAdmin",
+                      ImmutableMap.of("app", "keywhiz"))
         ),
         ImmutableList.of());
 

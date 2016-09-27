@@ -16,6 +16,7 @@
 
 package keywhiz.service.daos;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import java.util.Optional;
 import java.util.Set;
@@ -69,13 +70,13 @@ public class AclDAOTest {
     id = clientDAO.createClient("client2", "creator", "");
     client2 = clientDAO.getClientById(id).get();
 
-    id = groupDAO.createGroup("group1", "creator", "");
+    id = groupDAO.createGroup("group1", "creator", "", ImmutableMap.of());
     group1 = groupDAO.getGroupById(id).get();
 
-    id = groupDAO.createGroup("group2", "creator", "");
+    id = groupDAO.createGroup("group2", "creator", "", ImmutableMap.of());
     group2 = groupDAO.getGroupById(id).get();
 
-    id = groupDAO.createGroup("group3", "creator", "");
+    id = groupDAO.createGroup("group3", "creator", "", ImmutableMap.of());
     group3 = groupDAO.getGroupById(id).get();
 
     SecretFixtures secretFixtures = SecretFixtures.using(secretDAOFactory.readwrite());

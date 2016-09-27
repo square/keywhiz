@@ -6,5 +6,6 @@
   "createdBy" : "creator-user",
   "updatedBy" : "updater-user",
   "secrets" : ["secret1", "secret2"],
-  "clients" : ["client1", "client2"]
+  "clients" : ["client1", "client2"],
+  "metadata" : {"app" : "keywhiz"}
 }

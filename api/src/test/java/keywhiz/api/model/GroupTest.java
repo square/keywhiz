@@ -16,6 +16,7 @@
 
 package keywhiz.api.model;
 
+import com.google.common.collect.ImmutableMap;
 import keywhiz.api.ApiDate;
 import org.junit.Test;
 
@@ -31,7 +32,8 @@ public class GroupTest {
                             ApiDate.parse("2013-03-28T21:29:27.465Z"),
                             "keywhizAdmin",
                             ApiDate.parse("2013-03-28T21:29:27.465Z"),
-                            "keywhizAdmin");
+                            "keywhizAdmin",
+                            ImmutableMap.of("app", "keywhiz"));
 
     assertThat(asJson(group)).isEqualTo(jsonFixture("fixtures/group.json"));
   }

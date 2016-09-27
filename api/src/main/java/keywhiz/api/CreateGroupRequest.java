@@ -18,6 +18,7 @@ package keywhiz.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
 import javax.annotation.Nullable;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -30,14 +31,20 @@ public class CreateGroupRequest {
   @JsonProperty
   public final String description;
 
+  @Nullable
+  @JsonProperty
+  public final ImmutableMap<String, String> metadata;
+
   public CreateGroupRequest(@JsonProperty("name") String name,
-      @Nullable @JsonProperty("description") String description) {
+      @Nullable @JsonProperty("description") String description,
+      @Nullable @JsonProperty("metadata") ImmutableMap<String, String> metadata) {
     this.name = name;
     this.description = description;
+    this.metadata = metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata);
   }
 
   @Override public int hashCode() {
-    return Objects.hashCode(name, description);
+    return Objects.hashCode(name, description, metadata);
   }
 
   @Override public boolean equals(Object o) {
@@ -45,7 +52,8 @@ public class CreateGroupRequest {
     if (o instanceof CreateGroupRequest) {
       CreateGroupRequest that = (CreateGroupRequest) o;
       if (Objects.equal(this.name, that.name) &&
-          Objects.equal(this.description, that.description)) {
+          Objects.equal(this.description, that.description) &&
+          Objects.equal(this.metadata, that.metadata)) {
         return true;
       }
     }

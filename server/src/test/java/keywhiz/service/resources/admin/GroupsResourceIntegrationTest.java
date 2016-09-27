@@ -16,6 +16,7 @@
 package keywhiz.service.resources.admin;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.List;
@@ -70,12 +71,14 @@ public class GroupsResourceIntegrationTest {
   @Test(expected = KeywhizClient.MalformedRequestException.class)
   public void createFailsWhenGroupExists() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-    keywhizClient.createGroup("Blackops", "should already exist");
+    keywhizClient.createGroup("Blackops", "should already exist",
+        ImmutableMap.of("app", "Blackopps-app"));
   }
 
   @Test public void createsGroup() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-    GroupDetailResponse groupDetails = keywhizClient.createGroup("NewGroup", "");
+    GroupDetailResponse groupDetails =
+        keywhizClient.createGroup("NewGroup", "", ImmutableMap.of("app", "NewApp"));
     assertThat(groupDetails.getName()).isEqualTo("NewGroup");
 
     List<Group> groups = keywhizClient.allGroups();

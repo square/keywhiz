@@ -17,6 +17,7 @@
 package keywhiz.service.resources.automation;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.dropwizard.jersey.params.LongParam;
 import java.util.Optional;
@@ -56,7 +57,8 @@ public class AutomationGroupResourceTest {
   }
 
   @Test public void findGroupById() {
-    Group group = new Group(50, "testGroup", "testing group", now, "automation client", now, "automation client");
+    Group group = new Group(50, "testGroup", "testing group", now, "automation client", now,
+        "automation client", ImmutableMap.of("app", "keywhiz"));
     when(groupDAO.getGroupById(50)).thenReturn(Optional.of(group));
     when(aclDAO.getClientsFor(group)).thenReturn(ImmutableSet.of());
     when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of());
@@ -68,7 +70,8 @@ public class AutomationGroupResourceTest {
   }
 
   @Test public void findGroupByName() {
-    Group group = new Group(50, "testGroup", "testing group", now, "automation client", now, "automation client");
+    Group group = new Group(50, "testGroup", "testing group", now, "automation client", now,
+        "automation client", ImmutableMap.of("app", "keywhiz"));
     when(groupDAO.getGroup("testGroup")).thenReturn(Optional.of(group));
     when(aclDAO.getClientsFor(group)).thenReturn(ImmutableSet.of());
     when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of());
@@ -80,7 +83,8 @@ public class AutomationGroupResourceTest {
   }
 
   @Test public void groupIncludesClientsAndSecrets() {
-    Group group = new Group(50, "testGroup", "testing group", now, "automation client", now, "automation client");
+    Group group = new Group(50, "testGroup", "testing group", now, "automation client", now,
+        "automation client", ImmutableMap.of("app", "keywhiz"));
     Client groupClient =
         new Client(1, "firstClient", "Group client", now, "test", now, "test", true, true);
     SanitizedSecret firstGroupSecret =
@@ -100,12 +104,13 @@ public class AutomationGroupResourceTest {
   }
 
   @Test public void createNewGroup() {
-    Group group = new Group(50, "testGroup", "testing group", now, "automation client", now, "automation client");
+    Group group = new Group(50, "testGroup", "testing group", now, "automation client", now,
+        "automation client", ImmutableMap.of("app", "keywhiz"));
 
-    CreateGroupRequest request = new CreateGroupRequest("testGroup", null);
+    CreateGroupRequest request = new CreateGroupRequest("testGroup", null, null);
 
     when(groupDAO.getGroup("testGroup")).thenReturn(Optional.empty());
-    when(groupDAO.createGroup(group.getName(), automation.getName(), "")).thenReturn(500L);
+    when(groupDAO.createGroup(group.getName(), automation.getName(), "", ImmutableMap.of())).thenReturn(500L);
     when(groupDAO.getGroupById(500L)).thenReturn(Optional.of(group));
     Group responseGroup = resource.createGroup(automation, request);
 

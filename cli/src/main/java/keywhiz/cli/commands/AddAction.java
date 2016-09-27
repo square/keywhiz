@@ -77,7 +77,7 @@ public class AddAction implements Runnable {
           throw Throwables.propagate(e);
         }
         try {
-          keywhizClient.createGroup(name, null);
+          keywhizClient.createGroup(name, null, null);
           logger.info("Creating group '{}'.", name);
         } catch (IOException e) {
           throw Throwables.propagate(e);

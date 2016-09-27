@@ -16,6 +16,7 @@
 package keywhiz.service.resources.automation;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Optional;
 import javax.ws.rs.NotFoundException;
@@ -55,8 +56,10 @@ public class AutomationClientResourceTest {
 
   @Test public void findClientByName() {
     Client client = new Client(2, "client", "2nd client", now, "test", now, "test", true, false);
-    Group firstGroup = new Group(1, "first Group", "testing group", now, "client", now, "client");
-    Group secondGroup = new Group(2, "second Group", "testing group", now, "client", now, "client");
+    Group firstGroup = new Group(1, "first Group", "testing group", now, "client", now, "client",
+        ImmutableMap.of("app", "keywhiz"));
+    Group secondGroup = new Group(2, "second Group", "testing group", now, "client", now, "client",
+            ImmutableMap.of("app", "keywhiz"));
     ClientDetailResponse expectedClient = ClientDetailResponse.fromClient(client,
         ImmutableList.of(firstGroup, secondGroup), ImmutableList.of());
 

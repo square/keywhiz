@@ -17,6 +17,7 @@
 package keywhiz.api;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
@@ -33,6 +34,7 @@ public class GroupDetailResponseTest {
         ApiDate.parse("2012-09-10T03:15:30.000Z"),
         "creator-user",
         "updater-user",
+        ImmutableMap.of("app", "keywhiz"),
         ImmutableList.of(),
         ImmutableList.of());
 

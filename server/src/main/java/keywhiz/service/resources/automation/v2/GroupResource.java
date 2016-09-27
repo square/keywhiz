@@ -73,7 +73,7 @@ public class GroupResource {
       throw new ConflictException(format("Group %s already exists", group));
     });
 
-    groupDAO.createGroup(group, creator, request.description());
+    groupDAO.createGroup(group, creator, request.description(), request.metadata());
     URI uri = UriBuilder.fromResource(GroupResource.class).path(group).build();
     return Response.created(uri).build();
   }

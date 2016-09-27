@@ -18,6 +18,7 @@ package keywhiz.api.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
 import javax.annotation.Nullable;
 import keywhiz.api.ApiDate;
 
@@ -50,13 +51,18 @@ public class Group {
   @JsonProperty
   private final String updatedBy;
 
+  /** Key-value metadata of the group. */
+  @JsonProperty
+  private final ImmutableMap<String, String> metadata;
+
   public Group(@JsonProperty("id") long id,
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("createdAt") ApiDate createdAt,
       @JsonProperty("createdBy") @Nullable String createdBy,
       @JsonProperty("updatedAt") ApiDate updatedAt,
-      @JsonProperty("updatedBy") @Nullable String updatedBy) {
+      @JsonProperty("updatedBy") @Nullable String updatedBy,
+      @JsonProperty("metadata") @Nullable ImmutableMap<String, String> metadata) {
     this.id = id;
     this.name = checkNotNull(name);
     this.description = nullToEmpty(description);
@@ -64,6 +70,7 @@ public class Group {
     this.createdBy = nullToEmpty(createdBy);
     this.updatedAt = updatedAt;
     this.updatedBy = nullToEmpty(updatedBy);
+    this.metadata = ImmutableMap.copyOf(metadata == null ? ImmutableMap.of() : metadata);
   }
 
   public long getId() {
@@ -92,6 +99,8 @@ public class Group {
     return updatedBy;
   }
 
+  public ImmutableMap<String, String> getMetadata() {return metadata; }
+
   @Override
   public boolean equals(Object o) {
     if (o instanceof Group) {
@@ -102,7 +111,8 @@ public class Group {
           Objects.equal(this.createdAt, that.createdAt) &&
           Objects.equal(this.createdBy, that.createdBy) &&
           Objects.equal(this.updatedAt, that.updatedAt) &&
-          Objects.equal(this.updatedBy, that.updatedBy)) {
+          Objects.equal(this.updatedBy, that.updatedBy) &&
+          Objects.equal(this.metadata, that.metadata)) {
         return true;
       }
     }
@@ -110,7 +120,7 @@ public class Group {
   }
 
   @Override public int hashCode() {
-    return Objects.hashCode(id, name, description, createdAt, createdBy, updatedAt, updatedBy);
+    return Objects.hashCode(id, name, description, createdAt, createdBy, updatedAt, updatedBy, metadata);
   }
 
   @Override
@@ -123,6 +133,7 @@ public class Group {
         .add("createdBy", createdBy)
         .add("updatedAt", updatedAt)
         .add("updatedBy", updatedBy)
+        .add("metadata", metadata)
         .toString();
   }
 }

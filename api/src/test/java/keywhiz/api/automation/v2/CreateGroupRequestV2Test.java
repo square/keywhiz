@@ -16,6 +16,7 @@
 
 package keywhiz.api.automation.v2;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.fromJson;
@@ -27,6 +28,7 @@ public class CreateGroupRequestV2Test {
     CreateGroupRequestV2 createGroupRequest = CreateGroupRequestV2.builder()
         .name("group-name")
         .description("group-description")
+        .metadata(ImmutableMap.of("app", "group-app"))
         .build();
 
     assertThat(fromJson(
