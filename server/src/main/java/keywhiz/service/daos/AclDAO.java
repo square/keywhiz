@@ -198,16 +198,12 @@ public class AclDAO {
   }
 
   public Set<Group> getGroupsFor(Secret secret) {
-    return getGroupsFor(secret.getName());
-  }
-
-  public Set<Group> getGroupsFor(String secretName) {
     List<Group> r = dslContext
         .select(GROUPS.fields())
         .from(GROUPS)
         .join(ACCESSGRANTS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
         .join(SECRETS).on(ACCESSGRANTS.SECRETID.eq(SECRETS.ID))
-        .where(SECRETS.NAME.eq(secretName))
+        .where(SECRETS.NAME.eq(secret.getName()))
         .fetchInto(GROUPS)
         .map(groupMapper);
     return new HashSet<>(r);
@@ -273,7 +269,11 @@ public class AclDAO {
               row.getValue(SECRETS_CONTENT.EXPIRY),
               Collections.emptyList()
           );
-          Set<Group> groups = getGroupsFor(secret.name());
+          LazyString lazyString = () -> "";
+          Set<Group> groups = getGroupsFor(
+              new Secret(secret.id(), secret.name(), secret.description(), lazyString, secret.createdAt(),
+                  secret.createdBy(), secret.updatedAt(), secret.updatedBy(), secret.metadata(), secret.type().orElse(null), secret.generationOptions(),
+                  secret.expiry()));
           List<String> groupNames = groups.stream().map(Group::getName).collect(
               Collectors.toList());
           return SanitizedSecret.fromSecretWithGroups(secret, groupNames);
@@ -333,7 +333,11 @@ public class AclDAO {
               series.generationOptions(),
               row.getValue(SECRETS_CONTENT.EXPIRY),
               Collections.emptyList());
-          Set<Group> groups = getGroupsFor(secret.name());
+          LazyString lazyString = () -> "";
+          Set<Group> groups = getGroupsFor(
+              new Secret(secret.id(), secret.name(), secret.description(), lazyString, secret.createdAt(),
+                  secret.createdBy(), secret.updatedAt(), secret.updatedBy(), secret.metadata(), secret.type().orElse(null), secret.generationOptions(),
+                  secret.expiry()));
           List<String> groupNames = groups.stream().map(Group::getName).collect(
               Collectors.toList());
           return SanitizedSecret.fromSecretWithGroups(secret, groupNames);
