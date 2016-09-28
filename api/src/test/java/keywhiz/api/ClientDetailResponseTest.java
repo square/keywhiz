@@ -33,10 +33,28 @@ public class ClientDetailResponseTest {
         ApiDate.parse("2012-09-10T03:15:30.001Z"),
         "creator-user",
         "updater-user",
+        ApiDate.parse("2012-09-10T03:15:30.001Z"),
         ImmutableList.of(),
         ImmutableList.of());
 
     assertThat(asJson(clientDetailResponse))
         .isEqualTo(jsonFixture("fixtures/clientDetailResponse.json"));
+  }
+
+  @Test public void serializesNullLastSeenCorrectly() throws Exception {
+    ClientDetailResponse clientDetailResponse = new ClientDetailResponse(
+        9875,
+        "Client Name",
+        "Client Description",
+        ApiDate.parse("2012-08-01T13:15:30.001Z"),
+        ApiDate.parse("2012-09-10T03:15:30.001Z"),
+        "creator-user",
+        "updater-user",
+        null,
+        ImmutableList.of(),
+        ImmutableList.of());
+
+    assertThat(asJson(clientDetailResponse))
+        .isEqualTo(jsonFixture("fixtures/clientDetailResponse_NullLastSeen.json"));
   }
 }

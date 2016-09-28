@@ -52,6 +52,12 @@ public class Printing {
       throw Throwables.propagate(e);
     }
 
+    if (clientDetails.lastSeen == null) {
+      System.out.println("\tLast Seen: never");
+    } else {
+      System.out.printf("\tLast Seen: %s", clientDetails.lastSeen.toString());
+    }
+
     System.out.println("\tGroups:");
     clientDetails.groups.stream()
         .sorted(Comparator.comparing(Group::getName))

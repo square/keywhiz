@@ -55,23 +55,11 @@ public class AutomationClientResourceTest {
   }
 
   @Test public void findClientByName() {
-<<<<<<< HEAD
-    Client client = new Client(2, "client", "2nd client", now, "test", now, "test", true, false);
-    Group firstGroup = new Group(1, "first Group", "testing group", now, "client", now, "client",
-        ImmutableMap.of("app", "keywhiz"));
-    Group secondGroup = new Group(2, "second Group", "testing group", now, "client", now, "client",
-            ImmutableMap.of("app", "keywhiz"));
-||||||| parent of e9dd3c7... Adds a lastSeen field to clients, and updates it when client is seen in ClientAuthFactory
-    Client client = new Client(2, "client", "2nd client", now, "test", now, "test", true, false);
-    Group firstGroup = new Group(1, "first Group", "testing group", now, "client", now, "client");
-    Group secondGroup = new Group(2, "second Group", "testing group", now, "client", now, "client");
-=======
     Client client = new Client(2, "client", "2nd client", now, "test", now, "test", null, true, false);
     Group firstGroup = new Group(1, "first Group", "testing group", now, "client", now, "client",
         ImmutableMap.of("app", "keywhiz"));
     Group secondGroup = new Group(2, "second Group", "testing group", now, "client", now, "client",
         ImmutableMap.of("app", "keywhiz"));
->>>>>>> e9dd3c7... Adds a lastSeen field to clients, and updates it when client is seen in ClientAuthFactory
     ClientDetailResponse expectedClient = ClientDetailResponse.fromClient(client,
         ImmutableList.of(firstGroup, secondGroup), ImmutableList.of());
 
