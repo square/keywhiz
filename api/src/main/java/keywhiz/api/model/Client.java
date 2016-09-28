@@ -76,7 +76,11 @@ public class Client {
     this.createdBy = nullToEmpty(createdBy);
     this.updatedAt = updatedAt;
     this.updatedBy = nullToEmpty(updatedBy);
+    if (lastSeen != null && lastSeen.toEpochSecond() == 0L) {
+      lastSeen = null;
+    }
     this.lastSeen = lastSeen;
+
     this.enabled = enabled;
     this.automationAllowed = automationAllowed;
   }

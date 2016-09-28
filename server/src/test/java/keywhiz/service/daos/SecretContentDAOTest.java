@@ -98,7 +98,7 @@ public class SecretContentDAOTest {
 
     // Update created_at to make all secrets older than cutoff
     jooqContext.update(SECRETS_CONTENT)
-        .set(SECRETS_CONTENT.CREATEDAT, 0L)
+        .set(SECRETS_CONTENT.CREATEDAT, 1L)
         .execute();
 
     // Make most recent id be the current version for the secret series and prune
