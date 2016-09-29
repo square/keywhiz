@@ -47,7 +47,7 @@ class SecretContentDAO {
   @VisibleForTesting static final int PRUNE_CUTOFF_ITEMS = 10;
 
   // Cut-off time after which we prune old, unreferenced contents
-  @VisibleForTesting static final int PRUNE_CUTOFF_DAYS = 45;
+  @VisibleForTesting static final int PRUNE_CUTOFF_DAYS = 15;
 
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
