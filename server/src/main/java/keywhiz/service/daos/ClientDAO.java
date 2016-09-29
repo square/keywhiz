@@ -21,6 +21,8 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import keywhiz.service.config.Readonly;
@@ -33,6 +35,8 @@ import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 
 public class ClientDAO {
+  private final static long lastSeenThreshold = (24 * 60 * 60);
+
   private final DSLContext dslContext;
   private final ClientMapper clientMapper;
 
@@ -76,14 +80,19 @@ public class ClientDAO {
 
   public void sawClient(Client client) {
     long now = OffsetDateTime.now().toEpochSecond();
+    ApiDate lastSeen = client.getLastSeen();
 
-    dslContext.transaction(configuration -> {
-      DSL.using(configuration)
-          .update(CLIENTS)
-          .set(CLIENTS.LASTSEEN, now)
-          .where(CLIENTS.ID.eq(client.getId()))
-          .execute();
-    });
+    // only update last seen if it's been more than `lastSeenThreshold` seconds
+    // this way we can have less granularity on lastSeen and save db writes
+    if (lastSeen == null || now > lastSeen.toEpochSecond() + lastSeenThreshold) {
+      dslContext.transaction(configuration -> {
+        DSL.using(configuration)
+            .update(CLIENTS)
+            .set(CLIENTS.LASTSEEN, DSL.when(CLIENTS.LASTSEEN.isNull(), now).otherwise(DSL.greatest(CLIENTS.LASTSEEN, DSL.val(now, CLIENTS.LASTSEEN))))
+            .where(CLIENTS.ID.eq(client.getId()))
+            .execute();
+      });
+    }
   }
 
   public Optional<Client> getClient(String name) {
