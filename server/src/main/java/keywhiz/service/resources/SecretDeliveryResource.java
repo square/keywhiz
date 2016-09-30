@@ -65,7 +65,7 @@ public class SecretDeliveryResource {
       AclDAOFactory aclDAOFactory, ClientDAOFactory clientDAOFactory) {
     this.secretController = secretController;
     this.aclDAO = aclDAOFactory.readonly();
-    this.clientDAO = clientDAOFactory.readonly();
+    this.clientDAO = clientDAOFactory.readwrite();
   }
 
   @VisibleForTesting SecretDeliveryResource(SecretController secretController, AclDAO aclDAO,

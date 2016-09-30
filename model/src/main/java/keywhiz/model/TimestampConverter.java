@@ -25,10 +25,16 @@ import org.jooq.Converter;
  */
 public class TimestampConverter implements Converter<Timestamp, Long> {
   @Override public Long from(Timestamp timestamp) {
+    if (timestamp == null) {
+      return 0L;
+    }
     return timestamp.toInstant().getEpochSecond();
   }
 
   @Override public Timestamp to(Long value) {
+    if (value == 0) {
+      return null;
+    }
     return Timestamp.from(Instant.ofEpochSecond(value));
   }
 

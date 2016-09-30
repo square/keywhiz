@@ -41,7 +41,7 @@ public class AutomationClientAuthFactoryTest {
 
   private static final Principal principal = SimplePrincipal.of("CN=principal,OU=blah");
   private static final Client client =
-      new Client(0, "principal", null, null, null, null, null, false, true);
+      new Client(0, "principal", null, null, null, null, null, null, true, true);
   private static final AutomationClient automationClient = AutomationClient.of(client);
 
   @Mock ContainerRequest request;
@@ -66,7 +66,7 @@ public class AutomationClientAuthFactoryTest {
   @Test(expected = ForbiddenException.class)
   public void automationClientRejectsClientsWithoutAutomation() {
     Client clientWithoutAutomation =
-        new Client(3423, "clientWithoutAutomation", null, null, null, null, null, false, false);
+        new Client(3423, "clientWithoutAutomation", null, null, null, null, null, null, true, false);
 
     when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=clientWithoutAutomation"));
     when(clientDAO.getClient("clientWithoutAutomation"))

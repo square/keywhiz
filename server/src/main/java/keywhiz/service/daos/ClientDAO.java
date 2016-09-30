@@ -17,22 +17,31 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
+
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
+
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.Param;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 
 public class ClientDAO {
+  private final static long lastSeenThreshold = (24 * 60 * 60);
+
   private final DSLContext dslContext;
   private final ClientMapper clientMapper;
 
@@ -51,6 +60,7 @@ public class ClientDAO {
     r.setCreatedat(now);
     r.setUpdatedby(user);
     r.setUpdatedat(now);
+    r.setLastseen(null);
     r.setDescription(description);
     r.setEnabled(true);
     r.setAutomationallowed(false);
@@ -71,6 +81,24 @@ public class ClientDAO {
           .where(MEMBERSHIPS.CLIENTID.eq(client.getId()))
           .execute();
     });
+  }
+
+  public void sawClient(Client client) {
+    Instant now = Instant.now();
+    Instant lastSeen = Optional.ofNullable(client.getLastSeen()).map(ls -> Instant.ofEpochSecond(ls.toEpochSecond())).orElse(null);
+
+    // only update last seen if it's been more than `lastSeenThreshold` seconds
+    // this way we can have less granularity on lastSeen and save db writes
+    if (lastSeen == null || now.isAfter(lastSeen.plus(lastSeenThreshold, SECONDS))) {
+      dslContext.transaction(configuration -> {
+        Param<Long> val = DSL.val(now.getEpochSecond(), CLIENTS.LASTSEEN);
+        DSL.using(configuration)
+            .update(CLIENTS)
+            .set(CLIENTS.LASTSEEN, DSL.when(CLIENTS.LASTSEEN.isNull(), val).otherwise(DSL.greatest(CLIENTS.LASTSEEN, val)))
+            .where(CLIENTS.ID.eq(client.getId()))
+            .execute();
+      });
+    }
   }
 
   public Optional<Client> getClient(String name) {

@@ -32,8 +32,10 @@ public class ClientTest {
                                "keywhizAdmin",
                                ApiDate.parse("2013-03-28T21:29:27.465Z"),
                                "keywhizAdmin",
-                               true,
-                               false);
+                                null,
+                                true,
+                                false
+    );
 
     assertThat(asJson(client)).isEqualTo(jsonFixture("fixtures/client.json"));
   }

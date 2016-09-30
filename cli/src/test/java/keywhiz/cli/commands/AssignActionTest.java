@@ -68,7 +68,7 @@ public class AssignActionTest {
     assignActionConfig.assignType = Arrays.asList("client");
     assignActionConfig.name = "non-existent-client-name";
     assignActionConfig.group = group.getName();
-    Client client = new Client(543, assignActionConfig.name, null, null, null, null, null, false, false);
+    Client client = new Client(543, assignActionConfig.name, null, null, null, null, null, null, false, false);
 
     // Group exists
     when(keywhizClient.getGroupByName(group.getName())).thenReturn(group);
@@ -89,7 +89,7 @@ public class AssignActionTest {
     assignActionConfig.assignType = Arrays.asList("client");
     assignActionConfig.name = "existing-client-name";
     assignActionConfig.group = group.getName();
-    Client client = new Client(5673, assignActionConfig.name, null, null, null, null, null, false, true);
+    Client client = new Client(5673, assignActionConfig.name, null, null, null, null, null, null, false, true);
 
     // Group exists
     when(keywhizClient.getGroupByName(group.getName())).thenReturn(group);

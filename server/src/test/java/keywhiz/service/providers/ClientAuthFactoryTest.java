@@ -35,6 +35,8 @@ import org.mockito.junit.MockitoRule;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ClientAuthFactoryTest {
@@ -42,7 +44,7 @@ public class ClientAuthFactoryTest {
 
   private static final Principal principal = SimplePrincipal.of("CN=principal,OU=organizational-unit");
   private static final Client client =
-      new Client(0, "principal", null, null, null, null, null, true, false);
+      new Client(0, "principal", null, null, null, null, null, null, true, false);
 
   @Mock ContainerRequest request;
   @Mock SecurityContext securityContext;
@@ -72,7 +74,7 @@ public class ClientAuthFactoryTest {
 
   @Test(expected = NotAuthorizedException.class)
   public void rejectsDisabledClients() {
-    Client disabledClient =new Client(1, "disabled", null, null, null, null, null,
+    Client disabledClient =new Client(1, "disabled", null, null, null, null, null, null,
         false /* disabled */, false);
 
     when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=disabled"));
@@ -83,7 +85,7 @@ public class ClientAuthFactoryTest {
 
   @Test public void createsDbRecordForNewClient() throws Exception {
     ApiDate now = ApiDate.now();
-    Client newClient = new Client(2345L, "new-client", "desc", now, "automatic", now, "automatic",
+    Client newClient = new Client(2345L, "new-client", "desc", now, "automatic", now, "automatic", null,
         true, false);
 
     // lookup doesn't find client
@@ -96,4 +98,11 @@ public class ClientAuthFactoryTest {
 
     assertThat(factory.provide(request)).isEqualTo(newClient);
   }
+
+  @Test public void updatesClientLastSeen() {
+    when(securityContext.getUserPrincipal()).thenReturn(principal);
+    factory.provide(request);
+    verify(clientDAO, times(1)).sawClient(any());
+  }
+
 }

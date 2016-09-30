@@ -20,6 +20,7 @@ import java.time.OffsetDateTime;
 import java.util.Set;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import org.jooq.DSLContext;
@@ -29,6 +30,7 @@ import org.junit.runner.RunWith;
 
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(KeywhizTestRunner.class)
 public class ClientDAOTest {
@@ -97,6 +99,24 @@ public class ClientDAOTest {
     Set<Client> clients = clientDAO.getClients();
     assertThat(clients).containsOnly(client1, client2);
   }
+
+  @Test public void sawClientTest() {
+    assertThat(client1.getLastSeen()).isNull();
+    assertThat(client2.getLastSeen()).isNull();
+
+    ApiDate now = ApiDate.now();
+    clientDAO.sawClient(client1);
+
+    // reload clients from db, as sawClient doesn't update in-memory object
+    Client client1v2 = clientDAO.getClient(client1.getName()).get();
+    Client client2v2 = clientDAO.getClient(client2.getName()).get();
+
+    // verify client1 from db has updated lastSeen, and client2 hasn't changed
+    assertThat(client1v2.getLastSeen()).isNotNull();
+    assertTrue(client1v2.getLastSeen().toEpochSecond() >= now.toEpochSecond());
+    assertThat(client2v2.getLastSeen()).isNull();
+  }
+
 
   private int tableSize() {
     return jooqContext.fetchCount(CLIENTS);

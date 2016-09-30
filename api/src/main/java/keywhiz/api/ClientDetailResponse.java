@@ -22,6 +22,8 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 
+import javax.annotation.Nullable;
+
 public class ClientDetailResponse {
   @JsonProperty
   public final long id;
@@ -44,6 +46,9 @@ public class ClientDetailResponse {
   @JsonProperty
   public final String updatedBy;
 
+  @JsonProperty
+  public final ApiDate lastSeen;
+
   /** List of secrets the group has access to. The secrets do not contain content. */
   @JsonProperty
   public final ImmutableList<SanitizedSecret> secrets;
@@ -58,6 +63,7 @@ public class ClientDetailResponse {
       @JsonProperty("updateDate") ApiDate updateDate,
       @JsonProperty("createdBy") String createdBy,
       @JsonProperty("updatedBy") String updatedBy,
+      @JsonProperty("lastSeen") @Nullable ApiDate lastSeen,
       @JsonProperty("groups") ImmutableList<Group> groups,
       @JsonProperty("secrets") ImmutableList<SanitizedSecret> secrets) {
     this.id = id;
@@ -67,6 +73,7 @@ public class ClientDetailResponse {
     this.updateDate = updateDate;
     this.createdBy = createdBy;
     this.updatedBy = updatedBy;
+    this.lastSeen = lastSeen;
     this.groups = groups;
     this.secrets = secrets;
   }
@@ -80,6 +87,7 @@ public class ClientDetailResponse {
         client.getUpdatedAt(),
         client.getCreatedBy(),
         client.getUpdatedBy(),
+        client.getLastSeen(),
         groups,
         secrets);
   }

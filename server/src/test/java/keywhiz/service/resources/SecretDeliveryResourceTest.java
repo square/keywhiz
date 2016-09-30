@@ -46,7 +46,7 @@ public class SecretDeliveryResourceTest {
   @Mock ClientDAO clientDAO;
   SecretDeliveryResource secretDeliveryResource;
 
-  final Client client = new Client(0, "principal", null, null, null, null, null, false, false);
+  final Client client = new Client(0, "principal", null, null, null, null, null, null, false, false);
   final Secret secret = new Secret(0, "secret_name", null, () -> "secret_value", NOW, null, NOW, null,
       null, null, null, 0);
   final Secret secretBase64 = new Secret(1, "Base64With=", null, () -> "SGVsbG8=", NOW, null, NOW,
