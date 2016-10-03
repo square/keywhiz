@@ -75,13 +75,13 @@ public class XsrfServletFilter implements Filter {
     }
 
     if (isNullOrEmpty(xsrfHeader)) {
-      logger.warn("Request missing {} header", xsrfHeaderName);
+      logger.info("Request missing {} header", xsrfHeaderName);
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
       return;
     }
 
     if (isNullOrEmpty(sessionCookie)) {
-      logger.warn("Request missing {} cookie", sessionCookieName);
+      logger.info("Request missing {} cookie", sessionCookieName);
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
       return;
     }
