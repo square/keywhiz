@@ -81,7 +81,7 @@ public class UserAuthFactory {
     public Optional<User> authenticate(Cookie sessionCookie) throws AuthenticationException {
       Optional<User> user = cookieAuthenticator.authenticate(sessionCookie);
       if (!user.isPresent()) {
-        logger.warn("Invalid session cookie");
+        logger.info("Invalid session cookie");
       }
       return user;
     }

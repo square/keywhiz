@@ -92,7 +92,7 @@ public class SessionLoginResource {
     }
 
     if (!optionalUser.isPresent()) {
-      logger.warn("User authentication failed at login for {}", username);
+      logger.info("User authentication failed at login for {}", username);
       throw new NotAuthorizedException("");
     }
 
