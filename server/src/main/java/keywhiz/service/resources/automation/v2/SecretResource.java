@@ -7,7 +7,9 @@ import com.google.common.collect.Sets;
 import io.dropwizard.auth.Auth;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -35,6 +37,9 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.api.model.SecretVersion;
+import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
+import keywhiz.log.EventTag;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.GroupDAO;
@@ -65,13 +70,15 @@ public class SecretResource {
   private final AclDAO aclDAO;
   private final GroupDAO groupDAO;
   private final SecretDAO secretDAO;
+  private final AuditLog auditLog;
 
   @Inject public SecretResource(SecretController secretController, AclDAOFactory aclDAOFactory,
-      GroupDAOFactory groupDAOFactory, SecretDAOFactory secretDAOFactory) {
+      GroupDAOFactory groupDAOFactory, SecretDAOFactory secretDAOFactory, AuditLog auditLog) {
     this.secretController = secretController;
     this.aclDAO = aclDAOFactory.readwrite();
     this.groupDAO = groupDAOFactory.readwrite();
     this.secretDAO = secretDAOFactory.readwrite();
+    this.auditLog = auditLog;
   }
 
   /**
@@ -90,6 +97,7 @@ public class SecretResource {
       @Valid CreateSecretRequestV2 request) {
     // allows new version, return version in resulting path
     String name = request.name();
+    String user = automationClient.getName();
 
     SecretBuilder builder = secretController
         .builder(name, request.content(), automationClient.getName(), request.expiry())
@@ -105,10 +113,20 @@ public class SecretResource {
       throw new ConflictException(format("Cannot create secret %s.", name));
     }
 
+    Map<String, String> extraInfo = new HashMap<>();
+    if (request.description() != null) {
+      extraInfo.put("description", request.description());
+    }
+    if (request.metadata() != null) {
+      extraInfo.put("metadata", request.metadata().toString());
+    }
+    extraInfo.put("expiry", Long.toString(request.expiry()));
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_CREATE, user, name, extraInfo));
+
     long secretId = secret.getId();
     groupsToGroupIds(request.groups())
         .forEach((maybeGroupId) -> maybeGroupId.ifPresent(
-            (groupId) -> aclDAO.findAndAllowAccess(secretId, groupId)));
+            (groupId) -> aclDAO.findAndAllowAccess(secretId, groupId, auditLog, user, new HashMap<>())));
 
     UriBuilder uriBuilder = UriBuilder.fromResource(SecretResource.class).path(name);
 
@@ -137,6 +155,16 @@ public class SecretResource {
         .withType(request.type());
 
     builder.createOrUpdate();
+
+    Map<String, String> extraInfo = new HashMap<>();
+    if (request.description() != null) {
+      extraInfo.put("description", request.description());
+    }
+    if (request.metadata() != null) {
+      extraInfo.put("metadata", request.metadata().toString());
+    }
+    extraInfo.put("expiry", Long.toString(request.expiry()));
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_CREATEORUPDATE, automationClient.getName(), name, extraInfo));
 
     UriBuilder uriBuilder = UriBuilder.fromResource(SecretResource.class).path(name);
 
@@ -240,7 +268,13 @@ public class SecretResource {
 
     if (expiry != null) {
       logger.info("Found expiry for secret {}: {}", secretName, expiry.getEpochSecond());
-      return secretDAO.setExpiration(name, expiry);
+      boolean success = secretDAO.setExpiration(name, expiry);
+      if (success) {
+        Map<String, String> extraInfo = new HashMap<>();
+        extraInfo.put("backfilled expiry", Long.toString(expiry.getEpochSecond()));
+        auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_BACKFILLEXPIRY, automationClient.getName(), name, extraInfo));
+      }
+      return success;
     }
 
     logger.info("Unable to determine expiry for secret {}", secretName);
@@ -345,6 +379,10 @@ public class SecretResource {
 
     // If the secret wasn't found or the request was misformed, setCurrentSecretVersionByName
     // already threw an exception
+    Map<String, String> extraInfo = new HashMap<>();
+    extraInfo.put("new version", Long.toString(request.version()));
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_CHANGEVERSION, automationClient.getName(), request.name(), extraInfo));
+
     return Response.status(Response.Status.CREATED).build();
   }
 
@@ -391,6 +429,7 @@ public class SecretResource {
     // TODO: Use latest version instead of non-versioned
     Secret secret = secretController.getSecretByName(name)
         .orElseThrow(NotFoundException::new);
+    String user = automationClient.getName();
 
     long secretId = secret.getId();
     Set<String> oldGroups = aclDAO.getGroupsFor(secret).stream()
@@ -404,11 +443,11 @@ public class SecretResource {
 
     groupsToGroupIds(groupsToAdd)
         .forEach((maybeGroupId) -> maybeGroupId.ifPresent(
-            (groupId) -> aclDAO.findAndAllowAccess(secretId, groupId)));
+            (groupId) -> aclDAO.findAndAllowAccess(secretId, groupId, auditLog, user, new HashMap<>())));
 
     groupsToGroupIds(groupsToRemove)
         .forEach((maybeGroupId) -> maybeGroupId.ifPresent(
-            (groupId) -> aclDAO.findAndRevokeAccess(secretId, groupId)));
+            (groupId) -> aclDAO.findAndRevokeAccess(secretId, groupId, auditLog, user, new HashMap<>())));
 
     return aclDAO.getGroupsFor(secret).stream()
         .map(Group::getName)
@@ -432,6 +471,7 @@ public class SecretResource {
     secretDAO.getSecretByName(name)
         .orElseThrow(NotFoundException::new);
     secretDAO.deleteSecretsByName(name);
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_DELETE, automationClient.getName(), name));
     return Response.noContent().build();
   }
 

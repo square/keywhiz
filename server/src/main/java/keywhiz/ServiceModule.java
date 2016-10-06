@@ -33,6 +33,8 @@ import keywhiz.auth.cookie.CookieConfig;
 import keywhiz.auth.cookie.CookieModule;
 import keywhiz.auth.cookie.SessionCookie;
 import keywhiz.auth.xsrf.Xsrf;
+import keywhiz.log.AuditLog;
+import keywhiz.log.SimpleLogger;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoModule;
@@ -73,6 +75,12 @@ public class ServiceModule extends AbstractModule {
     bind(Environment.class).toInstance(environment);
     bind(Configuration.class).toInstance(config);
     bind(KeywhizConfig.class).toInstance(config);
+  }
+
+  // AuditLog
+
+  @Provides @Singleton AuditLog simpleLogger() {
+    return new SimpleLogger();
   }
 
   // ManagedDataSource

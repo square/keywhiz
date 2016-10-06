@@ -22,6 +22,8 @@ import keywhiz.api.ApiDate;
 import keywhiz.api.AutomationSecretResponse;
 import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.model.*;
+import keywhiz.log.AuditLog;
+import keywhiz.log.SimpleLogger;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
@@ -57,10 +59,11 @@ public class AutomationSecretResourceTest {
 
   AutomationClient automation = AutomationClient.of(
       new Client(1, "automation", "Automation client", NOW, "test", NOW, "test", null, true, true));
+  AuditLog auditLog = new SimpleLogger();
 
   @Before
   public void setUp() {
-    resource = new AutomationSecretResource(secretController, secretDAO, aclDAO);
+    resource = new AutomationSecretResource(secretController, secretDAO, aclDAO, auditLog);
 
     when(secretController.builder(anyString(), anyString(), anyString(), anyLong())).thenReturn(secretBuilder);
     when(secretBuilder.withDescription(anyString())).thenReturn(secretBuilder);

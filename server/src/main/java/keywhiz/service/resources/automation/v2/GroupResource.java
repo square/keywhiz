@@ -4,6 +4,9 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -23,6 +26,9 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
+import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
+import keywhiz.log.EventTag;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.GroupDAO;
@@ -45,10 +51,12 @@ public class GroupResource {
 
   private final AclDAO aclDAO;
   private final GroupDAO groupDAO;
+  private final AuditLog auditLog;
 
-  @Inject public GroupResource(AclDAOFactory aclDAOFactory, GroupDAOFactory groupDAOFactory) {
+  @Inject public GroupResource(AclDAOFactory aclDAOFactory, GroupDAOFactory groupDAOFactory, AuditLog auditLog) {
     this.aclDAO = aclDAOFactory.readwrite();
     this.groupDAO = groupDAOFactory.readwrite();
+    this.auditLog = auditLog;
   }
 
   /**
@@ -74,6 +82,14 @@ public class GroupResource {
     });
 
     groupDAO.createGroup(group, creator, request.description(), request.metadata());
+    Map<String, String> extraInfo = new HashMap<>();
+    if (request.description() != null) {
+      extraInfo.put("description", request.description());
+    }
+    if (request.metadata() != null) {
+      extraInfo.put("metadata", request.metadata().toString());
+    }
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.GROUP_CREATE, creator, group, extraInfo));
     URI uri = UriBuilder.fromResource(GroupResource.class).path(group).build();
     return Response.created(uri).build();
   }
@@ -187,6 +203,7 @@ public class GroupResource {
 
     // Group memberships are deleted automatically by DB cascading.
     groupDAO.deleteGroup(group);
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.GROUP_DELETE, automationClient.getName(), group.getName()));
     return Response.noContent().build();
   }
 }

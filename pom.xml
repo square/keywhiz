@@ -28,6 +28,7 @@
     <module>model</module>
     <module>server</module>
     <module>testing</module>
+    <module>log</module>
   </modules>
 
   <properties>

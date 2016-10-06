@@ -16,13 +16,16 @@
 
 package keywhiz.service.resources.automation;
 
-import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -42,6 +45,9 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
+import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
+import keywhiz.log.EventTag;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.GroupDAO;
@@ -68,23 +74,27 @@ public class AutomationGroupResource {
 
   private final GroupDAO groupDAO;
   private final AclDAO aclDAO;
+  private final AuditLog auditLog;
 
-  @Inject public AutomationGroupResource(GroupDAOFactory groupDAOFactory, AclDAOFactory aclDAOFactory) {
+  @Inject
+  public AutomationGroupResource(GroupDAOFactory groupDAOFactory, AclDAOFactory aclDAOFactory,
+      AuditLog auditLog) {
     this.groupDAO = groupDAOFactory.readwrite();
     this.aclDAO = aclDAOFactory.readwrite();
+    this.auditLog = auditLog;
   }
 
-  @VisibleForTesting AutomationGroupResource(GroupDAO groupDAO, AclDAO aclDAO) {
+  @VisibleForTesting AutomationGroupResource(GroupDAO groupDAO, AclDAO aclDAO, AuditLog auditLog) {
     this.groupDAO = groupDAO;
     this.aclDAO = aclDAO;
+    this.auditLog = auditLog;
   }
 
   /**
    * Retrieve Group by ID
    *
-   * @excludeParams automationClient
    * @param groupId the ID of the group to retrieve
-   *
+   * @excludeParams automationClient
    * @description Returns a single Group if found
    * @responseMessage 200 Found and retrieved Group with given ID
    * @responseMessage 404 Group with given ID not Found
@@ -106,10 +116,9 @@ public class AutomationGroupResource {
   /**
    * Retrieve Group by a specified name, or all Groups if no name given
    *
+   * @param name the name of the Group to retrieve, if provided
    * @excludeParams automationClient
    * @optionalParams name
-   * @param name the name of the Group to retrieve, if provided
-   *
    * @description Returns a single Group or a set of all Groups
    * @responseMessage 200 Found and retrieved Group(s)
    * @responseMessage 404 Group with given name not found (if name provided)
@@ -123,7 +132,8 @@ public class AutomationGroupResource {
       Group group = groupDAO.getGroup(name.get()).orElseThrow(NotFoundException::new);
 
       ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(group));
-      ImmutableList<SanitizedSecret> sanitizedSecrets = ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(group));
+      ImmutableList<SanitizedSecret> sanitizedSecrets =
+          ImmutableList.copyOf(aclDAO.getSanitizedSecretsFor(group));
       return Response.ok()
           .entity(GroupDetailResponse.fromGroup(group, sanitizedSecrets, clients))
           .build();
@@ -142,9 +152,8 @@ public class AutomationGroupResource {
   /**
    * Create Group
    *
-   * @excludeParams automationClient
    * @param groupRequest the JSON group request used to formulate the Group
-   *
+   * @excludeParams automationClient
    * @description Creates a Group with the name from a valid group request
    * @responseMessage 200 Successfully created Group
    * @responseMessage 409 Group with given name already exists
@@ -158,21 +167,31 @@ public class AutomationGroupResource {
 
     Optional<Group> group = groupDAO.getGroup(groupRequest.name);
     if (group.isPresent()) {
-      logger.info("Automation ({}) - Group {} already exists", automationClient.getName(), groupRequest.name);
+      logger.info("Automation ({}) - Group {} already exists", automationClient.getName(),
+          groupRequest.name);
       throw new ConflictException("Group name already exists.");
     }
 
     long id = groupDAO.createGroup(groupRequest.name, automationClient.getName(),
         nullToEmpty(groupRequest.description), groupRequest.metadata);
+    Map<String, String> extraInfo = new HashMap<>();
+    extraInfo.put("deprecated", "true");
+    if (groupRequest.description != null) {
+      extraInfo.put("description", groupRequest.description);
+    }
+    if (groupRequest.metadata != null) {
+      extraInfo.put("metadata", groupRequest.metadata.toString());
+    }
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.GROUP_CREATE, automationClient.getName(),
+        groupRequest.name, extraInfo));
     return groupDAO.getGroupById(id).get();
   }
 
   /**
    * Deletes a group
    *
-   * @excludeParams automationClient
    * @param groupId the ID of the group to delete
-   *
+   * @excludeParams automationClient
    * @description Deletes a single group by id
    * @responseMessage 200 Deleted group
    * @responseMessage 404 Group not found by id
@@ -185,6 +204,11 @@ public class AutomationGroupResource {
       @PathParam("groupId") LongParam groupId) {
     Group group = groupDAO.getGroupById(groupId.get()).orElseThrow(NotFoundException::new);
     groupDAO.deleteGroup(group);
+    Map<String, String> extraInfo = new HashMap<>();
+    extraInfo.put("deprecated", "true");
+    auditLog.recordEvent(
+        new Event(Instant.now(), EventTag.GROUP_CREATE, automationClient.getName(), group.getName(),
+            extraInfo));
     return Response.ok().build();
   }
 }

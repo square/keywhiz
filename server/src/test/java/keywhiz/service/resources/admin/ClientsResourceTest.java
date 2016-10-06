@@ -32,6 +32,8 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.auth.User;
+import keywhiz.log.AuditLog;
+import keywhiz.log.SimpleLogger;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import org.junit.Before;
@@ -54,11 +56,12 @@ public class ClientsResourceTest {
   User user = User.named("user");
   ApiDate now = ApiDate.now();
   Client client = new Client(1, "client", "1st client", now, "test", now, "test", null, true, false);
+  AuditLog auditLog = new SimpleLogger();
 
   ClientsResource resource;
 
   @Before public void setUp() {
-    resource = new ClientsResource(aclDAO, clientDAO);
+    resource = new ClientsResource(aclDAO, clientDAO, auditLog);
   }
 
   @Test public void listClients() {

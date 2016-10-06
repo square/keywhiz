@@ -16,13 +16,14 @@
 
 package keywhiz.service.resources.admin;
 
-import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -46,11 +47,15 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.auth.User;
+import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
+import keywhiz.log.EventTag;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
+import org.apache.http.HttpStatus;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,15 +73,18 @@ public class ClientsResource {
 
   private final AclDAO aclDAO;
   private final ClientDAO clientDAO;
+  private final AuditLog auditLog;
 
-  @Inject public ClientsResource(AclDAOFactory aclDAOFactory, ClientDAOFactory clientDAOFactory) {
+  @Inject public ClientsResource(AclDAOFactory aclDAOFactory, ClientDAOFactory clientDAOFactory, AuditLog auditLog) {
     this.aclDAO = aclDAOFactory.readwrite();
     this.clientDAO = clientDAOFactory.readwrite();
+    this.auditLog = auditLog;
   }
 
-  @VisibleForTesting ClientsResource(AclDAO aclDAO, ClientDAO clientDAO) {
+  @VisibleForTesting ClientsResource(AclDAO aclDAO, ClientDAO clientDAO, AuditLog auditLog) {
     this.aclDAO = aclDAO;
     this.clientDAO = clientDAO;
+    this.auditLog = auditLog;
   }
 
   /**
@@ -139,10 +147,14 @@ public class ClientsResource {
     }
 
     URI uri = UriBuilder.fromResource(ClientsResource.class).path("{clientId}").build(clientId);
-    return Response
+    Response response = Response
         .created(uri)
         .entity(clientDetailResponseFromId(clientId))
         .build();
+    if (response.getStatus() == HttpStatus.SC_CREATED) {
+      auditLog.recordEvent(new Event(Instant.now(), EventTag.CLIENT_CREATE, user.getName(), createClientRequest.name));
+    }
+    return response;
   }
 
   /**
@@ -188,6 +200,8 @@ public class ClientsResource {
     }
 
     clientDAO.deleteClient(client.get());
+
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.CLIENT_DELETE, user.getName(), client.get().getName()));
 
     return Response.noContent().build();
   }

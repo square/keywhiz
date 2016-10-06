@@ -21,7 +21,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -41,6 +44,9 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
+import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
+import keywhiz.log.EventTag;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.SecretController;
@@ -69,19 +75,22 @@ public class AutomationSecretResource {
   private final SecretController secretController;
   private final SecretDAO secretDAO;
   private final AclDAO aclDAO;
+  private final AuditLog auditLog;
 
   @Inject public AutomationSecretResource(SecretController secretController,
-                                          SecretDAOFactory secretDAOFactory, AclDAOFactory aclDAOFactory) {
+                                          SecretDAOFactory secretDAOFactory, AclDAOFactory aclDAOFactory, AuditLog auditLog) {
     this.secretController = secretController;
     this.secretDAO = secretDAOFactory.readwrite();
     this.aclDAO = aclDAOFactory.readwrite();
+    this.auditLog = auditLog;
   }
 
   @VisibleForTesting AutomationSecretResource(SecretController secretController,
-                                              SecretDAO secretDAO, AclDAO aclDAO) {
+                                              SecretDAO secretDAO, AclDAO aclDAO, AuditLog auditLog) {
     this.secretController = secretController;
     this.secretDAO = secretDAO;
     this.aclDAO = aclDAO;
+    this.auditLog = auditLog;
   }
 
   /**
@@ -118,6 +127,17 @@ public class AutomationSecretResource {
     }
     ImmutableList<Group> groups =
         ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
+
+    Map<String, String> extraInfo = new HashMap<>();
+    extraInfo.put("deprecated", "true");
+    if (request.description != null) {
+      extraInfo.put("description", request.description);
+    }
+    if (request.metadata != null) {
+      extraInfo.put("metadata", request.metadata.toString());
+    }
+    extraInfo.put("expiry", Long.toString(request.expiry));
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_CREATE, automationClient.getName(), request.name, extraInfo));
 
     return AutomationSecretResponse.fromSecret(secret, groups);
   }
@@ -214,6 +234,10 @@ public class AutomationSecretResource {
     secretDAO.getSecretByName(secretName)
         .orElseThrow(() -> new NotFoundException("Secret series not found."));
     secretDAO.deleteSecretsByName(secretName);
+
+    Map<String, String> extraInfo = new HashMap<>();
+    extraInfo.put("deprecated", "true");
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_DELETE, automationClient.getName(), secretName, extraInfo));
 
     return Response.ok().build();
   }

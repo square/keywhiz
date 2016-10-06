@@ -70,6 +70,11 @@
       <artifactId>keywhiz-model</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.squareup.keywhiz</groupId>
+      <artifactId>keywhiz-log</artifactId>
+      <version>0.7.11-SNAPSHOT</version>
+    </dependency>
 
     <!-- Logging -->
     <dependency>
@@ -236,6 +241,11 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-testing</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
+      <version>4.4.1</version>
     </dependency>
   </dependencies>
 
