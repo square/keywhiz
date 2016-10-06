@@ -29,6 +29,8 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
+import keywhiz.log.AuditLog;
+import keywhiz.log.SimpleLogger;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.GroupDAO;
 import org.junit.Before;
@@ -49,11 +51,12 @@ public class AutomationGroupResourceTest {
   ApiDate now = ApiDate.now();
   AutomationClient automation = AutomationClient.of(
       new Client(1, "automation", "Automation client", now, "test", now, "test", null, true, true));
+  AuditLog auditLog = new SimpleLogger();
 
   AutomationGroupResource resource;
 
   @Before public void setUp() {
-    resource = new AutomationGroupResource(groupDAO, aclDAO);
+    resource = new AutomationGroupResource(groupDAO, aclDAO, auditLog);
   }
 
   @Test public void findGroupById() {

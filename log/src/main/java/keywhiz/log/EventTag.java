@@ -1,0 +1,22 @@
+package keywhiz.log;
+
+/**
+ * The definitions of possible events in Keywhiz
+ */
+public enum EventTag {
+  SECRET_CREATE,
+  SECRET_CREATEORUPDATE,
+  SECRET_UPDATE,
+  SECRET_CHANGEVERSION,
+  SECRET_DELETE,
+  SECRET_BACKFILLEXPIRY,
+
+  GROUP_CREATE,
+  GROUP_DELETE,
+
+  CLIENT_CREATE,
+  CLIENT_DELETE,
+
+  CHANGEACL_GROUP_SECRET,
+  CHANGEACL_GROUP_CLIENT,
+}

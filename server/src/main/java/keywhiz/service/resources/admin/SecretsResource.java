@@ -16,14 +16,17 @@
 
 package keywhiz.service.resources.admin;
 
-import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
 import java.net.URI;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -47,12 +50,16 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.auth.User;
+import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
+import keywhiz.log.EventTag;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
+import org.apache.http.HttpStatus;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,17 +81,20 @@ public class SecretsResource {
   private final SecretController secretController;
   private final AclDAO aclDAO;
   private final SecretDAO secretDAO;
+  private final AuditLog auditLog;
 
-  @Inject public SecretsResource(SecretController secretController, AclDAOFactory aclDAOFactory, SecretDAOFactory secretDAOFactory) {
+  @Inject public SecretsResource(SecretController secretController, AclDAOFactory aclDAOFactory, SecretDAOFactory secretDAOFactory, AuditLog auditLog) {
     this.secretController = secretController;
     this.aclDAO = aclDAOFactory.readwrite();
     this.secretDAO = secretDAOFactory.readwrite();
+    this.auditLog = auditLog;
   }
 
-  @VisibleForTesting SecretsResource(SecretController secretController, AclDAO aclDAO, SecretDAO secretDAO) {
+  @VisibleForTesting SecretsResource(SecretController secretController, AclDAO aclDAO, SecretDAO secretDAO, AuditLog auditLog) {
     this.secretController = secretController;
     this.aclDAO = aclDAO;
     this.secretDAO = secretDAO;
+    this.auditLog = auditLog;
   }
 
   /**
@@ -168,10 +178,25 @@ public class SecretsResource {
     }
 
     URI uri = UriBuilder.fromResource(SecretsResource.class).path("{secretId}").build(secret.getId());
-    return Response
+    Response response = Response
         .created(uri)
         .entity(secretDetailResponseFromId(secret.getId()))
         .build();
+
+    if (response.getStatus() == HttpStatus.SC_CREATED) {
+      Map<String, String> extraInfo = new HashMap<>();
+      if (request.description != null) {
+        extraInfo.put("description", request.description);
+      }
+      if (request.metadata != null) {
+        extraInfo.put("metadata", request.metadata.toString());
+      }
+      extraInfo.put("expiry", Long.toString(request.expiry));
+      auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_CREATE, user.getName(), request.name, extraInfo));
+    }
+    // TODO (jessep): Should we also log failures?
+
+    return response;
   }
 
   /**
@@ -199,7 +224,20 @@ public class SecretsResource {
 
     URI uri = UriBuilder.fromResource(SecretsResource.class).path(secretName).build();
 
-    return Response.created(uri).entity(secretDetailResponseFromId(secret.getId())).build();
+    Response response = Response.created(uri).entity(secretDetailResponseFromId(secret.getId())).build();
+
+    if (response.getStatus() == HttpStatus.SC_CREATED) {
+      Map<String, String> extraInfo = new HashMap<>();
+      if (request.description() != null) {
+        extraInfo.put("description", request.description());
+      }
+      if (request.metadata() != null) {
+        extraInfo.put("metadata", request.metadata().toString());
+      }
+      extraInfo.put("expiry", Long.toString(request.expiry()));
+      auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_CREATEORUPDATE, user.getName(), secretName, extraInfo));
+    }
+    return response;
   }
 
 
@@ -248,6 +286,7 @@ public class SecretsResource {
     logger.info("User '{}' deleting secret id={}, name='{}'", user, secretId, secret.get().getName());
 
     secretDAO.deleteSecretsByName(secret.get().getName());
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_DELETE, user.getName(), secret.get().getName()));
     return Response.noContent().build();
   }
 

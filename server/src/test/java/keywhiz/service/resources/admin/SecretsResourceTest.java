@@ -36,6 +36,8 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.auth.User;
+import keywhiz.log.AuditLog;
+import keywhiz.log.SimpleLogger;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
@@ -70,11 +72,13 @@ public class SecretsResourceTest {
   Secret secret = new Secret(22, "name", "desc", () -> "secret", NOW, "creator", NOW,
       "updater", emptyMap, null, null, 1136214245);
 
+  AuditLog auditLog = new SimpleLogger();
+
   SecretsResource resource;
 
   @Before
   public void setUp() {
-    resource = new SecretsResource(secretController, aclDAO, secretDAO);
+    resource = new SecretsResource(secretController, aclDAO, secretDAO, auditLog);
   }
 
   @Test

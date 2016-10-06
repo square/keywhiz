@@ -16,14 +16,17 @@
 
 package keywhiz.service.resources.admin;
 
-import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
 import java.net.URI;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
@@ -47,10 +50,14 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.auth.User;
+import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
+import keywhiz.log.EventTag;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,15 +76,18 @@ public class GroupsResource {
   private static final Logger logger = LoggerFactory.getLogger(GroupsResource.class);
   private final AclDAO aclDAO;
   private final GroupDAO groupDAO;
+  private final AuditLog auditLog;
 
-  @Inject public GroupsResource(AclDAOFactory aclDAOFactory, GroupDAOFactory groupDAOFactory) {
+  @Inject public GroupsResource(AclDAOFactory aclDAOFactory, GroupDAOFactory groupDAOFactory, AuditLog auditLog) {
     this.aclDAO = aclDAOFactory.readwrite();
     this.groupDAO = groupDAOFactory.readwrite();
+    this.auditLog = auditLog;
   }
 
-  @VisibleForTesting GroupsResource(AclDAO aclDAO, GroupDAO groupDAO) {
+  @VisibleForTesting GroupsResource(AclDAO aclDAO, GroupDAO groupDAO, AuditLog auditLog) {
     this.aclDAO = aclDAO;
     this.groupDAO = groupDAO;
+    this.auditLog = auditLog;
   }
 
   /**
@@ -136,10 +146,22 @@ public class GroupsResource {
     long groupId = groupDAO.createGroup(request.name, user.getName(),
         nullToEmpty(request.description), request.metadata);
     URI uri = UriBuilder.fromResource(GroupsResource.class).build(groupId);
-    return Response
+    Response response = Response
         .created(uri)
         .entity(groupDetailResponseFromId(groupId))
         .build();
+
+    if (response.getStatus() == HttpStatus.SC_CREATED) {
+      Map<String, String> extraInfo = new HashMap<>();
+      if (request.description != null) {
+        extraInfo.put("description", request.description);
+      }
+      if (request.metadata != null) {
+        extraInfo.put("metadata", request.metadata.toString());
+      }
+      auditLog.recordEvent(new Event(Instant.now(), EventTag.GROUP_CREATE, user.getName(), request.name, extraInfo));
+    }
+    return response;
   }
 
   /**
@@ -184,6 +206,7 @@ public class GroupsResource {
     }
 
     groupDAO.deleteGroup(group.get());
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.GROUP_DELETE, user.getName(), group.get().getName()));
     return Response.noContent().build();
   }
 

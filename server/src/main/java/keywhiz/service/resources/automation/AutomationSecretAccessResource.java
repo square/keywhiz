@@ -20,6 +20,8 @@ import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
+import java.util.HashMap;
+import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.NotFoundException;
@@ -29,6 +31,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import keywhiz.api.model.AutomationClient;
+import keywhiz.log.AuditLog;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.resources.automation.v2.SecretResource;
@@ -49,9 +52,11 @@ public class AutomationSecretAccessResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationSecretAccessResource.class);
 
   private final AclDAO aclDAO;
+  private final AuditLog auditLog;
 
-  @Inject public AutomationSecretAccessResource(AclDAOFactory aclDAOFactory) {
+  @Inject public AutomationSecretAccessResource(AclDAOFactory aclDAOFactory, AuditLog auditLog) {
     this.aclDAO = aclDAOFactory.readwrite();
+    this.auditLog = auditLog;
   }
 
   /**
@@ -75,7 +80,9 @@ public class AutomationSecretAccessResource {
         automationClient, secretId, groupId);
 
     try {
-      aclDAO.findAndAllowAccess(secretId.get(), groupId.get());
+      Map<String, String> extraInfo = new HashMap<>();
+      extraInfo.put("deprecated", "true");
+      aclDAO.findAndAllowAccess(secretId.get(), groupId.get(), auditLog, automationClient.getName(), extraInfo);
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }
@@ -104,7 +111,9 @@ public class AutomationSecretAccessResource {
         automationClient, secretId, groupId);
 
     try {
-      aclDAO.findAndRevokeAccess(secretId.get(), groupId.get());
+      Map<String, String> extraInfo = new HashMap<>();
+      extraInfo.put("deprecated", "true");
+      aclDAO.findAndRevokeAccess(secretId.get(), groupId.get(), auditLog, automationClient.getName(), extraInfo);
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }

@@ -27,6 +27,9 @@ import keywhiz.api.CreateClientRequest;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
+import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
+import keywhiz.log.SimpleLogger;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.ClientDAO;
 import org.junit.Before;
@@ -47,11 +50,12 @@ public class AutomationClientResourceTest {
   ApiDate now = ApiDate.now();
   AutomationClient automation = AutomationClient.of(
       new Client(1, "automation", "Automation client", now, "test", now, "test", null, true, true));
+  AuditLog auditLog = new SimpleLogger();
 
   AutomationClientResource resource;
 
   @Before public void setUp() {
-    resource = new AutomationClientResource(clientDAO, aclDAO);
+    resource = new AutomationClientResource(clientDAO, aclDAO, auditLog);
   }
 
   @Test public void findClientByName() {

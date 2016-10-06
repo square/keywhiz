@@ -1,10 +1,12 @@
 package keywhiz.service.resources.automation.v2;
 
-import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.Sets;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -29,6 +31,9 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
+import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
+import keywhiz.log.EventTag;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.ClientDAO;
@@ -55,12 +60,14 @@ public class ClientResource {
   private final AclDAO aclDAO;
   private final ClientDAO clientDAO;
   private final GroupDAO groupDAO;
+  private final AuditLog auditLog;
 
   @Inject public ClientResource(AclDAOFactory aclDAOFactory, ClientDAOFactory clientDAOFactory,
-      GroupDAOFactory groupDAOFactory) {
+      GroupDAOFactory groupDAOFactory, AuditLog auditLog) {
     this.aclDAO = aclDAOFactory.readwrite();
     this.clientDAO = clientDAOFactory.readwrite();
     this.groupDAO = groupDAOFactory.readwrite();
+    this.auditLog = auditLog;
   }
 
   /**
@@ -87,11 +94,12 @@ public class ClientResource {
 
     // Creates new client record
     long clientId = clientDAO.createClient(client, creator, request.description());
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.CLIENT_CREATE, creator, client));
 
     // Enrolls client in any requested groups
     groupsToGroupIds(request.groups())
         .forEach((maybeGroupId) -> maybeGroupId.ifPresent(
-            (groupId) -> aclDAO.findAndEnrollClient(clientId, groupId)));
+            (groupId) -> aclDAO.findAndEnrollClient(clientId, groupId, auditLog, creator, new HashMap<>())));
 
     URI uri = UriBuilder.fromResource(ClientResource.class).path(client).build();
     return Response.created(uri).build();
@@ -175,6 +183,7 @@ public class ClientResource {
       @PathParam("name") String name, @Valid ModifyGroupsRequestV2 request) {
     Client client = clientDAO.getClient(name)
         .orElseThrow(NotFoundException::new);
+    String user = automationClient.getName();
 
     long clientId = client.getId();
     Set<String> oldGroups = aclDAO.getGroupsFor(client).stream()
@@ -188,11 +197,11 @@ public class ClientResource {
 
     groupsToGroupIds(groupsToAdd)
         .forEach((maybeGroupId) -> maybeGroupId.ifPresent(
-            (groupId) -> aclDAO.findAndEnrollClient(clientId, groupId)));
+            (groupId) -> aclDAO.findAndEnrollClient(clientId, groupId, auditLog, user, new HashMap<>())));
 
     groupsToGroupIds(groupsToRemove)
         .forEach((maybeGroupId) -> maybeGroupId.ifPresent(
-            (groupId) -> aclDAO.findAndEvictClient(clientId, groupId)));
+            (groupId) -> aclDAO.findAndEvictClient(clientId, groupId, auditLog, user, new HashMap<>())));
 
     return aclDAO.getGroupsFor(client).stream()
         .map(Group::getName)
@@ -241,6 +250,7 @@ public class ClientResource {
 
     // Group memberships are deleted automatically by DB cascading.
     clientDAO.deleteClient(client);
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.CLIENT_DELETE, automationClient.getName(), client.getName()));
     return Response.noContent().build();
   }
 

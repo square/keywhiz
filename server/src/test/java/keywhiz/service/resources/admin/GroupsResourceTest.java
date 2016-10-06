@@ -30,6 +30,8 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.auth.User;
+import keywhiz.log.AuditLog;
+import keywhiz.log.SimpleLogger;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.GroupDAO;
 import org.junit.Before;
@@ -53,11 +55,12 @@ public class GroupsResourceTest {
   ApiDate now = ApiDate.now();
   Group group =
       new Group(1, "group", "desc", now, "creator", now, "creator", ImmutableMap.of("app", "app"));
+  AuditLog auditLog = new SimpleLogger();
 
   GroupsResource resource;
 
   @Before public void setUp() {
-    resource = new GroupsResource(aclDAO, groupDAO);
+    resource = new GroupsResource(aclDAO, groupDAO, auditLog);
   }
 
   @Test public void listingOfGroups() {

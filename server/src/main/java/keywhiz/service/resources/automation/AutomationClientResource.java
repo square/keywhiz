@@ -22,7 +22,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -41,6 +44,9 @@ import keywhiz.api.CreateClientRequest;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
+import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
+import keywhiz.log.EventTag;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.ClientDAO;
@@ -67,24 +73,28 @@ public class AutomationClientResource {
 
   private final ClientDAO clientDAO;
   private final AclDAO aclDAO;
+  private final AuditLog auditLog;
 
-
-  @Inject public AutomationClientResource(ClientDAOFactory clientDAOFactory, AclDAOFactory aclDAOFactory) {
+  @Inject
+  public AutomationClientResource(ClientDAOFactory clientDAOFactory, AclDAOFactory aclDAOFactory,
+      AuditLog auditLog) {
     this.clientDAO = clientDAOFactory.readwrite();
     this.aclDAO = aclDAOFactory.readwrite();
+    this.auditLog = auditLog;
   }
 
-  @VisibleForTesting AutomationClientResource(ClientDAO clientDAO, AclDAO aclDAO) {
+  @VisibleForTesting AutomationClientResource(ClientDAO clientDAO, AclDAO aclDAO,
+      AuditLog auditLog) {
     this.clientDAO = clientDAO;
     this.aclDAO = aclDAO;
+    this.auditLog = auditLog;
   }
 
   /**
    * Retrieve Client by ID
    *
-   * @excludeParams automationClient
    * @param clientId the ID of the Client to retrieve
-   *
+   * @excludeParams automationClient
    * @description Returns a single Client if found
    * @responseMessage 200 Found and retrieved Client with given ID
    * @responseMessage 404 Client with given ID not Found
@@ -109,10 +119,9 @@ public class AutomationClientResource {
   /**
    * Retrieve Client by a specified name, or all Clients if no name given
    *
+   * @param name the name of the Client to retrieve, if provided
    * @excludeParams automationClient
    * @optionalParams name
-   * @param name the name of the Client to retrieve, if provided
-   *
    * @description Returns a single Client or a set of all Clients
    * @responseMessage 200 Found and retrieved Client(s)
    * @responseMessage 404 Client with given name not found (if name provided)
@@ -142,9 +151,8 @@ public class AutomationClientResource {
   /**
    * Create Client
    *
-   * @excludeParams automationClient
    * @param clientRequest the JSON client request used to formulate the Client
-   *
+   * @excludeParams automationClient
    * @description Creates a Client with the name from a valid client request
    * @responseMessage 200 Successfully created Client
    * @responseMessage 409 Client with given name already exists
@@ -158,12 +166,21 @@ public class AutomationClientResource {
 
     Optional<Client> client = clientDAO.getClient(clientRequest.name);
     if (client.isPresent()) {
-      logger.info("Automation ({}) - Client {} already exists", automationClient.getName(), clientRequest.name);
+      logger.info("Automation ({}) - Client {} already exists", automationClient.getName(),
+          clientRequest.name);
       throw new ConflictException("Client name already exists.");
     }
 
     long id = clientDAO.createClient(clientRequest.name, automationClient.getName(), "");
     client = clientDAO.getClientById(id);
+
+    if (client.isPresent()) {
+      Map<String, String> extraInfo = new HashMap<>();
+      extraInfo.put("deprecated", "true");
+      auditLog.recordEvent(
+          new Event(Instant.now(), EventTag.CLIENT_CREATE, automationClient.getName(),
+              client.get().getName(), extraInfo));
+    }
 
     return ClientDetailResponse.fromClient(client.get(), ImmutableList.of(), ImmutableList.of());
   }
@@ -171,9 +188,8 @@ public class AutomationClientResource {
   /**
    * Deletes a client
    *
-   * @excludeParams automationClient
    * @param clientId the ID of the client to delete
-   *
+   * @excludeParams automationClient
    * @description Deletes a single client by id
    * @responseMessage 200 Deleted client
    * @responseMessage 404 Client not found by id
@@ -185,6 +201,11 @@ public class AutomationClientResource {
       @PathParam("clientId") LongParam clientId) {
     Client client = clientDAO.getClientById(clientId.get()).orElseThrow(NotFoundException::new);
     clientDAO.deleteClient(client);
+    Map<String, String> extraInfo = new HashMap<>();
+    extraInfo.put("deprecated", "true");
+    auditLog.recordEvent(
+        new Event(Instant.now(), EventTag.CLIENT_CREATE, automationClient.getName(),
+            client.getName(), extraInfo));
     return Response.ok().build();
   }
 }

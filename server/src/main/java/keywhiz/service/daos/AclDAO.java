@@ -17,14 +17,19 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 
 import keywhiz.api.ApiDate;
+import keywhiz.api.GroupDetailResponse;
+import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -33,6 +38,9 @@ import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.jooq.tables.records.SecretsRecord;
+import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
+import keywhiz.log.EventTag;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
@@ -84,7 +92,7 @@ public class AclDAO {
     this.secretContentMapper = secretContentMapper;
   }
 
-  public void findAndAllowAccess(long secretId, long groupId) {
+  public void findAndAllowAccess(long secretId, long groupId, AuditLog auditLog, String user, Map<String, String> extraInfo) {
     dslContext.transaction(configuration -> {
       GroupDAO groupDAO = groupDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
@@ -104,10 +112,14 @@ public class AclDAO {
       }
 
       allowAccess(configuration, secretId, groupId);
+
+      extraInfo.put("group", group.get().getName());
+      extraInfo.put("secret added", secret.get().name());
+      auditLog.recordEvent(new Event(Instant.now(), EventTag.CHANGEACL_GROUP_SECRET, group.get().getName(), user, extraInfo));
     });
   }
 
-  public void findAndRevokeAccess(long secretId, long groupId) {
+  public void findAndRevokeAccess(long secretId, long groupId, AuditLog auditLog, String user, Map<String, String> extraInfo) {
     dslContext.transaction(configuration -> {
       GroupDAO groupDAO = groupDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
@@ -127,10 +139,14 @@ public class AclDAO {
       }
 
       revokeAccess(configuration, secretId, groupId);
+
+      extraInfo.put("group", group.get().getName());
+      extraInfo.put("secret removed", secret.get().name());
+      auditLog.recordEvent(new Event(Instant.now(), EventTag.CHANGEACL_GROUP_SECRET, group.get().getName(), user, extraInfo));
     });
   }
 
-  public void findAndEnrollClient(long clientId, long groupId) {
+  public void findAndEnrollClient(long clientId, long groupId, AuditLog auditLog, String user, Map<String, String> extraInfo) {
     dslContext.transaction(configuration -> {
       ClientDAO clientDAO = clientDAOFactory.using(configuration);
       GroupDAO groupDAO = groupDAOFactory.using(configuration);
@@ -150,10 +166,14 @@ public class AclDAO {
       }
 
       enrollClient(configuration, clientId, groupId);
+
+      extraInfo.put("group", group.get().getName());
+      extraInfo.put("client added", client.get().getName());
+      auditLog.recordEvent(new Event(Instant.now(), EventTag.CHANGEACL_GROUP_CLIENT, group.get().getName(), user, extraInfo));
     });
   }
 
-  public void findAndEvictClient(long clientId, long groupId) {
+  public void findAndEvictClient(long clientId, long groupId, AuditLog auditLog, String user, Map<String, String> extraInfo) {
     dslContext.transaction(configuration -> {
       ClientDAO clientDAO = clientDAOFactory.using(configuration);
       GroupDAO groupDAO = groupDAOFactory.using(configuration);
@@ -173,6 +193,10 @@ public class AclDAO {
       }
 
       evictClient(configuration, clientId, groupId);
+
+      extraInfo.put("group", group.get().getName());
+      extraInfo.put("client removed", client.get().getName());
+      auditLog.recordEvent(new Event(Instant.now(), EventTag.CHANGEACL_GROUP_CLIENT, group.get().getName(), user, extraInfo));
     });
   }
 

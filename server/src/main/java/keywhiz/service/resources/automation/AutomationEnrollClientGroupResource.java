@@ -19,6 +19,8 @@ import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
+import java.util.HashMap;
+import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.NotFoundException;
@@ -28,6 +30,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import keywhiz.api.model.AutomationClient;
+import keywhiz.log.AuditLog;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.resources.automation.v2.ClientResource;
@@ -44,19 +47,22 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @Produces(APPLICATION_JSON)
 public class AutomationEnrollClientGroupResource {
   private final AclDAO aclDAO;
+  private final AuditLog auditLog;
 
-  @Inject public AutomationEnrollClientGroupResource(AclDAOFactory aclDAOFactory) {
+  @Inject
+  public AutomationEnrollClientGroupResource(AclDAOFactory aclDAOFactory, AuditLog auditLog) {
     this.aclDAO = aclDAOFactory.readwrite();
+    this.auditLog = auditLog;
   }
 
   /**
    * Enroll Client in Group
    *
-   * @excludeParams automationClient
    * @param clientId the ID of the Client to assign
    * @param groupId the ID of the Group to be assigned to
-   *
-   * @description Assigns the Client specified by the clientID to the Group specified by the groupID
+   * @excludeParams automationClient
+   * @description Assigns the Client specified by the clientID to the Group specified by the
+   * groupID
    * @responseMessage 200 Successfully enrolled Client in Group
    * @responseMessage 404 Could not find Client or Group
    */
@@ -68,7 +74,10 @@ public class AutomationEnrollClientGroupResource {
       @PathParam("groupId") LongParam groupId) {
 
     try {
-      aclDAO.findAndEnrollClient(clientId.get(), groupId.get());
+      Map<String, String> extraInfo = new HashMap<>();
+      extraInfo.put("deprecated", "true");
+      aclDAO.findAndEnrollClient(clientId.get(), groupId.get(), auditLog,
+          automationClient.getName(), extraInfo);
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }
@@ -79,11 +88,11 @@ public class AutomationEnrollClientGroupResource {
   /**
    * Remove Client from Group
    *
-   * @excludeParams automationClient
    * @param clientId the ID of the Client to unassign
    * @param groupId the ID of the Group to be removed from
-   *
-   * @description Unassigns the Client specified by the clientID from the Group specified by the groupID
+   * @excludeParams automationClient
+   * @description Unassigns the Client specified by the clientID from the Group specified by the
+   * groupID
    * @responseMessage 200 Successfully removed Client from Group
    * @responseMessage 404 Could not find Client or Group
    */
@@ -95,7 +104,9 @@ public class AutomationEnrollClientGroupResource {
       @PathParam("groupId") long groupId) {
 
     try {
-      aclDAO.findAndEvictClient(clientId, groupId);
+      Map<String, String> extraInfo = new HashMap<>();
+      extraInfo.put("deprecated", "true");
+      aclDAO.findAndEvictClient(clientId, groupId, auditLog, automationClient.getName(), extraInfo);
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }

@@ -15,11 +15,12 @@
  */
 package keywhiz.service.resources.admin;
 
-import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
+import java.util.HashMap;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.NotFoundException;
@@ -29,6 +30,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import keywhiz.auth.User;
+import keywhiz.log.AuditLog;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import org.slf4j.Logger;
@@ -48,13 +50,16 @@ public class MembershipResource {
   private static final Logger logger = LoggerFactory.getLogger(MembershipResource.class);
 
   private final AclDAO aclDAO;
+  private final AuditLog auditLog;
 
-  @Inject public MembershipResource(AclDAOFactory aclDAOFactory) {
+  @Inject public MembershipResource(AclDAOFactory aclDAOFactory, AuditLog auditLog) {
     this.aclDAO = aclDAOFactory.readwrite();
+    this.auditLog = auditLog;
   }
 
-  @VisibleForTesting MembershipResource(AclDAO aclDAO) {
+  @VisibleForTesting MembershipResource(AclDAO aclDAO, AuditLog auditLog) {
     this.aclDAO = aclDAO;
+    this.auditLog = auditLog;
   }
 
   /**
@@ -80,7 +85,7 @@ public class MembershipResource {
     logger.info("User '{}' allowing groupId {} access to secretId {}", user, groupId, secretId);
 
     try {
-      aclDAO.findAndAllowAccess(secretId.get(), groupId.get());
+      aclDAO.findAndAllowAccess(secretId.get(), groupId.get(), auditLog, user.getName(), new HashMap<>());
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }
@@ -111,7 +116,7 @@ public class MembershipResource {
     logger.info("User '{}' disallowing groupId {} access to secretId {}", user, groupId, secretId);
 
     try {
-      aclDAO.findAndRevokeAccess(secretId.get(), groupId.get());
+      aclDAO.findAndRevokeAccess(secretId.get(), groupId.get(), auditLog, user.getName(), new HashMap<>());
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }
@@ -141,7 +146,7 @@ public class MembershipResource {
     logger.info("User {} enrolling clientId {} in groupId {}.", user.getName(), clientId, groupId);
 
     try {
-      aclDAO.findAndEnrollClient(clientId.get(), groupId.get());
+      aclDAO.findAndEnrollClient(clientId.get(), groupId.get(), auditLog, user.getName(), new HashMap<>());
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }
@@ -170,7 +175,7 @@ public class MembershipResource {
     logger.info("User {} evicting clientId {} from groupId {}.", user.getName(), clientId, groupId);
 
     try {
-      aclDAO.findAndEvictClient(clientId.get(), groupId.get());
+      aclDAO.findAndEvictClient(clientId.get(), groupId.get(), auditLog, user.getName(), new HashMap<>());
     } catch (IllegalStateException e) {
       throw new NotFoundException();
     }
