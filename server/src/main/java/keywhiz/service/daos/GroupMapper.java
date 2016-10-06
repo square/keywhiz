@@ -49,7 +49,7 @@ class GroupMapper implements RecordMapper<GroupsRecord, Group> {
   }
 
   private ImmutableMap<String, String> tryToReadMapFromMetadata(String value) {
-    if (!value.isEmpty()) {
+    if (value != null && !value.isEmpty()) {
       try {
         return ImmutableMap.copyOf(mapper.readValue(value, MAP_STRING_STRING_TYPE));
       } catch (IOException e) {
