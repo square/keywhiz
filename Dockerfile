@@ -62,6 +62,7 @@ COPY hkdf/pom.xml /usr/src/app/hkdf/
 COPY model/pom.xml /usr/src/app/model/
 COPY server/pom.xml /usr/src/app/server/
 COPY testing/pom.xml /usr/src/app/testing/
+COPY log/pom.xml /usr/src/app/log/
 RUN mvn dependency:copy-dependencies -P docker --fail-never
 
 # copy source required for build and install
@@ -72,6 +73,7 @@ COPY hkdf /usr/src/app/hkdf/
 COPY model /usr/src/app/model/
 COPY server /usr/src/app/server/
 COPY testing /usr/src/app/testing/
+COPY log /usr/src/app/log/
 RUN mvn install -P docker
 
 # Drop privs inside container
