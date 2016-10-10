@@ -10,7 +10,7 @@
 #   docker run -e KEYWHIZ_CONFIG=/path/to/config [COMMAND]
 #
 # If the KEYWHIZ_CONFIG environment variable is omitted, keywhiz
-# will run with the default development config. If COMMAND is 
+# will run with the default development config. If COMMAND is
 # omitted, keywhiz will print a help message.
 #
 # *** Development ***
@@ -41,7 +41,7 @@
 # in development is keywhizAdmin and the default password is adminPass.
 #
 # Note that for a production deployment, you'll probably want to setup
-# your own config to make sure you're not using development secrets. 
+# your own config to make sure you're not using development secrets.
 #
 FROM maven:3.3-jdk-8
 
@@ -62,6 +62,7 @@ COPY hkdf/pom.xml /usr/src/app/hkdf/
 COPY model/pom.xml /usr/src/app/model/
 COPY server/pom.xml /usr/src/app/server/
 COPY testing/pom.xml /usr/src/app/testing/
+COPY log/pom.xml /usr/src/app/log/
 RUN mvn dependency:copy-dependencies -P docker --fail-never
 
 # copy source required for build and install
@@ -72,6 +73,7 @@ COPY hkdf /usr/src/app/hkdf/
 COPY model /usr/src/app/model/
 COPY server /usr/src/app/server/
 COPY testing /usr/src/app/testing/
+COPY log /usr/src/app/log/
 RUN mvn install -P docker
 
 # Drop privs inside container
@@ -83,7 +85,7 @@ RUN useradd -ms /bin/false keywhiz && \
 USER keywhiz
 
 # Expose API port by default. Note that the admin console port
-# is NOT exposed by default, can be exposed manually if desired. 
+# is NOT exposed by default, can be exposed manually if desired.
 EXPOSE 4444
 
 VOLUME ["/data", "/secrets"]
