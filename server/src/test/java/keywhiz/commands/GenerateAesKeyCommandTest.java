@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Key;
 import java.security.KeyStore;
+import java.security.SecureRandom;
 import javax.crypto.SecretKey;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,7 +39,7 @@ public class GenerateAesKeyCommandTest {
     int keySize = 128;
     String alias = "baseKey";
 
-    GenerateAesKeyCommand.generate(password, destination, keySize, alias);
+    GenerateAesKeyCommand.generate(password, destination, keySize, alias, new SecureRandom());
     assertThat(destination).exists();
 
     KeyStore keyStore = KeyStore.getInstance("JCEKS");

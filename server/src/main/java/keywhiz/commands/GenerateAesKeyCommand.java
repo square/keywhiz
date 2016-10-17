@@ -72,15 +72,15 @@ public class GenerateAesKeyCommand extends Command {
     int keySize = namespace.getInt("keysize");
     String alias = namespace.getString("alias");
 
-    generate(password, destination, keySize, alias);
+    generate(password, destination, keySize, alias, SecureRandom.getInstanceStrong());
     System.out.println(format("Generated a %d-bit AES key at %s with alias %s", keySize,
         destination.toAbsolutePath(), alias));
   }
 
   @VisibleForTesting
-  static void generate(char[] password, Path destination, int keySize, String alias) throws Exception {
+  static void generate(char[] password, Path destination, int keySize, String alias, SecureRandom random) throws Exception {
     KeyGenerator generator = KeyGenerator.getInstance("AES");
-    generator.init(keySize, SecureRandom.getInstanceStrong());
+    generator.init(keySize, random);
     SecretKey key = generator.generateKey();
 
     KeyStore keyStore = KeyStore.getInstance("JCEKS");
