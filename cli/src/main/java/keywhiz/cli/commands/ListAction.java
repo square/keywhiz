@@ -24,8 +24,9 @@ import keywhiz.cli.Printing;
 import keywhiz.cli.configs.ListActionConfig;
 import keywhiz.client.KeywhizClient;
 
-public class ListAction implements Runnable {
+import static com.google.common.base.Preconditions.checkArgument;
 
+public class ListAction implements Runnable {
   private final ListActionConfig listActionConfig;
   private final KeywhizClient keywhizClient;
   private final Printing printing;
@@ -37,7 +38,7 @@ public class ListAction implements Runnable {
   }
 
   @Override public void run() {
-    List<String> listOptions = listActionConfig.listOptions;
+    List<String> listOptions = listActionConfig.listType;
     if (listOptions == null) {
       try {
         printing.printAllSanitizedSecrets(keywhizClient.allSecrets());
@@ -61,7 +62,19 @@ public class ListAction implements Runnable {
           break;
 
         case "secrets":
-          printing.printAllSanitizedSecrets(keywhizClient.allSecrets());
+          if (listActionConfig.idx == null && listActionConfig.num == null) {
+            printing.printAllSanitizedSecrets(keywhizClient.allSecrets());
+          } else if (listActionConfig.idx != null && listActionConfig.num != null) {
+            checkArgument(listActionConfig.idx >= 0);
+            checkArgument(listActionConfig.num >= 0);
+            if (listActionConfig.newestFirst == null) {
+              printing.printAllSanitizedSecrets(keywhizClient.allSecretsBatched(listActionConfig.idx, listActionConfig.num, true));
+            }  else {
+              printing.printAllSanitizedSecrets(keywhizClient.allSecretsBatched(listActionConfig.idx, listActionConfig.num, listActionConfig.newestFirst));
+            }
+          } else {
+            throw new AssertionError("Both idx and num must be provided for batched secret queries");
+          }
           break;
 
         default:

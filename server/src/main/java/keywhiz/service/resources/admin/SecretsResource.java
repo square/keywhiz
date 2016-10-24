@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -105,6 +106,9 @@ public class SecretsResource {
    * @param name the name of the Secret to retrieve, if provided
    * @optionalParams version
    * @param nameOnly if set, the result only contains the id and name for the secrets.
+   * @param idx if set, the desired starting index in a list of secrets to be retrieved
+   * @param num if set, the number of secrets to retrieve
+   * @param newestFirst whether to order the secrets by creation date with newest first; defaults to true
    *
    * @description Returns a single Secret or a set of all Secrets for this user.
    * Used by Keywhiz CLI and the web ui.
@@ -114,15 +118,39 @@ public class SecretsResource {
   @Timed @ExceptionMetered
   @GET
   public Response findSecrets(@Auth User user, @DefaultValue("") @QueryParam("name") String name,
-      @DefaultValue("") @QueryParam("nameOnly") String nameOnly) {
+      @DefaultValue("") @QueryParam("nameOnly") String nameOnly, @QueryParam("idx") Integer idx,
+      @QueryParam("num") Integer num,
+      @DefaultValue("true") @QueryParam("newestFirst") Boolean newestFirst) {
+    if (!name.isEmpty() && idx != null && num != null) {
+      throw new BadRequestException("Name and idx/num cannot both be specified");
+    }
+
+    validateArguments(name, nameOnly, idx, num);
+
     if (name.isEmpty()) {
       if (nameOnly.isEmpty()) {
-        return Response.ok().entity(listSecrets(user)).build();
+        if (idx == null || num == null) {
+          return Response.ok().entity(listSecrets(user)).build();
+        } else {
+          return Response.ok().entity(listSecretsBatched(user, idx, num, newestFirst)).build();
+        }
       } else {
         return Response.ok().entity(listSecretsNameOnly(user)).build();
       }
     }
     return Response.ok().entity(retrieveSecret(user, name)).build();
+  }
+
+  private void validateArguments(String name, String nameOnly, Integer idx, Integer num) {
+    if (idx == null && num != null || idx != null && num != null) {
+      throw new IllegalArgumentException("Both idx and num must be specified");
+    }
+    if (!name.isEmpty() && idx != null && num != null) {
+      throw new IllegalArgumentException("Name, idx, and num must not all be specified");
+    }
+    if (nameOnly.isEmpty() && idx != null && num != null) {
+      throw new IllegalArgumentException("nameOnly option is not valid for batched secret retrieval");
+    }
   }
 
   protected List<SanitizedSecret> listSecrets(@Auth User user) {
@@ -133,6 +161,11 @@ public class SecretsResource {
   protected List<SanitizedSecret> listSecretsNameOnly(@Auth User user) {
     logger.info("User '{}' listing secrets.", user);
     return secretController.getSecretsNameOnly();
+  }
+
+  protected List<SanitizedSecret> listSecretsBatched(@Auth User user, int idx, int num, boolean newestFirst) {
+    logger.info("User '{}' listing secrets with idx '{}', num '{}', newestFirst '{}'.", user, idx, num, newestFirst);
+    return secretController.getSecretsBatched(idx, num, newestFirst);
   }
 
   protected SanitizedSecret retrieveSecret(@Auth User user, String name) {

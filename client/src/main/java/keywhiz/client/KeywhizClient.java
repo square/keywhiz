@@ -145,6 +145,11 @@ public class KeywhizClient {
     return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
   }
 
+  public List<SanitizedSecret> allSecretsBatched(int idx, int num, boolean newestFirst) throws IOException {
+    String response = httpGet(baseUrl.resolve(String.format("/admin/secrets?idx=%d&num=%d&newestFirst=%s", idx, num, newestFirst)));
+    return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
+  }
+
   public SecretDetailResponse createSecret(String name, String description, byte[] content,
       ImmutableMap<String, String> metadata, long expiry) throws IOException {
     checkArgument(!name.isEmpty());

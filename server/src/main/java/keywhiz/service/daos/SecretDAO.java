@@ -33,6 +33,7 @@ import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.api.model.SecretVersion;
 import keywhiz.jooq.tables.Secrets;
+import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
@@ -218,6 +219,29 @@ public class SecretDAO {
         .fetchInto(Secrets.SECRETS)
         .map(r -> new SimpleEntry<>(r.getId(), r.getName()));
     return ImmutableList.copyOf(results);
+  }
+
+  /**
+   * @param idx the first index to select in a list of secrets sorted by creation time
+   * @param num the number of secrets after idx to select in the list of secrets
+   * @param newestFirst if true, order the secrets from newest creation time to oldest
+   * @return A list of secrets
+   */
+  public ImmutableList<SecretSeriesAndContent> getSecretsBatched(int idx, int num, boolean newestFirst) {
+    return dslContext.transactionResult(configuration -> {
+      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
+      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+
+      ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
+
+      for (SecretSeries series : secretSeriesDAO.getSecretSeriesBatched(idx, num, newestFirst)) {
+        SecretContent content = secretContentDAO.getSecretContentById(series.currentVersion().get()).get();
+        SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
+        secretsBuilder.add(seriesAndContent);
+      }
+
+      return secretsBuilder.build();
+    });
   }
 
   /**
