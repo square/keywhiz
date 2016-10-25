@@ -113,7 +113,7 @@ public class ClientsResourceTest {
   @Test public void includesAssociations() {
     Group group1 = new Group(0, "group1", null, null, null, null, null, null);
     Group group2 = new Group(0, "group2", null, null, null, null, null, null);
-    Secret secret = new Secret(15, "secret", null, () -> "supersecretdata", now, "creator", now,
+    Secret secret = new Secret(15, "secret", null, () -> "supersecretdata", "checksum", now, "creator", now,
         "updater", null, null, null, 0);
 
     when(clientDAO.getClientById(1)).thenReturn(Optional.of(client));

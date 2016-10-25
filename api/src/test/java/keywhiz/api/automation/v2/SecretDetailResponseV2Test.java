@@ -37,6 +37,7 @@ public class SecretDetailResponseV2Test {
         .version(1)
         .description("secret-description")
         .content("YXNkZGFz")
+        .checksum("checksum")
         .createdAtSeconds(OffsetDateTime.parse("2013-03-28T21:23:04.159Z").toEpochSecond())
         .createdBy("creator-user")
         .type("text/plain")
@@ -56,6 +57,7 @@ public class SecretDetailResponseV2Test {
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .series(series)
         .content("YXNkZGFz")
+        .checksum("checksum")
         .metadata(ImmutableMap.of("owner", "root"))
         .expiry(1136214245)
         .build();
@@ -65,7 +67,7 @@ public class SecretDetailResponseV2Test {
   }
 
   @Test public void formsCorrectlyFromSecret() throws Exception {
-    Secret secret = new Secret(1, "secret-name", "secret-description", () -> "",
+    Secret secret = new Secret(1, "secret-name", "secret-description", () -> "", "checksum",
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
         ImmutableMap.of("owner", "root"), "text/plain", null,
@@ -88,6 +90,7 @@ public class SecretDetailResponseV2Test {
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .secretVersion(version)
         .content("YXNkZGFz")
+        .checksum("checksum")
         .build();
 
     assertThat(asJson(secretDetailResponse))

@@ -71,7 +71,7 @@ public class SecretSeriesDAOTest {
     Optional<SecretSeries> secretSeriesById = secretSeriesDAO.getSecretSeriesById(id);
     assertThat(secretSeriesById.get().currentVersion().isPresent()).isFalse();
 
-    long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah", "creator", null, 0);
+    long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah", "checksum", "creator", null, 0);
     secretSeriesDAO.setCurrentVersion(id, contentId);
     secretSeriesById = secretSeriesDAO.getSecretSeriesById(id);
     assertThat(secretSeriesById.get().currentVersion().get()).isEqualTo(contentId);
@@ -81,14 +81,14 @@ public class SecretSeriesDAOTest {
   public void setCurrentVersion_failsWithIncorrectSecretContent() {
     long id = secretSeriesDAO.createSecretSeries("someSecret", "creator", "", null, null);
     long other = secretSeriesDAO.createSecretSeries("someOtherSecret", "creator", "", null, null);
-    long contentId = secretContentDAOFactory.readwrite().createSecretContent(other, "blah", "creator", null, 0);
+    long contentId = secretContentDAOFactory.readwrite().createSecretContent(other, "blah", "checksum", "creator", null, 0);
 
     secretSeriesDAO.setCurrentVersion(id, contentId);
   }
 
   @Test public void deleteSecretSeriesByName() {
     long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", "creator", "", null, null);
-    long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah", "creator", null, 0);
+    long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah", "checksum", "creator", null, 0);
     secretSeriesDAO.setCurrentVersion(id, contentId);
     assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName").get().currentVersion().isPresent()).isTrue();
 
@@ -98,7 +98,7 @@ public class SecretSeriesDAOTest {
 
   @Test public void deleteSecretSeriesById() {
     long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesById", "creator", "", null, null);
-    long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah", "creator", null, 0);
+    long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah", "checksum", "creator", null, 0);
     secretSeriesDAO.setCurrentVersion(id, contentId);
     assertThat(secretSeriesDAO.getSecretSeriesById(id).get().currentVersion().isPresent()).isTrue();
 

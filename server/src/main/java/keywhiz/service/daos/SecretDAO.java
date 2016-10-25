@@ -66,7 +66,7 @@ public class SecretDAO {
   }
 
   @VisibleForTesting
-  public long createSecret(String name, String encryptedSecret,
+  public long createSecret(String name, String encryptedSecret, String hmac,
       String creator, Map<String, String> metadata, long expiry, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
     return dslContext.transactionResult(configuration -> {
@@ -87,7 +87,7 @@ public class SecretDAO {
             generationOptions);
       }
 
-      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, creator, metadata, expiry);
+      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, hmac, creator, metadata, expiry);
       secretSeriesDAO.setCurrentVersion(secretId, secretContentId);
 
       return secretId;
@@ -95,9 +95,9 @@ public class SecretDAO {
   }
 
   @VisibleForTesting
-  public long createOrUpdateSecret(String name, String encryptedSecret, String creator, Map<String, String> metadata,
-                                   long expiry, String description, @Nullable String type,
-                                   @Nullable Map<String, String> generationOptions) {
+  public long createOrUpdateSecret(String name, String encryptedSecret, String hmac, String creator,
+      Map<String, String> metadata, long expiry, String description, @Nullable String type,
+      @Nullable Map<String, String> generationOptions) {
     return dslContext.transactionResult(configuration -> {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
@@ -112,7 +112,7 @@ public class SecretDAO {
         secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type, generationOptions);
       }
 
-      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, creator, metadata, expiry);
+      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, hmac, creator, metadata, expiry);
       secretSeriesDAO.setCurrentVersion(secretId, secretContentId);
 
       return secretId;

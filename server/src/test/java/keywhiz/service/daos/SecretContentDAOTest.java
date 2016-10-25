@@ -42,7 +42,7 @@ public class SecretContentDAOTest {
   final static ApiDate date = ApiDate.now();
   ImmutableMap<String, String> metadata = ImmutableMap.of("foo", "bar");
 
-  SecretContent secretContent1 = SecretContent.of(11, 22, "[crypted]", date, "creator", date,
+  SecretContent secretContent1 = SecretContent.of(11, 22, "[crypted]", "checksum", date, "creator", date,
       "creator", metadata, 1136214245);
 
   SecretContentDAO secretContentDAO;
@@ -60,6 +60,7 @@ public class SecretContentDAOTest {
         .set(SECRETS_CONTENT.ID, secretContent1.id())
         .set(SECRETS_CONTENT.SECRETID, secretContent1.secretSeriesId())
         .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secretContent1.encryptedContent())
+        .set(SECRETS_CONTENT.CONTENT_HMAC, "checksum")
         .set(SECRETS_CONTENT.CREATEDAT, secretContent1.createdAt().toEpochSecond())
         .set(SECRETS_CONTENT.CREATEDBY, secretContent1.createdBy())
         .set(SECRETS_CONTENT.UPDATEDAT, secretContent1.updatedAt().toEpochSecond())
@@ -71,7 +72,7 @@ public class SecretContentDAOTest {
 
   @Test public void createSecretContent() {
     int before = tableSize();
-    secretContentDAO.createSecretContent(secretContent1.secretSeriesId()+1, "encrypted", "creator",
+    secretContentDAO.createSecretContent(secretContent1.secretSeriesId()+1, "encrypted", "checksum", "creator",
         metadata, 1136214245);
     assertThat(tableSize()).isEqualTo(before + 1);
   }
@@ -90,7 +91,7 @@ public class SecretContentDAOTest {
     long[] ids = new long[15];
     for (int i = 0; i < ids.length; i++) {
       long id = secretContentDAO.createSecretContent(
-          secretSeriesId, "encrypted", "creator", metadata, 1136214245);
+          secretSeriesId, "encrypted", "checksum", "creator", metadata, 1136214245);
       ids[i] = id;
     }
 
@@ -137,7 +138,7 @@ public class SecretContentDAOTest {
     long[] ids = new long[15];
     for (int i = 0; i < ids.length; i++) {
       long id = secretContentDAO.createSecretContent(
-          secretSeriesId, "encrypted", "creator", metadata, 1136214245);
+          secretSeriesId, "encrypted", "checksum", "creator", metadata, 1136214245);
       ids[i] = id;
     }
 

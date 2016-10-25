@@ -22,6 +22,7 @@ import static keywhiz.api.model.Secret.decodedLength;
   public static Builder builder() {
     return new AutoValue_SecretDetailResponseV2.Builder()
         .content("")
+        .checksum("")
         .description("")
         .type(null)
         .metadata(ImmutableMap.of());
@@ -37,6 +38,7 @@ import static keywhiz.api.model.Secret.decodedLength;
     public abstract Builder name(String name);
     public abstract Builder version(@Nullable long version); // Unique ID in secrets_content table
     public abstract Builder content(String secret);
+    public abstract Builder checksum(String checksum);
     public abstract Builder description(String description);
     public abstract Builder createdAtSeconds(long createdAt);
     public abstract Builder createdBy(String person);
@@ -62,6 +64,7 @@ import static keywhiz.api.model.Secret.decodedLength;
           .name(secret.getName())
           .description(secret.getDescription())
           .content(secret.getSecret())
+          .checksum(secret.getChecksum())
           .createdAtSeconds(secret.getCreatedAt().toEpochSecond())
           .createdBy(secret.getCreatedBy())
           .type(secret.getType().orElse(null))
@@ -100,6 +103,7 @@ import static keywhiz.api.model.Secret.decodedLength;
       @JsonProperty("version") @Nullable long version,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("content") String content,
+      @JsonProperty("checksum") String checksum,
       @JsonProperty("size") UnsignedLong size,
       @JsonProperty("createdAtSeconds") long createdAtSeconds,
       @JsonProperty("createdBy") String createdBy,
@@ -111,6 +115,7 @@ import static keywhiz.api.model.Secret.decodedLength;
         .version(version)
         .description(nullToEmpty(description))
         .content(content)
+        .checksum(checksum)
         .size(size)
         .createdAtSeconds(createdAtSeconds)
         .createdBy(createdBy)
@@ -125,6 +130,7 @@ import static keywhiz.api.model.Secret.decodedLength;
   @JsonProperty("version") @Nullable public abstract long version();
   @JsonProperty("description") public abstract String description();
   @JsonProperty("content") public abstract String content();
+  @JsonProperty("checksum") public abstract String checksum();
   @JsonProperty("size") public abstract UnsignedLong size();
   @JsonProperty("createdAtSeconds") public abstract long createdAtSeconds();
   @JsonProperty("createdBy") public abstract String createdBy();
@@ -137,6 +143,7 @@ import static keywhiz.api.model.Secret.decodedLength;
         .add("name", name())
         .add("description", description())
         .add("content", "[REDACTED]")
+        .add("checksum", checksum())
         .add("size", size())
         .add("createdAtSeconds", createdAtSeconds())
         .add("createdBy", createdBy())

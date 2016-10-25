@@ -31,6 +31,7 @@ public class SecretsResponseTest {
         SanitizedSecret.of(
             767,
             "trapdoor",
+            "checksum",
             "v1",
             ApiDate.parse("2013-03-28T21:42:42.573Z"),
             "keywhizAdmin",
@@ -43,6 +44,7 @@ public class SecretsResponseTest {
         SanitizedSecret.of(
             768,
             "anotherSecret",
+            "checksum",
             "",
             ApiDate.parse("2013-04-28T21:42:42.573Z"),
             "keywhizAdmin",

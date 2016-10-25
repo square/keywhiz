@@ -47,6 +47,7 @@ public class SecretTransformer {
         series.name(),
         series.description(),
         () -> cryptographer.decrypt(content.encryptedContent()),
+        content.hmac(),
         content.createdAt(),
         content.createdBy(),
         content.updatedAt(),

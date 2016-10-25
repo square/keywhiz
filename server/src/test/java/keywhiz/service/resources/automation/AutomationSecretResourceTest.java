@@ -81,6 +81,7 @@ public class AutomationSecretResourceTest {
         request.name,
         request.description,
         () -> Base64.getUrlEncoder().encodeToString(request.content.getBytes(UTF_8)),
+        "checksum",
         NOW,
         automation.getName(),
         NOW, /* updatedAt set by DB */
@@ -117,7 +118,7 @@ public class AutomationSecretResourceTest {
 
     when(secretDAO.getSecretByName(secretSeries.name()))
         .thenReturn(Optional.of(SecretSeriesAndContent.of(secretSeries, SecretContent.of(123, secretSeries.id(), "meh",
-            NOW, null, NOW, null, ImmutableMap.of(), 0))));
+            "checksum", NOW, null, NOW, null, ImmutableMap.of(), 0))));
 
     resource.deleteSecretSeries(automation, "mySecret");
     verify(secretDAO).deleteSecretsByName(secretSeries.name());

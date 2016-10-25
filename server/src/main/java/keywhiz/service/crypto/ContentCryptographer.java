@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Throwables;
+import com.google.common.io.BaseEncoding;
 import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
@@ -35,6 +36,7 @@ import java.util.Base64.Encoder;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
@@ -147,6 +149,18 @@ public class ContentCryptographer {
 
     byte[] plaintext = gcm(Mode.DECRYPT, crypted.derivationInfo(), crypted.ivBytes(), crypted.contentBytes());
     return getEncoder().encodeToString(plaintext);
+  }
+
+  public String computeHmac(byte[] data) {
+    SecretKey hmacKey = deriveKey(32, "hmackey");
+    try {
+      Mac mac = Mac.getInstance("HmacSHA256");
+      mac.init(hmacKey);
+      return BaseEncoding.base16().encode(mac.doFinal(data));
+    } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+      logger.warn("Error computing HMAC: ", e);
+      return null;
+    }
   }
 
   private SecretKey deriveKey(int blockSize, String info) {
