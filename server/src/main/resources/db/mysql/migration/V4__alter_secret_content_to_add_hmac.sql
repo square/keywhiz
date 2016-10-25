@@ -1,0 +1,1 @@
+ALTER TABLE secrets_content ADD content_hmac varchar(64) not null default "";
