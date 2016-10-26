@@ -45,7 +45,7 @@ public class SecretTest {
   }
 
   @Test public void callsDecryptOnlyOnce() {
-    Secret s = new Secret(42, "toto", null, () -> String.valueOf(++called), ApiDate.now(), "", ApiDate.now(), "", null,
+    Secret s = new Secret(42, "toto", null, () -> String.valueOf(++called), "checksum", ApiDate.now(), "", ApiDate.now(), "", null,
         null, null, 0);
     assertThat(s.getSecret()).isEqualTo("1");
     assertThat(s.getSecret()).isEqualTo("1");

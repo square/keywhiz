@@ -55,7 +55,7 @@ public class AddActionTest {
 
   Client client = new Client(4, "newClient", null, null, null, null, null, null, true, false);
   Group group = new Group(4, "newGroup", null, null, null, null, null, null);
-  Secret secret = new Secret(15, "newSecret", null, () -> "c2VjcmV0MQ==", NOW, null, NOW, null, null, null,
+  Secret secret = new Secret(15, "newSecret", null, () -> "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null, null, null,
       ImmutableMap.of(), 0);
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
   SecretDetailResponse secretDetailResponse = SecretDetailResponse.fromSecret(secret, null, null);

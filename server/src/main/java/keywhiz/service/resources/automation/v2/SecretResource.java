@@ -323,6 +323,7 @@ public class SecretResource {
         .orElseThrow(NotFoundException::new);
     return SecretDetailResponseV2.builder()
         .series(secret.series())
+        .checksum(secret.content().hmac())
         .expiry(secret.content().expiry())
         .build();
   }

@@ -48,7 +48,7 @@ public class DescribeActionTest {
 
   DescribeActionConfig describeActionConfig;
   DescribeAction describeAction;
-  Secret secret = new Secret(0, "secret", null, () ->  "c2VjcmV0MQ==", NOW, null, NOW, null, null, null,
+  Secret secret = new Secret(0, "secret", null, () ->  "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null, null, null,
       ImmutableMap.of(), 0);
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
 

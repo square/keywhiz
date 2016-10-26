@@ -33,7 +33,7 @@ public class AutomationSecretResponseTest {
   private static final ImmutableMap<String, String> metadata =
       ImmutableMap.of("key1", "value1", "key2", "value2");
   private static final ApiDate NOW = ApiDate.now();
-  private static final Secret secret = new Secret(0, "name", null, () -> "YWJj", NOW, null, NOW, null, metadata,
+  private static final Secret secret = new Secret(0, "name", null, () -> "YWJj", "checksum", NOW, null, NOW, null, metadata,
       "upload", null, 1136214245);
 
   @Test

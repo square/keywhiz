@@ -60,7 +60,7 @@ class SecretContentDAO {
     this.secretContentMapper = secretContentMapper;
   }
 
-  public long createSecretContent(long secretId, String encryptedContent,
+  public long createSecretContent(long secretId, String encryptedContent, String hmac,
       String creator, Map<String, String> metadata, long expiry) {
     SecretsContentRecord r = dslContext.newRecord(SECRETS_CONTENT);
 
@@ -76,6 +76,7 @@ class SecretContentDAO {
 
     r.setSecretid(secretId);
     r.setEncryptedContent(encryptedContent);
+    r.setContentHmac(hmac);
     r.setCreatedby(creator);
     r.setCreatedat(now);
     r.setUpdatedby(creator);

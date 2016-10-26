@@ -267,6 +267,7 @@ public class AclDAO {
         .join(SECRETS_CONTENT).on(SECRETS_CONTENT.ID.eq(SECRETS.CURRENT))
         .where(CLIENTS.NAME.eq(client.getName()).and(SECRETS.CURRENT.isNotNull()))
         .getQuery();
+    query.addSelect(SECRETS_CONTENT.CONTENT_HMAC);
     query.addSelect(SECRETS_CONTENT.CREATEDAT);
     query.addSelect(SECRETS_CONTENT.CREATEDBY);
     query.addSelect(SECRETS_CONTENT.UPDATEDAT);
@@ -279,6 +280,7 @@ public class AclDAO {
           return SanitizedSecret.of(
               series.id(),
               series.name(),
+              row.getValue(SECRETS_CONTENT.CONTENT_HMAC),
               series.description(),
               new ApiDate(row.getValue(SECRETS_CONTENT.CREATEDAT)),
               row.getValue(SECRETS_CONTENT.CREATEDBY),
@@ -322,6 +324,7 @@ public class AclDAO {
             .and(SECRETS.NAME.eq(secretName)))
         .limit(1)
         .getQuery();
+    query.addSelect(SECRETS_CONTENT.CONTENT_HMAC);
     query.addSelect(SECRETS_CONTENT.CREATEDAT);
     query.addSelect(SECRETS_CONTENT.CREATEDBY);
     query.addSelect(SECRETS_CONTENT.UPDATEDAT);
@@ -334,6 +337,7 @@ public class AclDAO {
           return SanitizedSecret.of(
               series.id(),
               series.name(),
+              row.getValue(SECRETS_CONTENT.CONTENT_HMAC),
               series.description(),
               new ApiDate(row.getValue(SECRETS_CONTENT.CREATEDAT)),
               row.getValue(SECRETS_CONTENT.CREATEDBY),

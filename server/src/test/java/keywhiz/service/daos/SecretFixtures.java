@@ -19,8 +19,11 @@ package keywhiz.service.daos;
 import com.google.common.collect.ImmutableMap;
 import keywhiz.api.model.Secret;
 import keywhiz.service.crypto.ContentCryptographer;
+import keywhiz.service.crypto.ContentEncodingException;
 import keywhiz.service.crypto.CryptoFixtures;
 import keywhiz.service.crypto.SecretTransformer;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Helper methods to make secrets, reducing the amount of work for testing.
@@ -51,8 +54,12 @@ public class SecretFixtures {
    * @return created secret model
    */
   public Secret createSecret(String name, String content) {
+    String hmac = cryptographer.computeHmac(content.getBytes(UTF_8));
+    if (hmac == null) {
+      throw new ContentEncodingException("Error encoding content in SecretFixture!");
+    }
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    long id = secretDAO.createSecret(name, encryptedContent, "creator", ImmutableMap.of(), 0, "", null,
+    long id = secretDAO.createSecret(name, encryptedContent, hmac, "creator", ImmutableMap.of(), 0, "", null,
         ImmutableMap.of());
     return transformer.transform(secretDAO.getSecretById(id).get());
   }

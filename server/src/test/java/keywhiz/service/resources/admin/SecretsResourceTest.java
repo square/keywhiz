@@ -69,7 +69,7 @@ public class SecretsResourceTest {
   User user = User.named("user");
   ImmutableMap<String, String> emptyMap = ImmutableMap.of();
 
-  Secret secret = new Secret(22, "name", "desc", () -> "secret", NOW, "creator", NOW,
+  Secret secret = new Secret(22, "name", "desc", () -> "secret", "checksum", NOW, "creator", NOW,
       "updater", emptyMap, null, null, 1136214245);
 
   AuditLog auditLog = new SimpleLogger();
@@ -83,9 +83,9 @@ public class SecretsResourceTest {
 
   @Test
   public void listSecrets() {
-    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc", NOW, "user", NOW, "user",
+    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "checksum", "desc", NOW, "user", NOW, "user",
         emptyMap, null, null, 1136214245);
-    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "desc", NOW, "user", NOW, "user",
+    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "checksum", "desc", NOW, "user", NOW, "user",
         emptyMap, null, null, 1136214245);
     when(secretController.getSanitizedSecrets(null, null)).thenReturn(ImmutableList.of(secret1, secret2));
 
