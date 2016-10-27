@@ -179,7 +179,7 @@ public class Printing {
     }
 
     System.out.println("\tUpdated at:");
-    d = new Date(secret.createdAt().toEpochSecond() * 1000);
+    d = new Date(secret.updatedAt().toEpochSecond() * 1000);
     System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
   }
 
