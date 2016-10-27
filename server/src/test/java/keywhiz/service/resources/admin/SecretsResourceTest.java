@@ -59,6 +59,7 @@ import static org.mockito.Mockito.when;
 
 public class SecretsResourceTest {
   private static final ApiDate NOW = ApiDate.now();
+  private static final ApiDate NOWPLUS = new ApiDate(NOW.toEpochSecond() + 10000);
 
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
 
@@ -91,6 +92,26 @@ public class SecretsResourceTest {
 
     List<SanitizedSecret> response = resource.listSecrets(user);
     assertThat(response).containsOnly(secret1, secret2);
+  }
+
+  @Test
+  public void listSecretsBatched() {
+    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc", "checksum", NOW, "user", NOW, "user",
+        emptyMap, null, null, 1136214245);
+    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "desc", "checksum", NOWPLUS, "user", NOWPLUS, "user",
+        emptyMap, null, null, 1136214245);
+    when(secretController.getSecretsBatched(0, 1, false)).thenReturn(ImmutableList.of(secret1));
+    when(secretController.getSecretsBatched(0, 1, true)).thenReturn(ImmutableList.of(secret2));
+    when(secretController.getSecretsBatched(1, 1, false)).thenReturn(ImmutableList.of(secret2));
+
+    List<SanitizedSecret> response = resource.listSecretsBatched(user, 0, 1, false);
+    assertThat(response).containsOnly(secret1);
+
+    response = resource.listSecretsBatched(user, 1, 1, false);
+    assertThat(response).containsOnly(secret2);
+
+    response = resource.listSecretsBatched(user, 0, 1, true);
+    assertThat(response).containsOnly(secret2);
   }
 
   @Test

@@ -83,6 +83,20 @@ public class SecretController {
         .collect(toList());
   }
 
+  /**
+   * @param idx the first index to select in a list of secrets sorted by creation time
+   * @param num the number of secrets after idx to select in the list of secrets
+   * @param newestFirst if true, order the secrets from newest creation time to oldest
+   * @return A list of secret names
+   */
+  public List<SanitizedSecret> getSecretsBatched(int idx, int num, boolean newestFirst) {
+    checkArgument(idx >= 0, "Index must be positive when getting batched secret names!");
+    checkArgument(num >= 0, "Num must be positive when getting batched secret names!");
+    return secretDAO.getSecretsBatched(idx, num, newestFirst).stream()
+        .map(SanitizedSecret::fromSecretSeriesAndContent)
+        .collect(toList());
+  }
+
   public SecretBuilder builder(String name, String secret, String creator, long expiry) {
     checkArgument(!name.isEmpty());
     checkArgument(!secret.isEmpty());

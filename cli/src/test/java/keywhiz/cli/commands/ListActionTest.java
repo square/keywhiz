@@ -46,14 +46,14 @@ public class ListActionTest {
 
   @Test
   public void listCallsPrintForListAll() throws Exception {
-    listActionConfig.listOptions = null;
+    listActionConfig.listType = null;
     listAction.run();
     verify(printing).printAllSanitizedSecrets(keywhizClient.allSecrets());
   }
 
   @Test
   public void listCallsPrintForListGroups() throws Exception {
-    listActionConfig.listOptions = Arrays.asList("groups");
+    listActionConfig.listType = Arrays.asList("groups");
     listAction.run();
 
     verify(printing).printAllGroups(keywhizClient.allGroups());
@@ -61,7 +61,7 @@ public class ListActionTest {
 
   @Test
   public void listCallsPrintForListClients() throws Exception {
-    listActionConfig.listOptions = Arrays.asList("clients");
+    listActionConfig.listType = Arrays.asList("clients");
     listAction.run();
 
     verify(printing).printAllClients(keywhizClient.allClients());
@@ -69,15 +69,60 @@ public class ListActionTest {
 
   @Test
   public void listCallsPrintForListSecrets() throws Exception {
-    listActionConfig.listOptions = Arrays.asList("secrets");
+    listActionConfig.listType = Arrays.asList("secrets");
     listAction.run();
 
     verify(printing).printAllSanitizedSecrets(keywhizClient.allSecrets());
   }
 
+  @Test
+  public void listCallsPrintForListSecretsBatched() throws Exception {
+    listActionConfig.listType = Arrays.asList("secrets");
+    listActionConfig.idx = 0;
+    listActionConfig.num = 10;
+    listActionConfig.newestFirst = false;
+    listAction.run();
+
+    verify(printing).printAllSanitizedSecrets(keywhizClient.allSecretsBatched(0, 10, false));
+  }
+
+  @Test
+  public void listCallsPrintForListSecretsBatchedWithDefault() throws Exception {
+    listActionConfig.listType = Arrays.asList("secrets");
+    listActionConfig.idx = 5;
+    listActionConfig.num = 10;
+    listAction.run();
+
+    verify(printing).printAllSanitizedSecrets(keywhizClient.allSecretsBatched(5, 10, true));
+  }
+
+  @Test
+  public void listCallsErrorsCorrectly() throws Exception {
+    listActionConfig.listType = Arrays.asList("secrets");
+    listActionConfig.idx = 5;
+    boolean error = false;
+    try {
+      listAction.run();
+    } catch (AssertionError e) {
+      error = true;
+    }
+    assert(error);
+
+    listActionConfig.listType = Arrays.asList("secrets");
+    listActionConfig.idx = 5;
+    listActionConfig.num = -5;
+    error = false;
+    try {
+      listAction.run();
+    } catch (IllegalArgumentException e) {
+      error = true;
+    }
+    assert(error);
+  }
+
   @Test(expected = AssertionError.class)
   public void listThrowsIfInvalidType() throws Exception {
-    listActionConfig.listOptions = Arrays.asList("invalid_type");
+    listActionConfig.listType = Arrays.asList("invalid_type");
     listAction.run();
   }
 }
