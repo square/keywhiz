@@ -261,10 +261,10 @@ public class SecretsResource {
 
     if (response.getStatus() == HttpStatus.SC_CREATED) {
       Map<String, String> extraInfo = new HashMap<>();
-      if (request.description() != null) {
+      if (request.description() != null && !request.description().isEmpty()) {
         extraInfo.put("description", request.description());
       }
-      if (request.metadata() != null) {
+      if (request.metadata() != null && !request.metadata().isEmpty()) {
         extraInfo.put("metadata", request.metadata().toString());
       }
       extraInfo.put("expiry", Long.toString(request.expiry()));
