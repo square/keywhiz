@@ -736,7 +736,7 @@ public class SecretResourceTest {
   private List<SecretDetailResponseV2> listVersions(String name, int versionIdx, int numVersions)
       throws IOException {
     Request get = clientRequest(
-        format("/automation/v2/secrets/%s/versions/%d-%d", name, versionIdx, numVersions)).get()
+        format("/automation/v2/secrets/%s/versions?versionIdx=%d&numVersions=%d", name, versionIdx, numVersions)).get()
         .build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
