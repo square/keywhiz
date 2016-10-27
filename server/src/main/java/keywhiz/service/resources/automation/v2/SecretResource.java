@@ -287,7 +287,6 @@ public class SecretResource {
    * @excludeParams automationClient
    * @param time timestamp for farthest expiry to include
    * @param name Group name
-   *
    * @responseMessage 200 List of secrets expiring soon in group
    */
   @Timed @ExceptionMetered

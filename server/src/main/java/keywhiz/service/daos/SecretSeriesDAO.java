@@ -53,7 +53,7 @@ import static org.jooq.impl.DSL.val;
 /**
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
  */
-class SecretSeriesDAO {
+public class SecretSeriesDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretSeriesMapper secretSeriesMapper;
@@ -122,6 +122,13 @@ class SecretSeriesDAO {
 
     return dslContext.update(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.EXPIRY, minExpiration)
+        .where(SECRETS_CONTENT.ID.eq(secretContentId))
+        .execute();
+  }
+
+  public int setHmac(long secretContentId, String hmac) {
+    return dslContext.update(SECRETS_CONTENT)
+        .set(SECRETS_CONTENT.CONTENT_HMAC, hmac)
         .where(SECRETS_CONTENT.ID.eq(secretContentId))
         .execute();
   }
