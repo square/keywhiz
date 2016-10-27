@@ -393,11 +393,11 @@ public class SecretResource {
    */
   @Timed @ExceptionMetered
   @GET
-  @Path("{name}/versions/{versionIdx}-{numVersions}")
+  @Path("{name}/versions")
   @Produces(APPLICATION_JSON)
   public Iterable<SecretDetailResponseV2> secretVersions(@Auth AutomationClient automationClient,
-      @PathParam("name") String name, @PathParam("versionIdx") int versionIdx,
-      @PathParam("numVersions") int numVersions) {
+      @PathParam("name") String name, @QueryParam("versionIdx") int versionIdx,
+      @QueryParam("numVersions") int numVersions) {
     ImmutableList<SecretVersion> versions =
         secretDAO.getSecretVersionsByName(name, versionIdx, numVersions)
             .orElseThrow(NotFoundException::new);
