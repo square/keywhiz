@@ -54,10 +54,10 @@ public class Printing {
     }
 
     if (clientDetails.lastSeen == null) {
-      System.out.println("\tLast Seen: never\n");
+      System.out.println("\tLast Seen: never");
     } else {
       String lastSeen = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date (clientDetails.lastSeen.toEpochSecond()*1000));
-      System.out.printf("\tLast Seen: %s\n", lastSeen);
+      System.out.printf("\tLast Seen: %s%n", lastSeen);
     }
 
     System.out.println("\tGroups:");
