@@ -21,6 +21,7 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import java.io.IOException;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -53,9 +54,10 @@ public class Printing {
     }
 
     if (clientDetails.lastSeen == null) {
-      System.out.println("\tLast Seen: never");
+      System.out.println("\tLast Seen: never\n");
     } else {
-      System.out.printf("\tLast Seen: %s", clientDetails.lastSeen.toString());
+      String lastSeen = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date (clientDetails.lastSeen.toEpochSecond()*1000));
+      System.out.printf("\tLast Seen: %s\n", lastSeen);
     }
 
     System.out.println("\tGroups:");
