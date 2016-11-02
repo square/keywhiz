@@ -38,11 +38,13 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.api.model.SecretVersion;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
+import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.GroupDAO;
@@ -51,12 +53,15 @@ import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretController.SecretBuilder;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
+import keywhiz.service.daos.SecretSeriesDAO;
+import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -74,14 +79,19 @@ public class SecretResource {
   private final GroupDAO groupDAO;
   private final SecretDAO secretDAO;
   private final AuditLog auditLog;
+  private final SecretSeriesDAO secretSeriesDAO;
+  private final ContentCryptographer cryptographer;
 
   @Inject public SecretResource(SecretController secretController, AclDAOFactory aclDAOFactory,
-      GroupDAOFactory groupDAOFactory, SecretDAOFactory secretDAOFactory, AuditLog auditLog) {
+      GroupDAOFactory groupDAOFactory, SecretDAOFactory secretDAOFactory, AuditLog auditLog,
+      SecretSeriesDAOFactory secretSeriesDAOFactory, ContentCryptographer cryptographer) {
     this.secretController = secretController;
     this.aclDAO = aclDAOFactory.readwrite();
     this.groupDAO = groupDAOFactory.readwrite();
     this.secretDAO = secretDAOFactory.readwrite();
     this.auditLog = auditLog;
+    this.secretSeriesDAO = secretSeriesDAOFactory.readwrite();
+    this.cryptographer = cryptographer;
   }
 
   /**
@@ -328,6 +338,30 @@ public class SecretResource {
 
     logger.info("Unable to determine expiry for secret {}", secretName);
     return false;
+  }
+
+  /**
+   * Backfill content hmac for this secret.
+   */
+  @Timed @ExceptionMetered
+  @Path("{name}/backfill-hmac")
+  @POST
+  @Consumes(APPLICATION_JSON)
+  @Produces(APPLICATION_JSON)
+  public boolean backfillHmac(@Auth AutomationClient automationClient, @PathParam("name") String name, List<String> passwords) {
+    Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName(name);
+
+    if (!secret.isPresent()) {
+      return false;
+    }
+    logger.info("backfill-hmac {}: processing secret", name);
+
+    SecretContent secretContent = secret.get().content();
+    if (!secretContent.hmac().isEmpty()) {
+      return true; // No need to backfill
+    }
+    String hmac = cryptographer.computeHmac(cryptographer.decrypt(secretContent.encryptedContent()).getBytes(UTF_8));
+    return secretSeriesDAO.setHmac(secretContent.id(), hmac) == 1; // We expect only one row to be changed
   }
 
   /**
