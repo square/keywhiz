@@ -152,11 +152,11 @@ public class SecretResourceTest {
     assertThat(response.createdBy()).isEqualTo("client");
     assertThat(response.description()).isEqualTo("desc");
     assertThat(response.type()).isEqualTo("password");
+    assertThat(response.metadata()).isEqualTo(ImmutableMap.of("owner", "root", "mode", "0440"));
 
     // These values are left out for a series lookup as they pertain to a specific secret.
     assertThat(response.content()).isEmpty();
     assertThat(response.size().longValue()).isZero();
-    assertThat(response.metadata()).isEmpty();
   }
 
   //---------------------------------------------------------------------------------------

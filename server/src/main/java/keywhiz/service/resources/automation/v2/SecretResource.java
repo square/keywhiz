@@ -404,9 +404,7 @@ public class SecretResource {
     SecretSeriesAndContent secret = secretDAO.getSecretByName(name)
         .orElseThrow(NotFoundException::new);
     return SecretDetailResponseV2.builder()
-        .series(secret.series())
-        .checksum(secret.content().hmac())
-        .expiry(secret.content().expiry())
+        .seriesAndContent(secret)
         .build();
   }
 
