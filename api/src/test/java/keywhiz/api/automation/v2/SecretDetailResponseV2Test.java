@@ -23,6 +23,7 @@ import keywhiz.api.ApiDate;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.api.model.SecretVersion;
 import org.junit.Test;
 
@@ -60,6 +61,25 @@ public class SecretDetailResponseV2Test {
         .checksum("checksum")
         .metadata(ImmutableMap.of("owner", "root"))
         .expiry(1136214245)
+        .build();
+
+    assertThat(asJson(secretDetailResponse))
+        .isEqualTo(jsonFixture("fixtures/v2/secretDetailResponse.json"));
+  }
+
+  @Test public void formsCorrectlyFromSecretSeriesAndContent() throws Exception {
+    SecretSeries series = SecretSeries.of(1, "secret-name", "secret-description",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user", "text/plain", null,
+        1L);
+    SecretContent content = SecretContent.of(1, 1, "YXNkZGFz", "checksum",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ImmutableMap.of("owner", "root"), 1136214245);
+    SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
+    SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
+        .seriesAndContent(seriesAndContent)
+        .content("YXNkZGFz")
         .build();
 
     assertThat(asJson(secretDetailResponse))

@@ -11,6 +11,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.api.model.SecretVersion;
 
 import static com.google.common.base.Strings.nullToEmpty;
@@ -59,6 +60,20 @@ import static keywhiz.api.model.Secret.decodedLength;
           .type(series.type().orElse(null));
     }
 
+    // Does not save secret contents, but saves HMAC
+    public Builder seriesAndContent(SecretSeriesAndContent seriesAndContent) {
+      return this
+          .name(seriesAndContent.series().name())
+          .version(seriesAndContent.series().currentVersion().orElse(null))
+          .checksum(seriesAndContent.content().hmac())
+          .description(seriesAndContent.series().description())
+          .metadata(seriesAndContent.content().metadata())
+          .createdAtSeconds(seriesAndContent.series().createdAt().toEpochSecond())
+          .createdBy(seriesAndContent.series().createdBy())
+          .expiry(seriesAndContent.content().expiry())
+          .type(seriesAndContent.series().type().orElse(null));
+    }
+
     public Builder secret(Secret secret) {
       return this
           .name(secret.getName())
@@ -72,6 +87,7 @@ import static keywhiz.api.model.Secret.decodedLength;
           .metadata(secret.getMetadata());
     }
 
+    // Does not save secret contents or checksum
     public Builder secretVersion(SecretVersion secretVersion) {
       return this
           .name(secretVersion.name())
@@ -82,7 +98,6 @@ import static keywhiz.api.model.Secret.decodedLength;
           .type(secretVersion.type())
           .expiry(secretVersion.expiry())
           .metadata(secretVersion.metadata());
-
     }
 
     public SecretDetailResponseV2 build() {
