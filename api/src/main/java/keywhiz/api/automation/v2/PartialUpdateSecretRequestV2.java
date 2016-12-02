@@ -85,7 +85,7 @@ import java.util.Map;
         .metadataPresent(metadataPresent)
         .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
         .expiryPresent(expiryPresent)
-        .expiry(expiry == null ? 0 : expiry)
+        .expiry(expiry == null ? Long.valueOf(0) : expiry)
         .typePresent(typePresent)
         .type(Strings.nullToEmpty(type))
         .build();

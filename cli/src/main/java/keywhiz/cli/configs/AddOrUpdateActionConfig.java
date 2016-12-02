@@ -14,69 +14,50 @@
  * limitations under the License.
  */
 
-package keywhiz.cli.commands;
+package keywhiz.cli.configs;
 
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteStreams;
-import keywhiz.cli.configs.CreateOrUpdateActionConfig;
-import keywhiz.client.KeywhizClient;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.List;
+import org.joda.time.DateTime;
 
 import static java.lang.String.format;
-import static keywhiz.cli.Utilities.VALID_NAME_PATTERN;
-import static keywhiz.cli.Utilities.validName;
 
-public class CreateOrUpdateAction implements Runnable {
-  private static final Logger logger = LoggerFactory.getLogger(CreateOrUpdateAction.class);
+public class AddOrUpdateActionConfig {
+  @Parameter(names = "--name", description = "Name of the item to add", required = true)
+  public String name;
 
-  private final CreateOrUpdateActionConfig createOrUpdateActionConfig;
-  private final KeywhizClient keywhizClient;
-  private final ObjectMapper mapper;
+  @Parameter(names = "--description", description = "Description of the item to add or update")
+  public String description;
 
-  InputStream stream = System.in;
+  @Parameter(names = "--json", description = "Metadata JSON blob")
+  public String json;
 
-  public CreateOrUpdateAction(CreateOrUpdateActionConfig createOrUpdateActionConfig, KeywhizClient client, ObjectMapper mapper) {
-    this.createOrUpdateActionConfig = createOrUpdateActionConfig;
-    this.keywhizClient = client;
-    this.mapper = mapper;
-  }
+  @Parameter(names = { "-g", "--group" }, description = "Also assign the secret to this group (secrets only)")
+  public String group;
 
-  @Override public void run() {
-    String secretName = createOrUpdateActionConfig.secretName;
+  @Parameter(names = { "-e", "--expiry" }, description = "Secret expiry. For keystores, it is recommended to use the expiry of the earliest key. Format should be 2006-01-02T15:04:05Z or seconds since epoch.")
+  public String expiry;
 
-    if (secretName == null || !validName(secretName)) {
-      throw new IllegalArgumentException(format("Invalid name, must match %s", VALID_NAME_PATTERN));
+  public String getDescription() {
+    String description = this.description;
+    if (description == null) {
+      return "";
     }
-
-    byte[] content = readSecretContent();
-    createOrUpdateSecret(secretName, content, getMetadata(), getExpiry());
+    return description;
   }
 
-  private void createOrUpdateSecret(String secretName, byte[] content,
-      ImmutableMap<String, String> metadata, long expiry) {
-    try {
-      keywhizClient.createOrUpdateSecret(secretName, "", content, metadata, expiry);
-      logger.info("createOrUpdate secret '{}'.", secretName);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  private ImmutableMap<String, String> getMetadata() {
+  public ImmutableMap<String, String> getMetadata(ObjectMapper mapper) {
     ImmutableMap<String, String> metadata = ImmutableMap.of();
-    String jsonBlob = createOrUpdateActionConfig.json;
-    if (jsonBlob != null && !jsonBlob.isEmpty()) {
+    if (json != null && !json.isEmpty()) {
       TypeReference typeRef = new TypeReference<ImmutableMap<String, String>>() {};
       try {
-        metadata = mapper.readValue(jsonBlob, typeRef);
+        metadata = mapper.readValue(json, typeRef);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
@@ -85,8 +66,7 @@ public class CreateOrUpdateAction implements Runnable {
     return metadata;
   }
 
-  private long getExpiry() {
-    String expiry = createOrUpdateActionConfig.expiry;
+  public long getExpiry() {
     if (expiry != null) {
       try {
         return Long.parseLong(expiry);
@@ -96,18 +76,6 @@ public class CreateOrUpdateAction implements Runnable {
       return dt.getMillis()/1000;
     }
     return 0;
-  }
-
-  private byte[] readSecretContent() {
-    try {
-      byte[] content = ByteStreams.toByteArray(stream);
-      if (content.length == 0) {
-        throw new RuntimeException("Secret content empty!");
-      }
-      return content;
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
   }
 
   private static void validateMetadata(ImmutableMap<String, String> metadata) {
@@ -132,4 +100,5 @@ public class CreateOrUpdateAction implements Runnable {
       }
     }
   }
+
 }

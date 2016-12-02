@@ -35,7 +35,7 @@ public class CliMain {
         .put("list", new ListActionConfig())
         .put("describe", new DescribeActionConfig())
         .put("add", new AddActionConfig())
-        .put("update", new CreateOrUpdateActionConfig())
+        .put("update", new UpdateActionConfig())
         .put("delete", new DeleteActionConfig())
         .put("assign", new AssignActionConfig())
         .put("unassign", new UnassignActionConfig())
