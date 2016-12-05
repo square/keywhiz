@@ -31,6 +31,7 @@ import keywhiz.api.GroupDetailResponse;
 import keywhiz.api.LoginRequest;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
+import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -161,19 +162,25 @@ public class KeywhizClient {
     return mapper.readValue(response, SecretDetailResponse.class);
   }
 
-  public SecretDetailResponse createOrUpdateSecret(String name, String description, byte[] content,
-                                           ImmutableMap<String, String> metadata, long expiry) throws IOException {
+  public SecretDetailResponse updateSecret(String name, boolean descriptionPresent,
+      String description, boolean contentPresent, byte[] content,
+      boolean metadataPresent, ImmutableMap<String, String> metadata, boolean expiryPresent,
+      long expiry) throws IOException {
     checkArgument(!name.isEmpty());
-    checkArgument(content.length > 0, "Content must not be empty");
 
     String b64Content = Base64.getEncoder().encodeToString(content);
-    CreateOrUpdateSecretRequestV2 request = CreateOrUpdateSecretRequestV2.builder()
+    PartialUpdateSecretRequestV2 request = PartialUpdateSecretRequestV2.builder()
+        .descriptionPresent(descriptionPresent)
         .description(description)
+        .contentPresent(contentPresent)
         .content(b64Content)
+        .metadataPresent(metadataPresent)
         .metadata(metadata)
+        .expiryPresent(expiryPresent)
         .expiry(expiry)
         .build();
-    String response = httpPost(baseUrl.resolve(format("/admin/secrets/%s", name)), request);
+    String response =
+        httpPost(baseUrl.resolve(format("/admin/secrets/%s/partialupdate", name)), request);
     return mapper.readValue(response, SecretDetailResponse.class);
   }
 

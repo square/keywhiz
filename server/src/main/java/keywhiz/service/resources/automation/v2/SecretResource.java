@@ -32,6 +32,7 @@ import javax.ws.rs.core.UriBuilder;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
+import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.AutomationClient;
@@ -159,8 +160,8 @@ public class SecretResource {
   @POST
   @Consumes(APPLICATION_JSON)
   public Response createOrUpdateSecret(@Auth AutomationClient automationClient,
-                                       @PathParam("name") String name,
-                                       @Valid CreateOrUpdateSecretRequestV2 request) {
+      @PathParam("name") String name,
+      @Valid CreateOrUpdateSecretRequestV2 request) {
     SecretBuilder builder = secretController
         .builder(name, request.content(), automationClient.getName(), request.expiry())
         .withDescription(request.description())
@@ -178,6 +179,40 @@ public class SecretResource {
     }
     extraInfo.put("expiry", Long.toString(request.expiry()));
     auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_CREATEORUPDATE, automationClient.getName(), name, extraInfo));
+
+    UriBuilder uriBuilder = UriBuilder.fromResource(SecretResource.class).path(name);
+
+    return Response.created(uriBuilder.build()).build();
+  }
+
+  /**
+   * Updates a subset of the fields of an existing secret
+   *
+   * @excludeParams automationClient
+   * @param request JSON request to update a secret
+   *
+   * @responseMessage 201 Created secret and assigned to given groups
+   */
+  @Timed @ExceptionMetered
+  @Path("{name}/partialupdate")
+  @POST
+  @Consumes(APPLICATION_JSON)
+  public Response partialUpdateSecret(@Auth AutomationClient automationClient,
+      @PathParam("name") String name,
+      @Valid PartialUpdateSecretRequestV2 request) {
+    secretDAO.partialUpdateSecret(name, automationClient.getName(), request);
+
+    Map<String, String> extraInfo = new HashMap<>();
+    if (request.description() != null) {
+      extraInfo.put("description", request.description());
+    }
+    if (request.metadata() != null) {
+      extraInfo.put("metadata", request.metadata().toString());
+    }
+    if (request.expiry() != null) {
+      extraInfo.put("expiry", Long.toString(request.expiry()));
+    }
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_UPDATE, automationClient.getName(), name, extraInfo));
 
     UriBuilder uriBuilder = UriBuilder.fromResource(SecretResource.class).path(name);
 

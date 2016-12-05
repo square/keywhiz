@@ -135,7 +135,7 @@ public class CommandExecutor {
         break;
 
       case UPDATE:
-        new CreateOrUpdateAction((CreateOrUpdateActionConfig) commands.get(command), client, mapper).run();
+        new UpdateAction((UpdateActionConfig) commands.get(command), client, mapper).run();
         break;
 
       case DELETE:

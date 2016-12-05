@@ -46,6 +46,7 @@ import javax.ws.rs.core.UriBuilder;
 import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
+import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -60,6 +61,7 @@ import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
+import keywhiz.service.resources.automation.v2.SecretResource;
 import org.apache.http.HttpStatus;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
@@ -273,6 +275,48 @@ public class SecretsResource {
     return response;
   }
 
+  /**
+   * Update a subset of the fields of an existing secret
+   *
+   * @excludeParams user
+   * @param request the JSON client request used to formulate the Secret
+   *
+   * @responseMessage 200 Successfully updated Secret
+   */
+  @Path("{name}/partialupdate")
+  @Timed @ExceptionMetered
+  @POST
+  @Consumes(APPLICATION_JSON)
+  public Response partialUpdateSecret(@Auth User user, @PathParam("name") String secretName, @Valid
+      PartialUpdateSecretRequestV2 request) {
+
+    logger.info("User '{}' partialUpdate secret '{}'.", user, secretName);
+
+    long id = secretDAO.partialUpdateSecret(secretName, user.getName(), request);
+
+    URI uri = UriBuilder.fromResource(SecretsResource.class)
+        .path(secretName)
+        .path("partialupdate")
+        .build();
+
+    Response response = Response.created(uri).entity(secretDetailResponseFromId(id)).build();
+
+    if (response.getStatus() == HttpStatus.SC_CREATED) {
+      Map<String, String> extraInfo = new HashMap<>();
+      if (request.descriptionPresent()) {
+        extraInfo.put("description", request.description());
+      }
+      if (request.metadataPresent()) {
+        extraInfo.put("metadata", request.metadata().toString());
+      }
+      if (request.expiryPresent()) {
+        extraInfo.put("expiry", Long.toString(request.expiry()));
+      }
+      auditLog.recordEvent(
+          new Event(Instant.now(), EventTag.SECRET_UPDATE, user.getName(), secretName, extraInfo));
+    }
+    return response;
+  }
 
   /**
    * Retrieve Secret by ID

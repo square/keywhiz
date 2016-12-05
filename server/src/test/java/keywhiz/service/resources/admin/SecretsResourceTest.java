@@ -31,6 +31,7 @@ import keywhiz.api.ApiDate;
 import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
+import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -52,6 +53,7 @@ import org.mockito.junit.MockitoRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -156,6 +158,24 @@ public class SecretsResourceTest {
         .containsExactly(new URI("/admin/secrets/" + secret.getName()));
   }
 
+  @Test
+  public void partialUpdateSecret() throws Exception {
+    when(secretController.getSecretById(secret.getId())).thenReturn(Optional.of(secret));
+
+    PartialUpdateSecretRequestV2 req = PartialUpdateSecretRequestV2.builder()
+        .description(secret.getDescription())
+        .content(secret.getSecret())
+        .build();
+
+    when(secretDAO.partialUpdateSecret(eq(secret.getName()), any(), eq(req))).thenReturn(
+        secret.getId());
+
+    Response response = resource.partialUpdateSecret(user, secret.getName(), req);
+
+    assertThat(response.getStatus()).isEqualTo(201);
+    assertThat(response.getMetadata().get(HttpHeaders.LOCATION))
+        .containsExactly(new URI("/admin/secrets/" + secret.getName() + "/partialupdate"));
+  }
 
   @Test public void canDelete() {
     when(secretController.getSecretById(0xdeadbeef)).thenReturn(Optional.of(secret));
