@@ -24,5 +24,14 @@ import java.util.List;
 public class ListActionConfig {
 
   @Parameter(description = "[<groups|clients|secrets>]")
-  public List<String> listOptions;
+  public List<String> listType;
+
+  @Parameter(names = "--idx", description = "Index to start retrieving secrets (valid only with 'secrets'; requires --num to also be specified)")
+  public Integer idx;
+
+  @Parameter(names = "--num", description = "Number of secrets to retrieve after index (valid only with 'secrets'; requires --idx to also be specified)")
+  public Integer num;
+
+  @Parameter(names = "--newestFirst", description = "Whether to batch the secrets from newest creation date first.  Defaults to 'true' (valid only with 'secrets'; requires --idx and --num to also be specified)")
+  public Boolean newestFirst;
 }

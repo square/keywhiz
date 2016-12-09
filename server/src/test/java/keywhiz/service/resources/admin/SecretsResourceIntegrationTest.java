@@ -31,6 +31,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 
@@ -75,7 +76,7 @@ public class SecretsResourceIntegrationTest {
   @Test public void createsSecret() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
     SecretDetailResponse secretDetails = keywhizClient.createSecret("newSecret", "",
-        "content".getBytes(), ImmutableMap.of(), 0);
+        "content".getBytes(UTF_8), ImmutableMap.of(), 0);
     assertThat(secretDetails.name).isEqualTo("newSecret");
 
     assertThat(keywhizClient.allSecrets().stream().map(SanitizedSecret::name).toArray())
@@ -86,8 +87,8 @@ public class SecretsResourceIntegrationTest {
   public void rejectsCreatingDuplicateSecretWithoutVersion() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
-    keywhizClient.createSecret("passage", "v1", "content".getBytes(), ImmutableMap.of(), 0);
-    keywhizClient.createSecret("passage", "v2", "content".getBytes(), ImmutableMap.of(), 0);
+    keywhizClient.createSecret("passage", "v1", "content".getBytes(UTF_8), ImmutableMap.of(), 0);
+    keywhizClient.createSecret("passage", "v2", "content".getBytes(UTF_8), ImmutableMap.of(), 0);
   }
 
   @Test public void deletesSecret() throws IOException {

@@ -8,6 +8,7 @@ import com.google.common.io.Resources;
 import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
@@ -16,6 +17,7 @@ import java.util.Optional;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
+import keywhiz.api.ApiDate;
 import keywhiz.api.automation.v2.CreateGroupRequestV2;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
@@ -124,6 +126,11 @@ public class SecretResourceTest {
     // TODO: check different metadata, name, location
   }
 
+
+  //---------------------------------------------------------------------------------------
+  // secretInfo
+  //---------------------------------------------------------------------------------------
+
   @Test public void secretInfo_notFound() throws Exception {
     Request get = clientRequest("/automation/v2/secrets/non-existent").get().build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
@@ -145,12 +152,16 @@ public class SecretResourceTest {
     assertThat(response.createdBy()).isEqualTo("client");
     assertThat(response.description()).isEqualTo("desc");
     assertThat(response.type()).isEqualTo("password");
+    assertThat(response.metadata()).isEqualTo(ImmutableMap.of("owner", "root", "mode", "0440"));
 
     // These values are left out for a series lookup as they pertain to a specific secret.
     assertThat(response.content()).isEmpty();
     assertThat(response.size().longValue()).isZero();
-    assertThat(response.metadata()).isEmpty();
   }
+
+  //---------------------------------------------------------------------------------------
+  // secretGroupsListing
+  //---------------------------------------------------------------------------------------
 
   @Test public void secretGroupsListing_notFound() throws Exception {
     Request get = clientRequest("/automation/v2/secrets/non-existent/groups").get().build();
@@ -171,6 +182,10 @@ public class SecretResourceTest {
 
     assertThat(groupsListing("secret7")).containsOnly("group7a", "group7b");
   }
+
+  //---------------------------------------------------------------------------------------
+  // modifySecretGroups
+  //---------------------------------------------------------------------------------------
 
   @Test public void modifySecretGroups_notFound() throws Exception {
     ModifyGroupsRequestV2 request = ModifyGroupsRequestV2.builder().build();
@@ -200,6 +215,10 @@ public class SecretResourceTest {
     assertThat(groups).containsOnly("group8b", "group8c");
   }
 
+  //---------------------------------------------------------------------------------------
+  // deleteSecretSeries
+  //---------------------------------------------------------------------------------------
+
   @Test public void deleteSecretSeries_notFound() throws Exception {
     assertThat(deleteSeries("non-existent").code()).isEqualTo(404);
   }
@@ -218,6 +237,10 @@ public class SecretResourceTest {
     assertThat(deleteSeries("secret12").code()).isEqualTo(404);
   }
 
+  //---------------------------------------------------------------------------------------
+  // secretListing
+  //---------------------------------------------------------------------------------------
+
   @Test public void secretListing_success() throws Exception {
     // Listing without secret16
     assertThat(listing()).doesNotContain("secret16");
@@ -225,12 +248,95 @@ public class SecretResourceTest {
     // Sample secret
     create(CreateSecretRequestV2.builder()
         .name("secret16")
+        .description("test secret 16")
         .content(encoder.encodeToString("supa secret16".getBytes(UTF_8)))
         .build());
 
     // Listing with secret16
     assertThat(listing()).contains("secret16");
+
+    List<SanitizedSecret> secrets = listingV2();
+    boolean found = false;
+    for (SanitizedSecret s : secrets) {
+      if (s.name().equals("secret16")) {
+        found = true;
+        assertThat(s.description().equals("test secret 16"));
+      }
+    }
+    assertThat(found).isTrue();
   }
+
+  @Test public void secretListingBatch_success() throws Exception {
+    // Listing without secret23, 24, 25
+    String name1 = "secret23";
+    String name2 = "secret24";
+    String name3 = "secret25";
+    List<String> s = listing();
+    assertThat(s).doesNotContain(name1);
+    assertThat(s).doesNotContain(name2);
+    assertThat(s).doesNotContain(name3);
+
+    // create groups
+    createGroup("group16a");
+    createGroup("group16b");
+
+    // get current time to calculate timestamps off for expiry
+    long now = System.currentTimeMillis() / 1000L;
+
+    // add some secrets
+    create(CreateSecretRequestV2.builder()
+        .name(name1)
+        .content(encoder.encodeToString("supa secret17".getBytes(UTF_8)))
+        .expiry(now + 86400 * 3)
+        .groups("group16a", "group16b")
+        .build());
+
+    create(CreateSecretRequestV2.builder()
+        .name(name2)
+        .content(encoder.encodeToString("supa secret18".getBytes(UTF_8)))
+        .expiry(now + 86400)
+        .groups("group16a")
+        .build());
+
+    create(CreateSecretRequestV2.builder()
+        .name(name3)
+        .content(encoder.encodeToString("supa secret19".getBytes(UTF_8)))
+        .expiry(now + 86400 * 2)
+        .groups("group16b")
+        .build());
+
+    // check limiting by batch (hard to test because the batch results heavily depend on other
+    // tests, which may be run in parallel and often execute fast enough that different tests'
+    // secrets have the same creation time as the secrets created in this test)
+    List<String> s1 = listBatch(0, 2, false);
+    assertThat(s1.size()).isEqualTo(2);
+
+    List<SanitizedSecret> s3 = listBatchV2(0, 2, true);
+    assertThat(s3.size()).isEqualTo(2);
+  }
+
+  @Test public void secretListingBatch_failure() throws Exception {
+    // check that negative inputs fail
+    Request get = clientRequest(String.format("/automation/v2/secrets?idx=%d&num=%d&newestFirst=%s", -1, 3, false)).get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(400);
+
+    get = clientRequest(String.format("/automation/v2/secrets?idx=%d&num=%d&newestFirst=%s", 0, -3, true)).get().build();
+    httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(400);
+
+    get = clientRequest(String.format("/automation/v2/secrets/v2?idx=%d&num=%d&newestFirst=%s", -1, 3, false)).get().build();
+    httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(400);
+
+    get = clientRequest(String.format("/automation/v2/secrets/v2?idx=%d&num=%d&newestFirst=%s", 0, -3, true)).get().build();
+    httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(400);
+  }
+
+  //---------------------------------------------------------------------------------------
+  // backfillExpiration
+  //---------------------------------------------------------------------------------------
 
   @Test
   public void backfillExpirationTest() throws Exception {
@@ -283,6 +389,10 @@ public class SecretResourceTest {
     details = lookup("keystore.jceks");
     assertThat(details.expiry()).isEqualTo(1681596851);
   }
+
+  //---------------------------------------------------------------------------------------
+  // secretListingExpiry
+  //---------------------------------------------------------------------------------------
 
   @Test public void secretListingExpiry_success() throws Exception {
     // Listing without secret17,18,19
@@ -341,6 +451,10 @@ public class SecretResourceTest {
     assertThat(s4.get(1).expiry()).isEqualTo(now + 86400 * 2);
   }
 
+  //---------------------------------------------------------------------------------------
+  // secretVersions
+  //---------------------------------------------------------------------------------------
+
   @Test public void secretVersionListing_notFound() throws Exception {
     Request put = clientRequest("/automation/v2/secrets/non-existent/versions/0-0").build();
     Response httpResponse = mutualSslClient.newCall(put).execute();
@@ -389,6 +503,10 @@ public class SecretResourceTest {
     checkSecretVersions(versions, "secret20", totalVersions, totalVersions / 4,
         totalVersions / 2);
   }
+
+  //---------------------------------------------------------------------------------------
+  // resetSecretVersion
+  //---------------------------------------------------------------------------------------
 
   @Test public void secretChangeVersion_notFound() throws Exception {
     Request post =
@@ -473,11 +591,11 @@ public class SecretResourceTest {
 
     // Get an invalid version of this secret
     versions = listVersions(name, 0, totalVersions);
-    Optional<Long> maxValidVersion = versions.stream().map(v -> v.version()).max(Long::compare);
+    Optional<Long> maxValidVersion = versions.stream().map(SecretDetailResponseV2::version).max(Long::compare);
 
     if (maxValidVersion.isPresent()) {
       // Reset the current version to this version
-      Request post = clientRequest("/automation/v2/secrets/secret22/setversion").post(
+      Request post = clientRequest(String.format("/automation/v2/secrets/%s/setversion", name)).post(
           RequestBody.create(JSON, mapper.writeValueAsString(SetSecretVersionRequestV2.builder()
               .name(name)
               .version(maxValidVersion.get() + 1)
@@ -524,6 +642,10 @@ public class SecretResourceTest {
     }
   }
 
+  //---------------------------------------------------------------------------------------
+  // helper functions for tests
+  //---------------------------------------------------------------------------------------
+
   private Response createGroup(String name) throws IOException {
     GroupResourceTest groupResourceTest = new GroupResourceTest();
     groupResourceTest.mutualSslClient = mutualSslClient;
@@ -554,6 +676,30 @@ public class SecretResourceTest {
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
     return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>() {
+    });
+  }
+
+  List<String> listBatch(int idx, int num, boolean newestFirst) throws IOException {
+    Request get = clientRequest(String.format("/automation/v2/secrets?idx=%d&num=%d&newestFirst=%s", idx, num, newestFirst)).get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>() {
+    });
+  }
+
+  List<SanitizedSecret> listingV2() throws IOException {
+    Request get = clientRequest("/automation/v2/secrets/v2").get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<SanitizedSecret>>() {
+    });
+  }
+
+  List<SanitizedSecret> listBatchV2(int idx, int num, boolean newestFirst) throws IOException {
+    Request get = clientRequest(String.format("/automation/v2/secrets/v2?idx=%d&num=%d&newestFirst=%s", idx, num, newestFirst)).get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<SanitizedSecret>>() {
     });
   }
 
@@ -590,7 +736,7 @@ public class SecretResourceTest {
   private List<SecretDetailResponseV2> listVersions(String name, int versionIdx, int numVersions)
       throws IOException {
     Request get = clientRequest(
-        format("/automation/v2/secrets/%s/versions/%d-%d", name, versionIdx, numVersions)).get()
+        format("/automation/v2/secrets/%s/versions?versionIdx=%d&numVersions=%d", name, versionIdx, numVersions)).get()
         .build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);

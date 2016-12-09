@@ -18,6 +18,7 @@ package keywhiz.service.daos;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
+import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
@@ -34,6 +36,8 @@ import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.api.model.SecretVersion;
 import keywhiz.jooq.tables.Secrets;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.crypto.ContentCryptographer;
+import keywhiz.service.crypto.ContentEncodingException;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import org.jooq.Configuration;
@@ -44,6 +48,7 @@ import org.jooq.impl.DSL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 
@@ -57,16 +62,18 @@ public class SecretDAO {
   private final DSLContext dslContext;
   private final SecretContentDAOFactory secretContentDAOFactory;
   private final SecretSeriesDAOFactory secretSeriesDAOFactory;
+  private final ContentCryptographer cryptographer;
 
   private SecretDAO(DSLContext dslContext, SecretContentDAOFactory secretContentDAOFactory,
-      SecretSeriesDAOFactory secretSeriesDAOFactory) {
+      SecretSeriesDAOFactory secretSeriesDAOFactory, ContentCryptographer cryptographer) {
     this.dslContext = dslContext;
     this.secretContentDAOFactory = secretContentDAOFactory;
     this.secretSeriesDAOFactory = secretSeriesDAOFactory;
+    this.cryptographer = cryptographer;
   }
 
   @VisibleForTesting
-  public long createSecret(String name, String encryptedSecret,
+  public long createSecret(String name, String encryptedSecret, String hmac,
       String creator, Map<String, String> metadata, long expiry, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
     return dslContext.transactionResult(configuration -> {
@@ -87,7 +94,7 @@ public class SecretDAO {
             generationOptions);
       }
 
-      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, creator, metadata, expiry);
+      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, hmac, creator, metadata, expiry);
       secretSeriesDAO.setCurrentVersion(secretId, secretContentId);
 
       return secretId;
@@ -95,9 +102,9 @@ public class SecretDAO {
   }
 
   @VisibleForTesting
-  public long createOrUpdateSecret(String name, String encryptedSecret, String creator, Map<String, String> metadata,
-                                   long expiry, String description, @Nullable String type,
-                                   @Nullable Map<String, String> generationOptions) {
+  public long createOrUpdateSecret(String name, String encryptedSecret, String hmac, String creator,
+      Map<String, String> metadata, long expiry, String description, @Nullable String type,
+      @Nullable Map<String, String> generationOptions) {
     return dslContext.transactionResult(configuration -> {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
@@ -112,7 +119,46 @@ public class SecretDAO {
         secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type, generationOptions);
       }
 
-      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, creator, metadata, expiry);
+      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, hmac, creator, metadata, expiry);
+      secretSeriesDAO.setCurrentVersion(secretId, secretContentId);
+
+      return secretId;
+    });
+  }
+
+  @VisibleForTesting
+  public long partialUpdateSecret(String name, String creator, PartialUpdateSecretRequestV2 request) {
+    return dslContext.transactionResult(configuration -> {
+      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
+      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+
+      // Get the current version of the secret, throwing exceptions if it is not found
+      SecretSeries secretSeries = secretSeriesDAO.getSecretSeriesByName(name).orElseThrow(
+          NotFoundException::new);
+      Long currentVersion = secretSeries.currentVersion().orElseThrow(NotFoundException::new);
+      SecretContent secretContent = secretContentDAO.getSecretContentById(currentVersion).orElseThrow(NotFoundException::new);
+
+      long secretId = secretSeries.id();
+
+      // Set the fields to the original series and current version's values or the request values if provided
+      String description = request.descriptionPresent() ? request.description() : secretSeries.description();
+      String type = request.typePresent() ? request.type() : secretSeries.type().orElse("");
+      ImmutableMap<String, String> metadata = request.metadataPresent() ? request.metadata() : secretContent.metadata();
+      Long expiry = request.expiryPresent() ? request.expiry() : secretContent.expiry();
+      String encryptedContent = secretContent.encryptedContent();
+      String hmac = secretContent.hmac();
+      // Mirrors hmac-creation in SecretController
+      if (request.contentPresent()) {
+        hmac = cryptographer.computeHmac(request.content().getBytes(UTF_8)); // Compute HMAC on base64 encoded data
+        if (hmac == null) {
+          throw new ContentEncodingException("Error encoding content for SecretBuilder!");
+        }
+        encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(request.content());
+      }
+
+      secretSeriesDAO.updateSecretSeries(secretId, name, creator, description, type, secretSeries.generationOptions());
+
+      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedContent, hmac, creator, metadata, expiry);
       secretSeriesDAO.setCurrentVersion(secretId, secretContentId);
 
       return secretId;
@@ -221,6 +267,29 @@ public class SecretDAO {
   }
 
   /**
+   * @param idx the first index to select in a list of secrets sorted by creation time
+   * @param num the number of secrets after idx to select in the list of secrets
+   * @param newestFirst if true, order the secrets from newest creation time to oldest
+   * @return A list of secrets
+   */
+  public ImmutableList<SecretSeriesAndContent> getSecretsBatched(int idx, int num, boolean newestFirst) {
+    return dslContext.transactionResult(configuration -> {
+      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
+      SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+
+      ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
+
+      for (SecretSeries series : secretSeriesDAO.getSecretSeriesBatched(idx, num, newestFirst)) {
+        SecretContent content = secretContentDAO.getSecretContentById(series.currentVersion().get()).get();
+        SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
+        secretsBuilder.add(seriesAndContent);
+      }
+
+      return secretsBuilder.build();
+    });
+  }
+
+  /**
    * @param name of secret series to look up secrets by.
    * @param versionIdx the first index to select in a list of versions sorted by creation time
    * @param numVersions the number of versions after versionIdx to select in the list of versions
@@ -291,27 +360,30 @@ public class SecretDAO {
     private final DSLContext readonlyJooq;
     private final SecretContentDAOFactory secretContentDAOFactory;
     private final SecretSeriesDAOFactory secretSeriesDAOFactory;
+    private final ContentCryptographer cryptographer;
 
     @Inject public SecretDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
         SecretContentDAOFactory secretContentDAOFactory,
-        SecretSeriesDAOFactory secretSeriesDAOFactory) {
+        SecretSeriesDAOFactory secretSeriesDAOFactory,
+        ContentCryptographer cryptographer) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.secretContentDAOFactory = secretContentDAOFactory;
       this.secretSeriesDAOFactory = secretSeriesDAOFactory;
+      this.cryptographer = cryptographer;
     }
 
     @Override public SecretDAO readwrite() {
-      return new SecretDAO(jooq, secretContentDAOFactory, secretSeriesDAOFactory);
+      return new SecretDAO(jooq, secretContentDAOFactory, secretSeriesDAOFactory, cryptographer);
     }
 
     @Override public SecretDAO readonly() {
-      return new SecretDAO(readonlyJooq, secretContentDAOFactory, secretSeriesDAOFactory);
+      return new SecretDAO(readonlyJooq, secretContentDAOFactory, secretSeriesDAOFactory, cryptographer);
     }
 
     @Override public SecretDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretDAO(dslContext, secretContentDAOFactory, secretSeriesDAOFactory);
+      return new SecretDAO(dslContext, secretContentDAOFactory, secretSeriesDAOFactory, cryptographer);
     }
   }
 }

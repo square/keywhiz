@@ -15,8 +15,10 @@ import java.util.Set;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -24,22 +26,26 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
+import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.api.model.SecretVersion;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
+import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.GroupDAO;
@@ -48,12 +54,15 @@ import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretController.SecretBuilder;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
+import keywhiz.service.daos.SecretSeriesDAO;
+import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -71,14 +80,19 @@ public class SecretResource {
   private final GroupDAO groupDAO;
   private final SecretDAO secretDAO;
   private final AuditLog auditLog;
+  private final SecretSeriesDAO secretSeriesDAO;
+  private final ContentCryptographer cryptographer;
 
   @Inject public SecretResource(SecretController secretController, AclDAOFactory aclDAOFactory,
-      GroupDAOFactory groupDAOFactory, SecretDAOFactory secretDAOFactory, AuditLog auditLog) {
+      GroupDAOFactory groupDAOFactory, SecretDAOFactory secretDAOFactory, AuditLog auditLog,
+      SecretSeriesDAOFactory secretSeriesDAOFactory, ContentCryptographer cryptographer) {
     this.secretController = secretController;
     this.aclDAO = aclDAOFactory.readwrite();
     this.groupDAO = groupDAOFactory.readwrite();
     this.secretDAO = secretDAOFactory.readwrite();
     this.auditLog = auditLog;
+    this.secretSeriesDAO = secretSeriesDAOFactory.readwrite();
+    this.cryptographer = cryptographer;
   }
 
   /**
@@ -146,8 +160,8 @@ public class SecretResource {
   @POST
   @Consumes(APPLICATION_JSON)
   public Response createOrUpdateSecret(@Auth AutomationClient automationClient,
-                                       @PathParam("name") String name,
-                                       @Valid CreateOrUpdateSecretRequestV2 request) {
+      @PathParam("name") String name,
+      @Valid CreateOrUpdateSecretRequestV2 request) {
     SecretBuilder builder = secretController
         .builder(name, request.content(), automationClient.getName(), request.expiry())
         .withDescription(request.description())
@@ -172,18 +186,98 @@ public class SecretResource {
   }
 
   /**
-   * Retrieve listing of secrets and metadata
+   * Updates a subset of the fields of an existing secret
    *
    * @excludeParams automationClient
-   * @responseMessage 200 List of secrets and metadata
+   * @param request JSON request to update a secret
+   *
+   * @responseMessage 201 Created secret and assigned to given groups
+   */
+  @Timed @ExceptionMetered
+  @Path("{name}/partialupdate")
+  @POST
+  @Consumes(APPLICATION_JSON)
+  public Response partialUpdateSecret(@Auth AutomationClient automationClient,
+      @PathParam("name") String name,
+      @Valid PartialUpdateSecretRequestV2 request) {
+    secretDAO.partialUpdateSecret(name, automationClient.getName(), request);
+
+    Map<String, String> extraInfo = new HashMap<>();
+    if (request.description() != null) {
+      extraInfo.put("description", request.description());
+    }
+    if (request.metadata() != null) {
+      extraInfo.put("metadata", request.metadata().toString());
+    }
+    if (request.expiry() != null) {
+      extraInfo.put("expiry", Long.toString(request.expiry()));
+    }
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_UPDATE, automationClient.getName(), name, extraInfo));
+
+    UriBuilder uriBuilder = UriBuilder.fromResource(SecretResource.class).path(name);
+
+    return Response.created(uriBuilder.build()).build();
+  }
+
+  /**
+   * Retrieve listing of secret names.  If "idx" and "num" are both provided, retrieve "num"
+   * names starting at "idx" from a list of secret names ordered by creation date, with
+   * order depending on "newestFirst" (which defaults to "true")
+   *
+   * @excludeParams automationClient
+   * @param idx the index from which to start retrieval in the list of secret names
+   * @param num the number of names to retrieve
+   * @param newestFirst whether to list the most-recently-created names first
+   * @responseMessage 200 List of secret names
+   * @responseMessage 400 Invalid (negative) idx or num
    */
   @Timed @ExceptionMetered
   @GET
   @Produces(APPLICATION_JSON)
-  public Iterable<String> secretListing(@Auth AutomationClient automationClient) {
+  public Iterable<String> secretListing(@Auth AutomationClient automationClient,
+      @QueryParam("idx") Integer idx, @QueryParam("num") Integer num,
+      @DefaultValue("true") @QueryParam("newestFirst") boolean newestFirst) {
+    if (idx != null && num != null) {
+      if (idx < 0 || num < 0) {
+        throw new BadRequestException(
+            "Index and num must both be positive when retrieving batched secrets!");
+      }
+      return secretController.getSecretsBatched(idx, num, newestFirst).stream()
+          .map(SanitizedSecret::name)
+          .collect(toList());
+    }
     return secretController.getSanitizedSecrets(null, null).stream()
         .map(SanitizedSecret::name)
         .collect(toSet());
+  }
+
+  /**
+   * Retrieve listing of secrets.  If "idx" and "num" are both provided, retrieve "num"
+   * names starting at "idx" from a list of secrets ordered by creation date, with
+   * order depending on "newestFirst" (which defaults to "true")
+   *
+   * @excludeParams automationClient
+   * @param idx the index from which to start retrieval in the list of secrets
+   * @param num the number of names to retrieve
+   * @param newestFirst whether to list the most-recently-created names first
+   * @responseMessage 200 List of secret names
+   * @responseMessage 400 Invalid (negative) idx or num
+   */
+  @Timed @ExceptionMetered
+  @Path("/v2")
+  @GET
+  @Produces(APPLICATION_JSON)
+  public Iterable<SanitizedSecret> secretListingV2(@Auth AutomationClient automationClient,
+      @QueryParam("idx") Integer idx, @QueryParam("num") Integer num,
+      @DefaultValue("true") @QueryParam("newestFirst") boolean newestFirst) {
+    if (idx != null && num != null) {
+      if (idx < 0 || num < 0) {
+        throw new BadRequestException(
+            "Index and num must both be positive when retrieving batched secrets!");
+      }
+      return secretController.getSecretsBatched(idx, num, newestFirst);
+    }
+    return secretController.getSanitizedSecrets(null, null);
   }
 
   /**
@@ -282,12 +376,35 @@ public class SecretResource {
   }
 
   /**
+   * Backfill content hmac for this secret.
+   */
+  @Timed @ExceptionMetered
+  @Path("{name}/backfill-hmac")
+  @POST
+  @Consumes(APPLICATION_JSON)
+  @Produces(APPLICATION_JSON)
+  public boolean backfillHmac(@Auth AutomationClient automationClient, @PathParam("name") String name, List<String> passwords) {
+    Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName(name);
+
+    if (!secret.isPresent()) {
+      return false;
+    }
+    logger.info("backfill-hmac {}: processing secret", name);
+
+    SecretContent secretContent = secret.get().content();
+    if (!secretContent.hmac().isEmpty()) {
+      return true; // No need to backfill
+    }
+    String hmac = cryptographer.computeHmac(cryptographer.decrypt(secretContent.encryptedContent()).getBytes(UTF_8));
+    return secretSeriesDAO.setHmac(secretContent.id(), hmac) == 1; // We expect only one row to be changed
+  }
+
+  /**
    * Retrieve listing of secrets expiring soon in a group
    *
    * @excludeParams automationClient
    * @param time timestamp for farthest expiry to include
    * @param name Group name
-   *
    * @responseMessage 200 List of secrets expiring soon in group
    */
   @Timed @ExceptionMetered
@@ -322,8 +439,7 @@ public class SecretResource {
     SecretSeriesAndContent secret = secretDAO.getSecretByName(name)
         .orElseThrow(NotFoundException::new);
     return SecretDetailResponseV2.builder()
-        .series(secret.series())
-        .expiry(secret.content().expiry())
+        .seriesAndContent(secret)
         .build();
   }
 
@@ -344,11 +460,11 @@ public class SecretResource {
    */
   @Timed @ExceptionMetered
   @GET
-  @Path("{name}/versions/{versionIdx}-{numVersions}")
+  @Path("{name}/versions")
   @Produces(APPLICATION_JSON)
   public Iterable<SecretDetailResponseV2> secretVersions(@Auth AutomationClient automationClient,
-      @PathParam("name") String name, @PathParam("versionIdx") int versionIdx,
-      @PathParam("numVersions") int numVersions) {
+      @PathParam("name") String name, @QueryParam("versionIdx") int versionIdx,
+      @QueryParam("numVersions") int numVersions) {
     ImmutableList<SecretVersion> versions =
         secretDAO.getSecretVersionsByName(name, versionIdx, numVersions)
             .orElseThrow(NotFoundException::new);

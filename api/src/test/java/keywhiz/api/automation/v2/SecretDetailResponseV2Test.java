@@ -23,6 +23,7 @@ import keywhiz.api.ApiDate;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.api.model.SecretVersion;
 import org.junit.Test;
 
@@ -37,6 +38,7 @@ public class SecretDetailResponseV2Test {
         .version(1)
         .description("secret-description")
         .content("YXNkZGFz")
+        .checksum("checksum")
         .createdAtSeconds(OffsetDateTime.parse("2013-03-28T21:23:04.159Z").toEpochSecond())
         .createdBy("creator-user")
         .type("text/plain")
@@ -56,6 +58,7 @@ public class SecretDetailResponseV2Test {
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .series(series)
         .content("YXNkZGFz")
+        .checksum("checksum")
         .metadata(ImmutableMap.of("owner", "root"))
         .expiry(1136214245)
         .build();
@@ -64,8 +67,27 @@ public class SecretDetailResponseV2Test {
         .isEqualTo(jsonFixture("fixtures/v2/secretDetailResponse.json"));
   }
 
+  @Test public void formsCorrectlyFromSecretSeriesAndContent() throws Exception {
+    SecretSeries series = SecretSeries.of(1, "secret-name", "secret-description",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user", "text/plain", null,
+        1L);
+    SecretContent content = SecretContent.of(1, 1, "YXNkZGFz", "checksum",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ImmutableMap.of("owner", "root"), 1136214245);
+    SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
+    SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
+        .seriesAndContent(seriesAndContent)
+        .content("YXNkZGFz")
+        .build();
+
+    assertThat(asJson(secretDetailResponse))
+        .isEqualTo(jsonFixture("fixtures/v2/secretDetailResponse.json"));
+  }
+
   @Test public void formsCorrectlyFromSecret() throws Exception {
-    Secret secret = new Secret(1, "secret-name", "secret-description", () -> "",
+    Secret secret = new Secret(1, "secret-name", "secret-description", () -> "", "checksum",
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
         ImmutableMap.of("owner", "root"), "text/plain", null,
@@ -88,6 +110,7 @@ public class SecretDetailResponseV2Test {
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .secretVersion(version)
         .content("YXNkZGFz")
+        .checksum("checksum")
         .build();
 
     assertThat(asJson(secretDetailResponse))

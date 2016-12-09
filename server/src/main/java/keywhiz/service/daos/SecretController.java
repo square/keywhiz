@@ -26,12 +26,14 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.service.crypto.ContentCryptographer;
+import keywhiz.service.crypto.ContentEncodingException;
 import keywhiz.service.crypto.SecretTransformer;
 
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 
 public class SecretController {
@@ -81,12 +83,30 @@ public class SecretController {
         .collect(toList());
   }
 
+  /**
+   * @param idx the first index to select in a list of secrets sorted by creation time
+   * @param num the number of secrets after idx to select in the list of secrets
+   * @param newestFirst if true, order the secrets from newest creation time to oldest
+   * @return A list of secret names
+   */
+  public List<SanitizedSecret> getSecretsBatched(int idx, int num, boolean newestFirst) {
+    checkArgument(idx >= 0, "Index must be positive when getting batched secret names!");
+    checkArgument(num >= 0, "Num must be positive when getting batched secret names!");
+    return secretDAO.getSecretsBatched(idx, num, newestFirst).stream()
+        .map(SanitizedSecret::fromSecretSeriesAndContent)
+        .collect(toList());
+  }
+
   public SecretBuilder builder(String name, String secret, String creator, long expiry) {
     checkArgument(!name.isEmpty());
     checkArgument(!secret.isEmpty());
     checkArgument(!creator.isEmpty());
+    String hmac = cryptographer.computeHmac(secret.getBytes(UTF_8)); // Compute HMAC on base64 encoded data
+    if (hmac == null) {
+      throw new ContentEncodingException("Error encoding content for SecretBuilder!");
+    }
     String encryptedSecret = cryptographer.encryptionKeyDerivedFrom(name).encrypt(secret);
-    return new SecretBuilder(transformer, secretDAO, name, encryptedSecret, creator, expiry);
+    return new SecretBuilder(transformer, secretDAO, name, encryptedSecret, hmac, creator, expiry);
   }
 
   /** Builder to generate new secret series or versions with. */
@@ -95,6 +115,7 @@ public class SecretController {
     private final SecretDAO secretDAO;
     private final String name;
     private final String encryptedSecret;
+    private final String hmac;
     private final String creator;
     private String description = "";
     private Map<String, String> metadata = ImmutableMap.of();
@@ -110,11 +131,12 @@ public class SecretController {
      * @param creator username responsible for creating this secret version.
      */
     private SecretBuilder(SecretTransformer transformer, SecretDAO secretDAO, String name, String encryptedSecret,
-        String creator, long expiry) {
+        String hmac, String creator, long expiry) {
       this.transformer = transformer;
       this.secretDAO = secretDAO;
       this.name = name;
       this.encryptedSecret = encryptedSecret;
+      this.hmac = hmac;
       this.creator = creator;
       this.expiry = expiry;
     }
@@ -155,13 +177,13 @@ public class SecretController {
      * @return an instance of the newly created secret.
      */
     public Secret create() {
-        secretDAO.createSecret(name, encryptedSecret, creator, metadata, expiry, description, type,
+        secretDAO.createSecret(name, encryptedSecret, hmac, creator, metadata, expiry, description, type,
             generationOptions);
         return transformer.transform(secretDAO.getSecretByName(name).get());
     }
 
     public Secret createOrUpdate() {
-      secretDAO.createOrUpdateSecret(name, encryptedSecret, creator, metadata, expiry, description, type,
+      secretDAO.createOrUpdateSecret(name, encryptedSecret, hmac, creator, metadata, expiry, description, type,
           generationOptions);
       return transformer.transform(secretDAO.getSecretByName(name).get());
     }

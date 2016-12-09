@@ -46,11 +46,11 @@ public class SecretsDeliveryResourceTest {
   SecretsDeliveryResource secretsDeliveryResource;
 
   Secret firstSecret = new Secret(0, "first_secret_name", null,
-      () -> Base64.getEncoder().encodeToString("first_secret_contents".getBytes(UTF_8)), NOW, null, NOW, null, null,
+      () -> Base64.getEncoder().encodeToString("first_secret_contents".getBytes(UTF_8)), "checksum", NOW, null, NOW, null, null,
       null, null, 0);
   SanitizedSecret sanitizedFirstSecret = SanitizedSecret.fromSecret(firstSecret);
   Secret secondSecret = new Secret(1, "second_secret_name", null,
-      () -> Base64.getEncoder().encodeToString("second_secret_contents".getBytes(UTF_8)), NOW, null, NOW, null, null,
+      () -> Base64.getEncoder().encodeToString("second_secret_contents".getBytes(UTF_8)), "checksum", NOW, null, NOW, null, null,
       null, null, 0);
   SanitizedSecret sanitizedSecondSecret = SanitizedSecret.fromSecret(secondSecret);
   Client client;

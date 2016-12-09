@@ -31,6 +31,7 @@ import keywhiz.api.ApiDate;
 import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
+import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -52,6 +53,7 @@ import org.mockito.junit.MockitoRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -59,6 +61,7 @@ import static org.mockito.Mockito.when;
 
 public class SecretsResourceTest {
   private static final ApiDate NOW = ApiDate.now();
+  private static final ApiDate NOWPLUS = new ApiDate(NOW.toEpochSecond() + 10000);
 
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
 
@@ -69,7 +72,7 @@ public class SecretsResourceTest {
   User user = User.named("user");
   ImmutableMap<String, String> emptyMap = ImmutableMap.of();
 
-  Secret secret = new Secret(22, "name", "desc", () -> "secret", NOW, "creator", NOW,
+  Secret secret = new Secret(22, "name", "desc", () -> "secret", "checksum", NOW, "creator", NOW,
       "updater", emptyMap, null, null, 1136214245);
 
   AuditLog auditLog = new SimpleLogger();
@@ -83,14 +86,34 @@ public class SecretsResourceTest {
 
   @Test
   public void listSecrets() {
-    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc", NOW, "user", NOW, "user",
+    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "checksum", "desc", NOW, "user", NOW, "user",
         emptyMap, null, null, 1136214245);
-    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "desc", NOW, "user", NOW, "user",
+    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "checksum", "desc", NOW, "user", NOW, "user",
         emptyMap, null, null, 1136214245);
     when(secretController.getSanitizedSecrets(null, null)).thenReturn(ImmutableList.of(secret1, secret2));
 
     List<SanitizedSecret> response = resource.listSecrets(user);
     assertThat(response).containsOnly(secret1, secret2);
+  }
+
+  @Test
+  public void listSecretsBatched() {
+    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc", "checksum", NOW, "user", NOW, "user",
+        emptyMap, null, null, 1136214245);
+    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "desc", "checksum", NOWPLUS, "user", NOWPLUS, "user",
+        emptyMap, null, null, 1136214245);
+    when(secretController.getSecretsBatched(0, 1, false)).thenReturn(ImmutableList.of(secret1));
+    when(secretController.getSecretsBatched(0, 1, true)).thenReturn(ImmutableList.of(secret2));
+    when(secretController.getSecretsBatched(1, 1, false)).thenReturn(ImmutableList.of(secret2));
+
+    List<SanitizedSecret> response = resource.listSecretsBatched(user, 0, 1, false);
+    assertThat(response).containsOnly(secret1);
+
+    response = resource.listSecretsBatched(user, 1, 1, false);
+    assertThat(response).containsOnly(secret2);
+
+    response = resource.listSecretsBatched(user, 0, 1, true);
+    assertThat(response).containsOnly(secret2);
   }
 
   @Test
@@ -135,6 +158,24 @@ public class SecretsResourceTest {
         .containsExactly(new URI("/admin/secrets/" + secret.getName()));
   }
 
+  @Test
+  public void partialUpdateSecret() throws Exception {
+    when(secretController.getSecretById(secret.getId())).thenReturn(Optional.of(secret));
+
+    PartialUpdateSecretRequestV2 req = PartialUpdateSecretRequestV2.builder()
+        .description(secret.getDescription())
+        .content(secret.getSecret())
+        .build();
+
+    when(secretDAO.partialUpdateSecret(eq(secret.getName()), any(), eq(req))).thenReturn(
+        secret.getId());
+
+    Response response = resource.partialUpdateSecret(user, secret.getName(), req);
+
+    assertThat(response.getStatus()).isEqualTo(201);
+    assertThat(response.getMetadata().get(HttpHeaders.LOCATION))
+        .containsExactly(new URI("/admin/secrets/" + secret.getName() + "/partialupdate"));
+  }
 
   @Test public void canDelete() {
     when(secretController.getSecretById(0xdeadbeef)).thenReturn(Optional.of(secret));

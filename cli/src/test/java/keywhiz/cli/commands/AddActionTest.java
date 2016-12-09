@@ -28,6 +28,7 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.cli.configs.AddActionConfig;
+import keywhiz.cli.configs.AddOrUpdateActionConfig;
 import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.NotFoundException;
 import org.junit.Before;
@@ -37,7 +38,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,7 +55,7 @@ public class AddActionTest {
 
   Client client = new Client(4, "newClient", null, null, null, null, null, null, true, false);
   Group group = new Group(4, "newGroup", null, null, null, null, null, null);
-  Secret secret = new Secret(15, "newSecret", null, () -> "c2VjcmV0MQ==", NOW, null, NOW, null, null, null,
+  Secret secret = new Secret(15, "newSecret", null, () -> "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null, null, null,
       ImmutableMap.of(), 0);
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
   SecretDetailResponse secretDetailResponse = SecretDetailResponse.fromSecret(secret, null, null);
@@ -74,7 +74,7 @@ public class AddActionTest {
     when(keywhizClient.getGroupByName(group.getName())).thenThrow(new NotFoundException());
 
     addAction.run();
-    verify(keywhizClient).createGroup(addActionConfig.name, null, null);
+    verify(keywhizClient).createGroup(addActionConfig.name, "", ImmutableMap.of());
   }
 
   @Test

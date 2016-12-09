@@ -53,12 +53,13 @@ import static org.jooq.impl.DSL.val;
 /**
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
  */
-class SecretSeriesDAO {
+public class SecretSeriesDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretSeriesMapper secretSeriesMapper;
 
-  private SecretSeriesDAO(DSLContext dslContext, ObjectMapper mapper, SecretSeriesMapper secretSeriesMapper) {
+  private SecretSeriesDAO(DSLContext dslContext, ObjectMapper mapper,
+      SecretSeriesMapper secretSeriesMapper) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretSeriesMapper = secretSeriesMapper;
@@ -92,8 +93,9 @@ class SecretSeriesDAO {
     return r.getId();
   }
 
-  void updateSecretSeries(long secretId, String name, String creator, String description, @Nullable String type,
-                          @Nullable Map<String, String> generationOptions) {
+  void updateSecretSeries(long secretId, String name, String creator, String description,
+      @Nullable String type,
+      @Nullable Map<String, String> generationOptions) {
     long now = OffsetDateTime.now().toEpochSecond();
     if (generationOptions == null) {
       generationOptions = ImmutableMap.of();
@@ -122,6 +124,13 @@ class SecretSeriesDAO {
 
     return dslContext.update(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.EXPIRY, minExpiration)
+        .where(SECRETS_CONTENT.ID.eq(secretContentId))
+        .execute();
+  }
+
+  public int setHmac(long secretContentId, String hmac) {
+    return dslContext.update(SECRETS_CONTENT)
+        .set(SECRETS_CONTENT.CONTENT_HMAC, hmac)
         .where(SECRETS_CONTENT.ID.eq(secretContentId))
         .execute();
   }
@@ -182,6 +191,25 @@ class SecretSeriesDAO {
     return ImmutableList.copyOf(r);
   }
 
+  public ImmutableList<SecretSeries> getSecretSeriesBatched(int idx, int num, boolean newestFirst) {
+    SelectQuery<Record> select = dslContext
+        .select()
+        .from(SECRETS)
+        .join(SECRETS_CONTENT)
+        .on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID))
+        .where(SECRETS.CURRENT.isNotNull())
+        .getQuery();
+    if (newestFirst) {
+      select.addOrderBy(SECRETS.CREATEDAT.desc());
+    } else {
+      select.addOrderBy(SECRETS.CREATEDAT.asc());
+    }
+    select.addLimit(idx, num);
+
+    List<SecretSeries> r = select.fetchInto(SECRETS).map(secretSeriesMapper);
+    return ImmutableList.copyOf(r);
+  }
+
   public void deleteSecretSeriesByName(String name) {
     long now = OffsetDateTime.now().toEpochSecond();
     dslContext.transaction(configuration -> {
@@ -207,16 +235,16 @@ class SecretSeriesDAO {
     dslContext.transaction(configuration -> {
       DSL.using(configuration)
           .update(SECRETS)
-          .set(SECRETS.CURRENT, (Long)null)
+          .set(SECRETS.CURRENT, (Long) null)
           .set(SECRETS.UPDATEDAT, now)
           .where(SECRETS.ID.eq(id))
           .execute();
 
-       DSL.using(configuration)
-           .delete(ACCESSGRANTS)
-           .where(ACCESSGRANTS.SECRETID.eq(id))
-           .execute();
-      });
+      DSL.using(configuration)
+          .delete(ACCESSGRANTS)
+          .where(ACCESSGRANTS.SECRETID.eq(id))
+          .execute();
+    });
   }
 
   public static class SecretSeriesDAOFactory implements DAOFactory<SecretSeriesDAO> {
