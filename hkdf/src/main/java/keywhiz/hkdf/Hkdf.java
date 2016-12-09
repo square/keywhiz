@@ -16,15 +16,16 @@
 package keywhiz.hkdf;
 
 import com.sun.crypto.provider.SunJCE;
+
+import javax.annotation.Nullable;
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.SecureRandom;
-import javax.annotation.Nullable;
-import javax.crypto.Mac;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 
 import static java.util.Objects.requireNonNull;
 
@@ -148,10 +149,11 @@ public class Hkdf {
     Mac mac = initMac(key);
     for (int roundNum = 1; roundNum <= n; roundNum++) {
       mac.reset();
-      mac.update(hashRound);
-      mac.update(info);
-      mac.update((byte) roundNum);
-      hashRound = mac.doFinal();
+      ByteBuffer t = ByteBuffer.allocate(hashRound.length + info.length + 1);
+      t.put(hashRound);
+      t.put(info);
+      t.put((byte)roundNum);
+      hashRound = mac.doFinal(t.array());
       generatedBytes.put(hashRound);
     }
 
