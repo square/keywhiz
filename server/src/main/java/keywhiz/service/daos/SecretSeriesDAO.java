@@ -172,16 +172,15 @@ public class SecretSeriesDAO {
 
   public ImmutableList<SecretSeries> getSecretSeries(@Nullable Long expireMaxTime, Group group) {
     SelectQuery<Record> select = dslContext
-        .select().from(SECRETS).join(SECRETS_CONTENT).on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID)).getQuery();
+        .select().from(SECRETS).join(SECRETS_CONTENT).on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID))
+        .where(SECRETS.CURRENT.isNotNull()).getQuery();
 
     if (expireMaxTime != null && expireMaxTime > 0) {
-      select.addOrderBy(SECRETS_CONTENT.EXPIRY.asc());
+      select.addOrderBy(SECRETS_CONTENT.EXPIRY.asc().nullsLast());
       long now = System.currentTimeMillis() / 1000L;
       select.addConditions(SECRETS_CONTENT.EXPIRY.greaterThan(now));
       select.addConditions(SECRETS_CONTENT.EXPIRY.lessOrEqual(expireMaxTime));
     }
-
-    select.addConditions(SECRETS.CURRENT.isNotNull().and(SECRETS_CONTENT.EXPIRY.isNotNull()));
 
     if (group != null) {
       select.addJoin(ACCESSGRANTS, SECRETS.ID.eq(ACCESSGRANTS.SECRETID));
