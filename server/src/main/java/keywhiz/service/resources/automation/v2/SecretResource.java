@@ -313,7 +313,8 @@ public class SecretResource {
   @Produces(APPLICATION_JSON)
   public Iterable<SanitizedSecret> secretListingExpiringV2(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
     List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(time, null);
-    return secrets;
+    return secrets.stream()
+        .collect(toList());
   }
 
   /**
