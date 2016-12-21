@@ -25,6 +25,7 @@ import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.SanitizedSecret;
+import keywhiz.api.model.SanitizedSecretWithGroups;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -449,6 +450,15 @@ public class SecretResourceTest {
     assertThat(s4.get(0).expiry()).isEqualTo(now + 86400);
     assertThat(s4.get(1).name()).isEqualTo("secret19");
     assertThat(s4.get(1).expiry()).isEqualTo(now + 86400 * 2);
+
+    List<SanitizedSecretWithGroups> s5 = listExpiringV3(now + 86400 * 2, null);
+    assertThat(s5).hasSize(2);
+    assertThat(s5.get(0).secret().name()).isEqualTo("secret18");
+    assertThat(s5.get(0).secret().expiry()).isEqualTo(now + 86400);
+    assertThat(s5.get(0).groups()).containsExactly("group15a");
+    assertThat(s5.get(1).secret().name()).isEqualTo("secret19");
+    assertThat(s5.get(1).secret().expiry()).isEqualTo(now + 86400 * 2);
+    assertThat(s5.get(1).groups()).containsExactly("group15b");
   }
 
   //---------------------------------------------------------------------------------------
@@ -730,6 +740,21 @@ public class SecretResourceTest {
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
     return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<SanitizedSecret>>() {
+    });
+  }
+
+  List<SanitizedSecretWithGroups> listExpiringV3(Long time, String groupName) throws IOException {
+    String requestURL = "/automation/v2/secrets/expiring/v3/";
+    if (time != null && time > 0) {
+      requestURL += time.toString() + "/";
+    }
+    if (groupName != null && groupName.length() > 0) {
+      requestURL += groupName;
+    }
+    Request get = clientRequest(requestURL).get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<SanitizedSecretWithGroups>>() {
     });
   }
 

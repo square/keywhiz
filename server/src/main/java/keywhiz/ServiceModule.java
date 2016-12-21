@@ -39,6 +39,8 @@ import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoModule;
 import keywhiz.service.crypto.SecretTransformer;
+import keywhiz.service.daos.GroupDAO;
+import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.utility.DSLContexts;
@@ -126,14 +128,18 @@ public class ServiceModule extends AbstractModule {
   }
 
   @Provides @Singleton SecretController secretController(SecretTransformer transformer,
-      ContentCryptographer cryptographer, SecretDAOFactory secretDAOFactory) {
-    return new SecretController(transformer, cryptographer, secretDAOFactory.readwrite());
+      ContentCryptographer cryptographer, SecretDAOFactory secretDAOFactory,
+      GroupDAOFactory groupDAOFactory) {
+    return new SecretController(transformer, cryptographer, secretDAOFactory.readwrite(),
+        groupDAOFactory.readwrite());
   }
 
   @Provides @Singleton
   @Readonly SecretController readonlySecretController(SecretTransformer transformer,
-      ContentCryptographer cryptographer, SecretDAOFactory secretDAOFactory) {
-    return new SecretController(transformer, cryptographer, secretDAOFactory.readonly());
+      ContentCryptographer cryptographer, SecretDAOFactory secretDAOFactory,
+      GroupDAOFactory groupDAOFactory) {
+    return new SecretController(transformer, cryptographer, secretDAOFactory.readonly(),
+        groupDAOFactory.readonly());
   }
 
   @Provides @Singleton
