@@ -16,6 +16,7 @@
 
 package keywhiz.service.daos;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,9 @@ import java.util.Optional;
 
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
+import keywhiz.api.model.SanitizedSecretWithGroups;
 import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.ContentEncodingException;
 import keywhiz.service.crypto.SecretTransformer;
@@ -35,17 +38,22 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static keywhiz.api.model.SanitizedSecret.fromSecretSeriesAndContent;
+import static keywhiz.api.model.SanitizedSecretWithGroups.fromSecretSeriesAndContentAndGroups;
 
 public class SecretController {
   private final SecretTransformer transformer;
   private final ContentCryptographer cryptographer;
   private final SecretDAO secretDAO;
+  private final GroupDAO groupDAO;
 
   public SecretController(SecretTransformer transformer, ContentCryptographer cryptographer,
-      SecretDAO secretDAO) {
+      SecretDAO secretDAO, GroupDAO groupDAO) {
     this.transformer = transformer;
     this.cryptographer = cryptographer;
     this.secretDAO = secretDAO;
+    this.groupDAO = groupDAO;
   }
 
   /**
@@ -73,6 +81,21 @@ public class SecretController {
     return secretDAO.getSecrets(expireMaxTime, group).stream()
         .map(SanitizedSecret::fromSecretSeriesAndContent)
         .collect(toList());
+  }
+  
+  /**
+   * @param expireMaxTime timestamp for farthest expiry to include
+   * @return all existing sanitized secrets and their groups matching criteria.
+   * */
+  public List<SanitizedSecretWithGroups> getExpiringSanitizedSecrets(@Nullable Long expireMaxTime) {
+    ImmutableList<SecretSeriesAndContent> secrets = secretDAO.getSecrets(expireMaxTime, null);
+
+    Map<Long, SecretSeriesAndContent> secretIds = secrets.stream()
+        .collect(toMap(s -> s.series().id(), s -> s));
+
+    Map<Long, List<Group>> groupsForSecrets = groupDAO.getGroupsForSecrets(secretIds.keySet());
+
+    return secrets.stream().map(s -> fromSecretSeriesAndContentAndGroups(s, groupsForSecrets.get(s.series().id()))).collect(toList());
   }
 
   /** @return names of all existing sanitized secrets. */

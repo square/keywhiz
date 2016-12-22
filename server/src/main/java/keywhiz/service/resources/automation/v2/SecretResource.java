@@ -38,6 +38,7 @@ import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
+import keywhiz.api.model.SanitizedSecretWithGroups;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeriesAndContent;
@@ -313,6 +314,23 @@ public class SecretResource {
   @Produces(APPLICATION_JSON)
   public Iterable<SanitizedSecret> secretListingExpiringV2(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
     List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(time, null);
+    return secrets;
+  }
+
+  /**
+   * Retrieve listing of secrets expiring soon
+   *
+   * @excludeParams automationClient
+   * @param time timestamp for farthest expiry to include
+   *
+   * @responseMessage 200 List of secrets expiring soon
+   */
+  @Timed @ExceptionMetered
+  @Path("expiring/v3/{time}")
+  @GET
+  @Produces(APPLICATION_JSON)
+  public Iterable<SanitizedSecretWithGroups> secretListingExpiringV3(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
+    List<SanitizedSecretWithGroups> secrets = secretController.getExpiringSanitizedSecrets(time);
     return secrets;
   }
 
