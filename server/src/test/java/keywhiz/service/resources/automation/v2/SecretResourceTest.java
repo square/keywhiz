@@ -14,6 +14,7 @@ import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
@@ -24,6 +25,7 @@ import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
+import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SanitizedSecretWithGroups;
 import okhttp3.OkHttpClient;
@@ -39,6 +41,7 @@ import org.junit.rules.RuleChain;
 import static java.lang.String.format;
 import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static keywhiz.TestClients.clientRequest;
 import static keywhiz.client.KeywhizClient.JSON;
@@ -455,10 +458,10 @@ public class SecretResourceTest {
     assertThat(s5).hasSize(2);
     assertThat(s5.get(0).secret().name()).isEqualTo("secret18");
     assertThat(s5.get(0).secret().expiry()).isEqualTo(now + 86400);
-    assertThat(s5.get(0).groups()).containsExactly("group15a");
+    assertThat(s5.get(0).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15a");
     assertThat(s5.get(1).secret().name()).isEqualTo("secret19");
     assertThat(s5.get(1).secret().expiry()).isEqualTo(now + 86400 * 2);
-    assertThat(s5.get(1).groups()).containsExactly("group15b");
+    assertThat(s5.get(1).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15b");
   }
 
   //---------------------------------------------------------------------------------------
