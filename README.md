@@ -17,10 +17,10 @@ See [CONTRIBUTING](CONTRIBUTING.md) for details on submitting patches.
 Build keywhiz: 
 
     # Build keywhiz for H2
-    mvn install -P h2
+    ./mvnw install -P h2
 
     # Build keywhiz for MySQL
-    mvn install -P mysql
+    ./mvnw install -P mysql
 
 Run Keywhiz:
 
@@ -48,7 +48,7 @@ Keywhiz uses [jOOQ](http://www.jooq.org/) to talk to its database.
 
 If you made changes to the database model and want to regenerate sources:
 
-    mvn install -pl model/ -Pgenerate-jooq-sources
+    ./mvnw install -pl model/ -Pgenerate-jooq-sources
 
 We recommend [IntelliJ IDEA](https://www.jetbrains.com/idea/) for development. 
 
