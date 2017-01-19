@@ -17,7 +17,10 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
@@ -183,6 +186,19 @@ public class AclDAOTest {
 
     aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
     assertThat(aclDAO.getGroupsFor(secret1)).containsOnly(group1, group2);
+  }
+
+  @Test public void getGroupsForSecrets() {
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId());
+    Map<Long, List<Group>> groupsForSecrets =
+        aclDAO.getGroupsForSecrets(ImmutableSet.of(secret1.getId(), secret2.getId()));
+
+    assertThat(groupsForSecrets.size()).isEqualTo(2);
+    assertThat(groupsForSecrets.get(secret1.getId())).containsOnly(group1, group2);
+    assertThat(groupsForSecrets.get(secret2.getId())).containsOnly(group1, group2);
   }
 
   @Test public void getGroupsForClient() {
