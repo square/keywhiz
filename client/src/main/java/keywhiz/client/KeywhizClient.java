@@ -278,8 +278,7 @@ public class KeywhizClient {
   /**
    * Maps some of the common HTTP errors to the corresponding exceptions.
    */
-  private void throwOnCommonError(Response response) throws IOException {
-    int status = response.code();
+  private void throwOnCommonError(int status) throws IOException {
     switch (status) {
       case HttpStatus.SC_BAD_REQUEST:
         throw new MalformedRequestException();
@@ -301,15 +300,24 @@ public class KeywhizClient {
     }
   }
 
+  private String makeCall(Request request) throws IOException {
+    Response response = client.newCall(request).execute();
+    try {
+      throwOnCommonError(response.code());
+    } catch (IOException e) {
+      response.body().close();
+      throw e;
+    }
+    return response.body().string();
+  }
+
   private String httpGet(HttpUrl url) throws IOException {
     Request request = new Request.Builder()
         .url(url)
         .get()
         .build();
 
-    Response response = client.newCall(request).execute();
-    throwOnCommonError(response);
-    return response.body().string();
+    return makeCall(request);
   }
 
   private String httpPost(HttpUrl url, Object content) throws IOException {
@@ -320,9 +328,7 @@ public class KeywhizClient {
         .addHeader(HttpHeaders.CONTENT_TYPE, JSON.toString())
         .build();
 
-    Response response = client.newCall(request).execute();
-    throwOnCommonError(response);
-    return response.body().string();
+    return makeCall(request);
   }
 
   private String httpPut(HttpUrl url) throws IOException {
@@ -331,9 +337,7 @@ public class KeywhizClient {
         .put(RequestBody.create(MediaType.parse("text/plain"), ""))
         .build();
 
-    Response response = client.newCall(request).execute();
-    throwOnCommonError(response);
-    return response.body().string();
+    return makeCall(request);
   }
 
   private String httpDelete(HttpUrl url) throws IOException {
@@ -342,8 +346,6 @@ public class KeywhizClient {
         .delete()
         .build();
 
-    Response response = client.newCall(request).execute();
-    throwOnCommonError(response);
-    return response.body().string();
+    return makeCall(request);
   }
 }
