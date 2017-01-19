@@ -109,29 +109,6 @@ public class GroupDAO {
     return Optional.ofNullable(r).map(groupMapper::map);
   }
 
-  public Map<Long, List<Group>> getGroupsForSecrets(Set<Long> secretIdList) {
-    List<Group> groups = dslContext.select().from(GROUPS)
-        .join(ACCESSGRANTS).on(ACCESSGRANTS.GROUPID.eq(GROUPS.ID))
-        .join(SECRETS).on(ACCESSGRANTS.SECRETID.eq(SECRETS.ID))
-        .where(SECRETS.ID.in(secretIdList))
-        .fetchInto(GROUPS).map(groupMapper);
-
-    Map<Long, Group> groupMap = groups.stream().collect(Collectors.toMap(Group::getId, g -> g));
-
-    Map<Long, List<Long>> secretsIdGroupsIdMap = dslContext.select().from(GROUPS)
-        .join(ACCESSGRANTS).on(ACCESSGRANTS.GROUPID.eq(GROUPS.ID))
-        .join(SECRETS).on(ACCESSGRANTS.SECRETID.eq(SECRETS.ID))
-        .where(SECRETS.ID.in(secretIdList))
-        .fetch().intoGroups(SECRETS.ID, GROUPS.ID);
-
-    ImmutableMap.Builder<Long, List<Group>> builder = ImmutableMap.builder();
-    for (Map.Entry<Long, List<Long>> entry : secretsIdGroupsIdMap.entrySet()) {
-      List<Group> groupList = entry.getValue().stream().map(groupMap::get).collect(toList());
-      builder.put(entry.getKey(), groupList);
-    }
-    return builder.build();
-  }
-
   public ImmutableSet<Group> getGroups() {
     List<Group> r = dslContext.selectFrom(GROUPS).fetch().map(groupMapper);
     return ImmutableSet.copyOf(r);

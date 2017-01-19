@@ -39,21 +39,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static keywhiz.api.model.SanitizedSecret.fromSecretSeriesAndContent;
 import static keywhiz.api.model.SanitizedSecretWithGroups.fromSecretSeriesAndContentAndGroups;
 
 public class SecretController {
   private final SecretTransformer transformer;
   private final ContentCryptographer cryptographer;
   private final SecretDAO secretDAO;
-  private final GroupDAO groupDAO;
+  private final AclDAO aclDAO;
 
   public SecretController(SecretTransformer transformer, ContentCryptographer cryptographer,
-      SecretDAO secretDAO, GroupDAO groupDAO) {
+      SecretDAO secretDAO, AclDAO aclDAO) {
     this.transformer = transformer;
     this.cryptographer = cryptographer;
     this.secretDAO = secretDAO;
-    this.groupDAO = groupDAO;
+    this.aclDAO = aclDAO;
   }
 
   /**
@@ -93,7 +92,7 @@ public class SecretController {
     Map<Long, SecretSeriesAndContent> secretIds = secrets.stream()
         .collect(toMap(s -> s.series().id(), s -> s));
 
-    Map<Long, List<Group>> groupsForSecrets = groupDAO.getGroupsForSecrets(secretIds.keySet());
+    Map<Long, List<Group>> groupsForSecrets = aclDAO.getGroupsForSecrets(secretIds.keySet());
 
     return secrets.stream().map(s -> fromSecretSeriesAndContentAndGroups(s, groupsForSecrets.get(s.series().id()))).collect(toList());
   }
