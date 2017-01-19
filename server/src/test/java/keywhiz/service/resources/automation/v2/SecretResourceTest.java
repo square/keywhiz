@@ -404,6 +404,7 @@ public class SecretResourceTest {
     assertThat(s).doesNotContain("secret17");
     assertThat(s).doesNotContain("secret18");
     assertThat(s).doesNotContain("secret19");
+    assertThat(s).doesNotContain("secret19a");
 
     // create groups
     createGroup("group15a");
@@ -434,6 +435,13 @@ public class SecretResourceTest {
         .groups("group15b")
         .build());
 
+    create(CreateSecretRequestV2.builder()
+        .name("secret19a")
+        .content(encoder.encodeToString("supa secret19a".getBytes(UTF_8)))
+        .expiry(now + 86400 * 2)
+        .build());
+
+
     // check limiting by group and expiry
     List<String> s1 = listExpiring(now + 86400 * 4, "group15a");
     assertThat(s1).contains("secret17");
@@ -448,20 +456,25 @@ public class SecretResourceTest {
     assertThat(s3).doesNotContain("secret17");
 
     List<SanitizedSecret> s4 = listExpiringV2(now + 86400 * 2, null);
-    assertThat(s4).hasSize(2);
+    assertThat(s4).hasSize(3);
     assertThat(s4.get(0).name()).isEqualTo("secret18");
     assertThat(s4.get(0).expiry()).isEqualTo(now + 86400);
     assertThat(s4.get(1).name()).isEqualTo("secret19");
     assertThat(s4.get(1).expiry()).isEqualTo(now + 86400 * 2);
+    assertThat(s4.get(2).name()).isEqualTo("secret19a");
+    assertThat(s4.get(2).expiry()).isEqualTo(now + 86400 * 2);
 
     List<SanitizedSecretWithGroups> s5 = listExpiringV3(now + 86400 * 2, null);
-    assertThat(s5).hasSize(2);
+    assertThat(s5).hasSize(3);
     assertThat(s5.get(0).secret().name()).isEqualTo("secret18");
     assertThat(s5.get(0).secret().expiry()).isEqualTo(now + 86400);
     assertThat(s5.get(0).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15a");
     assertThat(s5.get(1).secret().name()).isEqualTo("secret19");
     assertThat(s5.get(1).secret().expiry()).isEqualTo(now + 86400 * 2);
     assertThat(s5.get(1).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15b");
+    assertThat(s5.get(2).secret().name()).isEqualTo("secret19a");
+    assertThat(s5.get(2).secret().expiry()).isEqualTo(now + 86400 * 2);
+    assertThat(s5.get(2).groups()).isEmpty();
   }
 
   //---------------------------------------------------------------------------------------
