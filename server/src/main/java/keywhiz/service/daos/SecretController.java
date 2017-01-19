@@ -94,7 +94,14 @@ public class SecretController {
 
     Map<Long, List<Group>> groupsForSecrets = aclDAO.getGroupsForSecrets(secretIds.keySet());
 
-    return secrets.stream().map(s -> fromSecretSeriesAndContentAndGroups(s, groupsForSecrets.get(s.series().id()))).collect(toList());
+
+    return secrets.stream().map(s -> {
+      List<Group> groups = groupsForSecrets.get(s.series().id());
+      if (groups == null) {
+        groups = ImmutableList.of();
+      }
+      return fromSecretSeriesAndContentAndGroups(s, groups);
+    }).collect(toList());
   }
 
   /** @return names of all existing sanitized secrets. */
