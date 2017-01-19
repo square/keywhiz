@@ -60,6 +60,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
@@ -354,13 +355,11 @@ public class AclDAO {
   }
 
   public Map<Long, List<Group>> getGroupsForSecrets(Set<Long> secretIdList) {
-    List<Group> groups = dslContext.select().from(GROUPS)
+    Map<Long, Group> groupMap = dslContext.select().from(GROUPS)
         .join(ACCESSGRANTS).on(ACCESSGRANTS.GROUPID.eq(GROUPS.ID))
         .join(SECRETS).on(ACCESSGRANTS.SECRETID.eq(SECRETS.ID))
         .where(SECRETS.ID.in(secretIdList))
-        .fetchInto(GROUPS).map(groupMapper);
-
-    Map<Long, Group> groupMap = groups.stream().collect(Collectors.toMap(Group::getId, g -> g));
+        .fetchInto(GROUPS).map(groupMapper).stream().collect(Collectors.toMap(Group::getId, g -> g, (g1, g2) -> g1));
 
     Map<Long, List<Long>> secretsIdGroupsIdMap = dslContext.select().from(GROUPS)
         .join(ACCESSGRANTS).on(ACCESSGRANTS.GROUPID.eq(GROUPS.ID))
