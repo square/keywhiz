@@ -7,7 +7,7 @@
 #   docker build --rm --force-rm -t square/keywhiz .
 #
 # Basic usage:
-#   docker run -e KEYWHIZ_CONFIG=/path/to/config [COMMAND]
+#   docker run -e KEYWHIZ_CONFIG=/path/to/config square/keywhiz [COMMAND]
 #
 # If the KEYWHIZ_CONFIG environment variable is omitted, keywhiz
 # will run with the default development config. If COMMAND is
