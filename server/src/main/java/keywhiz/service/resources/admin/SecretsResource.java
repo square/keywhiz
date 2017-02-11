@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.BadRequestException;
@@ -68,6 +69,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
@@ -362,8 +364,15 @@ public class SecretsResource {
 
     logger.info("User '{}' deleting secret id={}, name='{}'", user, secretId, secret.get().getName());
 
+    // Get the groups for this secret, so they can be restored manually if necessary
+    Set<String> groups = aclDAO.getGroupsFor(secret.get()).stream().map(Group::getName).collect(toSet());
+
     secretDAO.deleteSecretsByName(secret.get().getName());
-    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_DELETE, user.getName(), secret.get().getName()));
+
+    // Record the deletion
+    Map<String, String> extraInfo = new HashMap<>();
+    extraInfo.put("groups", groups.toString());
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_DELETE, user.getName(), secret.get().getName(), extraInfo));
     return Response.noContent().build();
   }
 

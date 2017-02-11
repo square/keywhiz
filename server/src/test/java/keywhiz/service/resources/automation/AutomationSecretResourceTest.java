@@ -17,7 +17,11 @@ package keywhiz.service.resources.automation;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Optional;
+import java.util.Set;
 import keywhiz.api.ApiDate;
 import keywhiz.api.AutomationSecretResponse;
 import keywhiz.api.CreateSecretRequest;
@@ -28,6 +32,7 @@ import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.exceptions.ConflictException;
+import org.jetbrains.annotations.NotNull;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Rule;
@@ -105,23 +110,19 @@ public class AutomationSecretResourceTest {
 
   @Test
   public void deleteSecret() throws Exception {
-    SecretSeries secretSeries = SecretSeries.of(0, /* Set by DB */
-        "mySecret",
-        null,
-        NOW,
-        automation.getName(),
-        NOW,
-        automation.getName(),
-        null,
-        null,
-        null);
+    Secret secret = new Secret(0, "mySecret", null, (Secret.LazyString) () -> "meh",
+        "checksum", NOW, null, NOW, null, ImmutableMap.of(), null, null, 0);
 
-    when(secretDAO.getSecretByName(secretSeries.name()))
-        .thenReturn(Optional.of(SecretSeriesAndContent.of(secretSeries, SecretContent.of(123, secretSeries.id(), "meh",
-            "checksum", NOW, null, NOW, null, ImmutableMap.of(), 0))));
+    HashSet<Group> groups = new HashSet<>();
+    groups.add(new Group(0, "group1", "", NOW, null, NOW, null, null));
+    groups.add(new Group(0, "group2", "", NOW, null, NOW, null, null));
 
-    resource.deleteSecretSeries(automation, "mySecret");
-    verify(secretDAO).deleteSecretsByName(secretSeries.name());
+    when(secretController.getSecretByName(secret.getName()))
+        .thenReturn(Optional.of(secret));
+    when(aclDAO.getGroupsFor(secret)).thenReturn(groups);
+
+    resource.deleteSecretSeries(automation, secret.getName());
+    verify(secretDAO).deleteSecretsByName(secret.getName());
   }
 
   @Test(expected = ConflictException.class)
