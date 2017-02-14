@@ -33,19 +33,25 @@ public class SecretDeliveryResponse {
   private final String name;
   private final String secret;
   private final int secretLength;
+  private final String checksum;
   private final ApiDate creationDate;
+  private final ApiDate updateDate;
   private final ImmutableMap<String, String> metadata;
 
   public SecretDeliveryResponse(
       @JsonProperty("name") String name,
       @JsonProperty("secret") String secret,
       @JsonProperty("secretLength") int secretLength,
+      @JsonProperty("checksum") String checksum,
       @JsonProperty("creationDate") ApiDate creationDate,
+      @JsonProperty("updateDate") ApiDate updateDate,
       @JsonProperty("metadata") ImmutableMap<String, String> metadata) {
     this.name = name;
     this.secret = secret;
     this.secretLength = secretLength;
+    this.checksum = checksum;
     this.creationDate = creationDate;
+    this.updateDate = updateDate;
     this.metadata = metadata;
   }
 
@@ -54,7 +60,9 @@ public class SecretDeliveryResponse {
     return new SecretDeliveryResponse(secret.getDisplayName(),
         secret.getSecret(),
         decodedLength(secret.getSecret()),
+        secret.getChecksum(),
         secret.getCreatedAt(),
+        secret.getUpdatedAt(),
         secret.getMetadata());
   }
 
@@ -63,7 +71,9 @@ public class SecretDeliveryResponse {
     return new SecretDeliveryResponse(SanitizedSecret.displayName(sanitizedSecret),
         "",
         0,
+        sanitizedSecret.checksum(),
         sanitizedSecret.createdAt(),
+        sanitizedSecret.updatedAt(),
         sanitizedSecret.metadata());
   }
 
@@ -82,9 +92,19 @@ public class SecretDeliveryResponse {
     return secretLength;
   }
 
+  /** @return Secret checksum */
+  public String getChecksum() {
+    return checksum;
+  }
+
   /** @return ISO-8601 datetime the secret was created. */
   public ApiDate getCreationDate() {
     return creationDate;
+  }
+
+  /** @return ISO-8601 datetime the secret was last updated. */
+  public ApiDate getUpdateDate() {
+    return updateDate;
   }
 
   /** @return Arbitrary key-values, serialized with existing fields. */
@@ -95,8 +115,8 @@ public class SecretDeliveryResponse {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(getName(), getSecret(), getSecretLength(), getCreationDate(),
-        metadata);
+    return Objects.hashCode(getName(), getSecret(), getSecretLength(), getChecksum(),
+        getCreationDate(), getUpdateDate(), metadata);
   }
 
   @Override
@@ -106,7 +126,9 @@ public class SecretDeliveryResponse {
       if (Objects.equal(this.getName(), that.getName()) &&
           Objects.equal(this.getSecret(), that.getSecret()) &&
           this.getSecretLength() == that.getSecretLength() &&
+          Objects.equal(this.getChecksum(), that.getChecksum()) &&
           Objects.equal(this.getCreationDate(), that.getCreationDate()) &&
+          Objects.equal(this.getUpdateDate(), that.getUpdateDate()) &&
           Objects.equal(this.metadata, that.metadata)) {
         return true;
       }
@@ -120,7 +142,9 @@ public class SecretDeliveryResponse {
         .add("name", getName())
         .add("secret", "[REDACTED]")
         .add("secretLength", getSecretLength())
+        .add("checksum", getChecksum())
         .add("creationDate", getCreationDate())
+        .add("updateDate", getUpdateDate())
         .add("metadata", metadata)
         .toString();
   }
