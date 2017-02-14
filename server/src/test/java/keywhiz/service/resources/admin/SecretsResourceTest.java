@@ -22,6 +22,7 @@ import com.google.common.collect.Sets;
 import io.dropwizard.jersey.params.LongParam;
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.NotFoundException;
@@ -179,6 +180,10 @@ public class SecretsResourceTest {
 
   @Test public void canDelete() {
     when(secretController.getSecretById(0xdeadbeef)).thenReturn(Optional.of(secret));
+    HashSet<Group> groups = new HashSet<>();
+    groups.add(new Group(0, "group1", "", NOW, null, NOW, null, null));
+    groups.add(new Group(0, "group2", "", NOW, null, NOW, null, null));
+    when(aclDAO.getGroupsFor(secret)).thenReturn(groups);
 
     Response response = resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)));
     verify(secretDAO).deleteSecretsByName("name");

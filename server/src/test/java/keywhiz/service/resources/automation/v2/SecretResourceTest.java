@@ -233,6 +233,12 @@ public class SecretResourceTest {
         .name("secret12")
         .content(encoder.encodeToString("supa secret12".getBytes(UTF_8)))
         .build());
+    
+    createGroup("testGroup");
+    ModifyGroupsRequestV2 request = ModifyGroupsRequestV2.builder()
+        .addGroups("testGroup", "secret12")
+        .build();
+    List<String> groups = modifyGroups("secret12", request);
 
     // Delete works
     assertThat(deleteSeries("secret12").code()).isEqualTo(204);

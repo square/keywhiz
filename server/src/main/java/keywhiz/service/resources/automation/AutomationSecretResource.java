@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -60,6 +61,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
@@ -231,12 +233,14 @@ public class AutomationSecretResource {
       @Auth AutomationClient automationClient,
       @PathParam("secretName") String secretName) {
 
-    secretDAO.getSecretByName(secretName)
-        .orElseThrow(() -> new NotFoundException("Secret series not found."));
+    Secret secret = secretController.getSecretByName(secretName).orElseThrow(() -> new NotFoundException("Secret series not found."));
+    Set<String> groups = aclDAO.getGroupsFor(secret).stream().map(Group::getName).collect(toSet());
     secretDAO.deleteSecretsByName(secretName);
 
+    // Record all groups to which this secret belongs, so they can be restored manually if necessary
     Map<String, String> extraInfo = new HashMap<>();
     extraInfo.put("deprecated", "true");
+    extraInfo.put("groups", groups.toString());
     auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_DELETE, automationClient.getName(), secretName, extraInfo));
 
     return Response.ok().build();
