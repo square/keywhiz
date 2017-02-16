@@ -121,7 +121,7 @@ public abstract class SanitizedSecret {
         secret.updatedAt(),
         secret.updatedBy(),
         secret.metadata(),
-        secret.type(),
+        secret.type().orElse(null),
         ImmutableMap.of(),
         secret.expiry(),
         secret.versionId());

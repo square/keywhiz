@@ -8,21 +8,19 @@ import com.google.common.io.Resources;
 import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
-import keywhiz.api.ApiDate;
 import keywhiz.api.automation.v2.CreateGroupRequestV2;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
+import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.Group;
@@ -130,7 +128,50 @@ public class SecretResourceTest {
     // TODO: check different metadata, name, location
   }
 
+  //---------------------------------------------------------------------------------------
+  // partialUpdateSecret
+  //---------------------------------------------------------------------------------------
+  @Test
+  public void partialUpdateSecret_success() throws Exception {
+    // Create a secret to update
+    CreateOrUpdateSecretRequestV2 createRequest = CreateOrUpdateSecretRequestV2.builder()
+        .content(encoder.encodeToString("supa secret".getBytes(UTF_8)))
+        .description("desc")
+        .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
+        .type("password")
+        .build();
+    Response httpResponse = createOrUpdate(createRequest, "secret3");
+    assertThat(httpResponse.code()).isEqualTo(201);
+    URI location = URI.create(httpResponse.header(LOCATION));
+    assertThat(location.getPath()).isEqualTo("/automation/v2/secrets/secret3");
 
+    // Update the secret's description and set its expiry
+    PartialUpdateSecretRequestV2 request = PartialUpdateSecretRequestV2.builder()
+        .description("a more detailed description")
+        .descriptionPresent(true)
+        .expiry(1487268151L)
+        .expiryPresent(true)
+        .build();
+    httpResponse = partialUpdate(request, "secret3");
+    assertThat(httpResponse.code()).isEqualTo(201);
+    location = URI.create(httpResponse.header(LOCATION));
+    assertThat(location.getPath()).isEqualTo("/automation/v2/secrets/secret3");
+  }
+
+  @Test
+  public void partialUpdateSecret_notFound() throws Exception {
+    PartialUpdateSecretRequestV2 request = PartialUpdateSecretRequestV2.builder()
+        .description("a more detailed description")
+        .descriptionPresent(true)
+        .expiry(1487268151L)
+        .expiryPresent(true)
+        .build();
+    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
+    Request post = clientRequest("/automation/v2/secrets/non-existent/partialupdate").post(body).build();
+    Response httpResponse = mutualSslClient.newCall(post).execute();
+    assertThat(httpResponse.code()).isEqualTo(404);
+  }
+  
   //---------------------------------------------------------------------------------------
   // secretInfo
   //---------------------------------------------------------------------------------------
@@ -699,8 +740,13 @@ public class SecretResourceTest {
   Response createOrUpdate(CreateOrUpdateSecretRequestV2 request, String name) throws IOException {
     RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
     Request post = clientRequest(format("/automation/v2/secrets/%s", name)).post(body).build();
-    Response httpResponse = mutualSslClient.newCall(post).execute();
-    return httpResponse;
+    return mutualSslClient.newCall(post).execute();
+  }
+
+  Response partialUpdate(PartialUpdateSecretRequestV2 request, String name) throws IOException {
+    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
+    Request post = clientRequest(format("/automation/v2/secrets/%s/partialupdate", name)).post(body).build();
+    return mutualSslClient.newCall(post).execute();
   }
 
   List<String> listing() throws IOException {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import keywhiz.api.ApiDate;
 
@@ -21,7 +22,7 @@ public abstract class SecretVersion {
       ImmutableMap<String, String> metadata, @Nullable String type, long expiry) {
     return new AutoValue_SecretVersion(secretId, versionId, name, nullToEmpty(description),
         checksum, createdAt, nullToEmpty(createdBy), updatedAt,
-        nullToEmpty(updatedBy), metadata, type, expiry);
+        nullToEmpty(updatedBy), metadata, Optional.ofNullable(type), expiry);
   }
 
   public abstract long secretId();
@@ -34,7 +35,7 @@ public abstract class SecretVersion {
   public abstract ApiDate updatedAt();
   public abstract String updatedBy();
   @JsonAnyGetter public abstract  ImmutableMap<String, String> metadata();
-  public abstract String type();
+  public abstract Optional<String> type();
   public abstract long expiry();
 
   @Override public String toString() {
@@ -48,7 +49,7 @@ public abstract class SecretVersion {
         .add("updatedAt", updatedAt())
         .add("updatedBy", updatedBy())
         .add("metadata", metadata())
-        .add("type", type())
+        .add("type", type().orElse(""))
         .add("expiry", expiry())
         .omitNullValues().toString();
   }
