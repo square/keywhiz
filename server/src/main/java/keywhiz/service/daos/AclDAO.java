@@ -293,7 +293,8 @@ public class AclDAO {
               secretContentMapper.tryToReadMapFromMetadata(row.getValue(SECRETS_CONTENT.METADATA)),
               series.type().orElse(null),
               series.generationOptions(),
-              row.getValue(SECRETS_CONTENT.EXPIRY));
+              row.getValue(SECRETS_CONTENT.EXPIRY),
+              series.currentVersion().orElse(null));
         })
         .forEach(row -> sanitizedSet.add(row));
 
@@ -350,7 +351,8 @@ public class AclDAO {
               secretContentMapper.tryToReadMapFromMetadata(row.getValue(SECRETS_CONTENT.METADATA)),
               series.type().orElse(null),
               series.generationOptions(),
-              row.getValue(SECRETS_CONTENT.EXPIRY));
+              row.getValue(SECRETS_CONTENT.EXPIRY),
+              series.currentVersion().orElse(null));
         });
   }
 

@@ -93,6 +93,7 @@ import static keywhiz.api.model.Secret.decodedLength;
           .name(secretVersion.name())
           .version(secretVersion.versionId())
           .description(secretVersion.description())
+          .checksum(secretVersion.checksum())
           .createdAtSeconds(secretVersion.createdAt().toEpochSecond())
           .createdBy(secretVersion.createdBy())
           .type(secretVersion.type())

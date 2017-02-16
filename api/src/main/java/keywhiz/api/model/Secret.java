@@ -62,6 +62,9 @@ public class Secret {
 
   private final long expiry;
 
+  /** Current version of the secret (may be null) */
+  private final Long version;
+
   public Secret(long id,
                 String name,
                 @Nullable String description,
@@ -74,7 +77,8 @@ public class Secret {
                 @Nullable Map<String, String> metadata,
                 @Nullable String type,
                 @Nullable Map<String, String> generationOptions,
-                long expiry) {
+                long expiry,
+                @Nullable Long version) {
 
     checkArgument(!name.isEmpty());
     this.id = id;
@@ -92,6 +96,7 @@ public class Secret {
     this.generationOptions = (generationOptions == null) ?
         ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
     this.expiry = expiry;
+    this.version = version;
   }
 
   public long getId() {
@@ -154,6 +159,8 @@ public class Secret {
     return expiry;
   }
 
+  public Optional<Long> getVersion() {return Optional.ofNullable(version); }
+
   /** Slightly hokey way of calculating the decoded-length without bothering to decode. */
   public static int decodedLength(String secret) {
     checkNotNull(secret);
@@ -178,7 +185,8 @@ public class Secret {
           Objects.equal(this.metadata, that.metadata) &&
           Objects.equal(this.type, that.type) &&
           Objects.equal(this.generationOptions, that.generationOptions) &&
-          this.expiry == that.expiry) {
+          this.expiry == that.expiry &&
+          Objects.equal(this.version, that.version)) {
         return true;
       }
     }
@@ -206,6 +214,7 @@ public class Secret {
         .add("type", type)
         .add("generationOptions", generationOptions)
         .add("expiry", expiry)
+        .add("version", version)
         .toString();
   }
 

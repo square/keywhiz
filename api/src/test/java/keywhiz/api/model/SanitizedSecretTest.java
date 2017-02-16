@@ -38,7 +38,8 @@ public class SanitizedSecretTest {
         ImmutableMap.of("owner", "the king"),
         "password",
         ImmutableMap.of("favoriteFood", "PB&J sandwich"),
-        1136214245);
+        1136214245,
+        1L);
 
     assertThat(asJson(sanitizedSecret))
         .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
@@ -59,7 +60,8 @@ public class SanitizedSecretTest {
             ImmutableMap.of("owner", "the king"),
             "password",
             ImmutableMap.of("favoriteFood", "PB&J sandwich"),
-            1136214245));
+            1136214245,
+            1L));
 
     assertThat(asJson(sanitizedSecret))
         .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
@@ -78,7 +80,7 @@ public class SanitizedSecretTest {
                 "keywhizAdmin",
                 "password",
                 ImmutableMap.of("favoriteFood", "PB&J sandwich"),
-                1136214245L
+                1L
             ), SecretContent.of(
                 1L,
                 767,

@@ -45,18 +45,19 @@ public abstract class SanitizedSecret {
       @JsonProperty("metadata") @Nullable Map<String, String> metadata,
       @JsonProperty("type") @Nullable String type,
       @JsonProperty("generationOptions") @Nullable Map<String, String> generationOptions,
-      @JsonProperty("expiry") long expiry) {
+      @JsonProperty("expiry") long expiry,
+      @JsonProperty("version") @Nullable Long version) {
     ImmutableMap<String, String> meta =
         (metadata == null) ? ImmutableMap.of() : ImmutableMap.copyOf(metadata);
     ImmutableMap<String, String> genOptions =
         (generationOptions == null) ? ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
     return new AutoValue_SanitizedSecret(id, name, checksum, nullToEmpty(description), createdAt,
         nullToEmpty(createdBy), updatedAt, nullToEmpty(updatedBy), meta, Optional.ofNullable(type),
-        genOptions, expiry);
+        genOptions, expiry, Optional.ofNullable(version));
   }
 
   public static SanitizedSecret of(long id, String name) {
-    return of(id, name, "", null, new ApiDate(0), null, new ApiDate(0), null, null, null, null, 0);
+    return of(id, name, "", null, new ApiDate(0), null, new ApiDate(0), null, null, null, null, 0, null);
   }
 
   public static SanitizedSecret fromSecretSeriesAndContent(SecretSeriesAndContent seriesAndContent) {
@@ -74,7 +75,8 @@ public abstract class SanitizedSecret {
         content.metadata(),
         series.type().orElse(null),
         series.generationOptions(),
-        content.expiry());
+        content.expiry(),
+        series.currentVersion().orElse(null));
   }
 
   /**
@@ -97,7 +99,32 @@ public abstract class SanitizedSecret {
         secret.getMetadata(),
         secret.getType().orElse(null),
         secret.getGenerationOptions(),
-        secret.getExpiry());
+        secret.getExpiry(),
+        secret.getVersion().orElse(null));
+  }
+
+  /**
+   * Build a matching representation of a secret version, but without sensitive content.
+   *
+   * @param secret secret version to build from
+   * @return content of secret version, but without sensitive content
+   */
+  public static SanitizedSecret fromSecretVersion(SecretVersion secret) {
+    checkNotNull(secret);
+    return SanitizedSecret.of(
+        secret.secretId(),
+        secret.name(),
+        "", // No checksum
+        secret.description(),
+        secret.createdAt(),
+        secret.createdBy(),
+        secret.updatedAt(),
+        secret.updatedBy(),
+        secret.metadata(),
+        secret.type(),
+        ImmutableMap.of(),
+        secret.expiry(),
+        secret.versionId());
   }
 
   @JsonProperty public abstract long id();
@@ -112,10 +139,10 @@ public abstract class SanitizedSecret {
   @JsonProperty public abstract Optional<String> type();
   @JsonProperty public abstract ImmutableMap<String, String> generationOptions();
   @JsonProperty public abstract long expiry();
+  @JsonProperty public abstract Optional<Long> version();
 
   /** @return Name to serialize for clients. */
   public static String displayName(SanitizedSecret sanitizedSecret) {
-    String name = sanitizedSecret.name();
-    return name;
+    return sanitizedSecret.name();
   }
 }

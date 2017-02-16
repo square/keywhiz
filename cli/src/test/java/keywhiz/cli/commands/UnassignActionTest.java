@@ -50,7 +50,7 @@ public class UnassignActionTest {
   Client client = new Client(11, "client-name", null, null, null, null, null, null, false, false);
   Group group = new Group(22, "group-name", null, null, null, null, null, null);
   Secret secret = new Secret(33, "secret-name", null, () -> "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null, null, null,
-      ImmutableMap.of(), 0);
+      ImmutableMap.of(), 0, 1L);
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
   GroupDetailResponse groupDetailResponse = GroupDetailResponse.fromGroup(group,
       ImmutableList.of(sanitizedSecret), ImmutableList.of(client));

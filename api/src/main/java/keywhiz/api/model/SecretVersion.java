@@ -15,11 +15,12 @@ import static com.google.common.base.Strings.nullToEmpty;
  */
 @AutoValue
 public abstract class SecretVersion {
-  public static SecretVersion of(long secretId, long versionId, String name, @Nullable String description, ApiDate createdAt,
+  public static SecretVersion of(long secretId, long versionId, String name,
+      @Nullable String description, String checksum, ApiDate createdAt,
       @Nullable String createdBy, ApiDate updatedAt, @Nullable String updatedBy,
       ImmutableMap<String, String> metadata, @Nullable String type, long expiry) {
     return new AutoValue_SecretVersion(secretId, versionId, name, nullToEmpty(description),
-        createdAt, nullToEmpty(createdBy), updatedAt,
+        checksum, createdAt, nullToEmpty(createdBy), updatedAt,
         nullToEmpty(updatedBy), metadata, type, expiry);
   }
 
@@ -27,6 +28,7 @@ public abstract class SecretVersion {
   public abstract long versionId();
   public abstract String name();
   public abstract String description();
+  public abstract String checksum();
   public abstract ApiDate createdAt();
   public abstract String createdBy();
   public abstract ApiDate updatedAt();
@@ -40,6 +42,7 @@ public abstract class SecretVersion {
         .add("secretId", secretId())
         .add("name", name())
         .add("description", description())
+        .add("checksum", checksum())
         .add("createdAt", createdAt())
         .add("createdBy", createdBy())
         .add("updatedAt", updatedAt())
