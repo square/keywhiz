@@ -446,6 +446,7 @@ public class SecretsResource {
     // Record the deletion
     Map<String, String> extraInfo = new HashMap<>();
     extraInfo.put("groups", groups.toString());
+    extraInfo.put("current version", secret.get().getVersion().toString());
     auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_DELETE, user.getName(), secret.get().getName(), extraInfo));
     return Response.noContent().build();
   }

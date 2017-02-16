@@ -241,6 +241,7 @@ public class AutomationSecretResource {
     Map<String, String> extraInfo = new HashMap<>();
     extraInfo.put("deprecated", "true");
     extraInfo.put("groups", groups.toString());
+    extraInfo.put("current version", secret.getVersion().toString());
     auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_DELETE, automationClient.getName(), secretName, extraInfo));
 
     return Response.ok().build();
