@@ -114,7 +114,7 @@ public abstract class SanitizedSecret {
     return SanitizedSecret.of(
         secret.secretId(),
         secret.name(),
-        "", // No checksum
+        secret.checksum(),
         secret.description(),
         secret.createdAt(),
         secret.createdBy(),

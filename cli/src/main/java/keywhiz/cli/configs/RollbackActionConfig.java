@@ -9,6 +9,6 @@ public class RollbackActionConfig {
   @Parameter(names = "--name", description = "Name of the secret to roll back", required = true)
   public String name;
 
-  @Parameter(names = "--id", description = "Version ID to roll back to (list versions to view IDs)", required = true)
+  @Parameter(names = "--version", description = "Version ID to roll back to (list versions to view IDs)", required = true)
   public Long id;
 }

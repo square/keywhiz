@@ -68,7 +68,7 @@ public class RollbackAction implements Runnable {
       throw new AssertionError("Secret does not exist: " + rollbackActionConfig.name);
     } catch (IOException e) {
       throw new AssertionError(String.format(
-          "Error executing rollback; check whether ID %d is a valid version ID for secret %s by listing the secret's versions\nError: %s",
+          "Error executing rollback; check whether ID %d is a valid version ID for secret %s by listing the secret's versions%nError: %s",
           rollbackActionConfig.id, rollbackActionConfig.name, e.getMessage()));
     } catch (Exception e) {
       throw Throwables.propagate(e);
