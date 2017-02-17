@@ -32,6 +32,7 @@ import keywhiz.api.LoginRequest;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
+import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -186,6 +187,16 @@ public class KeywhizClient {
 
   public SecretDetailResponse secretDetailsForId(long secretId) throws IOException {
     String response = httpGet(baseUrl.resolve(format("/admin/secrets/%d", secretId)));
+    return mapper.readValue(response, SecretDetailResponse.class);
+  }
+
+  public List<SanitizedSecret> listSecretVersions(String name, int idx, int numVersions) throws IOException {
+    String response = httpGet(baseUrl.resolve(format("/admin/secrets/versions/%s?versionIdx=%d&numVersions=%d", name, idx, numVersions)));
+    return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
+  }
+
+  public SecretDetailResponse rollbackSecret (String name, long version) throws IOException {
+    String response = httpPost(baseUrl.resolve(format("/admin/secrets/rollback/%s/%d", name, version)), null);
     return mapper.readValue(response, SecretDetailResponse.class);
   }
 

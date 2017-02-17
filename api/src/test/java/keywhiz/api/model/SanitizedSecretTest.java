@@ -38,7 +38,8 @@ public class SanitizedSecretTest {
         ImmutableMap.of("owner", "the king"),
         "password",
         ImmutableMap.of("favoriteFood", "PB&J sandwich"),
-        1136214245);
+        1136214245,
+        1L);
 
     assertThat(asJson(sanitizedSecret))
         .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
@@ -59,7 +60,8 @@ public class SanitizedSecretTest {
             ImmutableMap.of("owner", "the king"),
             "password",
             ImmutableMap.of("favoriteFood", "PB&J sandwich"),
-            1136214245));
+            1136214245,
+            1L));
 
     assertThat(asJson(sanitizedSecret))
         .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
@@ -78,7 +80,7 @@ public class SanitizedSecretTest {
                 "keywhizAdmin",
                 "password",
                 ImmutableMap.of("favoriteFood", "PB&J sandwich"),
-                1136214245L
+                1L
             ), SecretContent.of(
                 1L,
                 767,
@@ -93,6 +95,40 @@ public class SanitizedSecretTest {
             )));
 
     assertThat(asJson(sanitizedSecret))
+        .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
+  }
+
+  @Test public void buildsCorrectlyFromSecretVersion() throws Exception {
+    SanitizedSecret secret = SanitizedSecret.fromSecretVersion(
+        SecretVersion.of(
+            767,
+            1L,
+            "trapdoor",
+            "v1",
+            "checksum",
+            ApiDate.parse("2013-03-28T21:42:42.573Z"),
+            "keywhizAdmin",
+            ApiDate.parse("2013-03-28T21:42:42.573Z"),
+            "keywhizAdmin",
+            ImmutableMap.of("owner", "the king"),
+            "password",
+            1136214245));
+    SanitizedSecret withGenerationOptions = SanitizedSecret.of(
+        secret.id(),
+        secret.name(),
+        secret.checksum(),
+        secret.description(),
+        secret.createdAt(),
+        secret.createdBy(),
+        secret.updatedAt(),
+        secret.updatedBy(),
+        secret.metadata(),
+        secret.type().orElse(null),
+        ImmutableMap.of("favoriteFood", "PB&J sandwich"),
+        secret.expiry(),
+        secret.version().orElse(null));
+
+    assertThat(asJson(withGenerationOptions))
         .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
   }
 }

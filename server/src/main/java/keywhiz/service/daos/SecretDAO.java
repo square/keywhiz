@@ -315,9 +315,9 @@ public class SecretDAO {
         ImmutableList.Builder<SecretVersion> b = new ImmutableList.Builder<>();
         b.addAll(contents.get()
             .stream()
-            .map(c -> SecretVersion.of(s.id(), c.id(), s.name(), s.description(), c.createdAt(),
-                c.createdBy(), c.updatedAt(), c.updatedBy(), c.metadata(), s.type().orElse(""),
-                c.expiry()))
+            .map(c -> SecretVersion.of(s.id(), c.id(), s.name(), s.description(), c.hmac(),
+                c.createdAt(), c.createdBy(), c.updatedAt(), c.updatedBy(), c.metadata(),
+                s.type().orElse(""), c.expiry()))
             .collect(toList()));
 
         return Optional.of(b.build());

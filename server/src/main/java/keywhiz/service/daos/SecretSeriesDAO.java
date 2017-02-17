@@ -150,7 +150,9 @@ public class SecretSeriesDAO {
 
     checkId = r.value1();
     if (checkId != secretId) {
-      throw new IllegalStateException("inconsistent secrets_content");
+      throw new IllegalStateException(String.format(
+          "tried to reset secret with id %d to version %d, but this version is not associated with this secret",
+          secretId, secretContentId));
     }
 
     return dslContext.update(SECRETS)

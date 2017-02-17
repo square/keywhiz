@@ -21,6 +21,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
+import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.jersey.params.LongParam;
 import java.net.URI;
 import java.time.Instant;
@@ -48,10 +49,12 @@ import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
+import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretVersion;
 import keywhiz.auth.User;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
@@ -69,6 +72,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -342,6 +346,76 @@ public class SecretsResource {
   }
 
   /**
+   * Retrieve the given range of versions of this secret, sorted from newest to
+   * oldest update time.  If versionIdx is nonzero, then numVersions versions,
+   * starting from versionIdx in the list and increasing in index, will be
+   * returned (set numVersions to a very large number to retrieve all versions).
+   * For instance, versionIdx = 5 and numVersions = 10 will retrieve entries
+   * at indices 5 through 14.
+   *
+   * @excludeParams user
+   * @param name Secret series name
+   * @param versionIdx The index in the list of versions of the first version to retrieve
+   * @param numVersions The number of versions to retrieve
+   * @excludeParams automationClient
+   * @responseMessage 200 Secret series information retrieved
+   * @responseMessage 404 Secret series not found
+   */
+  @Timed @ExceptionMetered
+  @GET
+  @Path("versions/{name}")
+  @Produces(APPLICATION_JSON)
+  public List<SanitizedSecret> secretVersions(@Auth User user,
+      @PathParam("name") String name, @QueryParam("versionIdx") int versionIdx,
+      @QueryParam("numVersions") int numVersions) {
+
+    logger.info("User '{}' listing {} versions starting at index {} for secret '{}'.", user,
+        numVersions, versionIdx, name);
+    
+    ImmutableList<SecretVersion> versions =
+        secretDAO.getSecretVersionsByName(name, versionIdx, numVersions)
+            .orElseThrow(NotFoundException::new);
+
+    return versions.stream()
+        .map(SanitizedSecret::fromSecretVersion)
+        .collect(toList());
+  }
+
+  /**
+   * Rollback to a previous secret version
+   *
+   * @param secretName the name of the secret to rollback
+   * @param versionId the ID of the version to return to
+   * @excludeParams user
+   * @description Returns the previous versions of the secret if found Used by Keywhiz CLI.
+   * @responseMessage 200 Found and reset the secret to this version
+   * @responseMessage 404 Secret with given name not found or invalid version provided
+   */
+  @Path("rollback/{secretName}/{versionId}")
+  @Timed @ExceptionMetered
+  @POST
+  public Response resetSecretVersion(@Auth User user, @PathParam("secretName") String secretName,
+      @PathParam("versionId") LongParam versionId) {
+
+    logger.info("User '{}' rolling back secret '{}' to version with ID '{}'.", user, secretName,
+        versionId);
+
+    secretDAO.setCurrentSecretVersionByName(secretName, versionId.get());
+
+    // If the secret wasn't found or the request was misformed, setCurrentSecretVersionByName
+    // already threw an exception
+    Map<String, String> extraInfo = new HashMap<>();
+    extraInfo.put("new version", versionId.toString());
+    auditLog.recordEvent(
+        new Event(Instant.now(), EventTag.SECRET_CHANGEVERSION, user.getName(), secretName,
+            extraInfo));
+
+    // Send the new secret in response
+    URI uri = UriBuilder.fromResource(SecretsResource.class).path("rollback/{secretName}/{versionID}").build(secretName, versionId);
+    return Response.created(uri).entity(secretDetailResponseFromName(secretName)).build();
+  }
+
+  /**
    * Delete Secret by ID
    *
    * @excludeParams user
@@ -372,12 +446,24 @@ public class SecretsResource {
     // Record the deletion
     Map<String, String> extraInfo = new HashMap<>();
     extraInfo.put("groups", groups.toString());
+    extraInfo.put("current version", secret.get().getVersion().toString());
     auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_DELETE, user.getName(), secret.get().getName(), extraInfo));
     return Response.noContent().build();
   }
 
   private SecretDetailResponse secretDetailResponseFromId(long secretId) {
     Optional<Secret> secrets = secretController.getSecretById(secretId);
+    if (!secrets.isPresent()) {
+      throw new NotFoundException("Secret not found.");
+    }
+
+    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(secrets.get()));
+    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(secrets.get()));
+    return SecretDetailResponse.fromSecret(secrets.get(), groups, clients);
+  }
+
+  private SecretDetailResponse secretDetailResponseFromName(String secretName) {
+    Optional<Secret> secrets = secretController.getSecretByName(secretName);
     if (!secrets.isPresent()) {
       throw new NotFoundException("Secret not found.");
     }

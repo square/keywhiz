@@ -39,6 +39,8 @@ public class CliMain {
         .put("delete", new DeleteActionConfig())
         .put("assign", new AssignActionConfig())
         .put("unassign", new UnassignActionConfig())
+        .put("versions", new ListVersionsActionConfig())
+        .put("rollback", new RollbackActionConfig())
         .build();
     commander.setProgramName("KeyWhiz Configuration Utility");
     commander.addObject(config);

@@ -91,7 +91,7 @@ public class SecretDetailResponseV2Test {
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
         ImmutableMap.of("owner", "root"), "text/plain", null,
-        1136214245);
+        1136214245, null);
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .secret(secret)
         .content("YXNkZGFz")
@@ -104,13 +104,12 @@ public class SecretDetailResponseV2Test {
 
   @Test public void formsCorrectlyFromSecretVersion() throws Exception {
     SecretVersion version = SecretVersion.of(10, 1, "secret-name", "secret-description",
-        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        "checksum", ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
         ImmutableMap.of("owner", "root"), "text/plain", 1136214245);
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .secretVersion(version)
         .content("YXNkZGFz")
-        .checksum("checksum")
         .build();
 
     assertThat(asJson(secretDetailResponse))

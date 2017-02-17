@@ -44,7 +44,7 @@ import static java.lang.String.format;
 public class CommandExecutor {
   public static final String APP_VERSION = "2.1";
 
-  public enum Command { LOGIN, LIST, DESCRIBE, ADD, UPDATE, DELETE, ASSIGN, UNASSIGN }
+  public enum Command { LOGIN, LIST, DESCRIBE, ADD, UPDATE, DELETE, ASSIGN, UNASSIGN, VERSIONS, ROLLBACK }
 
   private final Path cookieDir = Paths.get(USER_HOME.value());
 
@@ -148,6 +148,14 @@ public class CommandExecutor {
 
       case UNASSIGN:
         new UnassignAction((UnassignActionConfig) commands.get(command), client).run();
+        break;
+
+      case VERSIONS:
+        new ListVersionsAction((ListVersionsActionConfig) commands.get(command), client, printing).run();
+        break;
+
+      case ROLLBACK:
+        new RollbackAction((RollbackActionConfig) commands.get(command), client).run();
         break;
 
       case LOGIN:

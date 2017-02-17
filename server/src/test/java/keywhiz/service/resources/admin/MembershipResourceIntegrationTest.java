@@ -58,7 +58,13 @@ public class MembershipResourceIntegrationTest {
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void allowingMissingSecretInGroup() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-    keywhizClient.grantSecretToGroupByIds(4539475, 237694);
+    keywhizClient.grantSecretToGroupByIds(4539475, 919);
+  }
+
+  @Test(expected = KeywhizClient.NotFoundException.class)
+  public void allowingSecretInMissingGroup() throws IOException {
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    keywhizClient.grantSecretToGroupByIds(741, 237694);
   }
 
   @Test(expected = KeywhizClient.UnauthorizedException.class)
@@ -83,7 +89,13 @@ public class MembershipResourceIntegrationTest {
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void revokingMissingSecretFromGroup() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-    keywhizClient.revokeSecretFromGroupByIds(4539475, 237694);
+    keywhizClient.revokeSecretFromGroupByIds(4539475, 919);
+  }
+
+  @Test(expected = KeywhizClient.NotFoundException.class)
+  public void revokingSecretInMissingGroup() throws IOException {
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    keywhizClient.grantSecretToGroupByIds(741, 237694);
   }
 
   @Test public void enrollsClientInGroup() throws IOException {
@@ -97,7 +109,13 @@ public class MembershipResourceIntegrationTest {
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void enrollingMissingClientInGroup() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-    keywhizClient.enrollClientInGroupByIds(4539575, 237694);
+    keywhizClient.enrollClientInGroupByIds(4539575, 919);
+  }
+
+  @Test(expected = KeywhizClient.NotFoundException.class)
+  public void enrollingClientInMissingGroup() throws IOException {
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    keywhizClient.enrollClientInGroupByIds(770, 237694);
   }
 
   @Test public void evictsClientFromGroup() throws IOException {
@@ -111,7 +129,12 @@ public class MembershipResourceIntegrationTest {
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void evictingMissingClientFromGroup() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    keywhizClient.evictClientFromGroupByIds(4539475, 919);
+  }
 
-    keywhizClient.evictClientFromGroupByIds(4539475, 237694);
+  @Test(expected = KeywhizClient.NotFoundException.class)
+  public void evictingClientFromMissingGroup() throws IOException {
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    keywhizClient.enrollClientInGroupByIds(770, 237694);
   }
 }
