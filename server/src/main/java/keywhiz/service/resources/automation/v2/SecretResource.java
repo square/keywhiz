@@ -611,6 +611,7 @@ public class SecretResource {
     // Record the deletion in the audit log
     Map<String, String> extraInfo = new HashMap<>();
     extraInfo.put("groups", groups.toString());
+    extraInfo.put("current version", secret.getVersion().toString());
     auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_DELETE, automationClient.getName(), name, extraInfo));
     return Response.noContent().build();
   }

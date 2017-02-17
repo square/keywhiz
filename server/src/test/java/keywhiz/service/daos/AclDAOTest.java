@@ -165,7 +165,7 @@ public class AclDAOTest {
 
     aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId());
     Set<SanitizedSecret> secrets = aclDAO.getSanitizedSecretsFor(group1);
-    assertThat(Iterables.getOnlyElement(secrets)).isEqualToIgnoringGivenFields(sanitizedSecret2, "id");
+    assertThat(Iterables.getOnlyElement(secrets)).isEqualToIgnoringGivenFields(sanitizedSecret2, "id", "version");
 
     aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
     secrets = aclDAO.getSanitizedSecretsFor(group1);
@@ -173,9 +173,9 @@ public class AclDAOTest {
 
     for (SanitizedSecret secret : secrets) {
       if (secret.name().equals(secret1.getName())) {
-        assertThat(secret).isEqualToIgnoringGivenFields(sanitizedSecret1, "id");
+        assertThat(secret).isEqualToIgnoringGivenFields(sanitizedSecret1, "id", "version");
       } else {
-        assertThat(secret).isEqualToIgnoringGivenFields(sanitizedSecret2, "id");
+        assertThat(secret).isEqualToIgnoringGivenFields(sanitizedSecret2, "id", "version");
       }
     }
   }
@@ -224,7 +224,7 @@ public class AclDAOTest {
     aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group2.getId());
     Set<SanitizedSecret> secrets = aclDAO.getSanitizedSecretsFor(client2);
     assertThat(Iterables.getOnlyElement(secrets))
-        .isEqualToIgnoringGivenFields(SanitizedSecret.fromSecret(secret2), "id");
+        .isEqualToIgnoringGivenFields(SanitizedSecret.fromSecret(secret2), "id", "version");
 
     aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group2.getId());
     secrets = aclDAO.getSanitizedSecretsFor(client2);
@@ -232,9 +232,9 @@ public class AclDAOTest {
 
     for (SanitizedSecret secret : secrets) {
       if (secret.name().equals(secret1.getName())) {
-        assertThat(secret).isEqualToIgnoringGivenFields(SanitizedSecret.fromSecret(secret1), "id");
+        assertThat(secret).isEqualToIgnoringGivenFields(SanitizedSecret.fromSecret(secret1), "id", "version");
       } else {
-        assertThat(secret).isEqualToIgnoringGivenFields(SanitizedSecret.fromSecret(secret2), "id");
+        assertThat(secret).isEqualToIgnoringGivenFields(SanitizedSecret.fromSecret(secret2), "id", "version");
       }
     }
 
@@ -310,7 +310,7 @@ public class AclDAOTest {
 
     SanitizedSecret secret = aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name())
         .orElseThrow(RuntimeException::new);
-    assertThat(secret).isEqualToIgnoringGivenFields(sanitizedSecret1, "id");
+    assertThat(secret).isEqualToIgnoringGivenFields(sanitizedSecret1, "id", "version");
 
     aclDAO.evictClient(jooqContext.configuration(), client2.getId(), group1.getId());
     Optional<SanitizedSecret> missingSecret =
@@ -321,7 +321,7 @@ public class AclDAOTest {
 
     secret = aclDAO.getSanitizedSecretFor(client2, sanitizedSecret1.name())
         .orElseThrow(RuntimeException::new);
-    assertThat(secret).isEqualToIgnoringGivenFields(sanitizedSecret1, "id");
+    assertThat(secret).isEqualToIgnoringGivenFields(sanitizedSecret1, "id", "version");
   }
 
   @Test public void getSecretsReturnsDistinct() {

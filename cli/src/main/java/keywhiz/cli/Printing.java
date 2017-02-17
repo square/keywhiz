@@ -25,10 +25,12 @@ import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.GroupDetailResponse;
 import keywhiz.api.SecretDetailResponse;
+import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -201,5 +203,61 @@ public class Printing {
     secrets.stream()
         .sorted(Comparator.comparing(SanitizedSecret::name))
         .forEach(s -> System.out.println(SanitizedSecret.displayName(s)));
+  }
+
+  public void printSecretVersions(List<SanitizedSecret> versions, Long currentVersion) {
+    if (versions.isEmpty()) {
+      return;
+    }
+
+    System.out.println(versions.get(0).name() + "\n");
+
+    if (currentVersion < 0) {
+      System.out.println("Current secret version unknown!");
+    }
+
+    for (SanitizedSecret secret : versions) {
+      if (secret.version().isPresent()) {
+        if (secret.version().get().equals(currentVersion)) {
+          System.out.println(String.format("*** Current secret version id: %d ***", secret.version().get()));
+        } else {
+          System.out.println(String.format("Version id for rollback: %d", secret.version().get()));
+        }
+      } else {
+        System.out.println("Version id for rollback: Unknown!");
+      }
+
+      if (secret.createdBy().isEmpty()) {
+        System.out.println(INDENT + String.format("Created on %s (creator unknown)",
+            DateFormat.getDateTimeInstance()
+                .format(new Date(secret.createdAt().toEpochSecond() * 1000))));
+      } else {
+        System.out.println(INDENT + String.format("Created by %s on %s", secret.createdBy(),
+            DateFormat.getDateTimeInstance()
+                .format(new Date(secret.createdAt().toEpochSecond() * 1000))));
+      }
+
+      if (secret.updatedBy().isEmpty()) {
+        System.out.println(INDENT + String.format("Updated on %s (updater unknown)",
+            DateFormat.getDateTimeInstance()
+                .format(new Date(secret.updatedAt().toEpochSecond() * 1000))));
+      } else {
+        System.out.println(INDENT + String.format("Updated by %s on %s", secret.updatedBy(),
+            DateFormat.getDateTimeInstance()
+                .format(new Date(secret.updatedAt().toEpochSecond() * 1000))));
+      }
+
+      if (secret.expiry() == 0) {
+        System.out.println(INDENT + "Does not expire");
+      } else {
+        System.out.println(INDENT + String.format("Expires on %s", DateFormat.getDateTimeInstance()
+            .format(new Date(secret.expiry() * 1000))));
+      }
+
+      if (!secret.checksum().isEmpty()) {
+        System.out.println(INDENT + String.format("Content HMAC: %s", secret.checksum()));
+      }
+      System.out.print("\n"); // Add space between the versions
+    }
   }
 }
