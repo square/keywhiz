@@ -64,6 +64,7 @@ import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.temporal.ChronoUnit.HOURS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -349,6 +350,11 @@ public class SecretResource {
     }
 
     Secret secret = secretOptional.get();
+    Optional<Instant> existingExpiry = Optional.empty();
+    if (secret.getExpiry() > 0) {
+      existingExpiry = Optional.of(Instant.ofEpochMilli(secret.getExpiry()));
+    }
+
     String secretName = secret.getName();
     byte[] secretContent = Base64.getDecoder().decode(secret.getSecret());
 
@@ -378,6 +384,18 @@ public class SecretResource {
     }
 
     if (expiry != null) {
+      if (existingExpiry.isPresent()) {
+        long offset = existingExpiry.get().until(expiry, HOURS);
+        if (offset > 24 || offset < -24) {
+          logger.warn(
+              "Extracted expiration of secret {} differs from actual by more than {} hours.",
+              secretName, offset);
+        }
+
+        // Do not overwrite existing expiry, we just want to check for differences and warn.
+        return true;
+      }
+
       logger.info("Found expiry for secret {}: {}", secretName, expiry.getEpochSecond());
       boolean success = secretDAO.setExpiration(name, expiry);
       if (success) {
