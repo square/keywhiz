@@ -388,8 +388,8 @@ public class SecretResource {
         long offset = existingExpiry.get().until(expiry, HOURS);
         if (offset > 24 || offset < -24) {
           logger.warn(
-              "Extracted expiration of secret {} differs from actual by more than {} hours.",
-              secretName, offset);
+              "Extracted expiration of secret {} differs from actual by more than {} hours (extracted = {}, database = {}).",
+              secretName, offset, expiry, existingExpiry.get());
         }
 
         // Do not overwrite existing expiry, we just want to check for differences and warn.
