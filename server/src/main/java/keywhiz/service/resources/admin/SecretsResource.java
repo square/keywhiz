@@ -21,7 +21,6 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
-import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.jersey.params.LongParam;
 import java.net.URI;
 import java.time.Instant;
@@ -49,7 +48,6 @@ import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
-import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -65,7 +63,6 @@ import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
-import keywhiz.service.resources.automation.v2.SecretResource;
 import org.apache.http.HttpStatus;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
@@ -89,20 +86,27 @@ public class SecretsResource {
 
   private final SecretController secretController;
   private final AclDAO aclDAO;
-  private final SecretDAO secretDAO;
+  private final SecretDAO secretDAOReadWrite;
+  private final SecretDAO secretDAOReadOnly;
   private final AuditLog auditLog;
 
-  @Inject public SecretsResource(SecretController secretController, AclDAOFactory aclDAOFactory, SecretDAOFactory secretDAOFactory, AuditLog auditLog) {
+  @SuppressWarnings("unused")
+  @Inject public SecretsResource(SecretController secretController, AclDAOFactory aclDAOFactory,
+      SecretDAOFactory secretDAOFactory, AuditLog auditLog) {
     this.secretController = secretController;
     this.aclDAO = aclDAOFactory.readwrite();
-    this.secretDAO = secretDAOFactory.readwrite();
+    this.secretDAOReadWrite = secretDAOFactory.readwrite();
+    this.secretDAOReadOnly = secretDAOFactory.readonly();
     this.auditLog = auditLog;
   }
 
-  @VisibleForTesting SecretsResource(SecretController secretController, AclDAO aclDAO, SecretDAO secretDAO, AuditLog auditLog) {
+  /** Constructor for testing */
+  @VisibleForTesting SecretsResource(SecretController secretController, AclDAO aclDAO,
+      SecretDAO secretDAOReadWrite, AuditLog auditLog) {
     this.secretController = secretController;
     this.aclDAO = aclDAO;
-    this.secretDAO = secretDAO;
+    this.secretDAOReadWrite = secretDAOReadWrite;
+    this.secretDAOReadOnly = secretDAOReadWrite;
     this.auditLog = auditLog;
   }
 
@@ -298,7 +302,7 @@ public class SecretsResource {
 
     logger.info("User '{}' partialUpdate secret '{}'.", user, secretName);
 
-    long id = secretDAO.partialUpdateSecret(secretName, user.getName(), request);
+    long id = secretDAOReadWrite.partialUpdateSecret(secretName, user.getName(), request);
 
     URI uri = UriBuilder.fromResource(SecretsResource.class)
         .path(secretName)
@@ -373,7 +377,7 @@ public class SecretsResource {
         numVersions, versionIdx, name);
     
     ImmutableList<SecretVersion> versions =
-        secretDAO.getSecretVersionsByName(name, versionIdx, numVersions)
+        secretDAOReadOnly.getSecretVersionsByName(name, versionIdx, numVersions)
             .orElseThrow(NotFoundException::new);
 
     return versions.stream()
@@ -400,7 +404,7 @@ public class SecretsResource {
     logger.info("User '{}' rolling back secret '{}' to version with ID '{}'.", user, secretName,
         versionId);
 
-    secretDAO.setCurrentSecretVersionByName(secretName, versionId.get());
+    secretDAOReadWrite.setCurrentSecretVersionByName(secretName, versionId.get());
 
     // If the secret wasn't found or the request was misformed, setCurrentSecretVersionByName
     // already threw an exception
@@ -441,7 +445,7 @@ public class SecretsResource {
     // Get the groups for this secret, so they can be restored manually if necessary
     Set<String> groups = aclDAO.getGroupsFor(secret.get()).stream().map(Group::getName).collect(toSet());
 
-    secretDAO.deleteSecretsByName(secret.get().getName());
+    secretDAOReadWrite.deleteSecretsByName(secret.get().getName());
 
     // Record the deletion
     Map<String, String> extraInfo = new HashMap<>();
