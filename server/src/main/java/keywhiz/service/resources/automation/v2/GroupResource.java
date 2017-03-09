@@ -49,13 +49,15 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 public class GroupResource {
   private static final Logger logger = LoggerFactory.getLogger(GroupResource.class);
 
-  private final AclDAO aclDAO;
-  private final GroupDAO groupDAO;
+  private final AclDAO aclDAOReadOnly;
+  private final GroupDAO groupDAOReadOnly;
+  private final GroupDAO groupDAOReadWrite;
   private final AuditLog auditLog;
 
   @Inject public GroupResource(AclDAOFactory aclDAOFactory, GroupDAOFactory groupDAOFactory, AuditLog auditLog) {
-    this.aclDAO = aclDAOFactory.readwrite();
-    this.groupDAO = groupDAOFactory.readwrite();
+    this.aclDAOReadOnly = aclDAOFactory.readonly();
+    this.groupDAOReadOnly = groupDAOFactory.readonly();
+    this.groupDAOReadWrite = groupDAOFactory.readwrite();
     this.auditLog = auditLog;
   }
 
@@ -76,12 +78,12 @@ public class GroupResource {
     String creator = automationClient.getName();
     String group = request.name();
 
-    groupDAO.getGroup(group).ifPresent((g) -> {
+    groupDAOReadWrite.getGroup(group).ifPresent((g) -> {
       logger.info("Automation ({}) - Group {} already exists", creator, group);
       throw new ConflictException(format("Group %s already exists", group));
     });
 
-    groupDAO.createGroup(group, creator, request.description(), request.metadata());
+    groupDAOReadWrite.createGroup(group, creator, request.description(), request.metadata());
     Map<String, String> extraInfo = new HashMap<>();
     if (request.description() != null) {
       extraInfo.put("description", request.description());
@@ -104,7 +106,7 @@ public class GroupResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> groupListing(@Auth AutomationClient automationClient) {
-    return groupDAO.getGroups().stream()
+    return groupDAOReadOnly.getGroups().stream()
         .map(Group::getName)
         .collect(toSet());
   }
@@ -124,14 +126,14 @@ public class GroupResource {
   @Produces(APPLICATION_JSON)
   public GroupDetailResponseV2 groupInfo(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    Group group = groupDAO.getGroup(name)
+    Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
 
-    Set<String> secrets = aclDAO.getSanitizedSecretsFor(group).stream()
+    Set<String> secrets = aclDAOReadOnly.getSanitizedSecretsFor(group).stream()
         .map(SanitizedSecret::name)
         .collect(toSet());
 
-    Set<String> clients = aclDAO.getClientsFor(group).stream()
+    Set<String> clients = aclDAOReadOnly.getClientsFor(group).stream()
         .map(Client::getName)
         .collect(toSet());
 
@@ -157,10 +159,10 @@ public class GroupResource {
   @Produces(APPLICATION_JSON)
   public Set<SanitizedSecret> secretDetailForGroup(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    Group group = groupDAO.getGroup(name)
+    Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
 
-    return aclDAO.getSanitizedSecretsFor(group);
+    return aclDAOReadOnly.getSanitizedSecretsFor(group);
   }
 
   /**
@@ -178,10 +180,10 @@ public class GroupResource {
   @Produces(APPLICATION_JSON)
   public Set<Client> clientDetailForGroup(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    Group group = groupDAO.getGroup(name)
+    Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
 
-    return aclDAO.getClientsFor(group);
+    return aclDAOReadOnly.getClientsFor(group);
   }
 
   /**
@@ -198,11 +200,11 @@ public class GroupResource {
   @Path("{name}")
   public Response deleteGroup(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    Group group = groupDAO.getGroup(name)
+    Group group = groupDAOReadWrite.getGroup(name)
         .orElseThrow(NotFoundException::new);
 
     // Group memberships are deleted automatically by DB cascading.
-    groupDAO.deleteGroup(group);
+    groupDAOReadWrite.deleteGroup(group);
     auditLog.recordEvent(new Event(Instant.now(), EventTag.GROUP_DELETE, automationClient.getName(), group.getName()));
     return Response.noContent().build();
   }
