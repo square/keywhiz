@@ -85,26 +85,26 @@ public class SecretsResource {
   private static final Logger logger = LoggerFactory.getLogger(SecretsResource.class);
 
   private final SecretController secretController;
-  private final AclDAO aclDAO;
+  private final AclDAO aclDAOReadOnly;
   private final SecretDAO secretDAOReadWrite;
   private final SecretDAO secretDAOReadOnly;
   private final AuditLog auditLog;
 
   @SuppressWarnings("unused")
   @Inject public SecretsResource(SecretController secretController, AclDAOFactory aclDAOFactory,
-      SecretDAOFactory secretDAOFactory, AuditLog auditLog) {
+                                 SecretDAOFactory secretDAOFactory, AuditLog auditLog) {
     this.secretController = secretController;
-    this.aclDAO = aclDAOFactory.readwrite();
+    this.aclDAOReadOnly = aclDAOFactory.readonly();
     this.secretDAOReadWrite = secretDAOFactory.readwrite();
     this.secretDAOReadOnly = secretDAOFactory.readonly();
     this.auditLog = auditLog;
   }
 
   /** Constructor for testing */
-  @VisibleForTesting SecretsResource(SecretController secretController, AclDAO aclDAO,
-      SecretDAO secretDAOReadWrite, AuditLog auditLog) {
+  @VisibleForTesting SecretsResource(SecretController secretController, AclDAO aclDAOReadOnly,
+                                     SecretDAO secretDAOReadWrite, AuditLog auditLog) {
     this.secretController = secretController;
-    this.aclDAO = aclDAO;
+    this.aclDAOReadOnly = aclDAOReadOnly;
     this.secretDAOReadWrite = secretDAOReadWrite;
     this.secretDAOReadOnly = secretDAOReadWrite;
     this.auditLog = auditLog;
@@ -443,7 +443,7 @@ public class SecretsResource {
     logger.info("User '{}' deleting secret id={}, name='{}'", user, secretId, secret.get().getName());
 
     // Get the groups for this secret, so they can be restored manually if necessary
-    Set<String> groups = aclDAO.getGroupsFor(secret.get()).stream().map(Group::getName).collect(toSet());
+    Set<String> groups = aclDAOReadOnly.getGroupsFor(secret.get()).stream().map(Group::getName).collect(toSet());
 
     secretDAOReadWrite.deleteSecretsByName(secret.get().getName());
 
@@ -461,8 +461,8 @@ public class SecretsResource {
       throw new NotFoundException("Secret not found.");
     }
 
-    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(secrets.get()));
-    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(secrets.get()));
+    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAOReadOnly.getGroupsFor(secrets.get()));
+    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAOReadOnly.getClientsFor(secrets.get()));
     return SecretDetailResponse.fromSecret(secrets.get(), groups, clients);
   }
 
@@ -472,8 +472,8 @@ public class SecretsResource {
       throw new NotFoundException("Secret not found.");
     }
 
-    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(secrets.get()));
-    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAO.getClientsFor(secrets.get()));
+    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAOReadOnly.getGroupsFor(secrets.get()));
+    ImmutableList<Client> clients = ImmutableList.copyOf(aclDAOReadOnly.getClientsFor(secrets.get()));
     return SecretDetailResponse.fromSecret(secrets.get(), groups, clients);
   }
 
