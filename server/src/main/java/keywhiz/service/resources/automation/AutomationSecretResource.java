@@ -76,24 +76,22 @@ public class AutomationSecretResource {
   private static final Logger logger = LoggerFactory.getLogger(AutomationSecretResource.class);
   private final SecretController secretController;
   private final SecretDAO secretDAO;
-  private final AclDAO aclDAOReadOnly;
+  private final AclDAO aclDAO;
   private final AuditLog auditLog;
 
-  @SuppressWarnings("unused")
   @Inject public AutomationSecretResource(SecretController secretController,
                                           SecretDAOFactory secretDAOFactory, AclDAOFactory aclDAOFactory, AuditLog auditLog) {
     this.secretController = secretController;
     this.secretDAO = secretDAOFactory.readwrite();
-    this.aclDAOReadOnly = aclDAOFactory.readonly();
+    this.aclDAO = aclDAOFactory.readwrite();
     this.auditLog = auditLog;
   }
 
-  /** Constructor for testing */
   @VisibleForTesting AutomationSecretResource(SecretController secretController,
-                                              SecretDAO secretDAO, AclDAO aclDAOReadOnly, AuditLog auditLog) {
+                                              SecretDAO secretDAO, AclDAO aclDAO, AuditLog auditLog) {
     this.secretController = secretController;
     this.secretDAO = secretDAO;
-    this.aclDAOReadOnly = aclDAOReadOnly;
+    this.aclDAO = aclDAO;
     this.auditLog = auditLog;
   }
 
@@ -130,7 +128,7 @@ public class AutomationSecretResource {
       throw new ConflictException(format("Cannot create secret %s.", request.name));
     }
     ImmutableList<Group> groups =
-        ImmutableList.copyOf(aclDAOReadOnly.getGroupsFor(secret));
+        ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
 
     Map<String, String> extraInfo = new HashMap<>();
     extraInfo.put("deprecated", "true");
@@ -173,7 +171,7 @@ public class AutomationSecretResource {
 
       Secret secret = optionalSecret.get();
       ImmutableList<Group> groups =
-          ImmutableList.copyOf(aclDAOReadOnly.getGroupsFor(secret));
+          ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
       responseBuilder.add(AutomationSecretResponse.fromSecret(secret, groups));
     } else {
       List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(null, null);
@@ -183,7 +181,7 @@ public class AutomationSecretResource {
             new IllegalStateException(format("Cannot find record related to %s", sanitizedSecret)));
 
         ImmutableList<Group> groups =
-            ImmutableList.copyOf(aclDAOReadOnly.getGroupsFor(secret));
+            ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
         responseBuilder.add(AutomationSecretResponse.fromSecret(secret, groups));
       }
     }
@@ -213,7 +211,7 @@ public class AutomationSecretResource {
       throw new NotFoundException("Secret not found.");
     }
 
-    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAOReadOnly.getGroupsFor(secret.get()));
+    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(secret.get()));
 
     return AutomationSecretResponse.fromSecret(secret.get(), groups);
   }
@@ -236,7 +234,7 @@ public class AutomationSecretResource {
       @PathParam("secretName") String secretName) {
 
     Secret secret = secretController.getSecretByName(secretName).orElseThrow(() -> new NotFoundException("Secret series not found."));
-    Set<String> groups = aclDAOReadOnly.getGroupsFor(secret).stream().map(Group::getName).collect(toSet());
+    Set<String> groups = aclDAO.getGroupsFor(secret).stream().map(Group::getName).collect(toSet());
     secretDAO.deleteSecretsByName(secretName);
 
     // Record all groups to which this secret belongs, so they can be restored manually if necessary
