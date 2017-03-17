@@ -57,16 +57,20 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 public class ClientResource {
   private static final Logger logger = LoggerFactory.getLogger(ClientResource.class);
 
-  private final AclDAO aclDAO;
-  private final ClientDAO clientDAO;
-  private final GroupDAO groupDAO;
+  private final AclDAO aclDAOReadOnly;
+  private final AclDAO aclDAOReadWrite;
+  private final ClientDAO clientDAOReadOnly;
+  private final ClientDAO clientDAOReadWrite;
+  private final GroupDAO groupDAOReadWrite;
   private final AuditLog auditLog;
 
   @Inject public ClientResource(AclDAOFactory aclDAOFactory, ClientDAOFactory clientDAOFactory,
       GroupDAOFactory groupDAOFactory, AuditLog auditLog) {
-    this.aclDAO = aclDAOFactory.readwrite();
-    this.clientDAO = clientDAOFactory.readwrite();
-    this.groupDAO = groupDAOFactory.readwrite();
+    this.aclDAOReadOnly = aclDAOFactory.readonly();
+    this.aclDAOReadWrite = aclDAOFactory.readwrite();
+    this.clientDAOReadOnly = clientDAOFactory.readonly();
+    this.clientDAOReadWrite = clientDAOFactory.readwrite();
+    this.groupDAOReadWrite = groupDAOFactory.readwrite();
     this.auditLog = auditLog;
   }
 
@@ -87,19 +91,19 @@ public class ClientResource {
     String creator = automationClient.getName();
     String client = request.name();
 
-    clientDAO.getClient(client).ifPresent((c) -> {
+    clientDAOReadWrite.getClient(client).ifPresent((c) -> {
       logger.info("Automation ({}) - Client {} already exists", creator, client);
       throw new ConflictException("Client name already exists.");
     });
 
     // Creates new client record
-    long clientId = clientDAO.createClient(client, creator, request.description());
+    long clientId = clientDAOReadWrite.createClient(client, creator, request.description());
     auditLog.recordEvent(new Event(Instant.now(), EventTag.CLIENT_CREATE, creator, client));
 
     // Enrolls client in any requested groups
     groupsToGroupIds(request.groups())
         .forEach((maybeGroupId) -> maybeGroupId.ifPresent(
-            (groupId) -> aclDAO.findAndEnrollClient(clientId, groupId, auditLog, creator, new HashMap<>())));
+            (groupId) -> aclDAOReadWrite.findAndEnrollClient(clientId, groupId, auditLog, creator, new HashMap<>())));
 
     URI uri = UriBuilder.fromResource(ClientResource.class).path(client).build();
     return Response.created(uri).build();
@@ -115,7 +119,7 @@ public class ClientResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientListing(@Auth AutomationClient automationClient) {
-    return clientDAO.getClients().stream()
+    return clientDAOReadOnly.getClients().stream()
         .map(Client::getName)
         .collect(toSet());
   }
@@ -135,7 +139,7 @@ public class ClientResource {
   @Produces(APPLICATION_JSON)
   public ClientDetailResponseV2 clientInfo(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    Client client = clientDAO.getClient(name)
+    Client client = clientDAOReadOnly.getClient(name)
         .orElseThrow(NotFoundException::new);
 
     return ClientDetailResponseV2.fromClient(client);
@@ -157,9 +161,9 @@ public class ClientResource {
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientGroupsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    Client client = clientDAO.getClient(name)
+    Client client = clientDAOReadOnly.getClient(name)
         .orElseThrow(NotFoundException::new);
-    return aclDAO.getGroupsFor(client).stream()
+    return aclDAOReadOnly.getGroupsFor(client).stream()
         .map(Group::getName)
         .collect(toSet());
   }
@@ -181,12 +185,12 @@ public class ClientResource {
   @Produces(APPLICATION_JSON)
   public Iterable<String> modifyClientGroups(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @Valid ModifyGroupsRequestV2 request) {
-    Client client = clientDAO.getClient(name)
+    Client client = clientDAOReadWrite.getClient(name)
         .orElseThrow(NotFoundException::new);
     String user = automationClient.getName();
 
     long clientId = client.getId();
-    Set<String> oldGroups = aclDAO.getGroupsFor(client).stream()
+    Set<String> oldGroups = aclDAOReadWrite.getGroupsFor(client).stream()
         .map(Group::getName)
         .collect(toSet());
 
@@ -197,13 +201,13 @@ public class ClientResource {
 
     groupsToGroupIds(groupsToAdd)
         .forEach((maybeGroupId) -> maybeGroupId.ifPresent(
-            (groupId) -> aclDAO.findAndEnrollClient(clientId, groupId, auditLog, user, new HashMap<>())));
+            (groupId) -> aclDAOReadWrite.findAndEnrollClient(clientId, groupId, auditLog, user, new HashMap<>())));
 
     groupsToGroupIds(groupsToRemove)
         .forEach((maybeGroupId) -> maybeGroupId.ifPresent(
-            (groupId) -> aclDAO.findAndEvictClient(clientId, groupId, auditLog, user, new HashMap<>())));
+            (groupId) -> aclDAOReadWrite.findAndEvictClient(clientId, groupId, auditLog, user, new HashMap<>())));
 
-    return aclDAO.getGroupsFor(client).stream()
+    return aclDAOReadWrite.getGroupsFor(client).stream()
         .map(Group::getName)
         .collect(toSet());
   }
@@ -224,9 +228,9 @@ public class ClientResource {
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientSecretsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    Client client = clientDAO.getClient(name)
+    Client client = clientDAOReadOnly.getClient(name)
         .orElseThrow(NotFoundException::new);
-    return aclDAO.getSanitizedSecretsFor(client).stream()
+    return aclDAOReadOnly.getSanitizedSecretsFor(client).stream()
         .map(SanitizedSecret::name)
         .collect(toSet());
   }
@@ -245,11 +249,11 @@ public class ClientResource {
   @Path("{name}")
   public Response deleteClient(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    Client client = clientDAO.getClient(name)
+    Client client = clientDAOReadWrite.getClient(name)
         .orElseThrow(NotFoundException::new);
 
     // Group memberships are deleted automatically by DB cascading.
-    clientDAO.deleteClient(client);
+    clientDAOReadWrite.deleteClient(client);
     auditLog.recordEvent(new Event(Instant.now(), EventTag.CLIENT_DELETE, automationClient.getName(), client.getName()));
     return Response.noContent().build();
   }
@@ -271,7 +275,7 @@ public class ClientResource {
   @Produces(APPLICATION_JSON)
   public ClientDetailResponseV2 modifyClient(@Auth AutomationClient automationClient,
       @PathParam("name") String currentName, @Valid ModifyClientRequestV2 request) {
-    Client client = clientDAO.getClient(currentName)
+    Client client = clientDAOReadWrite.getClient(currentName)
         .orElseThrow(NotFoundException::new);
     String newName = request.name();
 
@@ -282,7 +286,7 @@ public class ClientResource {
 
   private Stream<Optional<Long>> groupsToGroupIds(Set<String> groupNames) {
     return groupNames.stream()
-        .map(groupDAO::getGroup)
+        .map(groupDAOReadWrite::getGroup)
         .map((group) -> group.map(Group::getId));
   }
 }

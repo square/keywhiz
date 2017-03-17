@@ -39,14 +39,12 @@ import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoModule;
 import keywhiz.service.crypto.SecretTransformer;
-import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
-import keywhiz.service.daos.GroupDAO;
-import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.utility.DSLContexts;
 import org.jooq.DSLContext;
+import org.jooq.impl.DefaultTransactionProvider;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.JooqHealthCheck.OnFailure.LOG_ONLY;
@@ -126,7 +124,12 @@ public class ServiceModule extends AbstractModule {
   @Provides @Singleton
   @Readonly DSLContext readonlyJooqContext(@Readonly ManagedDataSource dataSource)
       throws SQLException {
-    return DSLContexts.databaseAgnostic(dataSource);
+    DSLContext dslContext = DSLContexts.databaseAgnostic(dataSource);
+    org.jooq.Configuration configuration = dslContext.configuration();
+    // Disable support for nested transactions via savepoints (required for MySQL)
+    // See: https://groups.google.com/forum/#!topic/jooq-user/zG0U6CkxI5o
+    configuration.set(new DefaultTransactionProvider(configuration.connectionProvider(), false));
+    return dslContext;
   }
 
   @Provides @Singleton SecretController secretController(SecretTransformer transformer,

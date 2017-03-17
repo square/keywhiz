@@ -46,6 +46,7 @@ import keywhiz.api.model.SecretVersion;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
+import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
@@ -84,10 +85,12 @@ public class SecretResource {
   private final AuditLog auditLog;
   private final SecretSeriesDAO secretSeriesDAO;
   private final ContentCryptographer cryptographer;
+  private final SecretController secretControllerReadOnly;
 
   @Inject public SecretResource(SecretController secretController, AclDAOFactory aclDAOFactory,
       GroupDAOFactory groupDAOFactory, SecretDAOFactory secretDAOFactory, AuditLog auditLog,
-      SecretSeriesDAOFactory secretSeriesDAOFactory, ContentCryptographer cryptographer) {
+      SecretSeriesDAOFactory secretSeriesDAOFactory, ContentCryptographer cryptographer,
+      @Readonly SecretController secretControllerReadOnly) {
     this.secretController = secretController;
     this.aclDAO = aclDAOFactory.readwrite();
     this.groupDAO = groupDAOFactory.readwrite();
@@ -95,6 +98,7 @@ public class SecretResource {
     this.auditLog = auditLog;
     this.secretSeriesDAO = secretSeriesDAOFactory.readwrite();
     this.cryptographer = cryptographer;
+    this.secretControllerReadOnly = secretControllerReadOnly;
   }
 
   /**
@@ -244,11 +248,11 @@ public class SecretResource {
         throw new BadRequestException(
             "Index and num must both be positive when retrieving batched secrets!");
       }
-      return secretController.getSecretsBatched(idx, num, newestFirst).stream()
+      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst).stream()
           .map(SanitizedSecret::name)
           .collect(toList());
     }
-    return secretController.getSanitizedSecrets(null, null).stream()
+    return secretControllerReadOnly.getSanitizedSecrets(null, null).stream()
         .map(SanitizedSecret::name)
         .collect(toSet());
   }
@@ -277,9 +281,9 @@ public class SecretResource {
         throw new BadRequestException(
             "Index and num must both be positive when retrieving batched secrets!");
       }
-      return secretController.getSecretsBatched(idx, num, newestFirst);
+      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst);
     }
-    return secretController.getSanitizedSecrets(null, null);
+    return secretControllerReadOnly.getSanitizedSecrets(null, null);
   }
 
   /**
@@ -295,7 +299,7 @@ public class SecretResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> secretListingExpiring(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
-    List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(time, null);
+    List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, null);
     return secrets.stream()
         .map(SanitizedSecret::name)
         .collect(toList());
@@ -314,7 +318,7 @@ public class SecretResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<SanitizedSecret> secretListingExpiringV2(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
-    List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(time, null);
+    List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, null);
     return secrets;
   }
 
@@ -331,7 +335,7 @@ public class SecretResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<SanitizedSecretWithGroups> secretListingExpiringV3(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
-    List<SanitizedSecretWithGroups> secrets = secretController.getExpiringSanitizedSecrets(time);
+    List<SanitizedSecretWithGroups> secrets = secretControllerReadOnly.getExpiringSanitizedSecrets(time);
     return secrets;
   }
 
@@ -450,7 +454,7 @@ public class SecretResource {
       @PathParam("time") Long time, @PathParam("name") String name) {
     Group group = groupDAO.getGroup(name).orElseThrow(NotFoundException::new);
 
-    List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(time, group);
+    List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, group);
     return secrets.stream()
         .map(SanitizedSecret::name)
         .collect(toSet());
@@ -553,7 +557,7 @@ public class SecretResource {
   public Iterable<String> secretGroupsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     // TODO: Use latest version instead of non-versioned
-    Secret secret = secretController.getSecretByName(name)
+    Secret secret = secretControllerReadOnly.getSecretByName(name)
         .orElseThrow(NotFoundException::new);
     return aclDAO.getGroupsFor(secret).stream()
         .map(Group::getName)
