@@ -100,8 +100,6 @@ public class KeywhizService extends Application<KeywhizConfig> {
 
     logger.debug("Registering bundles");
     bootstrap.addBundle(new Java8Bundle());
-    bootstrap.addBundle(new NamedAssetsBundle());
-    bootstrap.addBundle(new UiAssetsBundle());
   }
 
   @SuppressWarnings("unchecked")

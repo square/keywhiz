@@ -56,9 +56,6 @@ public class KeywhizConfig extends Configuration {
   @JsonProperty
   private UserAuthenticatorFactory userAuth;
 
-  @JsonProperty
-  private String alternateUiPath = null;
-
   @NotNull
   @JsonProperty
   private CookieConfig sessionCookie;
@@ -141,11 +138,6 @@ public class KeywhizConfig extends Configuration {
   /** @return LDAP configuration to authenticate admin users. Absent if fakeLdap is true. */
   public UserAuthenticatorFactory getUserAuthenticatorFactory() {
     return userAuth;
-  }
-
-  /** @return Enables loading UI assets from a directory instead of resource. */
-  public Optional<String> getAlternateUiPath() {
-    return Optional.ofNullable(alternateUiPath);
   }
 
   /** @return Configuration for authenticating session cookie provided by admin login. */
