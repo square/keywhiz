@@ -18,7 +18,6 @@ package keywhiz.api.automation.v2;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
-import javax.ws.rs.ext.ParamConverter;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
@@ -41,6 +40,8 @@ public class SecretDetailResponseV2Test {
         .checksum("checksum")
         .createdAtSeconds(OffsetDateTime.parse("2013-03-28T21:23:04.159Z").toEpochSecond())
         .createdBy("creator-user")
+        .updatedAtSeconds(OffsetDateTime.parse("2014-03-28T21:23:04.159Z").toEpochSecond())
+        .updatedBy("updater-user")
         .type("text/plain")
         .metadata(ImmutableMap.of("owner", "root"))
         .expiry(1136214245)
@@ -53,7 +54,7 @@ public class SecretDetailResponseV2Test {
   @Test public void formsCorrectlyFromSecretSeries() throws Exception {
     SecretSeries series = SecretSeries.of(1, "secret-name", "secret-description",
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
-        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user", "text/plain", null,
+        ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user", "text/plain", null,
         1L);
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .series(series)
@@ -70,11 +71,11 @@ public class SecretDetailResponseV2Test {
   @Test public void formsCorrectlyFromSecretSeriesAndContent() throws Exception {
     SecretSeries series = SecretSeries.of(1, "secret-name", "secret-description",
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
-        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user", "text/plain", null,
+        ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user", "text/plain", null,
         1L);
     SecretContent content = SecretContent.of(1, 1, "YXNkZGFz", "checksum",
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
-        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user",
         ImmutableMap.of("owner", "root"), 1136214245);
     SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
@@ -89,7 +90,7 @@ public class SecretDetailResponseV2Test {
   @Test public void formsCorrectlyFromSecret() throws Exception {
     Secret secret = new Secret(1, "secret-name", "secret-description", () -> "", "checksum",
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
-        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user",
         ImmutableMap.of("owner", "root"), "text/plain", null,
         1136214245, null);
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
@@ -105,7 +106,7 @@ public class SecretDetailResponseV2Test {
   @Test public void formsCorrectlyFromSecretVersion() throws Exception {
     SecretVersion version = SecretVersion.of(10, 1, "secret-name", "secret-description",
         "checksum", ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
-        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user",
         ImmutableMap.of("owner", "root"), "text/plain", 1136214245);
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .secretVersion(version)
