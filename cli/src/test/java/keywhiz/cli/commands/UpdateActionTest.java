@@ -107,6 +107,30 @@ public class UpdateActionTest {
         updateActionConfig.getMetadata(Jackson.newObjectMapper()), false, 0);
   }
 
+  @Test
+  public void updateWithContentPipedInButNoContentFlag() throws Exception {
+    updateActionConfig.name = secret.getDisplayName();
+    updateActionConfig.description = "content test";
+    updateActionConfig.json = "{\"owner\":\"example-name\", \"group\":\"example-group\"}";
+    updateActionConfig.contentProvided = false;
+
+    byte[] content = base64Decoder.decode(secret.getSecret());
+    updateAction.stream = new ByteArrayInputStream(content);
+    when(keywhizClient.getSanitizedSecretByName(secret.getName()))
+        .thenThrow(new NotFoundException()); // Call checks for existence.
+
+    // If the content flag is not specified, the content should not be sent to Keywhiz
+    when(keywhizClient.updateSecret(secret.getName(), true, "content test", false, new byte[]{}, true,
+        updateActionConfig.getMetadata(Jackson.newObjectMapper()), false, 0))
+        .thenReturn(secretDetailResponse);
+
+    updateAction.run();
+
+    // Content should not have been sent to Keywhiz, even though it was piped in (warning should also have been printed to stdout)
+    verify(keywhizClient, times(1)).updateSecret(secret.getName(), true, "content test", false, new byte[]{}, true,
+        updateActionConfig.getMetadata(Jackson.newObjectMapper()), false, 0);
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void updateThrowsIfMetadataHasBadKeys() throws Exception {
     updateActionConfig.name = secret.getDisplayName();
