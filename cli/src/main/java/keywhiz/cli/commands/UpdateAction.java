@@ -21,6 +21,8 @@ import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import keywhiz.cli.configs.AddOrUpdateActionConfig;
 import keywhiz.cli.configs.UpdateActionConfig;
 import keywhiz.client.KeywhizClient;
@@ -59,6 +61,19 @@ public class UpdateAction implements Runnable {
       content = readSecretContent();
     }
     partialUpdateSecret(secretName, content, config);
+
+    // If it appears that content was piped in but --content was not specified, print a warning
+    if (!config.contentProvided) {
+      try {
+        InputStreamReader reader = new InputStreamReader(stream, "UTF-8");
+        if (reader.ready()) {
+          System.out.println("\nWarning: Specify the --content flag to update a secret's content.");
+          System.out.println("The secret has not been updated with any provided content.");
+        }
+      } catch (IOException e) {
+        logger.warn("Unexpected error trying to create an InputStreamReader for stdin: '{}'", e.getMessage());
+      }
+    }
   }
 
   private void partialUpdateSecret(String secretName, byte[] content,
