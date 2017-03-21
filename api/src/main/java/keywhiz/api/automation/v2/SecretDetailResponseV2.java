@@ -43,6 +43,8 @@ import static keywhiz.api.model.Secret.decodedLength;
     public abstract Builder description(String description);
     public abstract Builder createdAtSeconds(long createdAt);
     public abstract Builder createdBy(String person);
+    public abstract Builder updatedAtSeconds(long updatedAt);
+    public abstract Builder updatedBy(String person);
     public abstract Builder type(@Nullable String type);
     public abstract Builder expiry(long expiry);
 
@@ -57,6 +59,8 @@ import static keywhiz.api.model.Secret.decodedLength;
           .description(series.description())
           .createdAtSeconds(series.createdAt().toEpochSecond())
           .createdBy(series.createdBy())
+          .updatedAtSeconds(series.updatedAt().toEpochSecond())
+          .updatedBy(series.updatedBy())
           .type(series.type().orElse(null));
     }
 
@@ -70,6 +74,8 @@ import static keywhiz.api.model.Secret.decodedLength;
           .metadata(seriesAndContent.content().metadata())
           .createdAtSeconds(seriesAndContent.series().createdAt().toEpochSecond())
           .createdBy(seriesAndContent.series().createdBy())
+          .updatedAtSeconds(seriesAndContent.series().updatedAt().toEpochSecond())
+          .updatedBy(seriesAndContent.series().updatedBy())
           .expiry(seriesAndContent.content().expiry())
           .type(seriesAndContent.series().type().orElse(null));
     }
@@ -82,6 +88,8 @@ import static keywhiz.api.model.Secret.decodedLength;
           .checksum(secret.getChecksum())
           .createdAtSeconds(secret.getCreatedAt().toEpochSecond())
           .createdBy(secret.getCreatedBy())
+          .updatedAtSeconds(secret.getUpdatedAt().toEpochSecond())
+          .updatedBy(secret.getUpdatedBy())
           .type(secret.getType().orElse(null))
           .expiry(secret.getExpiry())
           .metadata(secret.getMetadata());
@@ -96,6 +104,8 @@ import static keywhiz.api.model.Secret.decodedLength;
           .checksum(secretVersion.checksum())
           .createdAtSeconds(secretVersion.createdAt().toEpochSecond())
           .createdBy(secretVersion.createdBy())
+          .updatedAtSeconds(secretVersion.updatedAt().toEpochSecond())
+          .updatedBy(secretVersion.updatedBy())
           .type(secretVersion.type().orElse(null))
           .expiry(secretVersion.expiry())
           .metadata(secretVersion.metadata());
@@ -123,6 +133,8 @@ import static keywhiz.api.model.Secret.decodedLength;
       @JsonProperty("size") UnsignedLong size,
       @JsonProperty("createdAtSeconds") long createdAtSeconds,
       @JsonProperty("createdBy") String createdBy,
+      @JsonProperty("updatedAtSeconds") long updatedAtSeconds,
+      @JsonProperty("updatedBy") String updatedBy,
       @JsonProperty("type") @Nullable String type,
       @JsonProperty("metadata") @Nullable Map<String, String> metadata,
       @JsonProperty("expiry") @Nullable long expiry) {
@@ -135,6 +147,8 @@ import static keywhiz.api.model.Secret.decodedLength;
         .size(size)
         .createdAtSeconds(createdAtSeconds)
         .createdBy(createdBy)
+        .updatedAtSeconds(updatedAtSeconds)
+        .updatedBy(updatedBy)
         .type(type)
         .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
         .expiry(expiry)
@@ -150,6 +164,8 @@ import static keywhiz.api.model.Secret.decodedLength;
   @JsonProperty("size") public abstract UnsignedLong size();
   @JsonProperty("createdAtSeconds") public abstract long createdAtSeconds();
   @JsonProperty("createdBy") public abstract String createdBy();
+  @JsonProperty("updatedAtSeconds") public abstract long updatedAtSeconds();
+  @JsonProperty("updatedBy") public abstract String updatedBy();
   @JsonProperty("type") @Nullable public abstract String type();
   @JsonProperty("metadata") public abstract ImmutableMap<String, String> metadata();
   @JsonProperty("expiry") public abstract long expiry();
@@ -163,6 +179,8 @@ import static keywhiz.api.model.Secret.decodedLength;
         .add("size", size())
         .add("createdAtSeconds", createdAtSeconds())
         .add("createdBy", createdBy())
+        .add("updatedAtSeconds", updatedAtSeconds())
+        .add("updatedBy", updatedBy())
         .add("type", type())
         .add("metadata", metadata())
         .add("expiry", expiry())

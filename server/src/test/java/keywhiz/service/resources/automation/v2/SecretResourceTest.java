@@ -195,6 +195,8 @@ public class SecretResourceTest {
     SecretDetailResponseV2 response = lookup("secret6");
     assertThat(response.name()).isEqualTo("secret6");
     assertThat(response.createdBy()).isEqualTo("client");
+    assertThat(response.updatedBy()).isEqualTo("client");
+    assertThat(response.createdAtSeconds()).isEqualTo(response.updatedAtSeconds());
     assertThat(response.description()).isEqualTo("desc");
     assertThat(response.type()).isEqualTo("password");
     assertThat(response.metadata()).isEqualTo(ImmutableMap.of("owner", "root", "mode", "0440"));
