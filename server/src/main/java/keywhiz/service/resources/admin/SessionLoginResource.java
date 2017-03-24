@@ -98,10 +98,7 @@ public class SessionLoginResource {
 
     logger.info("User logged in: {}", username);
 
-    Response.ResponseBuilder response = Response
-        .seeOther(URI.create("/ui/index.html"))
-        .cacheControl(CacheControl.valueOf("no-cache"));
-
+    Response.ResponseBuilder response = Response.ok();
     cookiesForUser(optionalUser.get())
         .forEach(response::cookie);
     return response.build();

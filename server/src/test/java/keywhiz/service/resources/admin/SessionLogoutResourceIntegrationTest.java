@@ -51,7 +51,7 @@ public class SessionLogoutResourceIntegrationTest {
         .build();
 
     Response response = client.newCall(request).execute();
-    assertThat(response.code()).isEqualTo(303);
+    assertThat(response.code()).isEqualTo(200);
 
     List<String> cookies = response.headers(HttpHeaders.SET_COOKIE);
     assertThat(cookies).hasSize(1);
