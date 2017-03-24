@@ -82,7 +82,7 @@ public class SessionLoginResourceTest {
     when(ldapAuthenticator.authenticate(goodCredentials)).thenReturn(Optional.of(user));
 
     Response response = sessionLoginResource.login(LoginRequest.from("good", "credentials".toCharArray()));
-    assertThat(response.getStatus()).isEqualTo(SEE_OTHER.getStatusCode());
+    assertThat(response.getStatus()).isEqualTo(200);
 
     Map<String, NewCookie> responseCookies = response.getCookies();
     assertThat(responseCookies).hasSize(2).containsOnlyKeys("session", "XSRF-TOKEN");

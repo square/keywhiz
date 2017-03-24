@@ -62,7 +62,7 @@ public class SessionLoginResourceIntegrationTest {
     Request post = buildLoginPost(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword);
 
     Response response = client.newCall(post).execute();
-    assertThat(response.code()).isEqualTo(303);
+    assertThat(response.code()).isEqualTo(200);
 
     List<String> cookieNames = Lists.newArrayList();
     String sessionCookie = null;

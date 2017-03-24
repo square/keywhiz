@@ -60,7 +60,7 @@ public class SessionLogoutResourceTest {
     NewCookie cookie = cookieFactory.getSessionCookie(User.named("Me"), ZonedDateTime.now(clock).plusDays(1));
     Response response = sessionLogoutResource.logout(cookie);
 
-    assertThat(response.getStatus()).isEqualTo(303);
+    assertThat(response.getStatus()).isEqualTo(200);
 
     String resultCookie = response.getMetadata().getFirst("Set-Cookie").toString();
     assertThat(resultCookie)

@@ -80,9 +80,7 @@ public class SessionLogoutResource {
 
     NewCookie expiredCookie = cookieFactory.getExpiredSessionCookie();
 
-    return Response
-        .seeOther(URI.create("/ui/index.html"))
-        .cacheControl(CacheControl.valueOf("no-cache"))
+    return Response.ok()
         .header(HttpHeaders.SET_COOKIE, expiredCookie.toString())
         .build();
   }
