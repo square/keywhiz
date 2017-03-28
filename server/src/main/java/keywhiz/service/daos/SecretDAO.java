@@ -29,11 +29,11 @@ import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Group;
+import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
-import keywhiz.api.model.SecretVersion;
 import keywhiz.jooq.tables.Secrets;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
@@ -295,7 +295,7 @@ public class SecretDAO {
    * @param numVersions the number of versions after versionIdx to select in the list of versions
    * @return Versions of a secret matching input parameters or Optional.absent().
    */
-  public Optional<ImmutableList<SecretVersion>> getSecretVersionsByName(String name,
+  public Optional<ImmutableList<SanitizedSecret>> getSecretVersionsByName(String name,
       int versionIdx,
       int numVersions) {
     checkArgument(!name.isEmpty());
@@ -312,12 +312,10 @@ public class SecretDAO {
       Optional<ImmutableList<SecretContent>> contents =
           secretContentDAO.getSecretVersionsBySecretId(secretId, versionIdx, numVersions);
       if (contents.isPresent()) {
-        ImmutableList.Builder<SecretVersion> b = new ImmutableList.Builder<>();
+        ImmutableList.Builder<SanitizedSecret> b = new ImmutableList.Builder<>();
         b.addAll(contents.get()
             .stream()
-            .map(c -> SecretVersion.of(s.id(), c.id(), s.name(), s.description(), c.hmac(),
-                c.createdAt(), c.createdBy(), c.updatedAt(), c.updatedBy(), c.metadata(),
-                s.type().orElse(""), c.expiry()))
+            .map(c -> SanitizedSecret.fromSecretSeriesAndContent(SecretSeriesAndContent.of(s, c)))
             .collect(toList()));
 
         return Optional.of(b.build());

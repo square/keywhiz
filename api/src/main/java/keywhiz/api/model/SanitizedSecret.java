@@ -103,30 +103,6 @@ public abstract class SanitizedSecret {
         secret.getVersion().orElse(null));
   }
 
-  /**
-   * Build a matching representation of a secret version, but without sensitive content.
-   *
-   * @param secret secret version to build from
-   * @return content of secret version, but without sensitive content
-   */
-  public static SanitizedSecret fromSecretVersion(SecretVersion secret) {
-    checkNotNull(secret);
-    return SanitizedSecret.of(
-        secret.secretId(),
-        secret.name(),
-        secret.checksum(),
-        secret.description(),
-        secret.createdAt(),
-        secret.createdBy(),
-        secret.updatedAt(),
-        secret.updatedBy(),
-        secret.metadata(),
-        secret.type().orElse(null),
-        ImmutableMap.of(),
-        secret.expiry(),
-        secret.versionId());
-  }
-
   @JsonProperty public abstract long id();
   @JsonProperty public abstract String name();
   @JsonProperty public abstract String checksum();
