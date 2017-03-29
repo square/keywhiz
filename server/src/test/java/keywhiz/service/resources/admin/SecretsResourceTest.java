@@ -37,9 +37,7 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
-import keywhiz.api.model.SecretVersion;
 import keywhiz.auth.User;
-import keywhiz.client.KeywhizClient;
 import keywhiz.log.AuditLog;
 import keywhiz.log.SimpleLogger;
 import keywhiz.service.daos.AclDAO;
@@ -198,15 +196,10 @@ public class SecretsResourceTest {
     SanitizedSecret secret2 = SanitizedSecret.of(1, "name1", "checksum2", "desc", NOWPLUS, "user",
         NOWPLUS, "user", emptyMap, null, null, 1136214245, 250L);
 
-    SecretVersion version1 = SecretVersion.of(1, 125L, "name1", "desc", "checksum", NOW, "user",
-        NOW, "user", emptyMap, null, 1136214245);
-    SecretVersion version2 = SecretVersion.of(1, 250L, "name1", "desc", "checksum2", NOWPLUS,
-        "user", NOWPLUS, "user", emptyMap, null, 1136214245);
-
     when(secretDAO.getSecretVersionsByName("name1", 0, 10)).thenReturn(
-        Optional.of(ImmutableList.of(version2, version1)));
+        Optional.of(ImmutableList.of(secret2, secret1)));
     when(secretDAO.getSecretVersionsByName("name1", 1, 5)).thenReturn(
-        Optional.of(ImmutableList.of(version1)));
+        Optional.of(ImmutableList.of(secret1)));
     when(secretDAO.getSecretVersionsByName("name1", 2, 10)).thenReturn(
         Optional.of(ImmutableList.of()));
 
