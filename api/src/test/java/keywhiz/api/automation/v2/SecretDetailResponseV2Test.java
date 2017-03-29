@@ -36,30 +36,12 @@ public class SecretDetailResponseV2Test {
         .name("secret-name")
         .version(1L)
         .description("secret-description")
-        .content("YXNkZGFz")
         .checksum("checksum")
         .createdAtSeconds(OffsetDateTime.parse("2013-03-28T21:23:04.159Z").toEpochSecond())
         .createdBy("creator-user")
         .updatedAtSeconds(OffsetDateTime.parse("2014-03-28T21:23:04.159Z").toEpochSecond())
         .updatedBy("updater-user")
         .type("text/plain")
-        .metadata(ImmutableMap.of("owner", "root"))
-        .expiry(1136214245)
-        .build();
-
-    assertThat(asJson(secretDetailResponse))
-        .isEqualTo(jsonFixture("fixtures/v2/secretDetailResponse.json"));
-  }
-
-  @Test public void formsCorrectlyFromSecretSeries() throws Exception {
-    SecretSeries series = SecretSeries.of(1, "secret-name", "secret-description",
-        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
-        ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user", "text/plain", null,
-        1L);
-    SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
-        .series(series)
-        .content("YXNkZGFz")
-        .checksum("checksum")
         .metadata(ImmutableMap.of("owner", "root"))
         .expiry(1136214245)
         .build();
@@ -80,21 +62,6 @@ public class SecretDetailResponseV2Test {
     SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .seriesAndContent(seriesAndContent)
-        .content("YXNkZGFz")
-        .build();
-
-    assertThat(asJson(secretDetailResponse))
-        .isEqualTo(jsonFixture("fixtures/v2/secretDetailResponse.json"));
-  }
-
-  @Test public void formsCorrectlyFromSecret() throws Exception {
-    Secret secret = new Secret(1, "secret-name", "secret-description", () -> "YXNkZGFz", "checksum",
-        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
-        ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user",
-        ImmutableMap.of("owner", "root"), "text/plain", null,
-        1136214245, 1L);
-    SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
-        .secret(secret)
         .build();
 
     assertThat(asJson(secretDetailResponse))
@@ -102,15 +69,13 @@ public class SecretDetailResponseV2Test {
   }
 
   @Test public void formsCorrectlyFromSanitizedSecret() throws Exception {
-    Secret secret = new Secret(1, "secret-name", "secret-description", () -> "YXNkZGFz", "checksum",
+    SanitizedSecret sanitizedSecret = SanitizedSecret.of(1, "secret-name", "secret-description", "checksum",
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
         ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user",
         ImmutableMap.of("owner", "root"), "text/plain", null,
         1136214245, 1L);
-    SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .sanitizedSecret(sanitizedSecret)
-        .content("YXNkZGFz")
         .build();
 
     assertThat(asJson(secretDetailResponse))

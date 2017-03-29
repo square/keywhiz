@@ -9,7 +9,6 @@ import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Base64;
-import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
 import java.util.List;
 import java.util.Optional;
@@ -49,7 +48,6 @@ public class SecretResourceTest {
   private static final ObjectMapper mapper =
       KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
   private static final Encoder encoder = Base64.getEncoder();
-  private static final Decoder decoder = Base64.getDecoder();
 
   OkHttpClient mutualSslClient;
 
@@ -200,10 +198,6 @@ public class SecretResourceTest {
     assertThat(response.description()).isEqualTo("desc");
     assertThat(response.type()).isEqualTo("password");
     assertThat(response.metadata()).isEqualTo(ImmutableMap.of("owner", "root", "mode", "0440"));
-
-    // These values are left out for a series lookup as they pertain to a specific secret.
-    assertThat(response.content()).isEmpty();
-    assertThat(response.size().longValue()).isZero();
   }
 
   //---------------------------------------------------------------------------------------
