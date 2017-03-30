@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
@@ -20,6 +22,8 @@ import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
+import keywhiz.api.automation.v2.SecretContentsRequestV2;
+import keywhiz.api.automation.v2.SecretContentsResponseV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.Group;
@@ -199,6 +203,44 @@ public class SecretResourceTest {
     assertThat(response.type()).isEqualTo("password");
     assertThat(response.metadata()).isEqualTo(ImmutableMap.of("owner", "root", "mode", "0440"));
   }
+
+  //---------------------------------------------------------------------------------------
+  // secretContents
+  //---------------------------------------------------------------------------------------
+
+  @Test public void secretContents_empty() throws Exception {
+    // No error expected when the list of requested secrets is empty
+    SecretContentsResponseV2 resp = contents(SecretContentsRequestV2.fromParts(ImmutableSet.of()));
+    assertThat(resp.successSecrets().isEmpty()).isTrue();
+    assertThat(resp.missingSecrets().isEmpty()).isTrue();
+  }
+
+  @Test public void secretContents_success() throws Exception {
+    // Sample secrets
+    create(CreateSecretRequestV2.builder()
+        .name("secret23a")
+        .content(encoder.encodeToString("supa secret23a".getBytes(UTF_8)))
+        .description("desc")
+        .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
+        .type("password")
+        .build());
+
+    create(CreateSecretRequestV2.builder()
+        .name("secret23b")
+        .content(encoder.encodeToString("supa secret23b".getBytes(UTF_8)))
+        .description("desc")
+        .build());
+
+    SecretContentsRequestV2 request = SecretContentsRequestV2.fromParts(
+        ImmutableSet.of("secret23a", "secret23b", "non-existent")
+    );
+    SecretContentsResponseV2 response = contents(request);
+    assertThat(response.successSecrets()).isEqualTo(ImmutableMap.of("secret23a",
+        encoder.encodeToString("supa secret23a".getBytes(UTF_8)),
+        "secret23b", encoder.encodeToString("supa secret23b".getBytes(UTF_8))));
+    assertThat(response.missingSecrets()).isEqualTo(ImmutableList.of("non-existent"));
+  }
+
 
   //---------------------------------------------------------------------------------------
   // secretGroupsListing
@@ -849,6 +891,14 @@ public class SecretResourceTest {
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
     return mapper.readValue(httpResponse.body().byteStream(), SecretDetailResponseV2.class);
+  }
+
+  SecretContentsResponseV2 contents(SecretContentsRequestV2  request) throws IOException {
+    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
+    Request get = clientRequest("/automation/v2/secrets/contents").post(body).build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), SecretContentsResponseV2.class);
   }
 
   List<String> groupsListing(String name) throws IOException {
