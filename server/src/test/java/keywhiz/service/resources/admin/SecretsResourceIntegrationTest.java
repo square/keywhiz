@@ -15,7 +15,6 @@
  */
 package keywhiz.service.resources.admin;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Base64;

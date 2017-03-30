@@ -28,11 +28,11 @@ import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SanitizedSecretWithGroupsTest {
-  SanitizedSecret sanitizedSecret = SanitizedSecret.of(
+  private SanitizedSecret sanitizedSecret = SanitizedSecret.of(
       767,
       "trapdoor",
-      "checksum",
       "v1",
+      "checksum",
       ApiDate.parse("2013-03-28T21:42:42.000Z"),
       "keywhizAdmin",
       ApiDate.parse("2013-03-28T21:42:42.000Z"),
@@ -43,7 +43,7 @@ public class SanitizedSecretWithGroupsTest {
       1136214245,
       1L);
 
-  List<Group> groups;
+  private List<Group> groups;
 
   @Before
   public void setUp() {

@@ -36,8 +36,8 @@ public abstract class SanitizedSecret {
   @JsonCreator public static SanitizedSecret of(
       @JsonProperty("id") long id,
       @JsonProperty("name") String name,
-      @JsonProperty("checksum") String checksum,
       @JsonProperty("description") @Nullable String description,
+      @JsonProperty("checksum") String checksum,
       @JsonProperty("createdAt") ApiDate createdAt,
       @JsonProperty("createdBy") @Nullable String createdBy,
       @JsonProperty("updatedAt") ApiDate updatedAt,
@@ -51,13 +51,13 @@ public abstract class SanitizedSecret {
         (metadata == null) ? ImmutableMap.of() : ImmutableMap.copyOf(metadata);
     ImmutableMap<String, String> genOptions =
         (generationOptions == null) ? ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
-    return new AutoValue_SanitizedSecret(id, name, checksum, nullToEmpty(description), createdAt,
+    return new AutoValue_SanitizedSecret(id, name, nullToEmpty(description), checksum, createdAt,
         nullToEmpty(createdBy), updatedAt, nullToEmpty(updatedBy), meta, Optional.ofNullable(type),
         genOptions, expiry, Optional.ofNullable(version));
   }
 
   public static SanitizedSecret of(long id, String name) {
-    return of(id, name, "", null, new ApiDate(0), null, new ApiDate(0), null, null, null, null, 0, null);
+    return of(id, name, null, "", new ApiDate(0), null, new ApiDate(0), null, null, null, null, 0, null);
   }
 
   public static SanitizedSecret fromSecretSeriesAndContent(SecretSeriesAndContent seriesAndContent) {
@@ -66,8 +66,8 @@ public abstract class SanitizedSecret {
     return SanitizedSecret.of(
         series.id(),
         series.name(),
-        content.hmac(),
         series.description(),
+        content.hmac(),
         series.createdAt(),
         series.createdBy(),
         series.updatedAt(),
@@ -90,8 +90,8 @@ public abstract class SanitizedSecret {
     return SanitizedSecret.of(
         secret.getId(),
         secret.getName(),
-        secret.getChecksum(),
         secret.getDescription(),
+        secret.getChecksum(),
         secret.getCreatedAt(),
         secret.getCreatedBy(),
         secret.getUpdatedAt(),
@@ -105,8 +105,8 @@ public abstract class SanitizedSecret {
 
   @JsonProperty public abstract long id();
   @JsonProperty public abstract String name();
-  @JsonProperty public abstract String checksum();
   @JsonProperty public abstract String description();
+  @JsonProperty public abstract String checksum();
   @JsonProperty public abstract ApiDate createdAt();
   @JsonProperty public abstract String createdBy();
   @JsonProperty public abstract ApiDate updatedAt();

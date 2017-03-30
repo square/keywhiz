@@ -38,16 +38,16 @@ import static keywhiz.api.model.Secret.decodedLength;
     abstract SecretDetailResponseV2 autoBuild();
 
     public abstract Builder name(String name);
-    public abstract Builder version(@Nullable Long version); // Unique ID in secrets_content table
+    public abstract Builder description(String description);
     public abstract Builder content(String secret);
     public abstract Builder checksum(String checksum);
-    public abstract Builder description(String description);
     public abstract Builder createdAtSeconds(long createdAt);
     public abstract Builder createdBy(String person);
     public abstract Builder updatedAtSeconds(long updatedAt);
     public abstract Builder updatedBy(String person);
     public abstract Builder type(@Nullable String type);
     public abstract Builder expiry(long expiry);
+    public abstract Builder version(@Nullable Long version); // Unique ID in secrets_content table
 
     public Builder metadata(Map<String, String> metadata) {
       return metadata(ImmutableMap.copyOf(metadata));
@@ -56,30 +56,30 @@ import static keywhiz.api.model.Secret.decodedLength;
     public Builder series(SecretSeries series) {
       return this
           .name(series.name())
-          .version(series.currentVersion().orElse(null))
           .description(series.description())
           .createdAtSeconds(series.createdAt().toEpochSecond())
           .createdBy(series.createdBy())
           .updatedAtSeconds(series.updatedAt().toEpochSecond())
           .updatedBy(series.updatedBy())
           .type(series.type().orElse(null))
-          .expiry(0);
+          .expiry(0)
+          .version(series.currentVersion().orElse(null));
     }
 
     // Does not save secret contents, but saves HMAC
     public Builder seriesAndContent(SecretSeriesAndContent seriesAndContent) {
       return this
           .name(seriesAndContent.series().name())
-          .version(seriesAndContent.series().currentVersion().orElse(null))
-          .checksum(seriesAndContent.content().hmac())
           .description(seriesAndContent.series().description())
-          .metadata(seriesAndContent.content().metadata())
+          .checksum(seriesAndContent.content().hmac())
           .createdAtSeconds(seriesAndContent.series().createdAt().toEpochSecond())
           .createdBy(seriesAndContent.series().createdBy())
           .updatedAtSeconds(seriesAndContent.series().updatedAt().toEpochSecond())
           .updatedBy(seriesAndContent.series().updatedBy())
+          .metadata(seriesAndContent.content().metadata())
+          .type(seriesAndContent.series().type().orElse(null))
           .expiry(seriesAndContent.content().expiry())
-          .type(seriesAndContent.series().type().orElse(null));
+          .version(seriesAndContent.series().currentVersion().orElse(null));
     }
 
     public Builder secret(Secret secret) {
@@ -92,9 +92,9 @@ import static keywhiz.api.model.Secret.decodedLength;
           .createdBy(secret.getCreatedBy())
           .updatedAtSeconds(secret.getUpdatedAt().toEpochSecond())
           .updatedBy(secret.getUpdatedBy())
+          .metadata(secret.getMetadata())
           .type(secret.getType().orElse(null))
           .expiry(secret.getExpiry())
-          .metadata(secret.getMetadata())
           .version(secret.getVersion().orElse(null));
     }
 
@@ -107,9 +107,9 @@ import static keywhiz.api.model.Secret.decodedLength;
           .createdBy(sanitizedSecret.createdBy())
           .updatedAtSeconds(sanitizedSecret.updatedAt().toEpochSecond())
           .updatedBy(sanitizedSecret.updatedBy())
+          .metadata(sanitizedSecret.metadata())
           .type(sanitizedSecret.type().orElse(null))
           .expiry(sanitizedSecret.expiry())
-          .metadata(sanitizedSecret.metadata())
           .version(sanitizedSecret.version().orElse(null));
     }
 
@@ -128,7 +128,6 @@ import static keywhiz.api.model.Secret.decodedLength;
   @SuppressWarnings("unused")
   @JsonCreator public static SecretDetailResponseV2 fromParts(
       @JsonProperty("name") String name,
-      @JsonProperty("version") @Nullable Long version,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("content") String content,
       @JsonProperty("checksum") String checksum,
@@ -137,12 +136,12 @@ import static keywhiz.api.model.Secret.decodedLength;
       @JsonProperty("createdBy") String createdBy,
       @JsonProperty("updatedAtSeconds") long updatedAtSeconds,
       @JsonProperty("updatedBy") String updatedBy,
-      @JsonProperty("type") @Nullable String type,
       @JsonProperty("metadata") @Nullable Map<String, String> metadata,
-      @JsonProperty("expiry") long expiry) {
+      @JsonProperty("type") @Nullable String type,
+      @JsonProperty("expiry") long expiry,
+      @JsonProperty("version") @Nullable Long version) {
     return builder()
         .name(name)
-        .version(version)
         .description(nullToEmpty(description))
         .content(content)
         .checksum(checksum)
@@ -151,15 +150,15 @@ import static keywhiz.api.model.Secret.decodedLength;
         .createdBy(createdBy)
         .updatedAtSeconds(updatedAtSeconds)
         .updatedBy(updatedBy)
-        .type(type)
         .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
+        .type(type)
         .expiry(expiry)
+        .version(version)
         .build();
   }
 
   // TODO: Consider Optional values in place of Nullable.
   @JsonProperty("name") public abstract String name();
-  @JsonProperty("version") @Nullable public abstract Long version();
   @JsonProperty("description") public abstract String description();
   @JsonProperty("content") public abstract String content();
   @JsonProperty("checksum") public abstract String checksum();
@@ -168,9 +167,10 @@ import static keywhiz.api.model.Secret.decodedLength;
   @JsonProperty("createdBy") public abstract String createdBy();
   @JsonProperty("updatedAtSeconds") public abstract long updatedAtSeconds();
   @JsonProperty("updatedBy") public abstract String updatedBy();
-  @JsonProperty("type") @Nullable public abstract String type();
   @JsonProperty("metadata") public abstract ImmutableMap<String, String> metadata();
+  @JsonProperty("type") @Nullable public abstract String type();
   @JsonProperty("expiry") public abstract long expiry();
+  @JsonProperty("version") @Nullable public abstract Long version();
 
   @Override public final String toString() {
     return MoreObjects.toStringHelper(this)

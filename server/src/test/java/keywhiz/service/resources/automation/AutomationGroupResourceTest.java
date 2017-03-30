@@ -91,9 +91,9 @@ public class AutomationGroupResourceTest {
     Client groupClient =
         new Client(1, "firstClient", "Group client", now, "test", now, "test", null, true, true);
     SanitizedSecret firstGroupSecret =
-        SanitizedSecret.of(1, "name1", "checksum", "desc", now, "test", now, "test", null, "", null, 1136214245, 125L);
+        SanitizedSecret.of(1, "name1", "desc", "checksum", now, "test", now, "test", null, "", null, 1136214245, 125L);
     SanitizedSecret secondGroupSecret =
-        SanitizedSecret.of(2, "name2", "checksum", "desc", now, "test", now, "test", null, "", null, 1136214245, 250L);
+        SanitizedSecret.of(2, "name2", "desc", "checksum", now, "test", now, "test", null, "", null, 1136214245, 250L);
 
     when(groupDAO.getGroup("testGroup")).thenReturn(Optional.of(group));
     when(aclDAO.getClientsFor(group)).thenReturn(ImmutableSet.of(groupClient));
