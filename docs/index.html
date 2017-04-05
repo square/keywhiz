@@ -64,11 +64,10 @@
             <p>Keywhiz makes managing secrets easier and more secure. Keywhiz servers in a cluster
                 centrally store secrets encrypted in a database. Clients use mutually authenticated
                 TLS (mTLS) to retrieve secrets they have access to. Authenticated users administer
-                Keywhiz via CLI or web app UI. To enable workflows, Keywhiz has automation APIs over
-                mTLS and support for simple secret generation plugins.</p>
+                Keywhiz via CLI. To enable workflows, Keywhiz has automation APIs over mTLS.</p>
 
-            <p><em>Keywhiz should be considered alpha at this point. Upcoming changes may break API
-                backward compatibility. See our <a href="#roadmap">roadmap</a>.</em></p>
+            <p><em>Keywhiz is reliable and used in production, however some upcoming changes may
+                break API backward compatibility. See our <a href="#roadmap">roadmap</a>.</em></p>
 
             <h3 id="components">System components</h3>
             <h4>Keywhiz Server</h4>
@@ -98,11 +97,6 @@
             <p>Keywhiz CLI is a Java program for Keywhiz administration. Clients, secrets, and
                 groups can be queried, added, removed, or associated with each other.
                 <a href="#model">Users</a> can authenticate and use the CLI.</p>
-
-            <h4>Keywhiz UI</h4>
-            <p>Keywhiz UI is web app for Keywhiz administration, similiar to Keywhiz CLI. The UI is
-                built with <a href="https://angularjs.org/">AngularJS</a>.
-                <a href="#model">Users</a> can authenticate and use the UI.</p>
 
             <h4>Public Key Infrastructure</h4>
             <p>Keywhiz makes heavy use of mTLS and X509 certificates. It can even help distribute
@@ -134,7 +128,7 @@
                 Server.</p>
 
             <h3 id="setup">Setup</h3>
-            <p>Source code for the Server, CLI, and UI is available in
+            <p>Source code for the Server and CLI is available in
                 <a href="https://github.com/square/keywhiz">square/keywhiz</a>. KeywhizFs source is
                 in <a href="https://github.com/square/keywhiz-fs">square/keywhiz-fs</a>. To checkout
                 the Keywhiz source code:</p>
@@ -158,10 +152,6 @@ $ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar migrate server/sr
 
             <p>Start the server:</p>
             <pre class="prettyprint">$ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar server server/src/main/resources/keywhiz-development.yaml</pre>
-
-            <p>Access the UI by opening
-                <a href="https://localhost:4444/">https://localhost:4444/</a> in a browser. The development
-                data provides a keywhizAdmin:adminPass account.</p>
 
             <h4>Building the CLI</h4>
             <p>From the base of the keywhiz repository:</p>
@@ -223,12 +213,11 @@ $ curl --cert ./server/src/test/resources/clients/client.p12:ponies -H "Content-
                 <a href="https://github.com/square/keywhiz">available on GitHub</a>.</p>
 
             <h3 id="roadmap">Roadmap</h3>
-            <h4>Beta release:</h4>
+            <h4>Upcoming features</h4>
             <ul>
-              <li>Expose secret versions in KeywhizFs</li>
-              <li>New client API for secret versions</li>
-              <li><del>Migrate from JDBI to JOOQ</del></li>
-              <li><del>Support MySQL in addition to PostgreSQL</del></li>
+              <li>Replace KeywhizFS to remove FUSE reliance</li>
+              <li>Redesigned, more coherent APIs</li>
+              <li>Database integrity checks</li>
             </ul>
 
             <h3 id="contributing">Contributing</h3>
