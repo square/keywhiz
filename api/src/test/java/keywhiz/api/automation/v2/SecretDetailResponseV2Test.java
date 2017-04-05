@@ -19,11 +19,11 @@ package keywhiz.api.automation.v2;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import keywhiz.api.ApiDate;
+import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
-import keywhiz.api.model.SecretVersion;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
@@ -34,7 +34,7 @@ public class SecretDetailResponseV2Test {
   @Test public void serializesCorrectly() throws Exception {
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .name("secret-name")
-        .version(1)
+        .version(1L)
         .description("secret-description")
         .content("YXNkZGFz")
         .checksum("checksum")
@@ -88,28 +88,28 @@ public class SecretDetailResponseV2Test {
   }
 
   @Test public void formsCorrectlyFromSecret() throws Exception {
-    Secret secret = new Secret(1, "secret-name", "secret-description", () -> "", "checksum",
+    Secret secret = new Secret(1, "secret-name", "secret-description", () -> "YXNkZGFz", "checksum",
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
         ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user",
         ImmutableMap.of("owner", "root"), "text/plain", null,
-        1136214245, null);
+        1136214245, 1L);
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .secret(secret)
-        .content("YXNkZGFz")
-        .version(1)
         .build();
 
     assertThat(asJson(secretDetailResponse))
         .isEqualTo(jsonFixture("fixtures/v2/secretDetailResponse.json"));
   }
 
-  @Test public void formsCorrectlyFromSecretVersion() throws Exception {
-    SecretVersion version = SecretVersion.of(10, 1, "secret-name", "secret-description",
-        "checksum", ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+  @Test public void formsCorrectlyFromSanitizedSecret() throws Exception {
+    Secret secret = new Secret(1, "secret-name", "secret-description", () -> "YXNkZGFz", "checksum",
+        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
         ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user",
-        ImmutableMap.of("owner", "root"), "text/plain", 1136214245);
+        ImmutableMap.of("owner", "root"), "text/plain", null,
+        1136214245, 1L);
+    SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
-        .secretVersion(version)
+        .sanitizedSecret(sanitizedSecret)
         .content("YXNkZGFz")
         .build();
 

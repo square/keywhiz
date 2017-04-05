@@ -52,7 +52,6 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
-import keywhiz.api.model.SecretVersion;
 import keywhiz.auth.User;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
@@ -69,7 +68,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -376,13 +374,11 @@ public class SecretsResource {
     logger.info("User '{}' listing {} versions starting at index {} for secret '{}'.", user,
         numVersions, versionIdx, name);
     
-    ImmutableList<SecretVersion> versions =
+    ImmutableList<SanitizedSecret> versions =
         secretDAOReadOnly.getSecretVersionsByName(name, versionIdx, numVersions)
             .orElseThrow(NotFoundException::new);
 
-    return versions.stream()
-        .map(SanitizedSecret::fromSecretVersion)
-        .collect(toList());
+    return versions;
   }
 
   /**

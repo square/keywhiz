@@ -42,7 +42,6 @@ import keywhiz.api.model.SanitizedSecretWithGroups;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeriesAndContent;
-import keywhiz.api.model.SecretVersion;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
@@ -504,13 +503,13 @@ public class SecretResource {
   public Iterable<SecretDetailResponseV2> secretVersions(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @QueryParam("versionIdx") int versionIdx,
       @QueryParam("numVersions") int numVersions) {
-    ImmutableList<SecretVersion> versions =
+    ImmutableList<SanitizedSecret> versions =
         secretDAO.getSecretVersionsByName(name, versionIdx, numVersions)
             .orElseThrow(NotFoundException::new);
 
     return versions.stream()
         .map(v -> SecretDetailResponseV2.builder()
-            .secretVersion(v)
+            .sanitizedSecret(v)
             .build())
         .collect(toList());
   }

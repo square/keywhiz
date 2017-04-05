@@ -119,7 +119,7 @@ public class AclDAO {
 
       extraInfo.put("group", group.get().getName());
       extraInfo.put("secret added", secret.get().name());
-      auditLog.recordEvent(new Event(Instant.now(), EventTag.CHANGEACL_GROUP_SECRET, group.get().getName(), user, extraInfo));
+      auditLog.recordEvent(new Event(Instant.now(), EventTag.CHANGEACL_GROUP_SECRET, user, group.get().getName(), extraInfo));
     });
   }
 
@@ -146,7 +146,7 @@ public class AclDAO {
 
       extraInfo.put("group", group.get().getName());
       extraInfo.put("secret removed", secret.get().name());
-      auditLog.recordEvent(new Event(Instant.now(), EventTag.CHANGEACL_GROUP_SECRET, group.get().getName(), user, extraInfo));
+      auditLog.recordEvent(new Event(Instant.now(), EventTag.CHANGEACL_GROUP_SECRET, user, group.get().getName(), extraInfo));
     });
   }
 
@@ -173,7 +173,7 @@ public class AclDAO {
 
       extraInfo.put("group", group.get().getName());
       extraInfo.put("client added", client.get().getName());
-      auditLog.recordEvent(new Event(Instant.now(), EventTag.CHANGEACL_GROUP_CLIENT, group.get().getName(), user, extraInfo));
+      auditLog.recordEvent(new Event(Instant.now(), EventTag.CHANGEACL_GROUP_CLIENT, user, group.get().getName(), extraInfo));
     });
   }
 
@@ -200,7 +200,7 @@ public class AclDAO {
 
       extraInfo.put("group", group.get().getName());
       extraInfo.put("client removed", client.get().getName());
-      auditLog.recordEvent(new Event(Instant.now(), EventTag.CHANGEACL_GROUP_CLIENT, group.get().getName(), user, extraInfo));
+      auditLog.recordEvent(new Event(Instant.now(), EventTag.CHANGEACL_GROUP_CLIENT, user, group.get().getName(), extraInfo));
     });
   }
 
