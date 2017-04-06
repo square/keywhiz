@@ -207,7 +207,7 @@ public class AutomationGroupResource {
     Map<String, String> extraInfo = new HashMap<>();
     extraInfo.put("deprecated", "true");
     auditLog.recordEvent(
-        new Event(Instant.now(), EventTag.GROUP_CREATE, automationClient.getName(), group.getName(),
+        new Event(Instant.now(), EventTag.GROUP_DELETE, automationClient.getName(), group.getName(),
             extraInfo));
     return Response.ok().build();
   }
