@@ -204,7 +204,7 @@ public class AutomationClientResource {
     Map<String, String> extraInfo = new HashMap<>();
     extraInfo.put("deprecated", "true");
     auditLog.recordEvent(
-        new Event(Instant.now(), EventTag.CLIENT_CREATE, automationClient.getName(),
+        new Event(Instant.now(), EventTag.CLIENT_DELETE, automationClient.getName(),
             client.getName(), extraInfo));
     return Response.ok().build();
   }
