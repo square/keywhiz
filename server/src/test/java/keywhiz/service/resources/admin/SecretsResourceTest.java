@@ -90,9 +90,9 @@ public class SecretsResourceTest {
 
   @Test
   public void listSecrets() {
-    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "checksum", "desc", NOW, "user", NOW, "user",
+    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc","checksum", NOW, "user", NOW, "user",
         emptyMap, null, null, 1136214245, 125L);
-    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "checksum", "desc", NOW, "user", NOW, "user",
+    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "desc","checksum", NOW, "user", NOW, "user",
         emptyMap, null, null, 1136214245, 250L);
     when(secretController.getSanitizedSecrets(null, null)).thenReturn(ImmutableList.of(secret1, secret2));
 
@@ -191,9 +191,9 @@ public class SecretsResourceTest {
 
   @Test
   public void listSecretVersions() {
-    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "checksum", "desc", NOW, "user",
+    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc", "checksum", NOW, "user",
         NOW, "user", emptyMap, null, null, 1136214245, 125L);
-    SanitizedSecret secret2 = SanitizedSecret.of(1, "name1", "checksum2", "desc", NOWPLUS, "user",
+    SanitizedSecret secret2 = SanitizedSecret.of(1, "name1", "desc", "checksum2", NOWPLUS, "user",
         NOWPLUS, "user", emptyMap, null, null, 1136214245, 250L);
 
     when(secretDAO.getSecretVersionsByName("name1", 0, 10)).thenReturn(

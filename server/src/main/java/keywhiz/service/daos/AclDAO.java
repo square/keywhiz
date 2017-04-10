@@ -284,8 +284,8 @@ public class AclDAO {
           return SanitizedSecret.of(
               series.id(),
               series.name(),
-              row.getValue(SECRETS_CONTENT.CONTENT_HMAC),
               series.description(),
+              row.getValue(SECRETS_CONTENT.CONTENT_HMAC),
               new ApiDate(row.getValue(SECRETS_CONTENT.CREATEDAT)),
               row.getValue(SECRETS_CONTENT.CREATEDBY),
               new ApiDate(row.getValue(SECRETS_CONTENT.UPDATEDAT)),
@@ -342,8 +342,8 @@ public class AclDAO {
           return SanitizedSecret.of(
               series.id(),
               series.name(),
-              row.getValue(SECRETS_CONTENT.CONTENT_HMAC),
               series.description(),
+              row.getValue(SECRETS_CONTENT.CONTENT_HMAC),
               new ApiDate(row.getValue(SECRETS_CONTENT.CREATEDAT)),
               row.getValue(SECRETS_CONTENT.CREATEDBY),
               new ApiDate(row.getValue(SECRETS_CONTENT.UPDATEDAT)),

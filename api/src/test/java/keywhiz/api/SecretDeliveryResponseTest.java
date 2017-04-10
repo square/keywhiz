@@ -17,7 +17,6 @@
 package keywhiz.api;
 
 import com.google.common.collect.ImmutableMap;
-import java.util.Optional;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import org.junit.Test;
@@ -36,8 +35,8 @@ public class SecretDeliveryResponseTest {
       () -> "YWJj", "checksum", NOW, null, NOW, null, metadata,
       "upload", null, 0, null);
 
-  private static final SanitizedSecret sanitizedSecret = SanitizedSecret.of(0, "name", "checksum",
-      null, NOW, null, NOW, null, metadata, "upload", null, 0, null);
+  private static final SanitizedSecret sanitizedSecret = SanitizedSecret.of(0, "name", null, "checksum",
+      NOW, null, NOW, null, metadata, "upload", null, 0, null);
 
   @Test
   public void setsLength() {
