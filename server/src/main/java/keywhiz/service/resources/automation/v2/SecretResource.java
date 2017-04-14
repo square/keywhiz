@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import io.dropwizard.auth.Auth;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,8 @@ import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
+import keywhiz.api.automation.v2.SecretContentsRequestV2;
+import keywhiz.api.automation.v2.SecretContentsResponseV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.AutomationClient;
@@ -478,6 +481,49 @@ public class SecretResource {
         .orElseThrow(NotFoundException::new);
     return SecretDetailResponseV2.builder()
         .seriesAndContent(secret)
+        .build();
+  }
+
+  /**
+   * Retrieve contents for a set of secret series.  Throws an exception
+   * for unexpected errors (i. e. empty secret names or errors connecting to
+   * the database); returns a response containing the contents of found
+   * secrets and a list of any missing secrets.
+   *
+   * @excludeParams automationClient
+   *
+   * @responseMessage 200 Secret series information retrieved
+   */
+  @Timed @ExceptionMetered
+  @POST
+  @Path("contents")
+  @Produces(APPLICATION_JSON)
+  public SecretContentsResponseV2 secretContents(@Auth AutomationClient automationClient,
+      @Valid SecretContentsRequestV2 request) {
+    HashMap<String, String> successSecrets = new HashMap<>();
+    ArrayList<String> missingSecrets = new ArrayList<>();
+
+    // Get the contents for each secret, recording any errors
+    for (String secretName : request.secrets()) {
+      // Get the secret, if present
+      Optional<Secret> secret = secretController.getSecretByName(secretName);
+
+      if (!secret.isPresent()) {
+        missingSecrets.add(secretName);
+      } else {
+        successSecrets.put(secretName, secret.get().getSecret());
+      }
+    }
+
+    // Record the read in the audit log, tracking which secrets were found and not found
+    Map<String, String> extraInfo = new HashMap<>();
+    extraInfo.put("success_secrets", successSecrets.keySet().toString());
+    extraInfo.put("missing_secrets", missingSecrets.toString());
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_READCONTENT, automationClient.getName(), request.secrets().toString(), extraInfo));
+
+    return SecretContentsResponseV2.builder()
+        .successSecrets(successSecrets)
+        .missingSecrets(missingSecrets)
         .build();
   }
 
