@@ -895,7 +895,7 @@ public class SecretResourceTest {
 
   SecretContentsResponseV2 contents(SecretContentsRequestV2  request) throws IOException {
     RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
-    Request get = clientRequest("/automation/v2/secrets/contents").post(body).build();
+    Request get = clientRequest("/automation/v2/secrets/request/contents").post(body).build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
     return mapper.readValue(httpResponse.body().byteStream(), SecretContentsResponseV2.class);

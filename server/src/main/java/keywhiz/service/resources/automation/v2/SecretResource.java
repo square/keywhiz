@@ -496,7 +496,7 @@ public class SecretResource {
    */
   @Timed @ExceptionMetered
   @POST
-  @Path("contents")
+  @Path("request/contents")
   @Produces(APPLICATION_JSON)
   public SecretContentsResponseV2 secretContents(@Auth AutomationClient automationClient,
       @Valid SecretContentsRequestV2 request) {
