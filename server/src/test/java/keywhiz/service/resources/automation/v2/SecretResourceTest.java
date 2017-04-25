@@ -33,6 +33,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -654,13 +655,13 @@ public class SecretResourceTest {
 
     // Get the current version (the last version created)
     initialCurrentVersion = lookup(name);
-    assertThat(initialCurrentVersion.name().equals(name));
+    assertThat(initialCurrentVersion.name()).isEqualTo(name);
     assertThat(
-        initialCurrentVersion.description().equals(format("%s, version %d", name, totalVersions)));
+        initialCurrentVersion.description()).isEqualTo(format("%s, version %d", name, totalVersions - 1));
 
     // Get the earliest version of this secret
-    versions = listVersions(name, totalVersions - 2, 1);
-    assertThat(!versions.get(0).equals(initialCurrentVersion));
+    versions = listVersions(name, totalVersions - 3, 1);
+    assertThat(versions.get(0)).isNotEqualTo(initialCurrentVersion);
 
     // Reset the current version to this version
     setCurrentVersion(
@@ -668,8 +669,8 @@ public class SecretResourceTest {
 
     // Get the current version
     finalCurrentVersion = lookup(name);
-    assertThat(finalCurrentVersion.equals(versions.get(0)));
-    assertThat(!finalCurrentVersion.equals(initialCurrentVersion));
+    assertThat(finalCurrentVersion).isEqualToIgnoringGivenFields(versions.get(0), "updatedAtSeconds");
+    assertThat(finalCurrentVersion).isNotEqualTo(initialCurrentVersion);
   }
 
   @Test public void secretChangeVersion_invalidVersion() throws Exception {
