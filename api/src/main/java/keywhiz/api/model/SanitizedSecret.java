@@ -76,7 +76,7 @@ public abstract class SanitizedSecret {
         series.type().orElse(null),
         series.generationOptions(),
         content.expiry(),
-        series.currentVersion().orElse(null));
+        content.id());
   }
 
   /**
