@@ -57,7 +57,7 @@ public class SecretsResourceIntegrationTest {
     List<SanitizedSecret> sanitizedSecrets = keywhizClient.allSecrets();
     assertThat(sanitizedSecrets.toString())
         .doesNotContain("MTMzNw==")
-        .doesNotContain(new String(Base64.getDecoder().decode("MTMzNw==")));
+        .doesNotContain(new String(Base64.getDecoder().decode("MTMzNw=="), UTF_8));
 
   }
 

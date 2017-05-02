@@ -16,16 +16,8 @@
 
 package keywhiz.service.resources.admin;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.Clock;
-import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.auth.User;
-import keywhiz.auth.cookie.AuthenticatedEncryptedCookieFactory;
-import keywhiz.auth.cookie.CookieAuthenticator;
-import keywhiz.auth.cookie.CookieConfig;
-import keywhiz.auth.cookie.GCMEncryptor;
-import keywhiz.auth.cookie.SessionCookie;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,18 +26,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(KeywhizTestRunner.class)
 public class SessionMeResourceTest {
-  @Inject ObjectMapper mapper;
-  @Inject GCMEncryptor GCMEncryptor;
-  @Inject @SessionCookie CookieConfig sessionCookieConfig;
-
-  AuthenticatedEncryptedCookieFactory cookieFactory;
-  CookieAuthenticator cookieAuthenticator;
   SessionMeResource sessionMeResource;
 
   @Before
   public void setUp() throws Exception {
-    cookieFactory = new AuthenticatedEncryptedCookieFactory(Clock.systemUTC(), mapper, GCMEncryptor, sessionCookieConfig);
-    cookieAuthenticator = new CookieAuthenticator(mapper, GCMEncryptor);
     sessionMeResource = new SessionMeResource();
   }
 
