@@ -13,4 +13,11 @@
     <Class name="keywhiz.FileAssetServlet"/>
     <Bug code="SnVI"/>
   </Match>
+
+  <!-- Don't complain about mockito in tests. -->
+  <Match>
+    <Field name="~.*mockito"/>
+    <Bug pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" />
+  </Match>
+
 </FindBugsFilter>
