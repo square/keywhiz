@@ -43,8 +43,8 @@ public class GenerateAesKeyCommand extends Command {
   @Override public void configure(Subparser parser) {
     parser.addArgument("--keystore")
         .dest("keystore")
-        .type(Path.class)
-        .setDefault(Paths.get("derivation.jceks"))
+        .type(String.class)
+        .setDefault("derivation.jceks")
         .help("keystore file name");
 
     parser.addArgument("--storepass")
@@ -68,7 +68,7 @@ public class GenerateAesKeyCommand extends Command {
 
   @Override public void run(Bootstrap<?> bootstrap, Namespace namespace) throws Exception {
     char[] password = namespace.getString("storepass").toCharArray();
-    Path destination = namespace.get("keystore");
+    Path destination = Paths.get(namespace.get("keystore"));
     int keySize = namespace.getInt("keysize");
     String alias = namespace.getString("alias");
 
