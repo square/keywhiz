@@ -236,7 +236,7 @@
       <dependency>
         <groupId>org.assertj</groupId>
         <artifactId>assertj-core</artifactId>
-        <version>3.0.0</version>
+        <version>3.6.2</version>
       </dependency>
       <dependency>
         <groupId>org.assertj</groupId>
@@ -472,12 +472,13 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>findbugs-maven-plugin</artifactId>
-          <version>3.0.1</version>
+          <version>3.0.4</version>
           <configuration>
             <effort>Max</effort>
             <threshold>Default</threshold>
             <xmlOutput>true</xmlOutput>
             <excludeFilterFile>findbugs-exclude.xml</excludeFilterFile>
+            <includeTests>true</includeTests>
           </configuration>
           <executions>
             <execution>

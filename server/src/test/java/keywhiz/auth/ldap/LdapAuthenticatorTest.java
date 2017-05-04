@@ -101,7 +101,7 @@ public class LdapAuthenticatorTest {
     assertThat(missingUser.isPresent()).isFalse();
   }
 
-  private class IsDnSearch extends ArgumentMatcher<SearchRequest> {
+  private static class IsDnSearch extends ArgumentMatcher<SearchRequest> {
     @Override
     public boolean matches(Object o) {
       if (o == null) return false;
@@ -110,7 +110,7 @@ public class LdapAuthenticatorTest {
     }
   }
 
-  private class IsRoleSearch extends ArgumentMatcher<SearchRequest> {
+  private static class IsRoleSearch extends ArgumentMatcher<SearchRequest> {
     @Override
     public boolean matches(Object o) {
       if (o == null) return false;
