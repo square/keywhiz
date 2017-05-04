@@ -50,11 +50,11 @@ public class ClientAuthFactory {
   private final Authenticator<String, Client> authenticator;
 
   @Inject public ClientAuthFactory(ClientDAOFactory clientDAOFactory) {
-    this.authenticator = new MyAuthenticator(clientDAOFactory.readwrite());
+    this.authenticator = new MyAuthenticator(clientDAOFactory.readwrite(), clientDAOFactory.readonly());
   }
 
   @VisibleForTesting ClientAuthFactory(ClientDAO clientDAO) {
-    this.authenticator = new MyAuthenticator(clientDAO);
+    this.authenticator = new MyAuthenticator(clientDAO, clientDAO);
   }
 
   public Client provide(ContainerRequest request) {
@@ -89,18 +89,22 @@ public class ClientAuthFactory {
   }
 
   private static class MyAuthenticator implements Authenticator<String, Client> {
-    private final ClientDAO clientDAO;
+    private final ClientDAO clientDAOReadWrite;
+    private final ClientDAO clientDAOReadOnly;
 
-    private MyAuthenticator(ClientDAO clientDAO) {
-      this.clientDAO = clientDAO;
+    private MyAuthenticator(
+        ClientDAO clientDAOReadWrite,
+        ClientDAO clientDAOReadOnly) {
+      this.clientDAOReadWrite = clientDAOReadWrite;
+      this.clientDAOReadOnly = clientDAOReadOnly;
     }
 
     @Override public Optional<Client> authenticate(String name)
         throws AuthenticationException {
-      Optional<Client> optionalClient = clientDAO.getClient(name);
+      Optional<Client> optionalClient = clientDAOReadOnly.getClient(name);
       if (optionalClient.isPresent()) {
         Client client = optionalClient.get();
-        clientDAO.sawClient(client);
+        clientDAOReadWrite.sawClient(client);
         if (client.isEnabled()) {
           return optionalClient;
         } else {
@@ -115,9 +119,9 @@ public class ClientAuthFactory {
        * 'enabled' field.
        */
       // TODO(justin): Consider making this behavior configurable.
-      long clientId = clientDAO.createClient(name, "automatic",
+      long clientId = clientDAOReadWrite.createClient(name, "automatic",
           "Client created automatically from valid certificate authentication");
-      return Optional.of(clientDAO.getClientById(clientId).get());
+      return Optional.of(clientDAOReadWrite.getClientById(clientId).get());
     }
   }
 }
