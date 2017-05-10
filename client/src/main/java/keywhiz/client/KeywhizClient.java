@@ -204,23 +204,6 @@ public class KeywhizClient {
     httpDelete(baseUrl.resolve(format("/admin/secrets/%d", secretId)));
   }
 
-  public <T> List<SanitizedSecret> generateSecrets(String generatorName, T params) throws IOException {
-    checkArgument(!generatorName.isEmpty());
-    String response = httpPost(baseUrl.resolve("/admin/secrets/generators/").newBuilder()
-        .addPathSegment(generatorName)
-        .build(), params);
-    return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
-  }
-
-  public <T> List<SanitizedSecret> batchGenerateSecrets(String generatorName, List<T> params) throws IOException {
-    checkArgument(!generatorName.isEmpty());
-    String response = httpPost(baseUrl.resolve("/admin/secrets/generators/").newBuilder()
-        .addPathSegment(generatorName)
-        .addPathSegment("batch")
-        .build(), params);
-    return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {});
-  }
-
   public List<Client> allClients() throws IOException {
     String httpResponse = httpGet(baseUrl.resolve("/admin/clients/"));
     return mapper.readValue(httpResponse, new TypeReference<List<Client>>() {});
