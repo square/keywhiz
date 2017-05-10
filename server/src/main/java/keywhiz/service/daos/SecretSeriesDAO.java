@@ -163,12 +163,12 @@ public class SecretSeriesDAO {
   }
 
   public Optional<SecretSeries> getSecretSeriesById(long id) {
-    SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.ID.eq(id));
+    SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNotNull()));
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
   public Optional<SecretSeries> getSecretSeriesByName(String name) {
-    SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.NAME.eq(name));
+    SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()));
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
@@ -215,7 +215,7 @@ public class SecretSeriesDAO {
   public void deleteSecretSeriesByName(String name) {
     long now = OffsetDateTime.now().toEpochSecond();
     dslContext.transaction(configuration -> {
-      SecretsRecord r = DSL.using(configuration).fetchOne(SECRETS, SECRETS.NAME.eq(name));
+      SecretsRecord r = DSL.using(configuration).fetchOne(SECRETS, SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()));
       if (r != null) {
         DSL.using(configuration)
             .update(SECRETS)

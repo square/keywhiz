@@ -207,10 +207,10 @@ public class SecretDAOTest {
 
     long secondId = secretDAO.createSecret(name, "content2", cryptographer.computeHmac("content2".getBytes(UTF_8)), "creator2",
         ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
-    assertThat(secondId).isEqualTo(firstId);
+    assertThat(secondId).isGreaterThan(firstId);
 
-    SecretSeriesAndContent newSecret = secretDAO.getSecretById(firstId).get();
-    assertThat(newSecret.series().createdBy()).isEqualTo("creator1");
+    SecretSeriesAndContent newSecret = secretDAO.getSecretById(secondId).get();
+    assertThat(newSecret.series().createdBy()).isEqualTo("creator2");
     assertThat(newSecret.series().updatedBy()).isEqualTo("creator2");
     assertThat(newSecret.series().description()).isEqualTo("description2");
     assertThat(newSecret.series().type().get()).isEqualTo("type2");

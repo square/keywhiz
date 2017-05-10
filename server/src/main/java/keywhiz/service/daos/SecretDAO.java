@@ -86,9 +86,10 @@ public class SecretDAO {
         SecretSeries secretSeries1 = secretSeries.get();
         if (secretSeries1.currentVersion().isPresent()) {
           throw new DataAccessException(format("secret already present: %s", name));
+        } else {
+          // Unreachable unless the implementation of getSecretSeriesByName is changed
+          throw new IllegalStateException(format("secret %s retrieved without current version set", name));
         }
-        secretId = secretSeries1.id();
-        secretSeriesDAO.updateSecretSeries(secretId, name, creator, description, type, generationOptions);
       } else {
         secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type,
             generationOptions);
