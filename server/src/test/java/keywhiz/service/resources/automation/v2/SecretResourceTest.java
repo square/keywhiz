@@ -738,9 +738,10 @@ public class SecretResourceTest {
     assertThat(versions.size()).isEqualTo(expectedVersions);
 
     for (SecretDetailResponseV2 version : versions) {
-      // Check creation ordering
-      assertThat(version.createdAtSeconds()).isLessThanOrEqualTo(creationTime);
-      creationTime = version.createdAtSeconds();
+      // Check creation ordering (createdAtSeconds is from the secret series; updatedAtSeconds
+      // is from the content and matches when this version was created)
+      assertThat(version.updatedAtSeconds()).isLessThan(creationTime);
+      creationTime = version.updatedAtSeconds();
 
       // Check version number
       assertThat(version.metadata()).isEqualTo(
