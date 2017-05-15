@@ -8,12 +8,6 @@
     <Package name="keywhiz.jooq.tables"/>
   </Match>
 
-  <!-- Not interested in serializing a servlet. -->
-  <Match>
-    <Class name="keywhiz.FileAssetServlet"/>
-    <Bug code="SnVI"/>
-  </Match>
-
   <!-- Don't complain about mockito in tests. -->
   <Match>
     <Field name="~.*mockito"/>
