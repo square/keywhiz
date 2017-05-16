@@ -358,7 +358,7 @@ public class SecretResource {
     Secret secret = secretOptional.get();
     Optional<Instant> existingExpiry = Optional.empty();
     if (secret.getExpiry() > 0) {
-      existingExpiry = Optional.of(Instant.ofEpochMilli(secret.getExpiry()));
+      existingExpiry = Optional.of(Instant.ofEpochMilli(secret.getExpiry()*1000));
     }
 
     String secretName = secret.getName();
