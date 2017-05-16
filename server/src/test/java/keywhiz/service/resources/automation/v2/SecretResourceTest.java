@@ -752,6 +752,46 @@ public class SecretResourceTest {
     }
   }
 
+
+  //---------------------------------------------------------------------------------------
+  // Version handling after creation and deletion
+  //---------------------------------------------------------------------------------------
+  /**
+   * A test which verifies that when a secret is created and deleted, and another secret
+   * with the same name is created later, listing versions of the current secret
+   * does not include versions from the original secret.
+   */
+  @Test public void secretVersionManagement_createAndDelete() throws Exception {
+    String name = "versionManagementSecret";
+    String firstDescription = "the first secret with this name";
+    String secondDescription = "the second secret with this name";
+
+    // Create a secret
+    create(CreateSecretRequestV2.builder()
+        .name(name)
+        .description(firstDescription)
+        .content(encoder.encodeToString("secret version 1".getBytes(UTF_8)))
+        .build());
+
+    // Check that the secret's current versions are as expected
+    List<SecretDetailResponseV2> versions = listVersions(name, 0, 1000);
+    assertThat(versions.size()).isEqualTo(1);
+    assertThat(versions.get(0).description()).isEqualTo(firstDescription);
+
+    // Delete the secret and recreate it
+    deleteSeries(name);
+    create(CreateSecretRequestV2.builder()
+        .name(name)
+        .description(secondDescription)
+        .content(encoder.encodeToString("secret version 2".getBytes(UTF_8)))
+        .build());
+
+    // Check that the original secret's versions were not retrieved
+    versions = listVersions(name, 0, 1000);
+    assertThat(versions.size()).isEqualTo(1);
+    assertThat(versions.get(0).description()).isEqualTo(secondDescription);
+  }
+
   //---------------------------------------------------------------------------------------
   // helper functions for tests
   //---------------------------------------------------------------------------------------

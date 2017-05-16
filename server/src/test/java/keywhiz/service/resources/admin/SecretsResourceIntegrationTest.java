@@ -127,4 +127,37 @@ public class SecretsResourceIntegrationTest {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
     keywhizClient.getSanitizedSecretByName("non-existent-secret");
   }
+
+  @Test public void doesNotRetrieveDeletedSecretVersions() throws IOException {
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    String name = "versionSecret";
+
+    // Create a secret
+    SecretDetailResponse secretDetails = keywhizClient.createSecret(name, "first secret",
+        "content".getBytes(UTF_8), ImmutableMap.of(), 0);
+    assertThat(secretDetails.name).isEqualTo(name);
+
+    assertThat(keywhizClient.allSecrets().stream().map(SanitizedSecret::name).toArray())
+        .contains(name);
+
+    // Retrieve versions for the first secret
+    List<SanitizedSecret> versions = keywhizClient.listSecretVersions(name, 0, 10);
+    assertThat(versions.size()).isEqualTo(1);
+    assertThat(versions.get(0).description()).isEqualTo("first secret");
+
+    // Delete this first secret
+    keywhizClient.deleteSecretWithId(secretDetails.id);
+    assertThat(keywhizClient.allSecrets().stream().map(SanitizedSecret::name).toArray())
+        .doesNotContain(name);
+    
+    // Create a second secret with the same name
+    secretDetails = keywhizClient.createSecret(name, "second secret",
+        "content".getBytes(UTF_8), ImmutableMap.of(), 0);
+    assertThat(secretDetails.name).isEqualTo(name);
+
+    // Retrieve versions for the second secret and check that the first secret's version is not included
+    versions = keywhizClient.listSecretVersions(name, 0, 10);
+    assertThat(versions.size()).isEqualTo(1);
+    assertThat(versions.get(0).description()).isEqualTo("second secret");
+  }
 }
