@@ -144,6 +144,13 @@ public class Printing {
         .sorted(Comparator.comparing(Client::getName))
         .forEach(c -> System.out.println(INDENT + c.getName()));
 
+    System.out.println("\tContent HMAC:");
+    if (secret.checksum().isEmpty()) {
+      System.out.println(INDENT + "WARNING: Content HMAC not calculated!");
+    } else {
+      System.out.println(INDENT + secret.checksum());
+    }
+
     System.out.println("\tMetadata:");
     if (!secret.metadata().isEmpty()) {
       String metadata;
