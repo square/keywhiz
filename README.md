@@ -32,8 +32,8 @@ get help on a particular command.
 
 For example, to run Keywhiz with an H2 database in development mode:
 
-    export SERVER_JAR=server/target/keywhiz-server-*-shaded.jar
-    export KEYWHIZ_CONFIG=server/target/classes/keywhiz-development.yaml.h2
+    SERVER_JAR="server/target/keywhiz-server-*-shaded.jar"
+    KEYWHIZ_CONFIG="server/target/classes/keywhiz-development.yaml.h2"
 
     # Initialize dev database (H2)
     java -jar $SERVER_JAR migrate $KEYWHIZ_CONFIG
@@ -43,6 +43,22 @@ For example, to run Keywhiz with an H2 database in development mode:
 
     # Run server
     java -jar $SERVER_JAR server $KEYWHIZ_CONFIG
+
+To connect to a running Keywhiz instance, you will need to use the CLI.
+
+An example helper shell script that wraps the keywhiz-cli and sets some default parameters:
+
+    #!/bin/sh
+
+    # Set the path to a compiled, shaded keywhiz-cli JAR file
+    KEYWHIZ_CLI_JAR="/path/to/keywhiz-cli-shaded.jar"
+    KEYWHIZ_SERVER_URL="https://$(hostname):4444"
+
+    # Use these flags if you want to specify a non-standard CA trust store
+    TRUSTSTORE="-Djavax.net.ssl.trustStore=/path/to/ca-bundle.jceks"
+    TRUSTTYPE="-Djavax.net.ssl.trustStoreType=JCEKS"
+
+    java "$TRUSTSTORE" "$TRUSTTYPE" -jar "$KEYWHIZ_CLI_JAR" -U "$KEYWHIZ_SERVER_URL" "$@"
 
 Keywhiz uses [jOOQ](http://www.jooq.org/) to talk to its database.
 
