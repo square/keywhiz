@@ -36,9 +36,9 @@
 #
 #   Be ready to provide a server certificate/private key for setup.
 #
-# After keywhiz starts up, you can access the admin console by going
-# to https://[DOCKER-MACHINE-IP]/ui in your browser. The default user
-# in development is keywhizAdmin and the default password is adminPass.
+# After keywhiz starts up, you can access it by running keywhiz-cli and
+# using the --url option to point it at the server you set up. The default user
+# in development is 'keywhizAdmin' and the default password is 'adminPass'.
 #
 # Note that for a production deployment, you'll probably want to setup
 # your own config to make sure you're not using development secrets.
