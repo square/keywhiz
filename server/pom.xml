@@ -308,8 +308,13 @@
             <id>generate-service-docs</id>
             <phase>generate-resources</phase>
             <configuration>
-              <doclet>com.carma.swagger.doclet.ServiceDoclet</doclet>
-              <reportOutputDirectory>${project.parent.basedir}/website/</reportOutputDirectory>
+              <doclet>com.tenxerconsulting.swagger.doclet.ServiceDoclet</doclet>
+              <docletArtifact>
+                <groupId>com.tenxerconsulting</groupId>
+                <artifactId>swagger-doclet</artifactId>
+                <version>1.0.7</version>
+              </docletArtifact>
+              <reportOutputDirectory>../docs</reportOutputDirectory>
               <useStandardDocletOptions>false</useStandardDocletOptions>
               <additionalparam>-logDebug -apiVersion 1 -docBasePath https://square.github.io/keywhiz/apidocs -apiBasePath https://square.github.io/keywhiz/apidocs -resourceTags -fieldDescriptionTags</additionalparam>
             </configuration>

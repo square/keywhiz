@@ -1,0 +1,21 @@
+{
+  "apiVersion" : "1",
+  "swaggerVersion" : "1.2",
+  "basePath" : "https://square.github.io/keywhiz/apidocs",
+  "resourcePath" : "/logout",
+  "apis" : [ {
+    "path" : "/admin/logout",
+    "operations" : [ {
+      "method" : "POST",
+      "nickname" : "logout",
+      "type" : "Response",
+      "summary" : "Logout and remove any session cookies",
+      "notes" : "Log out and remove any session cookies",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Logged out successfully"
+      } ],
+      "produces" : [ "application/json" ]
+    } ]
+  } ]
+}
