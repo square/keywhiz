@@ -68,6 +68,15 @@ If you made changes to the database model and want to regenerate sources:
 
 We recommend [IntelliJ IDEA](https://www.jetbrains.com/idea/) for development. 
 
+## Clients & API
+
+[Swagger API documentation](https://square.github.io/keywhiz/apidocs)
+
+Client implementations maintained by Square:
+
+* [Keywhiz-FS](https://github.com/square/keywhiz-fs): a FUSE driver for exposing Keywhiz secrets as a filesystem. In maintenance mode.
+* [Keysync](https://github.com/square/keywhiz-fs): next-generation replacement for Keywhiz-FS based on tmpfs instead of FUSE.
+
 ## Docker
 
 We ship a [Dockerfile](Dockerfile) for building a Docker container for keywhiz.
