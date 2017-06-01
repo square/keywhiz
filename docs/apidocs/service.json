@@ -1,0 +1,44 @@
+{
+  "swaggerVersion" : "1.2",
+  "apiVersion" : "1",
+  "basePath" : "https://square.github.io/keywhiz/apidocs",
+  "apis" : [ {
+    "path" : "/secrets-admin.{format}",
+    "description" : "Create, retrieve, and delete secrets"
+  }, {
+    "path" : "/login.{format}",
+    "description" : "Login to Keywhiz admin interface"
+  }, {
+    "path" : "/logout.{format}",
+    "description" : "Logout from the Keywhiz admin interface"
+  }, {
+    "path" : "/me.{format}",
+    "description" : "Retrieve user information"
+  }, {
+    "path" : "/automation_v2-group-management.{format}",
+    "description" : "Automation endpoints to manage groups"
+  }, {
+    "path" : "/automation_v2-client-management.{format}",
+    "description" : "Automation endpoints to manage clients"
+  }, {
+    "path" : "/automation_v2-secret-management.{format}",
+    "description" : "Automation endpoints to manage secrets"
+  }, {
+    "path" : "/secrets.{format}",
+    "description" : "Retrieve a collection of Secrets"
+  }, {
+    "path" : "/clients-admin.{format}",
+    "description" : "Create, retrieve, and delete clients"
+  }, {
+    "path" : "/status.{format}"
+  }, {
+    "path" : "/groups-admin.{format}",
+    "description" : "Create, retrieve, and delete groups"
+  }, {
+    "path" : "/memberships-admin.{format}",
+    "description" : "Manage group assignments"
+  }, {
+    "path" : "/secret.{format}",
+    "description" : "Retrieve Secret by name"
+  } ]
+}
