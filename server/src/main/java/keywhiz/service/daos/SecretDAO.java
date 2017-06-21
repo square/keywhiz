@@ -100,7 +100,7 @@ public class SecretDAO {
 
       long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, hmac,
           creator, metadata, expiry, now);
-      secretSeriesDAO.setCurrentVersion(secretId, secretContentId);
+      secretSeriesDAO.setCurrentVersion(secretId, secretContentId, creator, now);
 
       return secretId;
     });
@@ -130,7 +130,7 @@ public class SecretDAO {
 
       long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, hmac,
           creator, metadata, expiry, now);
-      secretSeriesDAO.setCurrentVersion(secretId, secretContentId);
+      secretSeriesDAO.setCurrentVersion(secretId, secretContentId, creator, now);
 
       return secretId;
     });
@@ -173,7 +173,7 @@ public class SecretDAO {
 
       long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedContent, hmac,
           creator, metadata, expiry, now);
-      secretSeriesDAO.setCurrentVersion(secretId, secretContentId);
+      secretSeriesDAO.setCurrentVersion(secretId, secretContentId, creator, now);
 
       return secretId;
     });
@@ -310,8 +310,7 @@ public class SecretDAO {
    * @return Versions of a secret matching input parameters or Optional.absent().
    */
   public Optional<ImmutableList<SanitizedSecret>> getSecretVersionsByName(String name,
-      int versionIdx,
-      int numVersions) {
+      int versionIdx, int numVersions) {
     checkArgument(!name.isEmpty());
     checkArgument(versionIdx >= 0);
     checkArgument(numVersions >= 0);
@@ -344,14 +343,15 @@ public class SecretDAO {
    * @param versionId The identifier for the desired current version
    * @throws NotFoundException if secret not found
    */
-  public void setCurrentSecretVersionByName(String name, long versionId) {
+  public void setCurrentSecretVersionByName(String name, long versionId, String updater) {
     checkArgument(!name.isEmpty());
     checkArgument(versionId >= 0);
 
     SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
     SecretSeries series = secretSeriesDAO.getSecretSeriesByName(name).orElseThrow(
         NotFoundException::new);
-    secretSeriesDAO.setCurrentVersion(series.id(), versionId);
+    secretSeriesDAO.setCurrentVersion(series.id(), versionId, updater,
+        OffsetDateTime.now().toEpochSecond());
   }
 
 

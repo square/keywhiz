@@ -235,7 +235,7 @@ public class SecretsResourceTest {
   @Test (expected = NotFoundException.class)
   public void rollbackThrowsException() {
     doThrow(new NotFoundException()).when(secretDAO)
-        .setCurrentSecretVersionByName(eq("name2"), anyLong());
+        .setCurrentSecretVersionByName(eq("name2"), anyLong(), eq("user"));
     resource.resetSecretVersion(user, "name2", new LongParam("125"));
   }
 

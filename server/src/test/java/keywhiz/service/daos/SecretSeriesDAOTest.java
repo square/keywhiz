@@ -55,7 +55,7 @@ public class SecretSeriesDAOTest {
         ImmutableMap.of("foo", "bar"), now);
     long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
-    secretSeriesDAO.setCurrentVersion(id, contentId);
+    secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
 
     SecretSeries expected = SecretSeries.of(id, "newSecretSeries", "desc", nowDate, "creator", nowDate,
         "creator", null, ImmutableMap.of("foo", "bar"), contentId);
@@ -83,10 +83,12 @@ public class SecretSeriesDAOTest {
 
     long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
-    secretSeriesDAO.setCurrentVersion(id, contentId);
+    secretSeriesDAO.setCurrentVersion(id, contentId, "updater", now + 3600);
 
     secretSeriesById = secretSeriesDAO.getSecretSeriesById(id);
     assertThat(secretSeriesById.get().currentVersion().get()).isEqualTo(contentId);
+    assertThat(secretSeriesById.get().updatedBy()).isEqualTo("updater");
+    assertThat(secretSeriesById.get().updatedAt().toEpochSecond()).isEqualTo(now + 3600);
   }
 
   @Test(expected = IllegalStateException.class)
@@ -99,7 +101,7 @@ public class SecretSeriesDAOTest {
     long contentId = secretContentDAOFactory.readwrite().createSecretContent(other, "blah",
         "checksum", "creator", null, 0, now);
 
-    secretSeriesDAO.setCurrentVersion(id, contentId);
+    secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
   }
 
   @Test public void deleteSecretSeriesByName() {
@@ -108,7 +110,7 @@ public class SecretSeriesDAOTest {
         "", null, null, now);
     long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
-    secretSeriesDAO.setCurrentVersion(id, contentId);
+    secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
     assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName").get().currentVersion().isPresent()).isTrue();
 
     secretSeriesDAO.deleteSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName");
@@ -122,7 +124,7 @@ public class SecretSeriesDAOTest {
         "creator", "", null, null, now);
     long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
-    secretSeriesDAO.setCurrentVersion(id, contentId);
+    secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
     assertThat(secretSeriesDAO.getSecretSeriesById(id).get().currentVersion().isPresent()).isTrue();
 
     secretSeriesDAO.deleteSecretSeriesById(id);

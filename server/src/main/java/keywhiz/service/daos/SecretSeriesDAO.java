@@ -131,9 +131,8 @@ public class SecretSeriesDAO {
         .execute();
   }
 
-  public int setCurrentVersion(long secretId, long secretContentId) {
+  public int setCurrentVersion(long secretId, long secretContentId, String updater, long now) {
     long checkId;
-    long now = OffsetDateTime.now().toEpochSecond();
     Record1<Long> r = dslContext.select(SECRETS_CONTENT.SECRETID)
         .from(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.ID.eq(secretContentId))
@@ -153,6 +152,7 @@ public class SecretSeriesDAO {
 
     return dslContext.update(SECRETS)
         .set(SECRETS.CURRENT, secretContentId)
+        .set(SECRETS.UPDATEDBY, updater)
         .set(SECRETS.UPDATEDAT, now)
         .where(SECRETS.ID.eq(secretId))
         .execute();
