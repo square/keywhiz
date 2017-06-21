@@ -575,13 +575,15 @@ public class SecretResource {
   @POST
   public Response resetSecretVersion(@Auth AutomationClient automationClient,
       @Valid SetSecretVersionRequestV2 request) {
-    secretDAO.setCurrentSecretVersionByName(request.name(), request.version());
+    secretDAO.setCurrentSecretVersionByName(request.name(), request.version(),
+        automationClient.getName());
 
     // If the secret wasn't found or the request was misformed, setCurrentSecretVersionByName
     // already threw an exception
     Map<String, String> extraInfo = new HashMap<>();
     extraInfo.put("new version", Long.toString(request.version()));
-    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_CHANGEVERSION, automationClient.getName(), request.name(), extraInfo));
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_CHANGEVERSION,
+        automationClient.getName(), request.name(), extraInfo));
 
     return Response.status(Response.Status.CREATED).build();
   }

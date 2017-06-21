@@ -66,10 +66,8 @@ public class SecretSeriesDAO {
   }
 
   long createSecretSeries(String name, String creator, String description, @Nullable String type,
-      @Nullable Map<String, String> generationOptions) {
+      @Nullable Map<String, String> generationOptions, long now) {
     SecretsRecord r = dslContext.newRecord(SECRETS);
-
-    long now = OffsetDateTime.now().toEpochSecond();
 
     r.setName(name);
     r.setDescription(description);
@@ -94,9 +92,7 @@ public class SecretSeriesDAO {
   }
 
   void updateSecretSeries(long secretId, String name, String creator, String description,
-      @Nullable String type,
-      @Nullable Map<String, String> generationOptions) {
-    long now = OffsetDateTime.now().toEpochSecond();
+      @Nullable String type, @Nullable Map<String, String> generationOptions, long now) {
     if (generationOptions == null) {
       generationOptions = ImmutableMap.of();
     }
@@ -135,9 +131,8 @@ public class SecretSeriesDAO {
         .execute();
   }
 
-  public int setCurrentVersion(long secretId, long secretContentId) {
+  public int setCurrentVersion(long secretId, long secretContentId, String updater, long now) {
     long checkId;
-    long now = OffsetDateTime.now().toEpochSecond();
     Record1<Long> r = dslContext.select(SECRETS_CONTENT.SECRETID)
         .from(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.ID.eq(secretContentId))
@@ -157,6 +152,7 @@ public class SecretSeriesDAO {
 
     return dslContext.update(SECRETS)
         .set(SECRETS.CURRENT, secretContentId)
+        .set(SECRETS.UPDATEDBY, updater)
         .set(SECRETS.UPDATEDAT, now)
         .where(SECRETS.ID.eq(secretId))
         .execute();
