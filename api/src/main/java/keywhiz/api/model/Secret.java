@@ -49,6 +49,12 @@ public class Secret {
   private final LazyString encryptedSecret;
   private final String checksum;
 
+  /**
+   * Information about this secret's creation and update.  If the secret's content
+   * has been rolled back to an earlier version, these timestamps will still reflect
+   * the secret's creation and latest update, not the creation/update time for the
+   * secret's contents.
+   */
   private final ApiDate createdAt;
   private final String createdBy;
   private final ApiDate updatedAt;

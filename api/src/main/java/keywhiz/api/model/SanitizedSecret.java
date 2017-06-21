@@ -63,9 +63,6 @@ public abstract class SanitizedSecret {
   public static SanitizedSecret fromSecretSeriesAndContent(SecretSeriesAndContent seriesAndContent) {
     SecretSeries series = seriesAndContent.series();
     SecretContent content = seriesAndContent.content();
-    // Use the series' creation information, but the content's update information; if this is
-    // the current content, series and content update information matches, and otherwise, this
-    // preserves the content's update data (which can also be used as its creation data).
     return SanitizedSecret.of(
         series.id(),
         series.name(),
@@ -73,8 +70,8 @@ public abstract class SanitizedSecret {
         content.hmac(),
         series.createdAt(),
         series.createdBy(),
-        content.updatedAt(),
-        content.updatedBy(),
+        series.updatedAt(),
+        series.updatedBy(),
         content.metadata(),
         series.type().orElse(null),
         series.generationOptions(),
