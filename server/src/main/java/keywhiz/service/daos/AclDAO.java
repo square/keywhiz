@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -28,10 +27,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-
-import keywhiz.api.ApiDate;
-import keywhiz.api.GroupDetailResponse;
-import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -60,7 +55,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
@@ -272,10 +266,6 @@ public class AclDAO {
         .where(CLIENTS.NAME.eq(client.getName()).and(SECRETS.CURRENT.isNotNull()))
         .getQuery();
     query.addSelect(SECRETS_CONTENT.CONTENT_HMAC);
-    query.addSelect(SECRETS_CONTENT.CREATEDAT);
-    query.addSelect(SECRETS_CONTENT.CREATEDBY);
-    query.addSelect(SECRETS_CONTENT.UPDATEDAT);
-    query.addSelect(SECRETS_CONTENT.UPDATEDBY);
     query.addSelect(SECRETS_CONTENT.METADATA);
     query.addSelect(SECRETS_CONTENT.EXPIRY);
     query.fetch()
@@ -286,10 +276,10 @@ public class AclDAO {
               series.name(),
               series.description(),
               row.getValue(SECRETS_CONTENT.CONTENT_HMAC),
-              new ApiDate(row.getValue(SECRETS_CONTENT.CREATEDAT)),
-              row.getValue(SECRETS_CONTENT.CREATEDBY),
-              new ApiDate(row.getValue(SECRETS_CONTENT.UPDATEDAT)),
-              row.getValue(SECRETS_CONTENT.UPDATEDBY),
+              series.createdAt(),
+              series.createdBy(),
+              series.updatedAt(),
+              series.updatedBy(),
               secretContentMapper.tryToReadMapFromMetadata(row.getValue(SECRETS_CONTENT.METADATA)),
               series.type().orElse(null),
               series.generationOptions(),
@@ -330,10 +320,6 @@ public class AclDAO {
         .limit(1)
         .getQuery();
     query.addSelect(SECRETS_CONTENT.CONTENT_HMAC);
-    query.addSelect(SECRETS_CONTENT.CREATEDAT);
-    query.addSelect(SECRETS_CONTENT.CREATEDBY);
-    query.addSelect(SECRETS_CONTENT.UPDATEDAT);
-    query.addSelect(SECRETS_CONTENT.UPDATEDBY);
     query.addSelect(SECRETS_CONTENT.METADATA);
     query.addSelect(SECRETS_CONTENT.EXPIRY);
     return Optional.ofNullable(query.fetchOne())
@@ -344,10 +330,10 @@ public class AclDAO {
               series.name(),
               series.description(),
               row.getValue(SECRETS_CONTENT.CONTENT_HMAC),
-              new ApiDate(row.getValue(SECRETS_CONTENT.CREATEDAT)),
-              row.getValue(SECRETS_CONTENT.CREATEDBY),
-              new ApiDate(row.getValue(SECRETS_CONTENT.UPDATEDAT)),
-              row.getValue(SECRETS_CONTENT.UPDATEDBY),
+              series.createdAt(),
+              series.createdBy(),
+              series.updatedAt(),
+              series.updatedBy(),
               secretContentMapper.tryToReadMapFromMetadata(row.getValue(SECRETS_CONTENT.METADATA)),
               series.type().orElse(null),
               series.generationOptions(),
