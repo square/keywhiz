@@ -73,7 +73,8 @@ public class SecretDetailResponseV2Test {
         ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
         ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user",
         ImmutableMap.of("owner", "root"), "text/plain", null,
-        1136214245, 1L);
+        1136214245, 1L,
+        ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user");
     SecretDetailResponseV2 secretDetailResponse = SecretDetailResponseV2.builder()
         .sanitizedSecret(sanitizedSecret)
         .build();

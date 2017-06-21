@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -266,6 +267,8 @@ public class AclDAO {
         .where(CLIENTS.NAME.eq(client.getName()).and(SECRETS.CURRENT.isNotNull()))
         .getQuery();
     query.addSelect(SECRETS_CONTENT.CONTENT_HMAC);
+    query.addSelect(SECRETS_CONTENT.CREATEDAT);
+    query.addSelect(SECRETS_CONTENT.CREATEDBY);
     query.addSelect(SECRETS_CONTENT.METADATA);
     query.addSelect(SECRETS_CONTENT.EXPIRY);
     query.fetch()
@@ -284,9 +287,11 @@ public class AclDAO {
               series.type().orElse(null),
               series.generationOptions(),
               row.getValue(SECRETS_CONTENT.EXPIRY),
-              series.currentVersion().orElse(null));
+              series.currentVersion().orElse(null),
+              new ApiDate(row.getValue(SECRETS_CONTENT.CREATEDAT)),
+              row.getValue(SECRETS_CONTENT.CREATEDBY));
         })
-        .forEach(row -> sanitizedSet.add(row));
+        .forEach(sanitizedSet::add);
 
     return sanitizedSet.build();
   }
@@ -320,6 +325,8 @@ public class AclDAO {
         .limit(1)
         .getQuery();
     query.addSelect(SECRETS_CONTENT.CONTENT_HMAC);
+    query.addSelect(SECRETS_CONTENT.CREATEDAT);
+    query.addSelect(SECRETS_CONTENT.CREATEDBY);
     query.addSelect(SECRETS_CONTENT.METADATA);
     query.addSelect(SECRETS_CONTENT.EXPIRY);
     return Optional.ofNullable(query.fetchOne())
@@ -338,7 +345,9 @@ public class AclDAO {
               series.type().orElse(null),
               series.generationOptions(),
               row.getValue(SECRETS_CONTENT.EXPIRY),
-              series.currentVersion().orElse(null));
+              series.currentVersion().orElse(null),
+              new ApiDate(row.getValue(SECRETS_CONTENT.CREATEDAT)),
+              row.getValue(SECRETS_CONTENT.CREATEDBY));
         });
   }
 
