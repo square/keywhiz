@@ -44,6 +44,8 @@ public class SecretDetailResponseV2Test {
         .type("text/plain")
         .metadata(ImmutableMap.of("owner", "root"))
         .expiry(1136214245)
+        .contentCreatedAtSeconds(OffsetDateTime.parse("2014-03-28T21:23:04.159Z").toEpochSecond())
+        .contentCreatedBy("updater-user")
         .build();
 
     assertThat(asJson(secretDetailResponse))
@@ -56,7 +58,7 @@ public class SecretDetailResponseV2Test {
         ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user", "text/plain", null,
         1L);
     SecretContent content = SecretContent.of(1, 1, "YXNkZGFz", "checksum",
-        ApiDate.parse("2013-03-28T21:23:04.159Z"), "creator-user",
+        ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user",
         ApiDate.parse("2014-03-28T21:23:04.159Z"), "updater-user",
         ImmutableMap.of("owner", "root"), 1136214245);
     SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
