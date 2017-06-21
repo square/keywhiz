@@ -66,10 +66,8 @@ public class SecretSeriesDAO {
   }
 
   long createSecretSeries(String name, String creator, String description, @Nullable String type,
-      @Nullable Map<String, String> generationOptions) {
+      @Nullable Map<String, String> generationOptions, long now) {
     SecretsRecord r = dslContext.newRecord(SECRETS);
-
-    long now = OffsetDateTime.now().toEpochSecond();
 
     r.setName(name);
     r.setDescription(description);
@@ -94,9 +92,7 @@ public class SecretSeriesDAO {
   }
 
   void updateSecretSeries(long secretId, String name, String creator, String description,
-      @Nullable String type,
-      @Nullable Map<String, String> generationOptions) {
-    long now = OffsetDateTime.now().toEpochSecond();
+      @Nullable String type, @Nullable Map<String, String> generationOptions, long now) {
     if (generationOptions == null) {
       generationOptions = ImmutableMap.of();
     }

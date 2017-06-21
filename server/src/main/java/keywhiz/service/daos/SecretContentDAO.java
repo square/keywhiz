@@ -61,7 +61,7 @@ class SecretContentDAO {
   }
 
   public long createSecretContent(long secretId, String encryptedContent, String hmac,
-      String creator, Map<String, String> metadata, long expiry) {
+      String creator, Map<String, String> metadata, long expiry, long now) {
     SecretsContentRecord r = dslContext.newRecord(SECRETS_CONTENT);
 
     String jsonMetadata;
@@ -71,8 +71,6 @@ class SecretContentDAO {
       // Serialization of a Map<String, String> can never fail.
       throw Throwables.propagate(e);
     }
-
-    long now = OffsetDateTime.now().toEpochSecond();
 
     r.setSecretid(secretId);
     r.setEncryptedContent(encryptedContent);
