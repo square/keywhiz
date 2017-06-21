@@ -64,7 +64,6 @@ public abstract class SanitizedSecretWithGroups {
 
   /** @return Name to serialize for clients. */
   public static String displayName(SanitizedSecretWithGroups sanitizedSecretWithGroups) {
-    String name = sanitizedSecretWithGroups.secret().name();
-    return name;
+    return sanitizedSecretWithGroups.secret().name();
   }
 }
