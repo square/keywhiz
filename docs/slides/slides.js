@@ -118,7 +118,7 @@ Slides.data = [
     <div style="position: absolute; bottom: 2px; left: 2px">9/15</div>
   `,
   `<h1>Adding secrets</h1>
-    <p>The encrypted file is then stored in a database. We recommend using MySQL, PostgresSQL or H2. A large number of
+    <p>The encrypted file is then stored in a database. We recommend using MySQL or H2. A large number of
     databases can be used by just regenerating jOOQ files, including SQLite, Microsoft Access 2013, Oracle 10g,
     SQL Server 2008 and Amazon Redshift.</p>
     <object data="slides/03_admin_add_secret_3.svg" type="image/svg+xml">
