@@ -102,7 +102,7 @@ public class GroupsResourceTest {
     when(groupDAO.getGroupById(4444)).thenReturn(Optional.of(group));
 
     SanitizedSecret secret = SanitizedSecret.of(1, "name", null, "checksum", now, "creator", now, "creator", null, null, null,
-        1136214245, 125L);
+        1136214245, 125L, now, "creator");
     when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of(secret));
 
     Client client = new Client(1, "client", "desc", now, "creator", now, "creator", null, true, false);

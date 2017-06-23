@@ -39,7 +39,9 @@ public class SanitizedSecretTest {
         "password",
         ImmutableMap.of("favoriteFood", "PB&J sandwich"),
         1136214245,
-        1L);
+        1L,
+        ApiDate.parse("2013-03-28T21:42:42.573Z"),
+        "keywhizAdmin");
 
     assertThat(asJson(sanitizedSecret))
         .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
@@ -61,7 +63,9 @@ public class SanitizedSecretTest {
             "password",
             ImmutableMap.of("favoriteFood", "PB&J sandwich"),
             1136214245,
-            1L));
+            1L,
+            ApiDate.parse("2013-03-28T21:42:42.573Z"),
+            "keywhizAdmin"));
 
     assertThat(asJson(sanitizedSecret))
         .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));

@@ -56,6 +56,8 @@ public class SecretTransformer {
         series.type().orElse(null),
         series.generationOptions(),
         content.expiry(),
-        series.currentVersion().orElse(null));
+        series.currentVersion().orElse(null),
+        content.createdAt(),
+        content.createdBy());
   }
 }

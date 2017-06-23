@@ -157,6 +157,18 @@ public class SecretResourceTest {
     assertThat(httpResponse.code()).isEqualTo(201);
     location = URI.create(httpResponse.header(LOCATION));
     assertThat(location.getPath()).isEqualTo("/automation/v2/secrets/secret3");
+
+    // Check the characteristics of the updated secret
+    SecretDetailResponseV2 response = lookup("secret3");
+    assertThat(response.name()).isEqualTo("secret3");
+    assertThat(response.createdBy()).isEqualTo("client");
+    assertThat(response.updatedBy()).isEqualTo("client");
+    assertThat(response.contentCreatedBy()).isEqualTo("client");
+    assertThat(response.updatedAtSeconds()).isEqualTo(response.contentCreatedAtSeconds());
+    assertThat(response.type()).isEqualTo("password");
+    assertThat(response.metadata()).isEqualTo(ImmutableMap.of("owner", "root", "mode", "0440"));
+    assertThat(response.description()).isEqualTo("a more detailed description");
+    assertThat(response.expiry()).isEqualTo(1487268151L);
   }
 
   @Test
@@ -198,6 +210,8 @@ public class SecretResourceTest {
     assertThat(response.createdBy()).isEqualTo("client");
     assertThat(response.updatedBy()).isEqualTo("client");
     assertThat(response.createdAtSeconds()).isEqualTo(response.updatedAtSeconds());
+    assertThat(response.contentCreatedBy()).isEqualTo("client");
+    assertThat(response.createdAtSeconds()).isEqualTo(response.contentCreatedAtSeconds());
     assertThat(response.description()).isEqualTo("desc");
     assertThat(response.type()).isEqualTo("password");
     assertThat(response.metadata()).isEqualTo(ImmutableMap.of("owner", "root", "mode", "0440"));
@@ -573,7 +587,7 @@ public class SecretResourceTest {
 
   @Test public void secretVersionListing_success() throws Exception {
     int totalVersions = 6;
-    int sleepInterval = 1000; // Delay so secrets have different creation timestamps
+    int sleepInterval = 1100; // Delay so secrets have different creation timestamps
     List<SecretDetailResponseV2> versions;
     assertThat(listing()).doesNotContain("secret20");
 
@@ -581,7 +595,7 @@ public class SecretResourceTest {
     long now = System.currentTimeMillis() / 1000L;
 
     // Create secrets 1 second apart, so that the order of the versions, which
-    // will be listed by creation time, is fixed
+    // will be listed by content creation time, is fixed
     for (int i = 0; i < totalVersions; i++) {
       createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
           .content(encoder.encodeToString(format("supa secret20_v%d", i).getBytes(UTF_8)))
@@ -739,8 +753,8 @@ public class SecretResourceTest {
 
     for (SecretDetailResponseV2 version : versions) {
       // Check creation ordering
-      assertThat(version.createdAtSeconds()).isLessThanOrEqualTo(creationTime);
-      creationTime = version.createdAtSeconds();
+      assertThat(version.contentCreatedAtSeconds()).isLessThan(creationTime);
+      creationTime = version.contentCreatedAtSeconds();
 
       // Check version number
       assertThat(version.metadata()).isEqualTo(

@@ -95,7 +95,9 @@ public class AutomationSecretResourceTest {
         null,
         null,
         0,
-        1L);
+        1L,
+        NOW,
+        automation.getName());
 
     when(secretBuilder.create()).thenReturn(secret);
 
@@ -112,7 +114,7 @@ public class AutomationSecretResourceTest {
   @Test
   public void deleteSecret() throws Exception {
     Secret secret = new Secret(0, "mySecret", null, (Secret.LazyString) () -> "meh",
-        "checksum", NOW, null, NOW, null, ImmutableMap.of(), null, null, 0, 1L);
+        "checksum", NOW, null, NOW, null, ImmutableMap.of(), null, null, 0, 1L, NOW, null);
 
     HashSet<Group> groups = new HashSet<>();
     groups.add(new Group(0, "group1", "", NOW, null, NOW, null, null));

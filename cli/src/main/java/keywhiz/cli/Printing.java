@@ -190,6 +190,17 @@ public class Printing {
     System.out.println("\tUpdated at:");
     d = new Date(secret.updatedAt().toEpochSecond() * 1000);
     System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
+
+    if (!secret.contentCreatedBy().isEmpty()) {
+      System.out.println("\tContent created by:");
+      System.out.println(INDENT + secret.contentCreatedBy());
+    }
+
+    if (secret.contentCreatedAt().isPresent()) {
+      System.out.println("\tContent created at:");
+      d = new Date(secret.contentCreatedAt().get().toEpochSecond() * 1000);
+      System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
+    }
   }
 
   public void printAllClients(List<Client> clients) {
@@ -232,24 +243,22 @@ public class Printing {
         System.out.println("Version id for rollback: Unknown!");
       }
 
-      if (secret.createdBy().isEmpty()) {
-        System.out.println(INDENT + String.format("Created on %s (creator unknown)",
-            DateFormat.getDateTimeInstance()
-                .format(new Date(secret.createdAt().toEpochSecond() * 1000))));
+      if (secret.contentCreatedAt().isPresent()) {
+        if (secret.contentCreatedBy().isEmpty()) {
+          System.out.println(INDENT + String.format("Created on %s (creator unknown)",
+              DateFormat.getDateTimeInstance()
+                  .format(new Date(secret.contentCreatedAt().get().toEpochSecond() * 1000))));
+        } else {
+          System.out.println(INDENT + String.format("Created by %s on %s", secret.createdBy(),
+              DateFormat.getDateTimeInstance()
+                  .format(new Date(secret.contentCreatedAt().get().toEpochSecond() * 1000))));
+        }
       } else {
-        System.out.println(INDENT + String.format("Created by %s on %s", secret.createdBy(),
-            DateFormat.getDateTimeInstance()
-                .format(new Date(secret.createdAt().toEpochSecond() * 1000))));
-      }
-
-      if (secret.updatedBy().isEmpty()) {
-        System.out.println(INDENT + String.format("Updated on %s (updater unknown)",
-            DateFormat.getDateTimeInstance()
-                .format(new Date(secret.updatedAt().toEpochSecond() * 1000))));
-      } else {
-        System.out.println(INDENT + String.format("Updated by %s on %s", secret.updatedBy(),
-            DateFormat.getDateTimeInstance()
-                .format(new Date(secret.updatedAt().toEpochSecond() * 1000))));
+        if (secret.contentCreatedBy().isEmpty()) {
+          System.out.println(INDENT + "Creator and creation date unknown");
+        } else {
+          System.out.println(INDENT + String.format("Created by %s (date unknown)", secret.contentCreatedBy()));
+        }
       }
 
       if (secret.expiry() == 0) {
