@@ -37,7 +37,8 @@ public abstract class SanitizedSecretWithGroups {
 
   public static SanitizedSecretWithGroups of(long id, String name, List<Group> groups) {
     SanitizedSecret sanitizedSecret = SanitizedSecret.of(id, name, null, "",
-        new ApiDate(0), null, new ApiDate(0), null, null, null, null, 0, null);
+        new ApiDate(0), null, new ApiDate(0), null, null, null, null, 0,
+        null, null, null);
     return SanitizedSecretWithGroups.of(sanitizedSecret, groups);
   }
 
@@ -64,7 +65,6 @@ public abstract class SanitizedSecretWithGroups {
 
   /** @return Name to serialize for clients. */
   public static String displayName(SanitizedSecretWithGroups sanitizedSecretWithGroups) {
-    String name = sanitizedSecretWithGroups.secret().name();
-    return name;
+    return sanitizedSecretWithGroups.secret().name();
   }
 }

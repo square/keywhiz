@@ -433,8 +433,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <!-- Updating blocked on MSHADE-183 -->
-          <version>1.7.1</version>
+          <version>3.0.0</version>
           <configuration>
             <shadedArtifactAttached>true</shadedArtifactAttached>
             <shadedClassifierName>shaded</shadedClassifierName>
@@ -597,9 +596,9 @@ Place the jars in this directory: `/usr/libexec/java_home -v
           <configuration>
             <additionalparam>-Xdoclint:none</additionalparam>
             <docletArtifact>
-              <groupId>com.carma</groupId>
+              <groupId>com.tenxerconsulting</groupId>
               <artifactId>swagger-doclet</artifactId>
-              <version>1.1.1</version>
+              <version>1.0.7</version>
             </docletArtifact>
             <links>
               <link>https://square.github.io/keywhiz/javadoc/</link>

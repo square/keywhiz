@@ -49,7 +49,7 @@ public class DescribeActionTest {
   DescribeActionConfig describeActionConfig;
   DescribeAction describeAction;
   Secret secret = new Secret(0, "secret", null, () ->  "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null, null, null,
-      ImmutableMap.of(), 0, 1L);
+      ImmutableMap.of(), 0, 1L, NOW, null);
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
 
   @Before

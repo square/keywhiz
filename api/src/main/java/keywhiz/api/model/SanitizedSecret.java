@@ -46,26 +46,28 @@ public abstract class SanitizedSecret {
       @JsonProperty("type") @Nullable String type,
       @JsonProperty("generationOptions") @Nullable Map<String, String> generationOptions,
       @JsonProperty("expiry") long expiry,
-      @JsonProperty("version") @Nullable Long version) {
+      @JsonProperty("version") @Nullable Long version,
+      @JsonProperty("contentCreatedAt") @Nullable ApiDate contentCreatedAt,
+      @JsonProperty("contentCreatedBy") @Nullable String contentCreatedBy) {
     ImmutableMap<String, String> meta =
         (metadata == null) ? ImmutableMap.of() : ImmutableMap.copyOf(metadata);
     ImmutableMap<String, String> genOptions =
         (generationOptions == null) ? ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
     return new AutoValue_SanitizedSecret(id, name, nullToEmpty(description), checksum, createdAt,
         nullToEmpty(createdBy), updatedAt, nullToEmpty(updatedBy), meta, Optional.ofNullable(type),
-        genOptions, expiry, Optional.ofNullable(version));
+        genOptions, expiry, Optional.ofNullable(version), Optional.ofNullable(contentCreatedAt),
+        nullToEmpty(contentCreatedBy));
   }
 
   public static SanitizedSecret of(long id, String name) {
-    return of(id, name, null, "", new ApiDate(0), null, new ApiDate(0), null, null, null, null, 0, null);
+    return of(id, name, null, "", new ApiDate(0), null, new ApiDate(0), null,
+        null, null, null, 0, null, null, null);
   }
 
   public static SanitizedSecret fromSecretSeriesAndContent(SecretSeriesAndContent seriesAndContent) {
     SecretSeries series = seriesAndContent.series();
     SecretContent content = seriesAndContent.content();
-    // Use the series' creation information, but the content's update information; if this is
-    // the current content, series and content update information matches, and otherwise, this
-    // preserves the content's update data (which can also be used as its creation data).
+    // Note that for all content records, createdAt = updatedAt and createdBy = updatedBy
     return SanitizedSecret.of(
         series.id(),
         series.name(),
@@ -73,13 +75,15 @@ public abstract class SanitizedSecret {
         content.hmac(),
         series.createdAt(),
         series.createdBy(),
-        content.updatedAt(),
-        content.updatedBy(),
+        series.updatedAt(),
+        series.updatedBy(),
         content.metadata(),
         series.type().orElse(null),
         series.generationOptions(),
         content.expiry(),
-        content.id());
+        content.id(),
+        content.createdAt(),
+        content.createdBy());
   }
 
   /**
@@ -103,7 +107,9 @@ public abstract class SanitizedSecret {
         secret.getType().orElse(null),
         secret.getGenerationOptions(),
         secret.getExpiry(),
-        secret.getVersion().orElse(null));
+        secret.getVersion().orElse(null),
+        secret.getContentCreatedAt().orElse(null),
+        secret.getContentCreatedBy());
   }
 
   @JsonProperty public abstract long id();
@@ -119,6 +125,8 @@ public abstract class SanitizedSecret {
   @JsonProperty public abstract ImmutableMap<String, String> generationOptions();
   @JsonProperty public abstract long expiry();
   @JsonProperty public abstract Optional<Long> version();
+  @JsonProperty public abstract Optional<ApiDate> contentCreatedAt();
+  @JsonProperty public abstract String contentCreatedBy();
 
   /** @return Name to serialize for clients. */
   public static String displayName(SanitizedSecret sanitizedSecret) {

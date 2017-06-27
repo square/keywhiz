@@ -400,7 +400,7 @@ public class SecretsResource {
     logger.info("User '{}' rolling back secret '{}' to version with ID '{}'.", user, secretName,
         versionId);
 
-    secretDAOReadWrite.setCurrentSecretVersionByName(secretName, versionId.get());
+    secretDAOReadWrite.setCurrentSecretVersionByName(secretName, versionId.get(), user.getName());
 
     // If the secret wasn't found or the request was misformed, setCurrentSecretVersionByName
     // already threw an exception

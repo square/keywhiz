@@ -56,7 +56,7 @@ public class UpdateActionTest {
   UpdateAction updateAction;
 
   Secret secret = new Secret(15, "newSecret", null, () -> "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null, null, null,
-      ImmutableMap.of(), 0, 1L);
+      ImmutableMap.of(), 0, 1L, NOW, null);
   SecretDetailResponse secretDetailResponse = SecretDetailResponse.fromSecret(secret, null, null);
 
   @Before

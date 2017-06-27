@@ -33,10 +33,10 @@ public class SecretDeliveryResponseTest {
   private static final ApiDate NOW = ApiDate.now();
   private static final Secret secret = new Secret(0, "name", null,
       () -> "YWJj", "checksum", NOW, null, NOW, null, metadata,
-      "upload", null, 0, null);
+      "upload", null, 0, null, NOW, null);
 
   private static final SanitizedSecret sanitizedSecret = SanitizedSecret.of(0, "name", null, "checksum",
-      NOW, null, NOW, null, metadata, "upload", null, 0, null);
+      NOW, null, NOW, null, metadata, "upload", null, 0, null, NOW, null);
 
   @Test
   public void setsLength() {

@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +78,8 @@ public class SecretDAO {
       String creator, Map<String, String> metadata, long expiry, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
     return dslContext.transactionResult(configuration -> {
+      long now = OffsetDateTime.now().toEpochSecond();
+
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
 
@@ -92,11 +95,12 @@ public class SecretDAO {
         }
       } else {
         secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type,
-            generationOptions);
+            generationOptions, now);
       }
 
-      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, hmac, creator, metadata, expiry);
-      secretSeriesDAO.setCurrentVersion(secretId, secretContentId);
+      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, hmac,
+          creator, metadata, expiry, now);
+      secretSeriesDAO.setCurrentVersion(secretId, secretContentId, creator, now);
 
       return secretId;
     });
@@ -107,6 +111,8 @@ public class SecretDAO {
       Map<String, String> metadata, long expiry, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
     return dslContext.transactionResult(configuration -> {
+      long now = OffsetDateTime.now().toEpochSecond();
+
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
 
@@ -115,13 +121,16 @@ public class SecretDAO {
       if (secretSeries.isPresent()) {
         SecretSeries secretSeries1 = secretSeries.get();
         secretId = secretSeries1.id();
-        secretSeriesDAO.updateSecretSeries(secretId, name, creator, description, type, generationOptions);
+        secretSeriesDAO.updateSecretSeries(secretId, name, creator, description, type,
+            generationOptions, now);
       } else {
-        secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type, generationOptions);
+        secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type,
+            generationOptions, now);
       }
 
-      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, hmac, creator, metadata, expiry);
-      secretSeriesDAO.setCurrentVersion(secretId, secretContentId);
+      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, hmac,
+          creator, metadata, expiry, now);
+      secretSeriesDAO.setCurrentVersion(secretId, secretContentId, creator, now);
 
       return secretId;
     });
@@ -130,6 +139,8 @@ public class SecretDAO {
   @VisibleForTesting
   public long partialUpdateSecret(String name, String creator, PartialUpdateSecretRequestV2 request) {
     return dslContext.transactionResult(configuration -> {
+      long now = OffsetDateTime.now().toEpochSecond();
+
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
 
@@ -157,10 +168,12 @@ public class SecretDAO {
         encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(request.content());
       }
 
-      secretSeriesDAO.updateSecretSeries(secretId, name, creator, description, type, secretSeries.generationOptions());
+      secretSeriesDAO.updateSecretSeries(secretId, name, creator, description, type,
+          secretSeries.generationOptions(), now);
 
-      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedContent, hmac, creator, metadata, expiry);
-      secretSeriesDAO.setCurrentVersion(secretId, secretContentId);
+      long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedContent, hmac,
+          creator, metadata, expiry, now);
+      secretSeriesDAO.setCurrentVersion(secretId, secretContentId, creator, now);
 
       return secretId;
     });
@@ -297,8 +310,7 @@ public class SecretDAO {
    * @return Versions of a secret matching input parameters or Optional.absent().
    */
   public Optional<ImmutableList<SanitizedSecret>> getSecretVersionsByName(String name,
-      int versionIdx,
-      int numVersions) {
+      int versionIdx, int numVersions) {
     checkArgument(!name.isEmpty());
     checkArgument(versionIdx >= 0);
     checkArgument(numVersions >= 0);
@@ -331,14 +343,15 @@ public class SecretDAO {
    * @param versionId The identifier for the desired current version
    * @throws NotFoundException if secret not found
    */
-  public void setCurrentSecretVersionByName(String name, long versionId) {
+  public void setCurrentSecretVersionByName(String name, long versionId, String updater) {
     checkArgument(!name.isEmpty());
     checkArgument(versionId >= 0);
 
     SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
     SecretSeries series = secretSeriesDAO.getSecretSeriesByName(name).orElseThrow(
         NotFoundException::new);
-    secretSeriesDAO.setCurrentVersion(series.id(), versionId);
+    secretSeriesDAO.setCurrentVersion(series.id(), versionId, updater,
+        OffsetDateTime.now().toEpochSecond());
   }
 
 

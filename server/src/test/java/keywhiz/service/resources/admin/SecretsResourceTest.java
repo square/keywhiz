@@ -77,7 +77,7 @@ public class SecretsResourceTest {
   ImmutableMap<String, String> emptyMap = ImmutableMap.of();
 
   Secret secret = new Secret(22, "name", "desc", () -> "secret", "checksum", NOW, "creator", NOW,
-      "updater", emptyMap, null, null, 1136214245, 1L);
+      "updater", emptyMap, null, null, 1136214245, 1L, NOW, "user");
 
   AuditLog auditLog = new SimpleLogger();
 
@@ -91,9 +91,9 @@ public class SecretsResourceTest {
   @Test
   public void listSecrets() {
     SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc","checksum", NOW, "user", NOW, "user",
-        emptyMap, null, null, 1136214245, 125L);
+        emptyMap, null, null, 1136214245, 125L, NOW, "user");
     SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "desc","checksum", NOW, "user", NOW, "user",
-        emptyMap, null, null, 1136214245, 250L);
+        emptyMap, null, null, 1136214245, 250L, NOW, "user");
     when(secretController.getSanitizedSecrets(null, null)).thenReturn(ImmutableList.of(secret1, secret2));
 
     List<SanitizedSecret> response = resource.listSecrets(user);
@@ -103,9 +103,9 @@ public class SecretsResourceTest {
   @Test
   public void listSecretsBatched() {
     SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc", "checksum", NOW, "user", NOW, "user",
-        emptyMap, null, null, 1136214245, 125L);
+        emptyMap, null, null, 1136214245, 125L, NOW, "user");
     SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "desc", "checksum", NOWPLUS, "user", NOWPLUS, "user",
-        emptyMap, null, null, 1136214245, 250L);
+        emptyMap, null, null, 1136214245, 250L, NOW, "user");
     when(secretController.getSecretsBatched(0, 1, false)).thenReturn(ImmutableList.of(secret1));
     when(secretController.getSecretsBatched(0, 1, true)).thenReturn(ImmutableList.of(secret2));
     when(secretController.getSecretsBatched(1, 1, false)).thenReturn(ImmutableList.of(secret2));
@@ -192,9 +192,9 @@ public class SecretsResourceTest {
   @Test
   public void listSecretVersions() {
     SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc", "checksum", NOW, "user",
-        NOW, "user", emptyMap, null, null, 1136214245, 125L);
+        NOW, "user", emptyMap, null, null, 1136214245, 125L, NOW, "user");
     SanitizedSecret secret2 = SanitizedSecret.of(1, "name1", "desc", "checksum2", NOWPLUS, "user",
-        NOWPLUS, "user", emptyMap, null, null, 1136214245, 250L);
+        NOWPLUS, "user", emptyMap, null, null, 1136214245, 250L, NOW, "user");
 
     when(secretDAO.getSecretVersionsByName("name1", 0, 10)).thenReturn(
         Optional.of(ImmutableList.of(secret2, secret1)));
@@ -224,7 +224,7 @@ public class SecretsResourceTest {
   public void rollbackSuccess() {
     Secret secret1 = new Secret(1, "name1", "desc", () -> "secret",
         "checksum", NOW, "user", NOW, "user", emptyMap, null,
-        null, 1136214245, 125L);
+        null, 1136214245, 125L, NOW, "user");
 
     when(secretController.getSecretByName("name1")).thenReturn(Optional.of(secret1));
 
@@ -235,7 +235,7 @@ public class SecretsResourceTest {
   @Test (expected = NotFoundException.class)
   public void rollbackThrowsException() {
     doThrow(new NotFoundException()).when(secretDAO)
-        .setCurrentSecretVersionByName(eq("name2"), anyLong());
+        .setCurrentSecretVersionByName(eq("name2"), anyLong(), eq("user"));
     resource.resetSecretVersion(user, "name2", new LongParam("125"));
   }
 

@@ -135,10 +135,10 @@
             <pre class="prettyprint">$ git clone https://github.com/square/keywhiz.git &amp;&amp; cd keywhiz</pre>
 
             <h4>Starting the Server</h4>
-            <p>Keywhiz can store data in PostgreSQL, MySQL or H2. H2 is the
-              simplest database for development purpose and all the data
-              is stored in <code>/tmp/h2_data/keywhizdb_development</code>. For
-              production systems you should use PostgreSQL or MySQL.</p>
+            <p>Keywhiz can store data in MySQL or H2. H2 is the simplest database
+              for development purpose and all the data is stored in
+              <code>/tmp/h2_data/keywhizdb_development</code>. For production
+              systems you should use MySQL.</p>
 
             <p>From the base of the keywhiz repository, build the server:</p>
             <pre class="prettyprint">$ mvn package -am -pl server -P h2</pre>

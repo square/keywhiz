@@ -1,0 +1,31 @@
+{
+  "apiVersion" : "1",
+  "swaggerVersion" : "1.2",
+  "basePath" : "https://square.github.io/keywhiz/apidocs",
+  "resourcePath" : "/me",
+  "apis" : [ {
+    "path" : "/admin/me",
+    "operations" : [ {
+      "method" : "GET",
+      "nickname" : "getInformation",
+      "type" : "User",
+      "summary" : "Retrieve own user information",
+      "notes" : "Returns JSON information about the current Keywhiz user",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Found and retrieved User information"
+      } ],
+      "produces" : [ "application/json" ]
+    } ]
+  } ],
+  "models" : {
+    "User" : {
+      "id" : "User",
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        }
+      }
+    }
+  }
+}

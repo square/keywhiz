@@ -1,0 +1,205 @@
+{
+  "apiVersion" : "1",
+  "swaggerVersion" : "1.2",
+  "basePath" : "https://square.github.io/keywhiz/apidocs",
+  "resourcePath" : "/clients-admin",
+  "apis" : [ {
+    "path" : "/admin/clients",
+    "operations" : [ {
+      "method" : "GET",
+      "nickname" : "findClients",
+      "type" : "Response",
+      "parameters" : [ {
+        "type" : "string",
+        "description" : "the name of the Client to retrieve, if provided",
+        "defaultValue" : "",
+        "paramType" : "query",
+        "name" : "name"
+      } ],
+      "summary" : "Retrieve Client by a specified name, or all Clients if no name given",
+      "notes" : "Returns a single Client or a set of all Clients for this user.\n Used by Keywhiz CLI and the web ui.",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Found and retrieved Client(s)"
+      }, {
+        "code" : 404,
+        "message" : "Client with given name not found (if name provided)"
+      } ],
+      "produces" : [ "application/json" ]
+    }, {
+      "method" : "POST",
+      "nickname" : "createClient",
+      "type" : "Response",
+      "parameters" : [ {
+        "type" : "CreateClientRequest",
+        "description" : "the JSON client request used to formulate the Client",
+        "paramType" : "body",
+        "name" : "createClientRequest",
+        "required" : true
+      } ],
+      "summary" : "Create Client",
+      "notes" : "Creates a Client with the name from a valid client request.\n Used by Keywhiz CLI and the web ui.",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Successfully created Client"
+      }, {
+        "code" : 409,
+        "message" : "Client with given name already exists"
+      } ],
+      "consumes" : [ "application/json" ],
+      "produces" : [ "application/json" ]
+    } ]
+  }, {
+    "path" : "/admin/clients/{clientId}",
+    "operations" : [ {
+      "method" : "GET",
+      "nickname" : "getClient",
+      "type" : "ClientDetailResponse",
+      "parameters" : [ {
+        "type" : "LongParam",
+        "description" : "the ID of the Client to retrieve",
+        "paramType" : "path",
+        "name" : "clientId",
+        "required" : true
+      } ],
+      "summary" : "Retrieve Client by ID",
+      "notes" : "Returns a single Client if found.\n Used by Keywhiz CLI and the web ui.",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Found and retrieved Client with given ID"
+      }, {
+        "code" : 404,
+        "message" : "Client with given ID not Found"
+      } ],
+      "produces" : [ "application/json" ]
+    }, {
+      "method" : "DELETE",
+      "nickname" : "deleteClient",
+      "type" : "Response",
+      "parameters" : [ {
+        "type" : "LongParam",
+        "description" : "the ID of the Client to be deleted",
+        "paramType" : "path",
+        "name" : "clientId",
+        "required" : true
+      } ],
+      "summary" : "Delete Client by ID",
+      "notes" : "Deletes a single Client if found.\n Used by Keywhiz CLI and the web ui.",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Found and deleted Client with given ID"
+      }, {
+        "code" : 404,
+        "message" : "Client with given ID not Found"
+      } ],
+      "produces" : [ "application/json" ]
+    } ]
+  } ],
+  "models" : {
+    "LongParam" : {
+      "id" : "LongParam",
+      "properties" : {
+        "value" : {
+          "type" : "T"
+        },
+        "errorStatus" : {
+          "type" : "string",
+          "enum" : [ "OK", "CREATED", "ACCEPTED", "NO_CONTENT", "RESET_CONTENT", "PARTIAL_CONTENT", "MOVED_PERMANENTLY", "FOUND", "SEE_OTHER", "NOT_MODIFIED", "USE_PROXY", "TEMPORARY_REDIRECT", "BAD_REQUEST", "UNAUTHORIZED", "PAYMENT_REQUIRED", "FORBIDDEN", "NOT_FOUND", "METHOD_NOT_ALLOWED", "NOT_ACCEPTABLE", "PROXY_AUTHENTICATION_REQUIRED", "REQUEST_TIMEOUT", "CONFLICT", "GONE", "LENGTH_REQUIRED", "PRECONDITION_FAILED", "REQUEST_ENTITY_TOO_LARGE", "REQUEST_URI_TOO_LONG", "UNSUPPORTED_MEDIA_TYPE", "REQUESTED_RANGE_NOT_SATISFIABLE", "EXPECTATION_FAILED", "INTERNAL_SERVER_ERROR", "NOT_IMPLEMENTED", "BAD_GATEWAY", "SERVICE_UNAVAILABLE", "GATEWAY_TIMEOUT", "HTTP_VERSION_NOT_SUPPORTED" ]
+        }
+      }
+    },
+    "Group" : {
+      "id" : "Group",
+      "properties" : {
+        "id" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "name" : {
+          "type" : "string"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "createdAt" : {
+          "type" : "ApiDate"
+        },
+        "createdBy" : {
+          "type" : "string"
+        },
+        "updatedAt" : {
+          "type" : "ApiDate"
+        },
+        "updatedBy" : {
+          "type" : "string"
+        },
+        "metadata" : {
+          "type" : "ImmutableMap"
+        }
+      }
+    },
+    "SanitizedSecret" : {
+      "id" : "SanitizedSecret",
+      "properties" : { }
+    },
+    "ApiDate" : {
+      "id" : "ApiDate",
+      "properties" : {
+        "epochSecond" : {
+          "type" : "integer",
+          "format" : "int64"
+        }
+      }
+    },
+    "ClientDetailResponse" : {
+      "id" : "ClientDetailResponse",
+      "properties" : {
+        "id" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "name" : {
+          "type" : "string"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "creationDate" : {
+          "type" : "ApiDate"
+        },
+        "updateDate" : {
+          "type" : "ApiDate"
+        },
+        "createdBy" : {
+          "type" : "string"
+        },
+        "updatedBy" : {
+          "type" : "string"
+        },
+        "lastSeen" : {
+          "type" : "ApiDate"
+        },
+        "secrets" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "SanitizedSecret"
+          }
+        },
+        "groups" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "Group"
+          }
+        }
+      }
+    },
+    "CreateClientRequest" : {
+      "id" : "CreateClientRequest",
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        }
+      }
+    }
+  }
+}

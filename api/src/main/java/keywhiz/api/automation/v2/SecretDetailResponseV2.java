@@ -7,6 +7,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import javax.annotation.Nullable;
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SecretSeriesAndContent;
 
@@ -32,12 +33,14 @@ import static com.google.common.base.Strings.nullToEmpty;
     public abstract Builder description(String description);
     public abstract Builder checksum(String checksum);
     public abstract Builder createdAtSeconds(long createdAt);
-    public abstract Builder createdBy(String person);
+    public abstract Builder createdBy(String createdBy);
     public abstract Builder updatedAtSeconds(long updatedAt);
-    public abstract Builder updatedBy(String person);
+    public abstract Builder updatedBy(String updatedBy);
     public abstract Builder type(@Nullable String type);
     public abstract Builder expiry(long expiry);
     public abstract Builder version(@Nullable Long version); // Unique ID in secrets_content table
+    public abstract Builder contentCreatedAtSeconds(@Nullable Long contentCreatedAt);
+    public abstract Builder contentCreatedBy(@Nullable String contentCreatedBy);
 
     public Builder metadata(Map<String, String> metadata) {
       return metadata(ImmutableMap.copyOf(metadata));
@@ -55,7 +58,9 @@ import static com.google.common.base.Strings.nullToEmpty;
           .metadata(seriesAndContent.content().metadata())
           .type(seriesAndContent.series().type().orElse(null))
           .expiry(seriesAndContent.content().expiry())
-          .version(seriesAndContent.series().currentVersion().orElse(null));
+          .version(seriesAndContent.series().currentVersion().orElse(null))
+          .contentCreatedAtSeconds(seriesAndContent.content().createdAt().toEpochSecond())
+          .contentCreatedBy(seriesAndContent.content().createdBy());
     }
 
     public Builder sanitizedSecret(SanitizedSecret sanitizedSecret) {
@@ -70,7 +75,10 @@ import static com.google.common.base.Strings.nullToEmpty;
           .metadata(sanitizedSecret.metadata())
           .type(sanitizedSecret.type().orElse(null))
           .expiry(sanitizedSecret.expiry())
-          .version(sanitizedSecret.version().orElse(null));
+          .version(sanitizedSecret.version().orElse(null))
+          .contentCreatedAtSeconds(sanitizedSecret.contentCreatedAt().isPresent() ?
+              sanitizedSecret.contentCreatedAt().get().toEpochSecond() : null)
+          .contentCreatedBy(sanitizedSecret.contentCreatedBy());
     }
 
     public SecretDetailResponseV2 build() {
@@ -93,7 +101,9 @@ import static com.google.common.base.Strings.nullToEmpty;
       @JsonProperty("metadata") @Nullable Map<String, String> metadata,
       @JsonProperty("type") @Nullable String type,
       @JsonProperty("expiry") long expiry,
-      @JsonProperty("version") @Nullable Long version) {
+      @JsonProperty("version") @Nullable Long version,
+      @JsonProperty("contentCreatedAtSeconds") @Nullable Long contentCreatedAtSeconds,
+      @JsonProperty("contentCreatedBy") @Nullable String contentCreatedBy) {
     return builder()
         .name(name)
         .description(nullToEmpty(description))
@@ -106,6 +116,8 @@ import static com.google.common.base.Strings.nullToEmpty;
         .type(type)
         .expiry(expiry)
         .version(version)
+        .contentCreatedAtSeconds(contentCreatedAtSeconds)
+        .contentCreatedBy(contentCreatedBy)
         .build();
   }
 
@@ -121,6 +133,8 @@ import static com.google.common.base.Strings.nullToEmpty;
   @JsonProperty("type") @Nullable public abstract String type();
   @JsonProperty("expiry") public abstract long expiry();
   @JsonProperty("version") @Nullable public abstract Long version();
+  @JsonProperty("contentCreatedAtSeconds") @Nullable public abstract Long contentCreatedAtSeconds();
+  @JsonProperty("contentCreatedBy") @Nullable public abstract String contentCreatedBy();
 
   @Override public final String toString() {
     return MoreObjects.toStringHelper(this)
@@ -134,6 +148,9 @@ import static com.google.common.base.Strings.nullToEmpty;
         .add("type", type())
         .add("metadata", metadata())
         .add("expiry", expiry())
+        .add("version", version())
+        .add("contentCreatedAtSeconds", contentCreatedAtSeconds())
+        .add("contentCreatedBy", contentCreatedBy())
         .omitNullValues()
         .toString();
   }

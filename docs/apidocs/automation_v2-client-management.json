@@ -1,0 +1,268 @@
+{
+  "apiVersion" : "1",
+  "swaggerVersion" : "1.2",
+  "basePath" : "https://square.github.io/keywhiz/apidocs",
+  "resourcePath" : "/automation/v2-client-management",
+  "apis" : [ {
+    "path" : "/automation/v2/clients",
+    "operations" : [ {
+      "method" : "POST",
+      "nickname" : "createClient",
+      "type" : "Response",
+      "parameters" : [ {
+        "type" : "CreateClientRequestV2",
+        "description" : "JSON request to create a client",
+        "paramType" : "body",
+        "name" : "request",
+        "required" : true
+      } ],
+      "summary" : "Creates a client and assigns to given groups",
+      "responseMessages" : [ {
+        "code" : 201,
+        "message" : "Created client and assigned to given groups"
+      }, {
+        "code" : 409,
+        "message" : "Client already exists"
+      } ],
+      "consumes" : [ "application/json" ]
+    }, {
+      "method" : "GET",
+      "nickname" : "clientListing",
+      "type" : "Iterable",
+      "summary" : "Retrieve listing of client names",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "List of client names"
+      } ],
+      "produces" : [ "application/json" ]
+    } ]
+  }, {
+    "path" : "/automation/v2/clients/{name}",
+    "operations" : [ {
+      "method" : "GET",
+      "nickname" : "clientInfo",
+      "type" : "ClientDetailResponseV2",
+      "parameters" : [ {
+        "type" : "string",
+        "description" : "Client name",
+        "paramType" : "path",
+        "name" : "name",
+        "required" : true
+      } ],
+      "summary" : "Retrieve information on a client",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Client information retrieved"
+      }, {
+        "code" : 404,
+        "message" : "Client not found"
+      } ],
+      "produces" : [ "application/json" ]
+    }, {
+      "method" : "DELETE",
+      "nickname" : "deleteClient",
+      "type" : "Response",
+      "parameters" : [ {
+        "type" : "string",
+        "description" : "Client name",
+        "paramType" : "path",
+        "name" : "name",
+        "required" : true
+      } ],
+      "summary" : "Delete a client",
+      "responseMessages" : [ {
+        "code" : 204,
+        "message" : "Client deleted"
+      }, {
+        "code" : 404,
+        "message" : "Client not found"
+      } ]
+    }, {
+      "method" : "POST",
+      "nickname" : "modifyClient",
+      "type" : "ClientDetailResponseV2",
+      "parameters" : [ {
+        "type" : "string",
+        "description" : "Client name",
+        "paramType" : "path",
+        "name" : "name",
+        "required" : true
+      }, {
+        "type" : "ModifyClientRequestV2",
+        "description" : "JSON request to modify the client",
+        "paramType" : "body",
+        "name" : "request",
+        "required" : true
+      } ],
+      "summary" : "Modify a client",
+      "responseMessages" : [ {
+        "code" : 201,
+        "message" : "Client updated"
+      }, {
+        "code" : 404,
+        "message" : "Client not found"
+      } ],
+      "consumes" : [ "application/json" ],
+      "produces" : [ "application/json" ]
+    } ]
+  }, {
+    "path" : "/automation/v2/clients/{name}/groups",
+    "operations" : [ {
+      "method" : "GET",
+      "nickname" : "clientGroupsListing",
+      "type" : "Iterable",
+      "parameters" : [ {
+        "type" : "string",
+        "description" : "Client name",
+        "paramType" : "path",
+        "name" : "name",
+        "required" : true
+      } ],
+      "summary" : "Listing of groups accessible to a client",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Listing succeeded"
+      }, {
+        "code" : 404,
+        "message" : "Client not found"
+      } ],
+      "produces" : [ "application/json" ]
+    }, {
+      "method" : "PUT",
+      "nickname" : "modifyClientGroups",
+      "type" : "Iterable",
+      "parameters" : [ {
+        "type" : "string",
+        "description" : "Client name",
+        "paramType" : "path",
+        "name" : "name",
+        "required" : true
+      }, {
+        "type" : "ModifyGroupsRequestV2",
+        "description" : "JSON request specifying which groups to add or remove",
+        "paramType" : "body",
+        "name" : "request",
+        "required" : true
+      } ],
+      "summary" : "Modify groups a client has membership in",
+      "responseMessages" : [ {
+        "code" : 201,
+        "message" : "Client modified successfully"
+      }, {
+        "code" : 404,
+        "message" : "Client not found"
+      } ],
+      "produces" : [ "application/json" ]
+    } ]
+  }, {
+    "path" : "/automation/v2/clients/{name}/secrets",
+    "operations" : [ {
+      "method" : "GET",
+      "nickname" : "clientSecretsListing",
+      "type" : "Iterable",
+      "parameters" : [ {
+        "type" : "string",
+        "description" : "Client name",
+        "paramType" : "path",
+        "name" : "name",
+        "required" : true
+      } ],
+      "summary" : "Listing of secrets accessible to a client",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Client lookup succeeded"
+      }, {
+        "code" : 404,
+        "message" : "Client not found"
+      } ],
+      "produces" : [ "application/json" ]
+    } ]
+  } ],
+  "models" : {
+    "ModifyClientRequestV2" : {
+      "id" : "ModifyClientRequestV2",
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        }
+      }
+    },
+    "ClientDetailResponseV2" : {
+      "id" : "ClientDetailResponseV2",
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "createdAtSeconds" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "updatedAtSeconds" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "createdBy" : {
+          "type" : "string"
+        },
+        "updatedBy" : {
+          "type" : "string"
+        },
+        "lastSeenSeconds" : {
+          "type" : "Optional"
+        }
+      }
+    },
+    "Optional" : {
+      "id" : "Optional",
+      "properties" : {
+        "value" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "present" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "CreateClientRequestV2" : {
+      "id" : "CreateClientRequestV2",
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        },
+        "groups" : {
+          "type" : "array",
+          "items" : {
+            "type" : "string"
+          },
+          "uniqueItems" : true
+        },
+        "description" : {
+          "type" : "string"
+        }
+      }
+    },
+    "ModifyGroupsRequestV2" : {
+      "id" : "ModifyGroupsRequestV2",
+      "properties" : {
+        "addGroups" : {
+          "type" : "array",
+          "items" : {
+            "type" : "string"
+          },
+          "uniqueItems" : true
+        },
+        "removeGroups" : {
+          "type" : "array",
+          "items" : {
+            "type" : "string"
+          },
+          "uniqueItems" : true
+        }
+      }
+    }
+  }
+}
