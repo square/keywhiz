@@ -1,3 +1,18 @@
+v0.8.0: 2017-06-27
+
+  * Removed old Web UI.
+
+  * Added secret versioning, to allow updating secrets.
+
+  * Added tracking of expiration dates of secrets.
+
+  * Added tracking HMACs of secret content so clients can intelligently
+    fetch secrets only when they've changed.
+
+  * Added an audit log interface to provide tracking of all changes made.
+
+  * Many small bugfixes and changes.
+
 v0.7.9: 2015-11-10
 
   * Various fixes related to MySQL.
