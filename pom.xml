@@ -13,7 +13,7 @@
 
   <groupId>com.squareup.keywhiz</groupId>
   <artifactId>keywhiz-parent</artifactId>
-  <version>0.7.11-SNAPSHOT</version>
+  <version>0.8.0</version>
   <packaging>pom</packaging>
 
   <name>Keywhiz (Parent)</name>
@@ -54,7 +54,7 @@
     <url>https://github.com/square/keywhiz/</url>
     <connection>scm:git:https://github.com/square/keywhiz.git</connection>
     <developerConnection>scm:git:git@github.com:square/keywhiz.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v0.8.0</tag>
   </scm>
 
   <issueManagement>
