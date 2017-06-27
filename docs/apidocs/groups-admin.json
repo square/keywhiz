@@ -1,0 +1,217 @@
+{
+  "apiVersion" : "1",
+  "swaggerVersion" : "1.2",
+  "basePath" : "https://square.github.io/keywhiz/apidocs",
+  "resourcePath" : "/groups-admin",
+  "apis" : [ {
+    "path" : "/admin/groups",
+    "operations" : [ {
+      "method" : "GET",
+      "nickname" : "findGroups",
+      "type" : "Response",
+      "parameters" : [ {
+        "type" : "string",
+        "description" : "the name of the Group to retrieve, if provided",
+        "defaultValue" : "",
+        "paramType" : "query",
+        "name" : "name"
+      } ],
+      "summary" : "Retrieve Group by a specified name, or all Groups if no name given",
+      "notes" : "Returns a single Group or a set of all Groups for this user.\n Used by Keywhiz CLI and the web ui.",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Found and retrieved Group(s)"
+      }, {
+        "code" : 404,
+        "message" : "Group with given name not found (if name provided)"
+      } ],
+      "produces" : [ "application/json" ]
+    }, {
+      "method" : "POST",
+      "nickname" : "createGroup",
+      "type" : "Response",
+      "parameters" : [ {
+        "type" : "CreateGroupRequest",
+        "description" : "the JSON client request used to formulate the Group",
+        "paramType" : "body",
+        "name" : "request",
+        "required" : true
+      } ],
+      "summary" : "Create Group",
+      "notes" : "Creates a Group with the name from a valid group request.\n Used by Keywhiz CLI and the web ui.",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Successfully created Group"
+      }, {
+        "code" : 400,
+        "message" : "Group with given name already exists"
+      } ],
+      "consumes" : [ "application/json" ],
+      "produces" : [ "application/json" ]
+    } ]
+  }, {
+    "path" : "/admin/groups/{groupId}",
+    "operations" : [ {
+      "method" : "GET",
+      "nickname" : "getGroup",
+      "type" : "GroupDetailResponse",
+      "parameters" : [ {
+        "type" : "LongParam",
+        "description" : "the ID of the Group to retrieve",
+        "paramType" : "path",
+        "name" : "groupId",
+        "required" : true
+      } ],
+      "summary" : "Retrieve Group by ID",
+      "notes" : "Returns a single Group if found.\n Used by Keywhiz CLI and the web ui.",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Found and retrieved Group with given ID"
+      }, {
+        "code" : 404,
+        "message" : "Group with given ID not Found"
+      } ],
+      "produces" : [ "application/json" ]
+    }, {
+      "method" : "DELETE",
+      "nickname" : "deleteGroup",
+      "type" : "Response",
+      "parameters" : [ {
+        "type" : "LongParam",
+        "description" : "the ID of the Group to be deleted",
+        "paramType" : "path",
+        "name" : "groupId",
+        "required" : true
+      } ],
+      "summary" : "Delete Group by ID",
+      "notes" : "Deletes a single Group if found.\n Used by Keywhiz CLI and the web ui.",
+      "responseMessages" : [ {
+        "code" : 200,
+        "message" : "Found and deleted Group with given ID"
+      }, {
+        "code" : 404,
+        "message" : "Group with given ID not Found"
+      } ],
+      "produces" : [ "application/json" ]
+    } ]
+  } ],
+  "models" : {
+    "LongParam" : {
+      "id" : "LongParam",
+      "properties" : {
+        "value" : {
+          "type" : "T"
+        },
+        "errorStatus" : {
+          "type" : "string",
+          "enum" : [ "OK", "CREATED", "ACCEPTED", "NO_CONTENT", "RESET_CONTENT", "PARTIAL_CONTENT", "MOVED_PERMANENTLY", "FOUND", "SEE_OTHER", "NOT_MODIFIED", "USE_PROXY", "TEMPORARY_REDIRECT", "BAD_REQUEST", "UNAUTHORIZED", "PAYMENT_REQUIRED", "FORBIDDEN", "NOT_FOUND", "METHOD_NOT_ALLOWED", "NOT_ACCEPTABLE", "PROXY_AUTHENTICATION_REQUIRED", "REQUEST_TIMEOUT", "CONFLICT", "GONE", "LENGTH_REQUIRED", "PRECONDITION_FAILED", "REQUEST_ENTITY_TOO_LARGE", "REQUEST_URI_TOO_LONG", "UNSUPPORTED_MEDIA_TYPE", "REQUESTED_RANGE_NOT_SATISFIABLE", "EXPECTATION_FAILED", "INTERNAL_SERVER_ERROR", "NOT_IMPLEMENTED", "BAD_GATEWAY", "SERVICE_UNAVAILABLE", "GATEWAY_TIMEOUT", "HTTP_VERSION_NOT_SUPPORTED" ]
+        }
+      }
+    },
+    "GroupDetailResponse" : {
+      "id" : "GroupDetailResponse",
+      "properties" : {
+        "id" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "name" : {
+          "type" : "string"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "creationDate" : {
+          "type" : "ApiDate"
+        },
+        "updateDate" : {
+          "type" : "ApiDate"
+        },
+        "createdBy" : {
+          "type" : "string"
+        },
+        "updatedBy" : {
+          "type" : "string"
+        },
+        "metadata" : {
+          "type" : "ImmutableMap"
+        },
+        "secrets" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "SanitizedSecret"
+          }
+        },
+        "clients" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "Client"
+          }
+        }
+      }
+    },
+    "SanitizedSecret" : {
+      "id" : "SanitizedSecret",
+      "properties" : { }
+    },
+    "ApiDate" : {
+      "id" : "ApiDate",
+      "properties" : {
+        "epochSecond" : {
+          "type" : "integer",
+          "format" : "int64"
+        }
+      }
+    },
+    "Client" : {
+      "id" : "Client",
+      "properties" : {
+        "id" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "name" : {
+          "type" : "string"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "createdAt" : {
+          "type" : "ApiDate"
+        },
+        "createdBy" : {
+          "type" : "string"
+        },
+        "updatedAt" : {
+          "type" : "ApiDate"
+        },
+        "updatedBy" : {
+          "type" : "string"
+        },
+        "lastSeen" : {
+          "type" : "ApiDate"
+        },
+        "enabled" : {
+          "type" : "boolean"
+        },
+        "automationAllowed" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "CreateGroupRequest" : {
+      "id" : "CreateGroupRequest",
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "metadata" : {
+          "type" : "ImmutableMap"
+        }
+      }
+    }
+  }
+}

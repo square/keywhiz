@@ -34,7 +34,7 @@ public class AutomationSecretResponseTest {
       ImmutableMap.of("key1", "value1", "key2", "value2");
   private static final ApiDate NOW = ApiDate.now();
   private static final Secret secret = new Secret(0, "name", null, () -> "YWJj", "checksum", NOW, null, NOW, null, metadata,
-      "upload", null, 1136214245, null);
+      "upload", null, 1136214245, null, null, null);
 
   @Test
   public void setsLength() {

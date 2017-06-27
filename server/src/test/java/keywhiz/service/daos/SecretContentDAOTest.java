@@ -73,7 +73,7 @@ public class SecretContentDAOTest {
   @Test public void createSecretContent() {
     int before = tableSize();
     secretContentDAO.createSecretContent(secretContent1.secretSeriesId()+1, "encrypted", "checksum", "creator",
-        metadata, 1136214245);
+        metadata, 1136214245, OffsetDateTime.now().toEpochSecond());
     assertThat(tableSize()).isEqualTo(before + 1);
   }
 
@@ -90,8 +90,8 @@ public class SecretContentDAOTest {
     // Create contents
     long[] ids = new long[15];
     for (int i = 0; i < ids.length; i++) {
-      long id = secretContentDAO.createSecretContent(
-          secretSeriesId, "encrypted", "checksum", "creator", metadata, 1136214245);
+      long id = secretContentDAO.createSecretContent(secretSeriesId, "encrypted", "checksum",
+          "creator", metadata, 1136214245, now);
       ids[i] = id;
     }
 
@@ -137,8 +137,8 @@ public class SecretContentDAOTest {
     // Create contents
     long[] ids = new long[15];
     for (int i = 0; i < ids.length; i++) {
-      long id = secretContentDAO.createSecretContent(
-          secretSeriesId, "encrypted", "checksum", "creator", metadata, 1136214245);
+      long id = secretContentDAO.createSecretContent(secretSeriesId, "encrypted",
+          "checksum", "creator", metadata, 1136214245, now);
       ids[i] = id;
     }
 

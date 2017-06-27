@@ -114,7 +114,7 @@ public class ClientsResourceTest {
     Group group1 = new Group(0, "group1", null, null, null, null, null, null);
     Group group2 = new Group(0, "group2", null, null, null, null, null, null);
     Secret secret = new Secret(15, "secret", null, () -> "supersecretdata", "checksum", now, "creator", now,
-        "updater", null, null, null, 0, 1L);
+        "updater", null, null, null, 0, 1L, now, "updater");
 
     when(clientDAO.getClientById(1)).thenReturn(Optional.of(client));
     when(aclDAO.getGroupsFor(client)).thenReturn(Sets.newHashSet(group1, group2));

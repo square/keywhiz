@@ -48,7 +48,8 @@ public class Secret {
   private String secret;
   private final LazyString encryptedSecret;
   private final String checksum;
-
+  
+  /** Data on the creation and update of the secret _series_ */
   private final ApiDate createdAt;
   private final String createdBy;
   private final ApiDate updatedAt;
@@ -65,6 +66,10 @@ public class Secret {
   /** Current version of the secret (may be null) */
   private final Long version;
 
+  /** Data on the creation of the current secret _content_ (equivalent to its update data) */
+  private final ApiDate contentCreatedAt;
+  private final String contentCreatedBy;
+
   public Secret(long id,
                 String name,
                 @Nullable String description,
@@ -78,7 +83,9 @@ public class Secret {
                 @Nullable String type,
                 @Nullable Map<String, String> generationOptions,
                 long expiry,
-                @Nullable Long version) {
+                @Nullable Long version,
+                @Nullable ApiDate contentCreatedAt,
+                @Nullable String contentCreatedBy) {
 
     checkArgument(!name.isEmpty());
     this.id = id;
@@ -97,6 +104,8 @@ public class Secret {
         ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
     this.expiry = expiry;
     this.version = version;
+    this.contentCreatedAt = contentCreatedAt;
+    this.contentCreatedBy = nullToEmpty(contentCreatedBy);
   }
 
   public long getId() {
@@ -161,6 +170,14 @@ public class Secret {
 
   public Optional<Long> getVersion() {return Optional.ofNullable(version); }
 
+  public Optional<ApiDate> getContentCreatedAt() {
+    return Optional.ofNullable(contentCreatedAt);
+  }
+
+  public String getContentCreatedBy() {
+    return contentCreatedBy;
+  }
+
   /** Slightly hokey way of calculating the decoded-length without bothering to decode. */
   public static int decodedLength(String secret) {
     checkNotNull(secret);
@@ -186,7 +203,9 @@ public class Secret {
           Objects.equal(this.type, that.type) &&
           Objects.equal(this.generationOptions, that.generationOptions) &&
           this.expiry == that.expiry &&
-          Objects.equal(this.version, that.version)) {
+          Objects.equal(this.version, that.version) &&
+          Objects.equal(this.contentCreatedAt, that.contentCreatedAt) &&
+          Objects.equal(this.contentCreatedBy, that.contentCreatedBy)) {
         return true;
       }
     }
@@ -195,7 +214,7 @@ public class Secret {
 
   @Override public int hashCode() {
     return Objects.hashCode(id, name, description, getSecret(), checksum, createdAt, createdBy, updatedAt,
-        updatedBy, metadata, type, generationOptions, expiry);
+        updatedBy, metadata, type, generationOptions, expiry, version, contentCreatedAt, contentCreatedBy);
   }
 
   @Override
@@ -215,6 +234,8 @@ public class Secret {
         .add("generationOptions", generationOptions)
         .add("expiry", expiry)
         .add("version", version)
+        .add("contentCreationDate", contentCreatedAt)
+        .add("contentCreatedBy", contentCreatedBy)
         .toString();
   }
 

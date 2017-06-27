@@ -1,1 +1,0 @@
-CREATE INDEX secrets_current_idx ON secrets (`current`);

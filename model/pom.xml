@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.squareup.keywhiz</groupId>
     <artifactId>keywhiz-parent</artifactId>
-    <version>0.8.0</version>
+    <version>0.8.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>keywhiz-model</artifactId>
@@ -45,21 +45,6 @@
   </dependencies>
 
   <profiles>
-    <profile>
-      <id>postgres</id>
-      <properties>
-        <skipResetDatabase>false</skipResetDatabase>
-        <db.driver>com.impossibl.postgres.jdbc.PGDriver</db.driver>
-        <db.create-url>jdbc:pgsql:postgres</db.create-url>
-        <db.migrate-url>jdbc:pgsql:keywhizdb_test</db.migrate-url>
-        <db.username>${user.name}</db.username>
-        <db.migrations-path>postgres/migration</db.migrations-path>
-        <jooq.dialect>org.jooq.util.postgres.PostgresDatabase</jooq.dialect>
-        <jooq.excludes>pg.*</jooq.excludes>
-        <jooq.input-schema>public</jooq.input-schema>
-      </properties>
-    </profile>
-
     <profile>
       <id>mysql</id>
       <activation>
@@ -112,7 +97,7 @@
 
   <build>
     <plugins>
-      <!-- Creates (or re-creates) a keywhizdb_test postgres database. -->
+      <!-- Creates (or re-creates) a keywhizdb_test database. -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>sql-maven-plugin</artifactId>

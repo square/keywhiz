@@ -41,7 +41,9 @@ public class SanitizedSecretWithGroupsTest {
       "password",
       ImmutableMap.of("favoriteFood", "PB&J sandwich"),
       1136214245,
-      1L);
+      1L,
+      ApiDate.parse("2013-03-28T21:42:42.000Z"),
+      "keywhizAdmin");
 
   private List<Group> groups;
 
@@ -80,7 +82,9 @@ public class SanitizedSecretWithGroupsTest {
             "password",
             ImmutableMap.of("favoriteFood", "PB&J sandwich"),
             1136214245,
-            1L), groups);
+            1L,
+            ApiDate.parse("2013-03-28T21:42:42.000Z"),
+            "keywhizAdmin"), groups);
 
     assertThat(asJson(sanitizedSecretWithGroups))
         .isEqualTo(jsonFixture("fixtures/sanitizedSecretWithGroups.json"));

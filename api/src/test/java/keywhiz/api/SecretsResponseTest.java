@@ -41,7 +41,9 @@ public class SecretsResponseTest {
             "password",
             ImmutableMap.of("param1", "value1"),
             1136214245,
-            1L),
+            1L,
+            ApiDate.parse("2013-03-28T21:42:42.573Z"),
+            "keywhizAdmin"),
         SanitizedSecret.of(
             768,
             "anotherSecret",
@@ -55,7 +57,9 @@ public class SecretsResponseTest {
             "upload",
             null,
             1136214245,
-            10L)
+            10L,
+            ApiDate.parse("2013-04-28T21:42:42.573Z"),
+            "keywhizAdmin")
     ));
 
     assertThat(asJson(secretsResponse))
