@@ -222,7 +222,7 @@ public class SecretResourceTest {
   //---------------------------------------------------------------------------------------
 
   @Test public void getSanitizedSecret_notFound() throws Exception {
-    Request get = clientRequest("/automation/v2/secrets/non-existent").get().build();
+    Request get = clientRequest("/automation/v2/secrets/non-existent/sanitized").get().build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(404);
   }
@@ -237,7 +237,7 @@ public class SecretResourceTest {
         .type("password")
         .build());
 
-    SanitizedSecret response = lookupSantizedSecret("secret12455");
+    SanitizedSecret response = lookupSanitizedSecret("secret12455");
     assertThat(response.name()).isEqualTo("secret12455");
     assertThat(response.createdBy()).isEqualTo("client");
     assertThat(response.updatedBy()).isEqualTo("client");
@@ -975,7 +975,7 @@ public class SecretResourceTest {
     return mapper.readValue(httpResponse.body().byteStream(), SecretDetailResponseV2.class);
   }
 
-  SanitizedSecret lookupSantizedSecret(String name) throws IOException {
+  SanitizedSecret lookupSanitizedSecret(String name) throws IOException {
     Request get = clientRequest(format("/automation/v2/secrets/%s/sanitized", name)).get().build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
