@@ -485,6 +485,25 @@ public class SecretResource {
   }
 
   /**
+   * Retrieve information on a secret series
+   *
+   * @excludeParams automationClient
+   * @param name Secret series name
+   *
+   * @responseMessage 200 Secret series information retrieved
+   * @responseMessage 404 Secret series not found
+   */
+  @Timed @ExceptionMetered
+  @GET
+  @Path("{name}/sanitized")
+  @Produces(APPLICATION_JSON)
+  public SanitizedSecret getSanitizedSecret(@Auth AutomationClient automationClient,
+      @PathParam("name") String name) {
+    return SanitizedSecret.fromSecretSeriesAndContent(
+        secretDAO.getSecretByName(name).orElseThrow(NotFoundException::new));
+  }
+
+  /**
    * Retrieve contents for a set of secret series.  Throws an exception
    * for unexpected errors (i. e. empty secret names or errors connecting to
    * the database); returns a response containing the contents of found

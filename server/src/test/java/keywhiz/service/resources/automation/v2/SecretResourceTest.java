@@ -218,6 +218,36 @@ public class SecretResourceTest {
   }
 
   //---------------------------------------------------------------------------------------
+  // getSanitizedSecret
+  //---------------------------------------------------------------------------------------
+
+  @Test public void getSanitizedSecret_notFound() throws Exception {
+    Request get = clientRequest("/automation/v2/secrets/non-existent").get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(404);
+  }
+
+  @Test public void getSanitizedSecret_success() throws Exception {
+    // Sample secret
+    create(CreateSecretRequestV2.builder()
+        .name("secret12455")
+        .content(encoder.encodeToString("supa secret12455".getBytes(UTF_8)))
+        .description("desc")
+        .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
+        .type("password")
+        .build());
+
+    SanitizedSecret response = lookupSantizedSecret("secret12455");
+    assertThat(response.name()).isEqualTo("secret12455");
+    assertThat(response.createdBy()).isEqualTo("client");
+    assertThat(response.updatedBy()).isEqualTo("client");
+    assertThat(response.contentCreatedBy()).isEqualTo("client");
+    assertThat(response.description()).isEqualTo("desc");
+    assertThat(response.type()).isEqualTo(Optional.of("password"));
+    assertThat(response.metadata()).isEqualTo(ImmutableMap.of("owner", "root", "mode", "0440"));
+  }
+
+  //---------------------------------------------------------------------------------------
   // secretContents
   //---------------------------------------------------------------------------------------
 
@@ -943,6 +973,13 @@ public class SecretResourceTest {
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
     return mapper.readValue(httpResponse.body().byteStream(), SecretDetailResponseV2.class);
+  }
+
+  SanitizedSecret lookupSantizedSecret(String name) throws IOException {
+    Request get = clientRequest(format("/automation/v2/secrets/%s/sanitized", name)).get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), SanitizedSecret.class);
   }
 
   SecretContentsResponseV2 contents(SecretContentsRequestV2  request) throws IOException {
