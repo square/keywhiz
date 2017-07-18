@@ -51,6 +51,7 @@ import keywhiz.service.resources.automation.AutomationEnrollClientGroupResource;
 import keywhiz.service.resources.automation.AutomationGroupResource;
 import keywhiz.service.resources.automation.AutomationSecretAccessResource;
 import keywhiz.service.resources.automation.AutomationSecretResource;
+import keywhiz.service.resources.automation.v2.BackupResource;
 import keywhiz.service.resources.automation.v2.ClientResource;
 import keywhiz.service.resources.automation.v2.GroupResource;
 import keywhiz.service.resources.automation.v2.SecretResource;
@@ -148,6 +149,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(injector.getInstance(AutomationEnrollClientGroupResource.class));
     jersey.register(injector.getInstance(AutomationSecretAccessResource.class));
     jersey.register(injector.getInstance(StatusResource.class));
+    jersey.register(injector.getInstance(BackupResource.class));
 
     ManualStatusHealthCheck mshc = new ManualStatusHealthCheck();
     environment.healthChecks().register("manualStatus", mshc);

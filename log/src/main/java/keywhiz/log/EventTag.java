@@ -14,6 +14,7 @@ public enum EventTag {
 
   GROUP_CREATE,
   GROUP_DELETE,
+  GROUP_BACKUP,
 
   CLIENT_CREATE,
   CLIENT_DELETE,

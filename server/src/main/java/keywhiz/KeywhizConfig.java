@@ -22,7 +22,8 @@ import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.db.ManagedDataSource;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Optional;
+import java.util.Map;
+import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import keywhiz.api.validation.ValidBase64;
@@ -67,6 +68,10 @@ public class KeywhizConfig extends Configuration {
   @NotNull
   @JsonProperty
   private String cookieKey;
+
+  @Nullable
+  @JsonProperty
+  private Map<String, String> backupExportKeys;
 
   @NotNull
   @JsonProperty
@@ -172,6 +177,13 @@ public class KeywhizConfig extends Configuration {
 
   public String getDerivationProviderClass() {
     return derivationProviderClass;
+  }
+
+  @Nullable public String getBackupExportKey(String name) {
+    if (backupExportKeys == null || backupExportKeys.isEmpty()) {
+      return null;
+    }
+    return backupExportKeys.get(name);
   }
 
   public static class TemplatedDataSourceFactory extends DataSourceFactory {
