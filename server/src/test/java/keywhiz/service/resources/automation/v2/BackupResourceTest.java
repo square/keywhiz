@@ -135,8 +135,18 @@ public class BackupResourceTest {
     mutualSslClient = TestClients.mutualSslClient();
   }
 
-  @Test public void createClient_success() throws Exception {
-    Response httpResponse = backup("Blackops");
+  @Test public void backupInvalidKey() throws Exception {
+    Response httpResponse = backup("asdf", "Blackops");
+    assertThat(httpResponse.code()).isEqualTo(404);
+  }
+
+  @Test public void backupInvalidGroup() throws Exception {
+    Response httpResponse = backup("test", "asdf");
+    assertThat(httpResponse.code()).isEqualTo(404);
+  }
+
+  @Test public void backupSuccess() throws Exception {
+    Response httpResponse = backup("test", "Blackops");
     assertThat(httpResponse.code()).isEqualTo(200);
 
     InputStream ciphertext = httpResponse.body().byteStream();
@@ -162,8 +172,8 @@ public class BackupResourceTest {
         .allMatch(s -> !Strings.isNullOrEmpty(s));
   }
 
-  Response backup(String group) throws IOException {
-    Request get = clientRequest(format("/automation/v2/backup/%s", group))
+  Response backup(String key, String group) throws IOException {
+    Request get = clientRequest(format("/automation/v2/backup/%s/group/%s", key, group))
         .addHeader("Accept", OCTET_STREAM.toString())
         .get()
         .build();

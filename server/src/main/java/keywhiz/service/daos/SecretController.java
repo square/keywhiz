@@ -72,7 +72,7 @@ public class SecretController {
 
   /**
    * @param group limit results to secrets assigned to this group.
-   * @return all existing sanitized secrets matching criteria.
+   * @return all existing secrets matching criteria.
    * */
   public List<Secret> getSecretsForGroup(Group group) {
     return secretDAO.getSecrets(null, group).stream()

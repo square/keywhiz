@@ -18,7 +18,6 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.ServiceUnavailableException;
 import keywhiz.KeywhizConfig;
 import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.AutomationClient;
@@ -50,7 +49,7 @@ import static org.c02e.jpgpj.HashingAlgorithm.Unsigned;
 
 /**
  * @parentEndpointName automation/v2-backup
- * @resourceDescription Automation endpoints to manage groups
+ * @resourceDescription Automation endpoints for backups
  */
 @Path("/automation/v2/backup")
 public class BackupResource {
@@ -86,18 +85,19 @@ public class BackupResource {
    * @return Encrypted archive
    */
   @Timed @ExceptionMetered
-  @GET @Path("{group}")
+  @GET @Path("{key}/group/{group}")
   @Produces(APPLICATION_OCTET_STREAM)
   public byte[] backup(
       @Auth AutomationClient automationClient,
-      @PathParam("group") String name) {
+      @PathParam("group") String name,
+      @PathParam("key") String key) {
+    if (config.getBackupExportKey(key) == null) {
+      throw new NotFoundException("Unknown key: " + key);
+    }
+
     Optional<Group> groupOptional = groupDAO.getGroup(name);
     if (!groupOptional.isPresent()) {
       throw new NotFoundException("Unknown group: " + name);
-    }
-
-    if (config.getBackupExportKey() == null) {
-      throw new ServiceUnavailableException("Backups keys are not configured");
     }
 
     Group group = groupOptional.get();
@@ -132,7 +132,7 @@ public class BackupResource {
 
     // Perform encryption & return encrypted data
     try {
-      Key exportKey = new Key(config.getBackupExportKey());
+      Key exportKey = new Key(config.getBackupExportKey(key));
 
       Encryptor encryptor = new Encryptor(exportKey);
       encryptor.setEncryptionAlgorithm(AES256);

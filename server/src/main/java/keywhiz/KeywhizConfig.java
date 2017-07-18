@@ -22,6 +22,7 @@ import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.db.ManagedDataSource;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Map;
 import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -70,7 +71,7 @@ public class KeywhizConfig extends Configuration {
 
   @Nullable
   @JsonProperty
-  private String backupExportKey;
+  private Map<String, String> backupExportKeys;
 
   @NotNull
   @JsonProperty
@@ -178,8 +179,11 @@ public class KeywhizConfig extends Configuration {
     return derivationProviderClass;
   }
 
-  @Nullable public String getBackupExportKey() {
-    return backupExportKey;
+  @Nullable public String getBackupExportKey(String name) {
+    if (backupExportKeys == null || backupExportKeys.isEmpty()) {
+      return null;
+    }
+    return backupExportKeys.get(name);
   }
 
   public static class TemplatedDataSourceFactory extends DataSourceFactory {
