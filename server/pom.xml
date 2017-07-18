@@ -82,6 +82,13 @@
       <artifactId>log4j-over-slf4j</artifactId>
     </dependency>
 
+    <!-- GPG for backups -->
+    <dependency>
+      <groupId>org.c02e.jpgpj</groupId>
+      <artifactId>jpgpj</artifactId>
+      <version>0.1.1</version>
+    </dependency>
+
     <!-- Guava makes the language better. -->
     <dependency>
       <groupId>com.google.guava</groupId>

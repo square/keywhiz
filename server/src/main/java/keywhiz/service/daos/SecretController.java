@@ -71,6 +71,16 @@ public class SecretController {
   }
 
   /**
+   * @param group limit results to secrets assigned to this group.
+   * @return all existing sanitized secrets matching criteria.
+   * */
+  public List<Secret> getSecretsForGroup(Group group) {
+    return secretDAO.getSecrets(null, group).stream()
+        .map(transformer::transform)
+        .collect(toList());
+  }
+
+  /**
    * @param expireMaxTime timestamp for farthest expiry to include
    * @param group limit results to secrets assigned to this group, if provided.
    * @return all existing sanitized secrets matching criteria.
@@ -80,7 +90,7 @@ public class SecretController {
         .map(SanitizedSecret::fromSecretSeriesAndContent)
         .collect(toList());
   }
-  
+
   /**
    * @param expireMaxTime timestamp for farthest expiry to include
    * @return all existing sanitized secrets and their groups matching criteria.
