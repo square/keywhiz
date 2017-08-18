@@ -84,7 +84,7 @@ public class AddOrUpdateActionConfig {
       String value = entry.getValue();
 
       // We want to perform strong validation of the metadata to make sure it is well formed.
-      if (!key.matches("(owner|group|mode)")) {
+      if (!key.matches("(owner|group|mode|filename)")) {
         if(!key.startsWith("_")) {
           throw new IllegalArgumentException(
               format("Illegal metadata key %s: custom metadata keys must start with an underscore", key));
