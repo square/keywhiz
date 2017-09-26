@@ -7,5 +7,8 @@ cache:
   directories:
     - $HOME/.m2
 
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V -q
+
 script:
-  - mvn test findbugs:check jacoco:report coveralls:report -P h2
+  - mvn test findbugs:check jacoco:report coveralls:report -B -P h2 -q

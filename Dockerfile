@@ -45,6 +45,8 @@
 #
 FROM maven:3.3-jdk-8
 
+ARG MAVEN_PROFILE=h2
+
 RUN apt-get update && \
     apt-get -y upgrade && \
     apt-get -y install gettext vim-common && \
@@ -63,7 +65,7 @@ COPY model/pom.xml /usr/src/app/model/
 COPY server/pom.xml /usr/src/app/server/
 COPY testing/pom.xml /usr/src/app/testing/
 COPY log/pom.xml /usr/src/app/log/
-RUN mvn dependency:copy-dependencies -P docker --fail-never
+RUN mvn dependency:copy-dependencies -P $MAVEN_PROFILE --fail-never
 
 # copy source required for build and install
 COPY api /usr/src/app/api/
@@ -74,7 +76,7 @@ COPY model /usr/src/app/model/
 COPY server /usr/src/app/server/
 COPY testing /usr/src/app/testing/
 COPY log /usr/src/app/log/
-RUN mvn install -P docker
+RUN mvn install -P $MAVEN_PROFILE
 
 # Drop privs inside container
 RUN useradd -ms /bin/false keywhiz && \
