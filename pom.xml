@@ -37,15 +37,14 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <dropwizard.version>0.8.4</dropwizard.version>
-    <guice.version>4.0</guice.version>
+    <guice.version>4.1.0</guice.version>
     <jackson.version>2.6.1</jackson.version>
-    <jooq.version>3.9.1</jooq.version>
-    <powermock.version>1.6.2</powermock.version>
-    <slf4j.version>1.7.12</slf4j.version>
-    <findbugs.version>3.0.0</findbugs.version>
-    <pgjdbc-ng.version>0.5</pgjdbc-ng.version>
-    <mysql.version>5.1.35</mysql.version>
-    <logback.version>1.1.3</logback.version>
+    <jooq.version>3.10.2</jooq.version>
+    <powermock.version>1.7.3</powermock.version>
+    <slf4j.version>1.7.25</slf4j.version>
+    <findbugs.version>3.0.1</findbugs.version>
+    <mysql.version>5.1.45</mysql.version>
+    <logback.version>1.2.3</logback.version>
 
     <custom.build.directory>target</custom.build.directory>
   </properties>
@@ -149,22 +148,22 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>18.0</version>
+        <version>23.5-jre</version>
       </dependency>
       <dependency>
         <groupId>com.squareup.okhttp3</groupId>
         <artifactId>okhttp</artifactId>
-        <version>3.0.1</version>
+        <version>3.9.1</version>
       </dependency>
       <dependency>
         <groupId>com.squareup.okhttp3</groupId>
         <artifactId>okhttp-urlconnection</artifactId>
-        <version>3.0.1</version>
+        <version>3.9.1</version>
       </dependency>
       <dependency>
         <groupId>com.unboundid</groupId>
         <artifactId>unboundid-ldapsdk</artifactId>
-        <version>2.3.8</version>
+        <version>4.0.1</version>
       </dependency>
       <dependency>
         <groupId>io.dropwizard</groupId>
@@ -246,7 +245,7 @@
       <dependency>
         <groupId>org.bouncycastle</groupId>
         <artifactId>bcprov-jdk15on</artifactId>
-        <version>1.56</version>
+        <version>1.58</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
@@ -261,7 +260,7 @@
       <dependency>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-core</artifactId>
-        <version>3.2.1</version>
+        <version>4.2.0</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate</groupId>
@@ -286,7 +285,7 @@
       <dependency>
         <groupId>de.svenkubiak</groupId>
         <artifactId>jBCrypt</artifactId>
-        <version>0.4</version>
+        <version>0.4.1</version>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
@@ -317,11 +316,6 @@
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.impossibl.pgjdbc-ng</groupId>
-        <artifactId>pgjdbc-ng</artifactId>
-        <version>${pgjdbc-ng.version}</version>
       </dependency>
       <dependency>
         <groupId>com.h2database</groupId>
@@ -611,11 +605,6 @@ Place the jars in this directory: `/usr/libexec/java_home -v
           <artifactId>sql-maven-plugin</artifactId>
           <version>1.5</version>
           <dependencies>
-            <dependency>
-              <groupId>com.impossibl.pgjdbc-ng</groupId>
-              <artifactId>pgjdbc-ng</artifactId>
-              <version>${pgjdbc-ng.version}</version>
-            </dependency>
             <dependency>
               <groupId>mysql</groupId>
               <artifactId>mysql-connector-java</artifactId>
