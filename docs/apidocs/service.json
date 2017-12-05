@@ -9,6 +9,9 @@
     "path" : "/login.{format}",
     "description" : "Login to Keywhiz admin interface"
   }, {
+    "path" : "/automation_v2-backup.{format}",
+    "description" : "Automation endpoints for backups"
+  }, {
     "path" : "/logout.{format}",
     "description" : "Logout from the Keywhiz admin interface"
   }, {
