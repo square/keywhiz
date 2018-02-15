@@ -17,6 +17,7 @@ package keywhiz.service.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.jackson.Jackson;
+import java.time.Instant;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
@@ -34,6 +35,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static java.time.Instant.EPOCH;
 import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -80,6 +82,7 @@ public class SecretDeliveryResourceIntegrationTest {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
     Client client = keywhizClient.getClientByName("client");
     assertThat(client.getExpiration()).isNotNull();
+    assertThat(client.getExpiration().toInstant().isAfter(EPOCH)).isTrue();
   }
 
   @Test public void returnsNotFoundWhenSecretUnspecified() throws Exception {
