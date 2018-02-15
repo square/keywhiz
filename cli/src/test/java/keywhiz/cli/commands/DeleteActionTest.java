@@ -85,7 +85,7 @@ public class DeleteActionTest {
     deleteActionConfig.deleteType = Arrays.asList("client");
     deleteActionConfig.name = "newClient";
 
-    Client client = new Client(657, "newClient", null, NOW, null, NOW, null, null, true, false);
+    Client client = new Client(657, "newClient", null, NOW, null, NOW, null, null, null, true, false);
     when(keywhizClient.getClientByName(deleteActionConfig.name)).thenReturn(client);
 
     deleteAction.run();

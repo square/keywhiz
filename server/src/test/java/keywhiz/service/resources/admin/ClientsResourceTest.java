@@ -55,7 +55,7 @@ public class ClientsResourceTest {
 
   User user = User.named("user");
   ApiDate now = ApiDate.now();
-  Client client = new Client(1, "client", "1st client", now, "test", now, "test", null, true, false);
+  Client client = new Client(1, "client", "1st client", now, "test", now, "test", null, null, true, false);
   AuditLog auditLog = new SimpleLogger();
 
   ClientsResource resource;
@@ -65,8 +65,8 @@ public class ClientsResourceTest {
   }
 
   @Test public void listClients() {
-    Client client1 = new Client(1, "client", "1st client", now, "test", now, "test", null, true, false);
-    Client client2 = new Client(2, "client2", "2nd client", now, "test", now, "test", null, true, false);
+    Client client1 = new Client(1, "client", "1st client", now, "test", now, "test", null, null, true, false);
+    Client client2 = new Client(2, "client2", "2nd client", now, "test", now, "test", null, null, true, false);
 
     when(clientDAO.getClients()).thenReturn(ImmutableSet.of(client1, client2));
 

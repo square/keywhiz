@@ -191,6 +191,9 @@
         "lastSeen" : {
           "type" : "ApiDate"
         },
+        "expiration" : {
+          "type" : "ApiDate"
+        },
         "enabled" : {
           "type" : "boolean"
         },

@@ -16,21 +16,28 @@
 
 package keywhiz.service.daos;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalField;
 import java.util.Set;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
+import keywhiz.auth.mutualssl.CertificatePrincipal;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static java.time.temporal.ChronoField.MILLI_OF_SECOND;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(KeywhizTestRunner.class)
 public class ClientDAOTest {
@@ -104,8 +111,16 @@ public class ClientDAOTest {
     assertThat(client1.getLastSeen()).isNull();
     assertThat(client2.getLastSeen()).isNull();
 
+    Instant expiration = Instant.now();
+    // Remove millis because database drops it on storage, and we want
+    // to compare later to make sure the proper expiration was set in DB.
+    expiration = expiration.minusMillis(expiration.get(MILLI_OF_SECOND));
+
+    CertificatePrincipal principal = mock(CertificatePrincipal.class);
+    when(principal.getCertificateExpiration()).thenReturn(expiration);
+
     ApiDate now = ApiDate.now();
-    clientDAO.sawClient(client1);
+    clientDAO.sawClient(client1, principal);
 
     // reload clients from db, as sawClient doesn't update in-memory object
     Client client1v2 = clientDAO.getClient(client1.getName()).get();
@@ -115,6 +130,9 @@ public class ClientDAOTest {
     assertThat(client1v2.getLastSeen()).isNotNull();
     assertTrue(client1v2.getLastSeen().toEpochSecond() >= now.toEpochSecond());
     assertThat(client2v2.getLastSeen()).isNull();
+    assertThat(client1v2.getExpiration()).isNotNull();
+    assertThat(client1v2.getExpiration().toInstant()).isEqualTo(expiration);
+    assertThat(client2v2.getExpiration()).isNull();
   }
 
 

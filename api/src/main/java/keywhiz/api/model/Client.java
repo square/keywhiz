@@ -19,6 +19,7 @@ package keywhiz.api.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import java.time.Instant;
 import javax.annotation.Nullable;
 import keywhiz.api.ApiDate;
 
@@ -51,6 +52,9 @@ public class Client {
   @JsonProperty
   private final ApiDate lastSeen;
 
+  @JsonProperty
+  private final ApiDate expiration;
+
   /** True if client is enabled to retrieve secrets. */
   @JsonProperty
   private final boolean enabled;
@@ -67,6 +71,7 @@ public class Client {
       @JsonProperty("updatedAt") ApiDate updatedAt,
       @JsonProperty("updatedBy") @Nullable String updatedBy,
       @JsonProperty("lastSeen") @Nullable ApiDate lastSeen,
+      @JsonProperty("expiration") @Nullable ApiDate expiration,
       @JsonProperty("enabled") boolean enabled,
       @JsonProperty("automationAllowed") boolean automationAllowed) {
     this.id = id;
@@ -76,13 +81,18 @@ public class Client {
     this.createdBy = nullToEmpty(createdBy);
     this.updatedAt = updatedAt;
     this.updatedBy = nullToEmpty(updatedBy);
-    if (lastSeen != null && lastSeen.toEpochSecond() == 0L) {
-      lastSeen = null;
-    }
-    this.lastSeen = lastSeen;
+    this.lastSeen = cleanTimestamp(lastSeen);
+    this.expiration = cleanTimestamp(expiration);
 
     this.enabled = enabled;
     this.automationAllowed = automationAllowed;
+  }
+
+  private static ApiDate cleanTimestamp(ApiDate instant) {
+    if (instant != null && instant.toEpochSecond() == 0L) {
+      return null;
+    }
+    return instant;
   }
 
   public long getId() {
@@ -117,6 +127,10 @@ public class Client {
     return lastSeen;
   }
 
+  public ApiDate getExpiration() {
+    return expiration;
+  }
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -137,6 +151,7 @@ public class Client {
           Objects.equal(this.updatedAt, that.updatedAt) &&
           Objects.equal(this.updatedBy, that.updatedBy) &&
           Objects.equal(this.lastSeen, that.lastSeen) &&
+          Objects.equal(this.expiration, that.expiration) &&
           this.enabled == that.enabled &&
           this.automationAllowed == that.automationAllowed) {
         return true;
@@ -148,8 +163,8 @@ public class Client {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, name, description, createdAt, createdBy, updatedAt, updatedBy, lastSeen,
-        enabled, automationAllowed);
+    return Objects.hashCode(id, name, description, createdAt, createdBy, updatedAt, updatedBy,
+        lastSeen, expiration, enabled, automationAllowed);
   }
 
   @Override
@@ -163,6 +178,7 @@ public class Client {
         .add("updatedAt", updatedAt)
         .add("updatedBy", updatedBy)
         .add("lastSeen", lastSeen)
+        .add("expiration", expiration)
         .add("enabled", enabled)
         .add("automationAllowed", automationAllowed)
         .toString();

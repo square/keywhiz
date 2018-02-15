@@ -47,7 +47,7 @@ public class UnassignActionTest {
   UnassignActionConfig unassignActionConfig;
   UnassignAction unassignAction;
 
-  Client client = new Client(11, "client-name", null, null, null, null, null, null, false, false);
+  Client client = new Client(11, "client-name", null, null, null, null, null, null, null, false, false);
   Group group = new Group(22, "group-name", null, null, null, null, null, null);
   Secret secret = new Secret(33, "secret-name", null, () -> "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null, null, null,
       ImmutableMap.of(), 0, 1L, NOW, null);

@@ -18,15 +18,17 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
 
+import java.security.Principal;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 
-import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
+import keywhiz.auth.mutualssl.CertificatePrincipal;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
@@ -35,12 +37,14 @@ import org.jooq.Param;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.time.temporal.ChronoUnit.SECONDS;
+import static java.time.Instant.EPOCH;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
+import static org.jooq.impl.DSL.greatest;
+import static org.jooq.impl.DSL.when;
 
 public class ClientDAO {
-  private final static long lastSeenThreshold = (24 * 60 * 60);
+  private final static Duration LAST_SEEN_THRESHOLD = Duration.ofSeconds(24 * 60 * 60);
 
   private final DSLContext dslContext;
   private final ClientMapper clientMapper;
@@ -83,18 +87,37 @@ public class ClientDAO {
     });
   }
 
-  public void sawClient(Client client) {
+  public void sawClient(Client client, @Nullable Principal principal) {
     Instant now = Instant.now();
-    Instant lastSeen = Optional.ofNullable(client.getLastSeen()).map(ls -> Instant.ofEpochSecond(ls.toEpochSecond())).orElse(null);
 
-    // only update last seen if it's been more than `lastSeenThreshold` seconds
-    // this way we can have less granularity on lastSeen and save db writes
-    if (lastSeen == null || now.isAfter(lastSeen.plus(lastSeenThreshold, SECONDS))) {
+    Instant lastSeen = Optional.ofNullable(client.getLastSeen())
+        .map(ls -> Instant.ofEpochSecond(ls.toEpochSecond()))
+        .orElse(EPOCH);
+
+    final Instant expiration;
+    if (principal instanceof CertificatePrincipal) {
+      expiration = Optional.ofNullable((CertificatePrincipal) principal)
+          .map(p -> p.getCertificateExpiration())
+          .orElse(EPOCH);
+    } else {
+      expiration = EPOCH;
+    }
+
+    // Only update last seen if it's been more than `lastSeenThreshold` seconds
+    // this way we can have less granularity on lastSeen and save DB writes
+    if (now.isAfter(lastSeen.plus(LAST_SEEN_THRESHOLD))) {
       dslContext.transaction(configuration -> {
-        Param<Long> val = DSL.val(now.getEpochSecond(), CLIENTS.LASTSEEN);
+        Param<Long> lastSeenValue = DSL.val(now.getEpochSecond(), CLIENTS.LASTSEEN);
+        Param<Long> expirationValue = DSL.val(expiration.getEpochSecond(), CLIENTS.EXPIRATION);
+
         DSL.using(configuration)
             .update(CLIENTS)
-            .set(CLIENTS.LASTSEEN, DSL.when(CLIENTS.LASTSEEN.isNull(), val).otherwise(DSL.greatest(CLIENTS.LASTSEEN, val)))
+            .set(CLIENTS.LASTSEEN,
+                when(CLIENTS.LASTSEEN.isNull(), lastSeenValue)
+                    .otherwise(greatest(CLIENTS.LASTSEEN, lastSeenValue)))
+            .set(CLIENTS.EXPIRATION,
+                when(CLIENTS.EXPIRATION.isNull(), expirationValue)
+                    .otherwise(greatest(CLIENTS.EXPIRATION, expirationValue)))
             .where(CLIENTS.ID.eq(client.getId()))
             .execute();
       });

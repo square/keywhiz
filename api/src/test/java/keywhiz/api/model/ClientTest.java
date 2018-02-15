@@ -33,6 +33,7 @@ public class ClientTest {
                                ApiDate.parse("2013-03-28T21:29:27.465Z"),
                                "keywhizAdmin",
                                 null,
+                                null,
                                 true,
                                 false
     );
