@@ -115,9 +115,7 @@ public class ClientDAO {
             .set(CLIENTS.LASTSEEN,
                 when(CLIENTS.LASTSEEN.isNull(), lastSeenValue)
                     .otherwise(greatest(CLIENTS.LASTSEEN, lastSeenValue)))
-            .set(CLIENTS.EXPIRATION,
-                when(CLIENTS.EXPIRATION.isNull(), expirationValue)
-                    .otherwise(greatest(CLIENTS.EXPIRATION, expirationValue)))
+            .set(CLIENTS.EXPIRATION, expirationValue)
             .where(CLIENTS.ID.eq(client.getId()))
             .execute();
       });
