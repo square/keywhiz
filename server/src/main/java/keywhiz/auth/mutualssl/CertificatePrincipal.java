@@ -19,6 +19,9 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import java.security.Principal;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
+
+import static java.time.Instant.EPOCH;
 
 public class CertificatePrincipal implements Principal {
   private final String subjectDn;
@@ -31,6 +34,13 @@ public class CertificatePrincipal implements Principal {
 
   public ImmutableList<X509Certificate> getCertificateChain() {
     return certificateChain;
+  }
+
+  public Instant getCertificateExpiration() {
+    return certificateChain.stream()
+        .map(c -> c.getNotAfter().toInstant())
+        .min(Instant::compareTo)
+        .orElse(EPOCH);
   }
 
   /**

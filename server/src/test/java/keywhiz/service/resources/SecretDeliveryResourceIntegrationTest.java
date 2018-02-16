@@ -17,12 +17,16 @@ package keywhiz.service.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.jackson.Jackson;
+import java.time.Instant;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
 import keywhiz.api.ApiDate;
 import keywhiz.api.SecretDeliveryResponse;
+import keywhiz.api.model.Client;
 import keywhiz.api.model.Secret;
+import keywhiz.client.KeywhizClient;
+import keywhiz.commands.DbSeedCommand;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -31,6 +35,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static java.time.Instant.EPOCH;
 import static keywhiz.testing.HttpClients.testUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,11 +43,13 @@ public class SecretDeliveryResourceIntegrationTest {
   ObjectMapper mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
   OkHttpClient client;
   Secret generalPassword;
+  KeywhizClient keywhizClient;
 
   @ClassRule public static final RuleChain chain = IntegrationTestRule.rule();
 
   @Before public void setUp() throws Exception {
     client = TestClients.mutualSslClient();
+    keywhizClient = TestClients.keywhizClient();
     generalPassword = new Secret(0, "General_Password", null, () -> "YXNkZGFz", "",
         ApiDate.parse("2011-09-29T15:46:00Z"), null,
         ApiDate.parse("2011-09-29T15:46:00Z"), null, null, "upload",
@@ -59,6 +66,23 @@ public class SecretDeliveryResourceIntegrationTest {
     assertThat(response.code()).isEqualTo(200);
     assertThat(response.body().string())
         .isEqualTo(mapper.writeValueAsString(SecretDeliveryResponse.fromSecret(generalPassword)));
+  }
+
+  @Test public void recordsClientExpirationInDatabase() throws Exception {
+    Request get = new Request.Builder()
+        .get()
+        .url(testUrl("/secret/General_Password"))
+        .build();
+
+    // Call into service using mutual-SSL client
+    Response response = client.newCall(get).execute();
+    assertThat(response.code()).isEqualTo(200);
+
+    // Check that expiration was recorded in database
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    Client client = keywhizClient.getClientByName("client");
+    assertThat(client.getExpiration()).isNotNull();
+    assertThat(client.getExpiration().toInstant().isAfter(EPOCH)).isTrue();
   }
 
   @Test public void returnsNotFoundWhenSecretUnspecified() throws Exception {

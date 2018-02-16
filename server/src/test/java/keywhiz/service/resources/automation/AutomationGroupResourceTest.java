@@ -41,6 +41,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.isNotNull;
 import static org.mockito.Mockito.when;
 
 public class AutomationGroupResourceTest {
@@ -50,7 +51,7 @@ public class AutomationGroupResourceTest {
   @Mock AclDAO aclDAO;
   ApiDate now = ApiDate.now();
   AutomationClient automation = AutomationClient.of(
-      new Client(1, "automation", "Automation client", now, "test", now, "test", null, true, true));
+      new Client(1, "automation", "Automation client", now, "test", now, "test", null, null, true, true));
   AuditLog auditLog = new SimpleLogger();
 
   AutomationGroupResource resource;
@@ -89,7 +90,7 @@ public class AutomationGroupResourceTest {
     Group group = new Group(50, "testGroup", "testing group", now, "automation client", now,
         "automation client", ImmutableMap.of("app", "keywhiz"));
     Client groupClient =
-        new Client(1, "firstClient", "Group client", now, "test", now, "test", null, true, true);
+        new Client(1, "firstClient", "Group client", now, "test", now, "test", null, null, true, true);
     SanitizedSecret firstGroupSecret =
         SanitizedSecret.of(1, "name1", "desc", "checksum", now, "test", now, "test", null, "", null, 1136214245, 125L, now, "test");
     SanitizedSecret secondGroupSecret =

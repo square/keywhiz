@@ -31,6 +31,7 @@ import java.util.Optional;
 class ClientMapper implements RecordMapper<ClientsRecord, Client> {
   public Client map(ClientsRecord r) {
     ApiDate lastSeen = Optional.ofNullable(r.getLastseen()).map(ApiDate::new).orElse(null);
+    ApiDate expiration = Optional.ofNullable(r.getExpiration()).map(ApiDate::new).orElse(null);
 
     return new Client(
         r.getId(),
@@ -41,6 +42,7 @@ class ClientMapper implements RecordMapper<ClientsRecord, Client> {
         new ApiDate(r.getUpdatedat()),
         r.getUpdatedby(),
         lastSeen,
+        expiration,
         r.getEnabled(),
         r.getAutomationallowed()
     );

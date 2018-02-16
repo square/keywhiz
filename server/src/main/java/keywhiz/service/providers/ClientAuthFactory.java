@@ -22,7 +22,9 @@ import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.java8.auth.Authenticator;
 import java.security.Principal;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.naming.Context;
 import javax.ws.rs.NotAuthorizedException;
 import keywhiz.api.model.Client;
 import keywhiz.service.daos.ClientDAO;
@@ -47,7 +49,7 @@ import static java.lang.String.format;
 public class ClientAuthFactory {
   private static final Logger logger = LoggerFactory.getLogger(ClientAuthFactory.class);
 
-  private final Authenticator<String, Client> authenticator;
+  private final MyAuthenticator authenticator;
 
   @Inject public ClientAuthFactory(ClientDAOFactory clientDAOFactory) {
     this.authenticator = new MyAuthenticator(clientDAOFactory.readwrite(), clientDAOFactory.readonly());
@@ -58,37 +60,37 @@ public class ClientAuthFactory {
   }
 
   public Client provide(ContainerRequest request) {
-    Optional<String> possibleClientName = getClientName(request);
-    if (!possibleClientName.isPresent()) {
+    Optional<Principal> principal = getPrincipal(request);
+    Optional<String> possibleClientName = getClientName(principal);
+    if (!principal.isPresent() || !possibleClientName.isPresent()) {
       throw new NotAuthorizedException("ClientCert not authorized as a Client");
     }
     String clientName = possibleClientName.get();
 
-    try {
-      return authenticator.authenticate(clientName)
-          .orElseThrow(() -> new NotAuthorizedException(
-              format("ClientCert name %s not authorized as a Client", clientName)));
-    } catch (AuthenticationException e) {
-      throw Throwables.propagate(e);
-    }
+    return authenticator.authenticate(clientName, principal.orElse(null))
+        .orElseThrow(() -> new NotAuthorizedException(
+            format("ClientCert name %s not authorized as a Client", clientName)));
   }
 
-  static Optional<String> getClientName(ContainerRequest request) {
-    Principal principal = request.getSecurityContext().getUserPrincipal();
-    if (principal == null) {
+  static Optional<Principal> getPrincipal(ContainerRequest request) {
+    return Optional.ofNullable(request.getSecurityContext().getUserPrincipal());
+  }
+
+  static Optional<String> getClientName(Optional<Principal> principal) {
+    if (!principal.isPresent()) {
       return Optional.empty();
     }
 
-    X500Name name = new X500Name(principal.getName());
+    X500Name name = new X500Name(principal.get().getName());
     RDN[] rdns = name.getRDNs(BCStyle.CN);
     if (rdns.length == 0) {
-      logger.warn("Certificate does not contain CN=xxx,...: {}", principal.getName());
+      logger.warn("Certificate does not contain CN=xxx,...: {}", principal.get().getName());
       return Optional.empty();
     }
     return Optional.of(IETFUtils.valueToString(rdns[0].getFirst().getValue()));
   }
 
-  private static class MyAuthenticator implements Authenticator<String, Client> {
+  private static class MyAuthenticator {
     private final ClientDAO clientDAOReadWrite;
     private final ClientDAO clientDAOReadOnly;
 
@@ -99,12 +101,11 @@ public class ClientAuthFactory {
       this.clientDAOReadOnly = clientDAOReadOnly;
     }
 
-    @Override public Optional<Client> authenticate(String name)
-        throws AuthenticationException {
+    public Optional<Client> authenticate(String name, @Nullable Principal principal) {
       Optional<Client> optionalClient = clientDAOReadOnly.getClient(name);
       if (optionalClient.isPresent()) {
         Client client = optionalClient.get();
-        clientDAOReadWrite.sawClient(client);
+        clientDAOReadWrite.sawClient(client, principal);
         if (client.isEnabled()) {
           return optionalClient;
         } else {

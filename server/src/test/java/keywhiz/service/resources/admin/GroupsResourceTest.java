@@ -105,7 +105,7 @@ public class GroupsResourceTest {
         1136214245, 125L, now, "creator");
     when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of(secret));
 
-    Client client = new Client(1, "client", "desc", now, "creator", now, "creator", null, true, false);
+    Client client = new Client(1, "client", "desc", now, "creator", now, "creator", null, null, true, false);
     when(aclDAO.getClientsFor(group)).thenReturn(ImmutableSet.of(client));
 
     GroupDetailResponse response = resource.getGroup(user, new LongParam("4444"));

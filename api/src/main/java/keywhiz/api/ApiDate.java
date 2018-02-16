@@ -44,6 +44,10 @@ public class ApiDate {
     return epochSecond;
   }
 
+  public Instant toInstant() {
+    return Instant.ofEpochSecond(epochSecond);
+  }
+
   public ApiDate(long epochSecond) {
     this.epochSecond = epochSecond;
   }

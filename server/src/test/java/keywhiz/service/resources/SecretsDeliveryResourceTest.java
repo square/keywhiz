@@ -56,7 +56,7 @@ public class SecretsDeliveryResourceTest {
 
   @Before public void setUp() {
     secretsDeliveryResource = new SecretsDeliveryResource(aclDAO);
-    client = new Client(0, "client_name", null, null, null, null, null, null, false, false);
+    client = new Client(0, "client_name", null, null, null, null, null, null, null, false, false);
   }
 
   @Test public void returnsEmptyJsonArrayWhenUserHasNoSecrets() throws Exception {
