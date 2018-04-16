@@ -22,7 +22,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.lang3.StringEscapeUtils;
 
 /** A Servlet added to the Admin Connector for manually making _status report unhealthy */
 public class ManualStatusServlet extends HttpServlet implements Serializable {
@@ -34,14 +33,14 @@ public class ManualStatusServlet extends HttpServlet implements Serializable {
 
   @Override protected void doPost(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    String path = StringEscapeUtils.escapeHtml4(req.getPathInfo());
+    String path = req.getPathInfo();
     if(path != null && path.equals("/enable")){
       mshc.setHealthy(true);
     } else if(path != null && path.equals("/disable")) {
       mshc.setHealthy(false);
     } else {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND,
-          "Need to pass /status/enable or /status/disable, not /status" + path);
+          "Need to pass /status/enable or /status/disable");
     }
   }
 
