@@ -22,6 +22,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 /** A Servlet added to the Admin Connector for manually making _status report unhealthy */
 public class ManualStatusServlet extends HttpServlet implements Serializable {
@@ -33,7 +34,7 @@ public class ManualStatusServlet extends HttpServlet implements Serializable {
 
   @Override protected void doPost(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    String path = req.getPathInfo();
+    String path = StringEscapeUtils.escapeHtml4(req.getPathInfo());
     if(path != null && path.equals("/enable")){
       mshc.setHealthy(true);
     } else if(path != null && path.equals("/disable")) {
