@@ -40,7 +40,7 @@ public class ManualStatusServlet extends HttpServlet implements Serializable {
       mshc.setHealthy(false);
     } else {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND,
-          "Need to pass /status/enable or /status/disable, not /status" + path);
+          "Need to pass /status/enable or /status/disable");
     }
   }
 
