@@ -18,6 +18,7 @@ package keywhiz.service.daos;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
+import keywhiz.auth.bcrypt.BcryptAuthenticator;
 import org.jooq.DSLContext;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -44,7 +45,7 @@ public class UserDAO {
     dslContext
       .insertInto(USERS)
       .set(USERS.USERNAME, user)
-      .set(USERS.PASSWORD_HASH, BCrypt.hashpw(password, BCrypt.gensalt()))
+      .set(USERS.PASSWORD_HASH, BcryptAuthenticator.hashPassword(password))
       .set(USERS.CREATED_AT, created.toEpochSecond())
       .set(USERS.UPDATED_AT, updated.toEpochSecond())
       .execute();
