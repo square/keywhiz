@@ -46,18 +46,29 @@ public class BcryptAuthenticator implements Authenticator<BasicCredentials, User
       return Optional.empty();
     }
 
+    // Get hashed password column from BCrypt table by username & verify hash against plaintext
     String password = credentials.getPassword();
-
-    // Get hashed password column from BCrypt table by username
     Optional<String> optionalHashedPwForUser = userDAO.getHashedPassword(username);
-    if (!optionalHashedPwForUser.isPresent()) {
-      return Optional.empty();
-    }
-
-    if (BCrypt.checkpw(password, optionalHashedPwForUser.get())) {
+    if (checkPassword(password, optionalHashedPwForUser)) {
       user = User.named(username);
     }
 
     return Optional.ofNullable(user);
+  }
+
+  /** Hash a password in a way compatible with this authenticator */
+  public static String hashPassword(String password) {
+    return BCrypt.hashpw(password, BCrypt.gensalt());
+  }
+
+  /** Constant-time password check */
+  private static boolean checkPassword(String password, Optional<String> hash) {
+    // We want to check the password in constant time, to avoid leaking information about whether
+    // a user is present in the database. In order to do this we pass a fake bcrypt hash into the
+    // checkpw function so we do the work of checking a hash even if there was no user present
+    // in the database. We return true iff there was a user/hash present *and* hash was valid.
+    String fakeHash = hashPassword("");
+    boolean valid = BCrypt.checkpw(password, hash.orElse(fakeHash));
+    return hash.isPresent() && valid;
   }
 }
