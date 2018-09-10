@@ -133,9 +133,8 @@
       <artifactId>dropwizard-java8-auth</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.dhatim</groupId>
-      <artifactId>dropwizard-sentry</artifactId>
-      <version>1.3.5-1</version>
+      <groupId>com.tradier</groupId>
+      <artifactId>dropwizard-raven</artifactId>
     </dependency>
 
     <!-- Necessary for object type detection. -->
