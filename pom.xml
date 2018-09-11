@@ -83,7 +83,7 @@
       <dependency>
         <groupId>com.tradier</groupId>
         <artifactId>dropwizard-raven</artifactId>
-        <version>0.7.1</version>
+        <version>0.9.3</version>
       </dependency>
       <dependency>
         <groupId>com.beust</groupId>
