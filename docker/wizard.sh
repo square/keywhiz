@@ -65,7 +65,7 @@ export KEYSTORE_PATH="/secrets/keywhiz-server.p12"
 export KEYSTORE_PASSWORD=`head -c16 /dev/urandom | xxd -p`
 export TRUSTSTORE_PATH="/secrets/ca-bundle.p12"
 export TRUSTSTORE_PASSWORD=ponies # contains public certificates only
-export CRL_FILE_PEM="/secrets/ca-crl.pem"
+export CRL_PATH="/secrets/ca-crl.pem"
 
 CERT_CHAIN_PEM="/secrets/keywhiz.pem"
 PRIVATE_KEY_PEM="/secrets/keywhiz-key.pem"
@@ -76,7 +76,7 @@ echo "Please copy the following files into the container:"
 echo "  1. Copy your certificate chain to $CERT_CHAIN_PEM"
 echo "  2. Copy your private key to $PRIVATE_KEY_PEM"
 echo "  3. Copy your CA bundle to $CA_BUNDLE_PEM"
-echo "  4. Copy a valid CRL file to $CRL_FILE_PEM"
+echo "  4. Copy a valid CRL file to $CRL_PATH"
 echo 
 echo "Files can be copied into a running container with docker cp."
 echo
@@ -87,7 +87,7 @@ echo
 assert_file_present $CERT_CHAIN_PEM
 assert_file_present $PRIVATE_KEY_PEM
 assert_file_present $CA_BUNDLE_PEM
-assert_file_present $CRL_FILE_PEM
+assert_file_present $CRL_PATH
 
 echo -n "Bundling certificate and private key into PKCS#12 keystore... "
 rm -f $KEYSTORE_PATH
