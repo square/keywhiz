@@ -16,11 +16,9 @@
 
 package keywhiz.model;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jooq.Converter;
 
 public class TinyIntConverter implements Converter<Byte, Boolean> {
-  @SuppressFBWarnings(value = "NP_BOOLEAN_RETURN_NULL", justification = "null is a valid DB value")
   @Override public Boolean from(Byte aByte) {
     if (aByte == null) {
       return null;

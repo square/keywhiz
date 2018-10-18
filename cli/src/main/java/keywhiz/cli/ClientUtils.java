@@ -44,6 +44,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import javax.servlet.http.Cookie;
 import okhttp3.ConnectionSpec;
 import okhttp3.Interceptor;
@@ -93,6 +94,7 @@ public class ClientUtils {
     checkNotNull(cookies);
 
     SSLContext sslContext;
+    X509TrustManager trustManager;
     try {
       TrustManagerFactory trustManagerFactory = TrustManagerFactory
           .getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -100,6 +102,7 @@ public class ClientUtils {
       trustManagerFactory.init(devTrustStore);
 
       TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+      trustManager = (X509TrustManager) trustManagers[0];
 
       sslContext = SSLContext.getInstance("TLSv1.2");
       sslContext.init(new KeyManager[0], trustManagers, new SecureRandom());
@@ -110,7 +113,7 @@ public class ClientUtils {
     SSLSocketFactory socketFactory = sslContext.getSocketFactory();
 
     OkHttpClient.Builder client = new OkHttpClient().newBuilder()
-        .sslSocketFactory(socketFactory)
+        .sslSocketFactory(socketFactory, trustManager)
         .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS))
         .followSslRedirects(false);
 

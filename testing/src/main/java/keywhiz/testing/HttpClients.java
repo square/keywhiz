@@ -23,12 +23,17 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import okhttp3.ConnectionSpec;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -74,6 +79,7 @@ public class HttpClients {
     boolean usingClientCert = keyStore != null && keyStorePassword != null;
 
     SSLContext sslContext;
+    X509TrustManager trustManager;
     try {
       SSLContextBuilder sslContextBuilder = new SSLContextBuilder()
           .useProtocol("TLSv1.2")
@@ -83,13 +89,20 @@ public class HttpClients {
         sslContextBuilder.loadKeyMaterial(keyStore, keyStorePassword.toCharArray());
       }
 
+      TrustManagerFactory trustManagerFactory = TrustManagerFactory
+          .getInstance(TrustManagerFactory.getDefaultAlgorithm());
+      trustManagerFactory.init(trustStore);
+
+      TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+      trustManager = (X509TrustManager) trustManagers[0];
+
       sslContext = sslContextBuilder.build();
     } catch (NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException | KeyManagementException e) {
       throw Throwables.propagate(e);
     }
 
     OkHttpClient.Builder client = new OkHttpClient().newBuilder()
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContext.getSocketFactory(), trustManager)
         .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS))
         .followSslRedirects(false);
 

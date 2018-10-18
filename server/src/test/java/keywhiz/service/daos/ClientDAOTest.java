@@ -33,6 +33,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static java.time.temporal.ChronoField.MILLI_OF_SECOND;
+import static java.time.temporal.ChronoField.NANO_OF_SECOND;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -112,9 +113,9 @@ public class ClientDAOTest {
     assertThat(client2.getLastSeen()).isNull();
 
     Instant expiration = Instant.now();
-    // Remove millis because database drops it on storage, and we want
+    // Remove nanos because database drops it on storage, and we want
     // to compare later to make sure the proper expiration was set in DB.
-    expiration = expiration.minusMillis(expiration.get(MILLI_OF_SECOND));
+    expiration = expiration.minusNanos(expiration.get(NANO_OF_SECOND));
 
     CertificatePrincipal principal = mock(CertificatePrincipal.class);
     when(principal.getCertificateExpiration()).thenReturn(expiration);

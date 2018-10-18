@@ -16,7 +16,6 @@
 
 package keywhiz.service.crypto;
 
-import com.sun.crypto.provider.SunJCE;
 import java.security.Provider;
 import java.security.Security;
 import javax.crypto.SecretKey;
@@ -46,7 +45,7 @@ public class ContentCryptographerTest {
   }
 
   @Before public void setUp() throws Exception {
-    cryptographer = new ContentCryptographer(BASE_KEY, new SunJCE(), BC, FakeRandom.create());
+    cryptographer = new ContentCryptographer(BASE_KEY, BC, BC, FakeRandom.create());
   }
 
   @Test public void encryptDecrypt() throws Exception {
