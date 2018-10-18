@@ -13,11 +13,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>annotations</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>org.jooq</groupId>
       <artifactId>jooq</artifactId>
     </dependency>
@@ -38,6 +33,18 @@
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
     </dependency>
+    <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+    </dependency>
   </dependencies>
 
   <profiles>
@@ -54,7 +61,7 @@
         <db.migrate-url>jdbc:mysql://localhost/keywhizdb_test?useUnicode=true&amp;characterEncoding=utf8</db.migrate-url>
         <db.username>root</db.username>
         <db.migrations-path>mysql/migration</db.migrations-path>
-        <jooq.dialect>org.jooq.util.mysql.MySQLDatabase</jooq.dialect>
+        <jooq.dialect>org.jooq.meta.mysql.MySQLDatabase</jooq.dialect>
         <jooq.excludes>mysql.*</jooq.excludes>
         <jooq.input-schema>keywhizdb_test</jooq.input-schema>
       </properties>
@@ -69,7 +76,7 @@
         <db.migrate-url>jdbc:h2:/tmp/h2_data/keywhizdb_test</db.migrate-url>
         <db.username>root</db.username>
         <db.migrations-path>h2/migration</db.migrations-path>
-        <jooq.dialect>org.jooq.util.h2.H2Database</jooq.dialect>
+        <jooq.dialect>org.jooq.meta.h2.H2Database</jooq.dialect>
         <jooq.excludes />
         <jooq.input-schema>PUBLIC</jooq.input-schema>
       </properties>
@@ -150,7 +157,7 @@
 
           <!-- Generator parameters -->
           <generator>
-            <name>org.jooq.util.JavaGenerator</name>
+            <name>org.jooq.codegen.JavaGenerator</name>
             <database>
               <name>${jooq.dialect}</name>
               <includes>.*</includes>

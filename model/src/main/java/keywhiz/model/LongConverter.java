@@ -16,11 +16,9 @@
 
 package keywhiz.model;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jooq.Converter;
 
 public class LongConverter implements Converter<Integer, Long> {
-  @SuppressFBWarnings(value = "NP_BOOLEAN_RETURN_NULL", justification = "null is a valid DB value")
   @Override public Long from(Integer value) {
     if (value == null) {
       return null;

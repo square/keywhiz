@@ -15,17 +15,14 @@
  */
 package keywhiz.hkdf;
 
-import com.sun.crypto.provider.SunJCE;
-
-import javax.annotation.Nullable;
-import javax.crypto.Mac;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.SecureRandom;
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 import static java.util.Objects.requireNonNull;
 
@@ -52,7 +49,6 @@ import static java.util.Objects.requireNonNull;
  */
 public class Hkdf {
   private static Hash DEFAULT_HASH = Hash.SHA256;
-  private static Provider DEFAULT_PROVIDER = new SunJCE();
 
   private final Hash hash;
   private final Provider provider;
@@ -66,7 +62,7 @@ public class Hkdf {
    * @return Hkdf constructed with default hash and derivation provider
    */
   public static Hkdf usingDefaults() {
-    return new Hkdf(DEFAULT_HASH, DEFAULT_PROVIDER);
+    return new Hkdf(DEFAULT_HASH, null);
   }
 
   /**
@@ -74,7 +70,7 @@ public class Hkdf {
    * @return Hkdf constructed with a specific hash function
    */
   public static Hkdf usingHash(Hash hash) {
-    return new Hkdf(requireNonNull(hash), DEFAULT_PROVIDER);
+    return new Hkdf(requireNonNull(hash), null);
   }
 
   /**
@@ -92,7 +88,7 @@ public class Hkdf {
    * @param ikm input keying material
    * @return a pseudorandom key (of HashLen bytes)
    */
-  public SecretKey extract(@Nullable SecretKey salt, byte[] ikm) {
+  public SecretKey extract(SecretKey salt, byte[] ikm) {
     requireNonNull(ikm, "ikm must not be null");
     if (salt == null) {
       salt = new SecretKeySpec(new byte[hash.getByteLength()], hash.getAlgorithm());
@@ -111,7 +107,7 @@ public class Hkdf {
    * @param outputLength length of output keying material in bytes (&lt;= 255*HashLen)
    * @return output keying material
    */
-  public byte[] expand(SecretKey key, @Nullable byte[] info, int outputLength) {
+  public byte[] expand(SecretKey key, byte[] info, int outputLength) {
     requireNonNull(key, "key must not be null");
     if (outputLength < 1) {
       throw new IllegalArgumentException("outputLength must be positive");
@@ -178,7 +174,11 @@ public class Hkdf {
   private Mac initMac(SecretKey key) {
     Mac mac;
     try {
-      mac = Mac.getInstance(hash.getAlgorithm(), provider);
+      if (provider != null) {
+        mac = Mac.getInstance(hash.getAlgorithm(), provider);
+      } else {
+        mac = Mac.getInstance(hash.getAlgorithm());
+      }
       mac.init(key);
       return mac;
     } catch (NoSuchAlgorithmException e) {
