@@ -29,17 +29,18 @@ import keywhiz.auth.User;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-//import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-//import org.powermock.core.classloader.annotations.PrepareForTest;
-//import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
+/**
+ *  Powermock is broken in JDK 9+, and until version 2 is released with support
+ *  these tests will not pass.
+ */
 //@RunWith(PowerMockRunner.class)
 //@PrepareForTest({LDAPConnection.class, SearchResult.class, SearchResultEntry.class})
 public class LdapAuthenticatorTest {
