@@ -36,7 +36,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-    <dropwizard.version>0.8.4</dropwizard.version>
+    <dropwizard.version>0.8.5</dropwizard.version>
     <guice.version>4.1.0</guice.version>
     <jackson.version>2.6.1</jackson.version>
     <jooq.version>3.10.2</jooq.version>
