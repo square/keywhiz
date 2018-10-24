@@ -25,6 +25,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
 import io.dropwizard.java8.Java8Bundle;
+import io.dropwizard.java8.auth.AuthDynamicFeature;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -56,6 +57,7 @@ import keywhiz.service.resources.automation.v2.ClientResource;
 import keywhiz.service.resources.automation.v2.GroupResource;
 import keywhiz.service.resources.automation.v2.SecretResource;
 import org.flywaydb.core.Flyway;
+import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,6 +131,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(new AuthResolver.Binder(injector.getInstance(ClientAuthFactory.class),
         injector.getInstance(AutomationClientAuthFactory.class),
         injector.getInstance(UserAuthFactory.class)));
+
 
     logger.debug("Registering resources");
     jersey.register(injector.getInstance(ClientResource.class));
