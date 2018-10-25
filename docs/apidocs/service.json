@@ -1,6 +1,7 @@
 {
   "swaggerVersion" : "1.2",
-  "apiVersion" : "0",
+  "apiVersion" : "1",
+  "basePath" : "https://square.github.io/keywhiz/apidocs",
   "apis" : [ {
     "path" : "/secrets-admin.{format}",
     "description" : "Create, retrieve, and delete secrets"

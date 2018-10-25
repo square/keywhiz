@@ -16,13 +16,12 @@
 
 package keywhiz.service.resources.admin;
 
-import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.AuthenticationException;
+import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
-import io.dropwizard.java8.auth.Authenticator;
-import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -32,7 +31,6 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import keywhiz.api.LoginRequest;
