@@ -18,6 +18,8 @@ server:
       trustStorePassword: ponies
       trustStoreType: PKCS12
       wantClientAuth: true
+      validateCerts: true
+      validatePeers: true
       crlPath: dev_and_test.crl
       supportedProtocols: [TLSv1.2]
       supportedCipherSuites:

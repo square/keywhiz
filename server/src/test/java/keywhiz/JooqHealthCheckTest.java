@@ -38,10 +38,10 @@ public class JooqHealthCheckTest {
   @Test
   public void reportsHealthy() throws Exception {
     JooqHealthCheck healthCheck = new JooqHealthCheck(dataSource, LOG_ONLY);
-    assertThat(healthCheck.check()).isEqualTo(HealthCheck.Result.healthy());
+    assertThat(healthCheck.check().isHealthy()).isTrue();
 
     healthCheck = new JooqHealthCheck(dataSource, RETURN_UNHEALTHY);
-    assertThat(healthCheck.check()).isEqualTo(HealthCheck.Result.healthy());
+    assertThat(healthCheck.check().isHealthy()).isTrue();
   }
 
   @Test
@@ -52,8 +52,10 @@ public class JooqHealthCheckTest {
     }
     when(managedDataSource.getConnection()).thenReturn(connection);
     JooqHealthCheck healthCheck = new JooqHealthCheck(managedDataSource, RETURN_UNHEALTHY);
-    assertThat(healthCheck.check()).isEqualTo(
-        HealthCheck.Result.unhealthy("Unhealthy connection to database."));
+    HealthCheck.Result result = healthCheck.check();
+
+    assertThat(result.isHealthy()).isFalse();
+    assertThat(result.getMessage()).isEqualTo("Unhealthy connection to database.");
   }
 
   @Test
@@ -64,6 +66,6 @@ public class JooqHealthCheckTest {
     }
     when(managedDataSource.getConnection()).thenReturn(connection);
     JooqHealthCheck healthCheck = new JooqHealthCheck(managedDataSource, LOG_ONLY);
-    assertThat(healthCheck.check()).isEqualTo(HealthCheck.Result.healthy());
+    assertThat(healthCheck.check().isHealthy()).isTrue();
   }
 }

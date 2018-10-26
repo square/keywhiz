@@ -26,6 +26,8 @@ server:
       # management, but in production we issue client certs off a seperate root.  Because only
       # that root is in the trustStore above, Dropwizard must be told not to validate its own cert
       validateCerts: false
+      # Dropwizard changed validatePeers and validateCerts defaults from true to false in 1.1.x
+      validatePeers: true
       # We don't use CRLDP or OCSP.
       enableCRLDP: false
       enableOCSP: false

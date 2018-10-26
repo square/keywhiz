@@ -28,6 +28,8 @@ import javax.ws.rs.core.NewCookie;
 import keywhiz.auth.User;
 import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.server.HttpChannel;
+import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,9 +96,9 @@ public class AuthenticatedEncryptedCookieFactory {
     HttpCookie cookie = new HttpCookie(config.getName(), value, config.getDomain(),
         config.getPath(), maxAge, config.isHttpOnly(), config.isSecure());
 
-    Response response = new Response(null, null);
+    Response response = newResponse();
     response.addCookie(cookie);
-    return NewCookie.valueOf(response.getHttpFields().getStringField(HttpHeader.SET_COOKIE));
+    return NewCookie.valueOf(response.getHttpFields().get(HttpHeader.SET_COOKIE));
   }
 
   /**
@@ -119,8 +121,12 @@ public class AuthenticatedEncryptedCookieFactory {
     HttpCookie cookie = new HttpCookie(config.getName(), "expired", config.getDomain(), config.getPath(),
         0, config.isHttpOnly(), config.isSecure());
 
-    Response response = new Response(null, null);
+    Response response = newResponse();
     response.addCookie(cookie);
     return NewCookie.valueOf(response.getHttpFields().getStringField(HttpHeader.SET_COOKIE));
+  }
+
+  private Response newResponse() {
+    return new Response(new HttpChannel(null, new HttpConfiguration(), null, null), null);
   }
 }
