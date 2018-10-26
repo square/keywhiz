@@ -43,13 +43,13 @@
 # Note that for a production deployment, you'll probably want to setup
 # your own config to make sure you're not using development secrets.
 #
-FROM maven:3.3-jdk-8
+FROM maven:3.5-jdk-11
 
 ARG MAVEN_PROFILE=h2
 
 RUN apt-get update && \
-    apt-get -y upgrade && \
-    apt-get -y install gettext vim-common && \
+    apt-get install -y --no-install-recommends --no-upgrade \
+      gettext vim-common && \
     mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
@@ -95,4 +95,5 @@ VOLUME ["/data", "/secrets"]
 COPY docker/entry.sh /usr/src/app
 COPY docker/wizard.sh /usr/src/app
 COPY docker/keywhiz-config.tpl /usr/src/app
+
 ENTRYPOINT ["/usr/src/app/entry.sh"]
