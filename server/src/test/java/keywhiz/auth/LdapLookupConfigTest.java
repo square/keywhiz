@@ -18,7 +18,7 @@ package keywhiz.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
-import io.dropwizard.configuration.ConfigurationFactory;
+import io.dropwizard.configuration.YamlConfigurationFactory;
 import io.dropwizard.setup.Bootstrap;
 import java.io.File;
 import javax.validation.Validation;
@@ -47,7 +47,7 @@ public class LdapLookupConfigTest {
     ObjectMapper objectMapper = bootstrap.getObjectMapper().copy();
 
     LdapLookupConfig lookupConfig =
-        new ConfigurationFactory<>(LdapLookupConfig.class, validator, objectMapper, "dw")
+        new YamlConfigurationFactory<>(LdapLookupConfig.class, validator, objectMapper, "dw")
             .build(yamlFile);
 
     assertThat(lookupConfig.getRequiredRoles()).containsOnly("keywhizAdmins");

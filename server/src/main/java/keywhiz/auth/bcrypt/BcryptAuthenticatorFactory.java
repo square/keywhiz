@@ -18,8 +18,8 @@ package keywhiz.auth.bcrypt;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.auto.service.AutoService;
+import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
-import io.dropwizard.java8.auth.Authenticator;
 import keywhiz.auth.User;
 import keywhiz.auth.UserAuthenticatorFactory;
 import keywhiz.service.daos.UserDAO;
