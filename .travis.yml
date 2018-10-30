@@ -1,5 +1,8 @@
 language: java
 
+services:
+  - docker
+
 jdk:
   - openjdk11
 
@@ -9,6 +12,10 @@ cache:
 
 install:
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V -q
+  # Build Docker container
+  - docker build -t squareup/keywhiz .
+  # Make sure Docker image runs
+  - docker run --rm squareup/keywhiz --version
 
 script:
   - mvn test jacoco:report coveralls:report -B -P h2 -q
