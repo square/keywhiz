@@ -18,12 +18,17 @@ server:
       trustStorePassword: ponies
       trustStoreType: PKCS12
       wantClientAuth: true
+      validateCerts: true
+      validatePeers: true
       crlPath: dev_and_test.crl
       supportedProtocols: [TLSv1.2]
       supportedCipherSuites:
         - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
         - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         - TLS_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_RSA_WITH_AES_128_GCM_SHA256
         - TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256
         - TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256
         - TLS_DHE_RSA_WITH_AES_128_CBC_SHA256

@@ -9,14 +9,20 @@ server:
       trustStorePassword: ${TRUSTSTORE_PASSWORD}
       trustStoreType: PKCS12
       wantClientAuth: true
+      # Dropwizard changed validatePeers and validateCerts defaults from true to false in 1.1.x
+      validateCerts: true
+      validatePeers: true
       enableCRLDP: false
       enableOCSP: false
       crlPath: ${CRL_PATH}
       supportedProtocols: [TLSv1.2]
       supportedCipherSuites:
         - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
         - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         - TLS_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_RSA_WITH_AES_128_GCM_SHA256
         - TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256
         - TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256
         - TLS_DHE_RSA_WITH_AES_128_CBC_SHA256

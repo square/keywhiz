@@ -41,10 +41,10 @@ public class ResourcesHttpsConnectorFactory extends HttpsConnectorFactory {
     return resolveResource(super.getCrlPath());
   }
 
-  @Override protected SslContextFactory buildSslContextFactory() {
-    SslContextFactory factory = super.buildSslContextFactory();
-    factory.setKeyStorePath(resolveResource(factory.getKeyStorePath()));
-    factory.setTrustStorePath(resolveResource(factory.getTrustStore()));
+  @Override protected SslContextFactory configureSslContextFactory(SslContextFactory factory) {
+    factory = super.configureSslContextFactory(factory);
+    factory.setKeyStorePath(resolveResource(super.getKeyStorePath()));
+    factory.setTrustStorePath(resolveResource(super.getTrustStorePath()));
     factory.setCrlPath(resolveResource(getCrlPath().getName()));
     return factory;
   }

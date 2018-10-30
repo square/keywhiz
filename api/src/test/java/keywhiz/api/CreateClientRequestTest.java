@@ -17,12 +17,13 @@
 package keywhiz.api;
 
 import io.dropwizard.testing.junit.ResourceTestRule;
-import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.ProcessingException;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -30,7 +31,7 @@ import static javax.ws.rs.client.Entity.entity;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.eclipse.jetty.http.HttpStatus.Code.UNPROCESSABLE_ENTITY;
 
 public class CreateClientRequestTest {
   @ClassRule public static final ResourceTestRule resources = ResourceTestRule.builder()
@@ -44,19 +45,17 @@ public class CreateClientRequestTest {
         .isEqualTo(createClientRequest);
   }
 
-  @Test public void emptyNameFailsValidation() throws Exception {
+  @Test public void emptyNameFailsValidation() {
     CreateClientRequest createClientRequest = new CreateClientRequest("");
-    Throwable exception = catchThrowable(() ->
-        resources.client().target("/").request()
-        .post(entity(createClientRequest, "application/json")));
+    Response response = resources.client().target("/").request()
+        .post(entity(createClientRequest, "application/json"));
 
-    assertThat(exception)
-        .isInstanceOf(ProcessingException.class)
-        .hasCauseInstanceOf(ConstraintViolationException.class);
+    assertThat(response.getStatus()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
   }
 
   @Path("/") public static class Resource {
-    @POST @Consumes("application/json") public String method(@Valid CreateClientRequest request) {
+    @POST @Produces(MediaType.APPLICATION_JSON) @Consumes(MediaType.APPLICATION_JSON)
+    public String method(@Valid CreateClientRequest request) {
       throw new UnsupportedOperationException();
     }
   }

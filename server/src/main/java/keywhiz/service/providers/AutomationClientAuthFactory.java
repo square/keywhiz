@@ -17,14 +17,10 @@
 package keywhiz.service.providers;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
-import io.dropwizard.auth.AuthenticationException;
-import io.dropwizard.java8.auth.Authenticator;
 import java.security.Principal;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import javax.validation.constraints.Null;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
 import keywhiz.api.model.AutomationClient;

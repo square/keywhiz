@@ -26,6 +26,8 @@ server:
       # management, but in production we issue client certs off a seperate root.  Because only
       # that root is in the trustStore above, Dropwizard must be told not to validate its own cert
       validateCerts: false
+      # Dropwizard changed validatePeers and validateCerts defaults from true to false in 1.1.x
+      validatePeers: true
       # We don't use CRLDP or OCSP.
       enableCRLDP: false
       enableOCSP: false
@@ -33,8 +35,11 @@ server:
       supportedProtocols: [TLSv1.2]
       supportedCipherSuites:
         - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
         - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         - TLS_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_RSA_WITH_AES_128_GCM_SHA256
         - TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256
         - TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256
         - TLS_DHE_RSA_WITH_AES_128_CBC_SHA256

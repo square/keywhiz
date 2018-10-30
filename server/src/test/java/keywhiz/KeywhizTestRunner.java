@@ -21,8 +21,8 @@ import com.google.common.io.Resources;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.configuration.ConfigurationException;
-import io.dropwizard.configuration.ConfigurationFactory;
-import io.dropwizard.logging.LoggingFactory;
+import io.dropwizard.configuration.YamlConfigurationFactory;
+import io.dropwizard.logging.BootstrapLogging;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import java.io.File;
@@ -46,7 +46,7 @@ import org.mockito.MockitoAnnotations;
 public class KeywhizTestRunner extends BlockJUnit4ClassRunner {
   public KeywhizTestRunner(Class<?> klass) throws InitializationError {
     super(klass);
-    LoggingFactory.bootstrap();
+    BootstrapLogging.bootstrap();
   }
 
   private static final Injector injector = createInjector();
@@ -61,7 +61,7 @@ public class KeywhizTestRunner extends BlockJUnit4ClassRunner {
     ObjectMapper objectMapper = bootstrap.getObjectMapper().copy();
     KeywhizConfig config;
     try {
-      config = new ConfigurationFactory<>(KeywhizConfig.class, validator, objectMapper, "dw")
+      config = new YamlConfigurationFactory<>(KeywhizConfig.class, validator, objectMapper, "dw")
           .build(yamlFile);
     } catch (IOException | ConfigurationException e) {
       throw Throwables.propagate(e);

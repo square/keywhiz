@@ -18,7 +18,7 @@ package keywhiz.service.providers;
 
 import com.google.common.base.Throwables;
 import io.dropwizard.auth.AuthenticationException;
-import io.dropwizard.java8.auth.Authenticator;
+import io.dropwizard.auth.Authenticator;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
