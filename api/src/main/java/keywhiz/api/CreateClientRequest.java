@@ -18,10 +18,10 @@ package keywhiz.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
-import org.hibernate.validator.constraints.NotEmpty;
+import org.hibernate.validator.constraints.NotBlank;
 
 public class CreateClientRequest {
-  @NotEmpty
+  @NotBlank
   @JsonProperty
   public String name;
 

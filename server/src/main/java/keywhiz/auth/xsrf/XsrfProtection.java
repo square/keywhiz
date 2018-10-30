@@ -23,6 +23,8 @@ import keywhiz.auth.Subtles;
 import keywhiz.auth.cookie.CookieConfig;
 import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.server.HttpChannel;
+import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.Response;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -67,7 +69,7 @@ public class XsrfProtection {
     // HttpOnly MUST NOT be present for this cookie.
     HttpCookie cookie = new HttpCookie(config.getName(), cookieValue, config.getDomain(),
         config.getPath(), -1, config.isHttpOnly(), config.isSecure());
-    Response response = new Response(null, null);
+    Response response = newResponse();
     response.addCookie(cookie);
     return NewCookie.valueOf(response.getHttpFields().getStringField(HttpHeader.SET_COOKIE));
   }
@@ -78,5 +80,9 @@ public class XsrfProtection {
 
     String expected = SHA512.hashString(session, UTF_8).toString();
     return Subtles.secureCompare(expected.getBytes(UTF_8), header.getBytes(UTF_8));
+  }
+
+  private Response newResponse() {
+    return new Response(new HttpChannel(null, new HttpConfiguration(), null, null), null);
   }
 }

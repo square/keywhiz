@@ -26,7 +26,6 @@ import io.dropwizard.jackson.AnnotationSensitivePropertyNamingStrategy;
 import io.dropwizard.jackson.DiscoverableSubtypeResolver;
 import io.dropwizard.jackson.FuzzyEnumModule;
 import io.dropwizard.jackson.GuavaExtrasModule;
-import io.dropwizard.jackson.LogbackModule;
 import java.io.IOException;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
@@ -94,7 +93,6 @@ public class JsonHelpers {
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new Jdk8Module());
     mapper.registerModule(new GuavaModule());
-    mapper.registerModule(new LogbackModule());
     mapper.registerModule(new GuavaExtrasModule());
     mapper.registerModule(new FuzzyEnumModule());
     mapper.setPropertyNamingStrategy(new AnnotationSensitivePropertyNamingStrategy());

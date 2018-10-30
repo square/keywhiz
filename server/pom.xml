@@ -114,6 +114,10 @@
     <!-- Dropwizard dependencies -->
     <dependency>
       <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-auth</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-db</artifactId>
     </dependency>
     <dependency>
@@ -123,14 +127,6 @@
     <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-views-mustache</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.dropwizard.modules</groupId>
-      <artifactId>dropwizard-java8</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.dropwizard.modules</groupId>
-      <artifactId>dropwizard-java8-auth</artifactId>
     </dependency>
     <dependency>
       <groupId>com.tradier</groupId>

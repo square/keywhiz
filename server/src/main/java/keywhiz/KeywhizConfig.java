@@ -189,7 +189,11 @@ public class KeywhizConfig extends Configuration {
   public static class TemplatedDataSourceFactory extends DataSourceFactory {
     @Override public String getPassword() {
       try {
-        return Templates.evaluateTemplate(super.getPassword());
+        String password = super.getPassword();
+        if (password == null) {
+          password = "";
+        }
+        return Templates.evaluateTemplate(password);
       } catch (IOException e) {
         throw new RuntimeException("Failure resolving database password template", e);
       }

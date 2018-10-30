@@ -24,7 +24,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
-import io.dropwizard.java8.Java8Bundle;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -45,7 +44,13 @@ import keywhiz.service.providers.UserAuthFactory;
 import keywhiz.service.resources.SecretDeliveryResource;
 import keywhiz.service.resources.SecretsDeliveryResource;
 import keywhiz.service.resources.StatusResource;
-import keywhiz.service.resources.admin.*;
+import keywhiz.service.resources.admin.ClientsResource;
+import keywhiz.service.resources.admin.GroupsResource;
+import keywhiz.service.resources.admin.MembershipResource;
+import keywhiz.service.resources.admin.SecretsResource;
+import keywhiz.service.resources.admin.SessionLoginResource;
+import keywhiz.service.resources.admin.SessionLogoutResource;
+import keywhiz.service.resources.admin.SessionMeResource;
 import keywhiz.service.resources.automation.AutomationClientResource;
 import keywhiz.service.resources.automation.AutomationEnrollClientGroupResource;
 import keywhiz.service.resources.automation.AutomationGroupResource;
@@ -98,9 +103,6 @@ public class KeywhizService extends Application<KeywhizConfig> {
     bootstrap.addCommand(new DbSeedCommand());
     bootstrap.addCommand(new GenerateAesKeyCommand());
     bootstrap.addCommand(new AddUserCommand());
-
-    logger.debug("Registering bundles");
-    bootstrap.addBundle(new Java8Bundle());
   }
 
   @SuppressWarnings("unchecked")

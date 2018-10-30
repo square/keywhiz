@@ -26,7 +26,7 @@ import static com.google.common.base.Strings.repeat;
 @AutoValue
 public abstract class LoginRequest {
   @JsonCreator public static LoginRequest from(
-      @JsonProperty("username") String username, @JsonProperty("password") char[] password) {
+      @JsonProperty(value="username", required=true) String username, @JsonProperty(value = "password", required=true) char[] password) {
     return new AutoValue_LoginRequest(username, password);
   }
 
