@@ -7,6 +7,12 @@ if [ "$1" == "wizard" ]; then
     exec ./wizard.sh
 fi
 
+# bypass keywhiz config so we can report the version
+if [ "$1" = "-v" ] || [ "$1" = "--version" ]; then
+    java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar $1
+    exit $?
+fi
+
 if [ -z "$KEYWHIZ_CONFIG" ]; then
     KEYWHIZ_CONFIG=server/src/main/resources/keywhiz-development.yaml
     echo -n "${RED}"

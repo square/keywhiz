@@ -264,6 +264,7 @@
                   <manifestEntries>
                     <Class-Path>lib-signed/bcprov-jdk15on.jar</Class-Path>
                     <Main-Class>keywhiz.KeywhizService</Main-Class>
+                    <Implementation-Version>${project.version}</Implementation-Version>
                   </manifestEntries>
                 </transformer>
               </transformers>
