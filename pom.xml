@@ -37,6 +37,8 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <dropwizard.version>1.2.9</dropwizard.version>
+    <!-- 1.2.0-1 is the last version of dropwizard-raven JAR. The development continues under dropwizard-sentry -->
+    <dropwizard-raven.version>1.2.0-1</dropwizard-raven.version>
     <guice.version>4.2.2</guice.version>
     <jackson.version>2.9.6</jackson.version>
     <jooq.version>3.11.5</jooq.version>
@@ -105,9 +107,9 @@
         <version>${logback.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.tradier</groupId>
+        <groupId>org.dhatim</groupId>
         <artifactId>dropwizard-raven</artifactId>
-        <version>0.9.3</version>
+        <version>${dropwizard-raven.version}</version>
       </dependency>
       <dependency>
         <groupId>com.beust</groupId>
