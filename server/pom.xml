@@ -129,7 +129,7 @@
       <artifactId>dropwizard-views-mustache</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.tradier</groupId>
+      <groupId>org.dhatim</groupId>
       <artifactId>dropwizard-raven</artifactId>
     </dependency>
 
