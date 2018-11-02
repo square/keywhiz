@@ -18,11 +18,11 @@
 #     docker volume create --name keywhiz-db-devel
 #
 #   Initialize the database, apply migrations, and add administrative user:
-#     docker run -v keywhiz-db-devel:/data square/keywhiz migrate
-#     docker run -it -v keywhiz-db-devel:/data square/keywhiz add-user
+#     docker run --rm -v keywhiz-db-devel:/data square/keywhiz migrate
+#     docker run --rm -it -v keywhiz-db-devel:/data square/keywhiz add-user
 #
 #   Finally, run the server with the default development config:
-#     docker run -it -p 4444:4444 -v keywhiz-db-devel:/data square/keywhiz server
+#     docker run --rm -it -p 4444:4444 -v keywhiz-db-devel:/data square/keywhiz server
 #
 # *** Production setup wizard ***
 #   For production deployments, we have setup wizard that will initialize
@@ -45,7 +45,7 @@
 #
 FROM maven:3.5-jdk-11
 
-ARG MAVEN_PROFILE=h2
+ARG MAVEN_PROFILE=docker
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends --no-upgrade \
@@ -84,6 +84,7 @@ RUN useradd -ms /bin/false keywhiz && \
     chown keywhiz:keywhiz /data && \
     mkdir /secrets && \
     chown keywhiz:keywhiz /secrets
+
 USER keywhiz
 
 # Expose API port by default. Note that the admin console port
