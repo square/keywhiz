@@ -34,7 +34,7 @@ public class TemplatedHttpsConnectorFactory extends HttpsConnectorFactory {
 
   @Override protected SslContextFactory configureSslContextFactory(SslContextFactory factory) {
     factory = super.configureSslContextFactory(factory);
-    String templatedPath = factory.getKeyStorePath();
+    String templatedPath = super.getKeyStorePath();
     factory.setKeyStorePath(convertTemplatedPath(templatedPath));
     return factory;
   }
