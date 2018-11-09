@@ -93,7 +93,7 @@ echo -n "Bundling certificate and private key into PKCS#12 keystore... "
 rm -f $KEYSTORE_PATH
 openssl pkcs12 \
     -export -out $KEYSTORE_PATH -inkey $PRIVATE_KEY_PEM -in $CERT_CHAIN_PEM \
-    -password "pass:$KEYSTORE_PASSWORD" -certfile $CA_BUNDLE_PEM
+    -password "pass:$KEYSTORE_PASSWORD"
 echo "done"
 
 echo "Bundling CA bundle into PKCS#12 trust store... "
