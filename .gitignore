@@ -10,6 +10,7 @@ target/
 .settings
 eclipsebin
 website/apidocs/
+docs/apidocs/*.json
 *.iml
 *.ipr
 *.iws
