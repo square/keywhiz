@@ -99,6 +99,9 @@
     "LongParam" : {
       "id" : "LongParam",
       "properties" : {
+        "parameterName" : {
+          "type" : "string"
+        },
         "value" : {
           "type" : "T"
         },

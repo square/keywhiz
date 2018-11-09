@@ -1,3 +1,48 @@
+v0.9.0: 2018-11-07
+
+  * Migrated to JDK 11 (now required to build Keywhiz)
+
+  * Added tracking of expiration of client certificates in the DB (#369)
+
+  * Added endpoint for encrypted group backup that allows to perform automated backups of secrets 
+    for groups that are required for bootstrapping a new datacenter by periodically calling the 
+    endpoint to produce a GPG-encrypted archive. The GPG key that is used for export should ideally 
+    be kept offline, only to be used in an emergency situation. (#361)
+
+  * Added an endpoint for retrieving a SanitizedSecret by name (#359)
+
+  * Improved BCrypt hash check on login (#374)
+
+  * Fixed building Docker image (#382 and #383)
+
+  * Removed PostgreSQL support (#347)
+
+  * Updated dependencies
+    - dropwizard updated to 1.2.9
+    - guice updated to 4.2.2
+    - jackson updated to 2.9.6
+    - jooq updated to 3.11.5
+    - mysql updated to 5.1.45
+    - logback updated to 1.2.3
+    - slf4j updated to 1.7.25
+    - powermock updated to 1.7.4
+    - updated dropwizard-raven to 1.2.0
+    - flyway updated to 4.2.0
+    - easymock updated to 3.6
+    - unboundid-ldapsdk updated to 4.0.1
+    - okhttp updated to 3.9.1
+    - mockito updated to 2.23.0
+    - hibernate-validator updated to 5.3.4
+    - jBcrypt updated to 0.4.1
+    - guava updated to 23.5
+    - auto-value updated to 1.5.4
+    - maven-shade-plugin updated to 3.0.0
+    - javax.annotation-api added
+    - jaxb-api added
+    - jaxb-runtime added
+    - jaxb-xjc added
+    - jaxb-jxc added
+
 v0.8.0: 2017-06-27
 
   * Removed old Web UI.
