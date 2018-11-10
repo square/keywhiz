@@ -13,7 +13,7 @@
 
   <groupId>com.squareup.keywhiz</groupId>
   <artifactId>keywhiz-parent</artifactId>
-  <version>0.8.1-SNAPSHOT</version>
+  <version>0.9.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Keywhiz (Parent)</name>
@@ -335,6 +335,13 @@
     <directory>${custom.build.directory}</directory>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.8.2</version>
@@ -417,6 +424,19 @@
             <id>attach-sources</id>
             <goals>
               <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.0.1</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>javadoc</goal>
             </goals>
           </execution>
         </executions>
@@ -546,16 +566,18 @@
               <configuration>
                 <rules>
                   <evaluateBeanshell>
-                    <condition>javax.crypto.Cipher.getMaxAllowedKeyLength("AES") &gt; 128</condition>
+                    <condition>javax.crypto.Cipher.getMaxAllowedKeyLength("AES") &gt; 128
+                    </condition>
                     <message>
-Please install the unlimited strength JCE crypt policy files for your Java JDK.
-Without these, crypto operations are crippled consistently.
+                      Please install the unlimited strength JCE crypt policy files for your Java
+                      JDK.
+                      Without these, crypto operations are crippled consistently.
 
-For Java8:
-Download the jars at:
-http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html
-Place the jars in this directory: `/usr/libexec/java_home -v
-1.8`/jre/lib/security/
+                      For Java8:
+                      Download the jars at:
+                      http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html
+                      Place the jars in this directory: `/usr/libexec/java_home -v
+                      1.8`/jre/lib/security/
                     </message>
                   </evaluateBeanshell>
                 </rules>
@@ -596,17 +618,28 @@ Place the jars in this directory: `/usr/libexec/java_home -v
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.0.1</version>
-          <configuration>
-            <additionalparam>-Xdoclint:none</additionalparam>
-            <docletArtifact>
-              <groupId>com.tenxerconsulting</groupId>
-              <artifactId>swagger-doclet</artifactId>
-              <version>1.1.3</version>
-            </docletArtifact>
-            <links>
-              <link>https://square.github.io/keywhiz/javadoc/</link>
-            </links>
-          </configuration>
+          <executions>
+            <execution>
+              <configuration>
+                <doclet>com.tenxerconsulting.swagger.doclet.ServiceDoclet</doclet>
+                <docletArtifact>
+                  <groupId>com.tenxerconsulting</groupId>
+                  <artifactId>swagger-doclet</artifactId>
+                  <version>1.1.3</version>
+                </docletArtifact>
+                <reportOutputDirectory>./docs</reportOutputDirectory>
+                <useStandardDocletOptions>false</useStandardDocletOptions>
+                <doclint>none</doclint>
+                <additionalOptions>-logDebug -apiVersion 1 -docBasePath
+                  https://square.github.io/keywhiz/apidocs -apiBasePath
+                  https://square.github.io/keywhiz/apidocs -resourceTags -fieldDescriptionTags
+                </additionalOptions>
+              </configuration>
+              <goals>
+                <goal>javadoc</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
 
         <plugin>

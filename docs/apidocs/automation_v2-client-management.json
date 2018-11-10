@@ -224,6 +224,9 @@
         },
         "present" : {
           "type" : "boolean"
+        },
+        "empty" : {
+          "type" : "boolean"
         }
       }
     },

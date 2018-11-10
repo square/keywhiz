@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.squareup.keywhiz</groupId>
     <artifactId>keywhiz-parent</artifactId>
-    <version>0.8.1-SNAPSHOT</version>
+    <version>0.9.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>keywhiz-server</artifactId>
@@ -65,7 +65,7 @@
     <dependency>
       <groupId>com.squareup.keywhiz</groupId>
       <artifactId>keywhiz-log</artifactId>
-      <version>0.8.1-SNAPSHOT</version>
+      <version>0.9.1-SNAPSHOT</version>
     </dependency>
 
     <!-- Logging -->
@@ -299,7 +299,8 @@
               </docletArtifact>
               <reportOutputDirectory>../docs</reportOutputDirectory>
               <useStandardDocletOptions>false</useStandardDocletOptions>
-              <additionalparam>-logDebug -apiVersion 1 -docBasePath https://square.github.io/keywhiz/apidocs -apiBasePath https://square.github.io/keywhiz/apidocs -resourceTags -fieldDescriptionTags</additionalparam>
+              <doclint>none</doclint>
+              <additionalOptions>-logDebug -apiVersion 1 -docBasePath https://square.github.io/keywhiz/apidocs -apiBasePath https://square.github.io/keywhiz/apidocs -resourceTags -fieldDescriptionTags</additionalOptions>
             </configuration>
             <goals>
               <goal>javadoc</goal>
