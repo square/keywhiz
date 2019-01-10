@@ -36,11 +36,11 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-    <dropwizard.version>1.2.9</dropwizard.version>
+    <dropwizard.version>1.3.8</dropwizard.version>
     <!-- 1.2.0-1 is the last version of dropwizard-raven JAR. The development continues under dropwizard-sentry -->
     <dropwizard-raven.version>1.2.0-1</dropwizard-raven.version>
     <guice.version>4.2.2</guice.version>
-    <jackson.version>2.9.6</jackson.version>
+    <jackson.version>2.9.8</jackson.version>
     <jooq.version>3.11.5</jooq.version>
     <powermock.version>1.7.4</powermock.version>
     <slf4j.version>1.7.25</slf4j.version>
