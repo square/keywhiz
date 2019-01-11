@@ -630,9 +630,13 @@
                 <reportOutputDirectory>./docs</reportOutputDirectory>
                 <useStandardDocletOptions>false</useStandardDocletOptions>
                 <doclint>none</doclint>
-                <additionalOptions>-logDebug -apiVersion 1 -docBasePath
-                  https://square.github.io/keywhiz/apidocs -apiBasePath
-                  https://square.github.io/keywhiz/apidocs -resourceTags -fieldDescriptionTags
+                <additionalOptions>
+                  <additionalOption>-logDebug</additionalOption>
+                  <additionalOption>-apiVersion "1"</additionalOption>
+                  <additionalOption>-docBasePath "https://square.github.io/keywhiz/apidocs"</additionalOption>
+                  <additionalOption>-apiBasePath "https://square.github.io/keywhiz/apidocs"</additionalOption>
+                  <additionalOption>-resourceTags</additionalOption>
+                  <additionalOption>-fieldDescriptionTags</additionalOption>
                 </additionalOptions>
               </configuration>
               <goals>
