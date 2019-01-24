@@ -1,0 +1,1 @@
+CREATE INDEX memberships_groupid_idx ON memberships (groupid);
