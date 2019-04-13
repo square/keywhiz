@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Group;
@@ -78,6 +79,13 @@ public class SecretDAO {
       String creator, Map<String, String> metadata, long expiry, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
     return dslContext.transactionResult(configuration -> {
+      // disallow use of a leading period in secret names
+      // check is here because this is where all APIs converge on secret creation
+      if (name.startsWith(".")) {
+        throw new BadRequestException(format("secret cannot be created with name `%s` - secret "
+            + "names cannot begin with a period", name));
+      }
+
       long now = OffsetDateTime.now().toEpochSecond();
 
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);

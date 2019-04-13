@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
@@ -192,6 +193,12 @@ public class SecretDAOTest {
   public void createSecretFailsIfSecretExists() {
     String name = "newSecret";
     secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void createSecretFailsIfNameHasLeadingPeriod() {
+    String name = ".newSecret";
     secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
   }
 
@@ -429,6 +436,22 @@ public class SecretDAOTest {
 
     Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName("toBeDeleted_deleteSecretsByName");
     assertThat(secret.isPresent()).isFalse();
+  }
+
+  @Test public void deleteSecretsByNameAndRecreate() {
+    secretDAO.createSecret("toBeDeletedAndReplaced", "encryptedShhh",
+        cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8)), "creator",
+        ImmutableMap.of(), 0, "", null, null);
+
+    secretDAO.deleteSecretsByName("toBeDeletedAndReplaced");
+
+    Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
+    assertThat(secret.isPresent()).isFalse();
+
+    secretDAO.createSecret("toBeDeletedAndReplaced", "secretsgohere", cryptographer.computeHmac("secretsgohere".getBytes(UTF_8)), "creator",
+        ImmutableMap.of(), 0, "", null, null);
+    secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
+    assertThat(secret.isPresent()).isTrue();
   }
 
   private int tableSize(Table table) {

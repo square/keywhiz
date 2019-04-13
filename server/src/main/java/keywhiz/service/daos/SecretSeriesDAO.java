@@ -26,6 +26,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -215,6 +216,7 @@ public class SecretSeriesDAO {
       if (r != null) {
         DSL.using(configuration)
             .update(SECRETS)
+            .set(SECRETS.NAME, transformNameForDeletion(name))
             .set(SECRETS.CURRENT, (Long) null)
             .set(SECRETS.UPDATEDAT, now)
             .where(SECRETS.ID.eq(r.getId()))
@@ -271,5 +273,12 @@ public class SecretSeriesDAO {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
       return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper);
     }
+  }
+
+  // create a new name for the deleted secret, so that deleted secret names can be reused, while
+  // still having a unique constraint on the name field in the DB
+  private String transformNameForDeletion(String name) {
+    long now = OffsetDateTime.now().toEpochSecond();
+    return String.format(".%s.deleted.%d.%s", name, now, UUID.randomUUID().toString());
   }
 }

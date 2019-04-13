@@ -118,6 +118,27 @@ public class SecretSeriesDAOTest {
     assertThat(secretSeriesDAO.getSecretSeriesById(id).isPresent()).isFalse();
   }
 
+  @Test public void deleteSecretSeriesByNameAndRecreate() {
+    long now = OffsetDateTime.now().toEpochSecond();
+    long id = secretSeriesDAO.createSecretSeries("toBeDeletedAndReplaced", "creator",
+        "", null, null, now);
+    long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah",
+        "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
+    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeletedAndReplaced").get().currentVersion().isPresent()).isTrue();
+
+    secretSeriesDAO.deleteSecretSeriesByName("toBeDeletedAndReplaced");
+    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeletedAndReplaced").isPresent()).isFalse();
+    assertThat(secretSeriesDAO.getSecretSeriesById(id).isPresent()).isFalse();
+
+    id = secretSeriesDAO.createSecretSeries("toBeDeletedAndReplaced", "creator",
+        "", null, null, now);
+    contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah2",
+        "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
+    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeletedAndReplaced").get().currentVersion().isPresent()).isTrue();
+  }
+
   @Test public void deleteSecretSeriesById() {
     long now = OffsetDateTime.now().toEpochSecond();
     long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesById",
