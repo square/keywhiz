@@ -202,6 +202,12 @@ public class SecretDAOTest {
     secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
   }
 
+  @Test(expected = BadRequestException.class)
+  public void createSecretFailsIfNameIsTooLong() {
+    String name = "newSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecret";
+    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+  }
+
   @Test public void createSecretSucceedsIfCurrentVersionIsNull() {
     String name = "newSecret";
     long firstId = secretDAO.createSecret(name, "content1", cryptographer.computeHmac("content1".getBytes(UTF_8)), "creator1",

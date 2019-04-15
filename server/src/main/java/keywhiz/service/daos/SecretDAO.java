@@ -66,6 +66,10 @@ public class SecretDAO {
   private final SecretSeriesDAOFactory secretSeriesDAOFactory;
   private final ContentCryptographer cryptographer;
 
+  // this is the maximum length of a secret name, so that it will still fit in the 255 char limit
+  // of the database field if it is deleted and auto-renamed
+  private static final int SECRET_NAME_MAX_LENGTH = 195;
+
   private SecretDAO(DSLContext dslContext, SecretContentDAOFactory secretContentDAOFactory,
       SecretSeriesDAOFactory secretSeriesDAOFactory, ContentCryptographer cryptographer) {
     this.dslContext = dslContext;
@@ -84,6 +88,12 @@ public class SecretDAO {
       if (name.startsWith(".")) {
         throw new BadRequestException(format("secret cannot be created with name `%s` - secret "
             + "names cannot begin with a period", name));
+      }
+
+      // enforce a shorter max length than the db to ensure secrets renamed on deletion still fit
+      if (name.length() > SECRET_NAME_MAX_LENGTH) {
+        throw new BadRequestException(format("secret cannot be created with name `%s` - secret "
+            + "names must be %d characters or less", name, SECRET_NAME_MAX_LENGTH));
       }
 
       long now = OffsetDateTime.now().toEpochSecond();
