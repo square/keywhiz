@@ -19,6 +19,7 @@ package keywhiz.service.daos;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.AbstractMap.SimpleEntry;
@@ -42,6 +43,7 @@ import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.ContentEncodingException;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
+import org.joda.time.DateTime;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
@@ -57,8 +59,8 @@ import static keywhiz.jooq.tables.Secrets.SECRETS;
 /**
  * Primary class to interact with {@link Secret}s.
  *
- * Does not map to a table itself, but utilizes both {@link SecretSeriesDAO} and
- * {@link SecretContentDAO} to provide a more usable API.
+ * Does not map to a table itself, but utilizes both {@link SecretSeriesDAO} and {@link
+ * SecretContentDAO} to provide a more usable API.
  */
 public class SecretDAO {
   private final DSLContext dslContext;
@@ -70,6 +72,10 @@ public class SecretDAO {
   // of the database field if it is deleted and auto-renamed
   private static final int SECRET_NAME_MAX_LENGTH = 195;
 
+  // this is the maximum number of rows that will be deleted per-transaction by the endpoint
+  // to permanently remove secrets
+  private static final int MAX_ROWS_REMOVED_PER_TRANSACTION = 1000;
+
   private SecretDAO(DSLContext dslContext, SecretContentDAOFactory secretContentDAOFactory,
       SecretSeriesDAOFactory secretSeriesDAOFactory, ContentCryptographer cryptographer) {
     this.dslContext = dslContext;
@@ -80,8 +86,8 @@ public class SecretDAO {
 
   @VisibleForTesting
   public long createSecret(String name, String encryptedSecret, String hmac,
-      String creator, Map<String, String> metadata, long expiry, String description, @Nullable String type,
-      @Nullable Map<String, String> generationOptions) {
+      String creator, Map<String, String> metadata, long expiry, String description,
+      @Nullable String type, @Nullable Map<String, String> generationOptions) {
     return dslContext.transactionResult(configuration -> {
       // disallow use of a leading period in secret names
       // check is here because this is where all APIs converge on secret creation
@@ -109,7 +115,8 @@ public class SecretDAO {
           throw new DataAccessException(format("secret already present: %s", name));
         } else {
           // Unreachable unless the implementation of getSecretSeriesByName is changed
-          throw new IllegalStateException(format("secret %s retrieved without current version set", name));
+          throw new IllegalStateException(
+              format("secret %s retrieved without current version set", name));
         }
       } else {
         secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type,
@@ -155,7 +162,8 @@ public class SecretDAO {
   }
 
   @VisibleForTesting
-  public long partialUpdateSecret(String name, String creator, PartialUpdateSecretRequestV2 request) {
+  public long partialUpdateSecret(String name, String creator,
+      PartialUpdateSecretRequestV2 request) {
     return dslContext.transactionResult(configuration -> {
       long now = OffsetDateTime.now().toEpochSecond();
 
@@ -166,20 +174,24 @@ public class SecretDAO {
       SecretSeries secretSeries = secretSeriesDAO.getSecretSeriesByName(name).orElseThrow(
           NotFoundException::new);
       Long currentVersion = secretSeries.currentVersion().orElseThrow(NotFoundException::new);
-      SecretContent secretContent = secretContentDAO.getSecretContentById(currentVersion).orElseThrow(NotFoundException::new);
+      SecretContent secretContent =
+          secretContentDAO.getSecretContentById(currentVersion).orElseThrow(NotFoundException::new);
 
       long secretId = secretSeries.id();
 
       // Set the fields to the original series and current version's values or the request values if provided
-      String description = request.descriptionPresent() ? request.description() : secretSeries.description();
+      String description =
+          request.descriptionPresent() ? request.description() : secretSeries.description();
       String type = request.typePresent() ? request.type() : secretSeries.type().orElse("");
-      ImmutableMap<String, String> metadata = request.metadataPresent() ? request.metadata() : secretContent.metadata();
+      ImmutableMap<String, String> metadata =
+          request.metadataPresent() ? request.metadata() : secretContent.metadata();
       Long expiry = request.expiryPresent() ? request.expiry() : secretContent.expiry();
       String encryptedContent = secretContent.encryptedContent();
       String hmac = secretContent.hmac();
       // Mirrors hmac-creation in SecretController
       if (request.contentPresent()) {
-        hmac = cryptographer.computeHmac(request.content().getBytes(UTF_8)); // Compute HMAC on base64 encoded data
+        hmac = cryptographer.computeHmac(
+            request.content().getBytes(UTF_8)); // Compute HMAC on base64 encoded data
         if (hmac == null) {
           throw new ContentEncodingException("Error encoding content for SecretBuilder!");
         }
@@ -217,7 +229,7 @@ public class SecretDAO {
    * @return Secret matching input parameters or Optional.absent().
    */
   public Optional<SecretSeriesAndContent> getSecretById(long secretId) {
-    return dslContext.<Optional<SecretSeriesAndContent>>transactionResult(configuration ->  {
+    return dslContext.<Optional<SecretSeriesAndContent>>transactionResult(configuration -> {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
 
@@ -226,7 +238,9 @@ public class SecretDAO {
         long secretContentId = series.get().currentVersion().get();
         Optional<SecretContent> contents = secretContentDAO.getSecretContentById(secretContentId);
         if (!contents.isPresent()) {
-          throw new IllegalStateException(format("failed to fetch secret %d, content %d not found.", secretId, secretContentId));
+          throw new IllegalStateException(
+              format("failed to fetch secret %d, content %d not found.", secretId,
+                  secretContentId));
         }
         return Optional.of(SecretSeriesAndContent.of(series.get(), contents.get()));
       }
@@ -258,7 +272,8 @@ public class SecretDAO {
     Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesByName(name);
     if (series.isPresent() && series.get().currentVersion().isPresent()) {
       long secretContentId = series.get().currentVersion().get();
-      Optional<SecretContent> secretContent = secretContentDAO.getSecretContentById(secretContentId);
+      Optional<SecretContent> secretContent =
+          secretContentDAO.getSecretContentById(secretContentId);
       if (!secretContent.isPresent()) {
         return Optional.empty();
       }
@@ -269,7 +284,8 @@ public class SecretDAO {
   }
 
   /** @return list of secrets. can limit/sort by expiry, and for group if given */
-  public ImmutableList<SecretSeriesAndContent> getSecrets(@Nullable Long expireMaxTime, Group group) {
+  public ImmutableList<SecretSeriesAndContent> getSecrets(@Nullable Long expireMaxTime,
+      Group group) {
     return dslContext.transactionResult(configuration -> {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
@@ -277,7 +293,8 @@ public class SecretDAO {
       ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
 
       for (SecretSeries series : secretSeriesDAO.getSecretSeries(expireMaxTime, group)) {
-        SecretContent content = secretContentDAO.getSecretContentById(series.currentVersion().get()).get();
+        SecretContent content =
+            secretContentDAO.getSecretContentById(series.currentVersion().get()).get();
         SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
         secretsBuilder.add(seriesAndContent);
       }
@@ -304,7 +321,8 @@ public class SecretDAO {
    * @param newestFirst if true, order the secrets from newest creation time to oldest
    * @return A list of secrets
    */
-  public ImmutableList<SecretSeriesAndContent> getSecretsBatched(int idx, int num, boolean newestFirst) {
+  public ImmutableList<SecretSeriesAndContent> getSecretsBatched(int idx, int num,
+      boolean newestFirst) {
     return dslContext.transactionResult(configuration -> {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
@@ -312,7 +330,8 @@ public class SecretDAO {
       ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
 
       for (SecretSeries series : secretSeriesDAO.getSecretSeriesBatched(idx, num, newestFirst)) {
-        SecretContent content = secretContentDAO.getSecretContentById(series.currentVersion().get()).get();
+        SecretContent content =
+            secretContentDAO.getSecretContentById(series.currentVersion().get()).get();
         SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
         secretsBuilder.add(seriesAndContent);
       }
@@ -372,7 +391,6 @@ public class SecretDAO {
         OffsetDateTime.now().toEpochSecond());
   }
 
-
   /**
    * Deletes the series and all associated version of the given secret series name.
    *
@@ -383,6 +401,48 @@ public class SecretDAO {
 
     secretSeriesDAOFactory.using(dslContext.configuration())
         .deleteSecretSeriesByName(name);
+  }
+
+  /**
+   * Counts the number of secrets deleted before the specified cutoff.
+   *
+   * @param deleteBefore the cutoff date; secrets deleted before this date will be counted
+   */
+  public int countSecretsDeletedBeforeDate(DateTime deleteBefore) {
+    checkArgument(deleteBefore != null);
+
+    // identify the secrets deleted before this date
+    return secretSeriesDAOFactory.using(dslContext.configuration())
+        .getIdsForSecretSeriesDeletedBeforeDate(deleteBefore)
+        .size();
+  }
+
+  /**
+   * Permanently removes the series and all secrets-contents records ("versions") which were deleted
+   * before the given date.
+   *
+   * Unlike the "delete" endpoints above, THIS REMOVAL IS PERMANENT and cannot be undone by editing
+   * the database to restore the "current" entries.
+   *
+   * @param deleteBefore the cutoff date; secrets deleted before this date will be deleted
+   */
+  public void dangerPermanentlyRemoveSecretsDeletedBeforeDate(DateTime deleteBefore) {
+    checkArgument(deleteBefore != null);
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
+
+    // identify the secrets deleted before this date
+    List<Long> ids = secretSeriesDAO.getIdsForSecretSeriesDeletedBeforeDate(deleteBefore);
+
+    // batch the list of secrets to be removed, to reduce load on the database
+    List<List<Long>> partitionedIds = Lists.partition(ids, MAX_ROWS_REMOVED_PER_TRANSACTION);
+    for (List<Long> idBatch : partitionedIds) {
+      // permanently remove the `secrets_contents` entries originally associated with these secrets
+      secretContentDAO.dangerPermanentlyRemoveRecordsForGivenSecretsIDs(idBatch);
+
+      // permanently remove the `secrets` entries for these secrets
+      secretSeriesDAO.dangerPermanentlyRemoveRecordsForGivenIDs(idBatch);
+    }
   }
 
   public static class SecretDAOFactory implements DAOFactory<SecretDAO> {
@@ -408,12 +468,14 @@ public class SecretDAO {
     }
 
     @Override public SecretDAO readonly() {
-      return new SecretDAO(readonlyJooq, secretContentDAOFactory, secretSeriesDAOFactory, cryptographer);
+      return new SecretDAO(readonlyJooq, secretContentDAOFactory, secretSeriesDAOFactory,
+          cryptographer);
     }
 
     @Override public SecretDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretDAO(dslContext, secretContentDAOFactory, secretSeriesDAOFactory, cryptographer);
+      return new SecretDAO(dslContext, secretContentDAOFactory, secretSeriesDAOFactory,
+          cryptographer);
     }
   }
 }
