@@ -425,8 +425,10 @@ public class SecretDAO {
    * the database to restore the "current" entries.
    *
    * @param deleteBefore the cutoff date; secrets deleted before this date will be deleted
+   * @param sleepMillis how many milliseconds to sleep between each batch of removals
    */
-  public void dangerPermanentlyRemoveSecretsDeletedBeforeDate(DateTime deleteBefore) {
+  public void dangerPermanentlyRemoveSecretsDeletedBeforeDate(DateTime deleteBefore,
+      int sleepMillis) throws InterruptedException {
     checkArgument(deleteBefore != null);
     SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
     SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
@@ -442,6 +444,9 @@ public class SecretDAO {
 
       // permanently remove the `secrets` entries for these secrets
       secretSeriesDAO.dangerPermanentlyRemoveRecordsForGivenIDs(idBatch);
+
+      // sleep
+      Thread.sleep(sleepMillis);
     }
   }
 

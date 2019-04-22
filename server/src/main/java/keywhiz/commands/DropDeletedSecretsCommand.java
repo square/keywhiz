@@ -25,6 +25,7 @@ import static java.lang.String.format;
  */
 public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> {
   protected static final String INPUT_DELETED_BEFORE = "deleted-before";
+  protected static final String INPUT_SLEEP_MILLIS = "sleep-millis";
   private SecretDAO secretDAO;
 
   @Inject
@@ -40,6 +41,12 @@ public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> 
         .required(true)
         .help(
             "secrets deleted before this date will be PERMANENTLY REMOVED.  Format: 2006-01-02T15:04:05Z");
+
+    subparser.addArgument("--sleep-millis")
+        .dest(INPUT_DELETED_BEFORE)
+        .type(Integer.class)
+        .setDefault(500)
+        .help("how many milliseconds to sleep between batches of removals");
   }
 
   @Override public void run(Bootstrap<KeywhizConfig> bootstrap, Namespace namespace,
@@ -48,6 +55,13 @@ public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> 
     String deletedBeforeStr = namespace.getString(INPUT_DELETED_BEFORE);
     DateTime deletedBefore = getDateIfValid(deletedBeforeStr);
     if (deletedBefore == null) {
+      // The error has already been printed
+      return;
+    }
+
+    Integer sleepMillis = namespace.getInt(INPUT_SLEEP_MILLIS);
+    if (sleepMillis < 0) {
+      System.out.format("Milliseconds to sleep must be nonnegative; got %d", sleepMillis);
       return;
     }
 
@@ -75,7 +89,12 @@ public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> 
     // remove the secrets
     System.out.format("Removing %d secrets which were deleted before %s from the database\n",
         affectedCount, deletedBefore.toString());
-    secretDAO.dangerPermanentlyRemoveSecretsDeletedBeforeDate(deletedBefore);
+    try {
+      secretDAO.dangerPermanentlyRemoveSecretsDeletedBeforeDate(deletedBefore, sleepMillis);
+    } catch (InterruptedException e) {
+      System.out.println("Error removing secrets; please retry command");
+      e.printStackTrace();
+    }
   }
 
   private DateTime getDateIfValid(String deletedBeforeStr) {

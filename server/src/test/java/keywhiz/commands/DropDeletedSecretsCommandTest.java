@@ -166,7 +166,7 @@ public class DropDeletedSecretsCommandTest {
 
   @Test
   public void testSecretDeletion_allDeletedSecrets() {
-    runCommandWithConfirmationAndDate("yes", "2019-02-01T00:00:00Z");
+    runCommandWithConfirmationAndDate("yes", "2019-02-01T00:00:00Z", 0);
 
     // check the database state; secret2 and secret3 should have been deleted
     checkExpectedSecretSeries(ImmutableList.of(series1), ImmutableList.of(series2, series3));
@@ -176,7 +176,7 @@ public class DropDeletedSecretsCommandTest {
 
   @Test
   public void testSecretDeletion_filterByDate_someSecretsRemoved() {
-    runCommandWithConfirmationAndDate("yes", "2018-02-01T00:00:00Z");
+    runCommandWithConfirmationAndDate("yes", "2018-02-01T00:00:00Z", 0);
 
     // check the database state; only secret2 should have been deleted
     checkExpectedSecretSeries(ImmutableList.of(series1, series3), ImmutableList.of(series2));
@@ -186,7 +186,7 @@ public class DropDeletedSecretsCommandTest {
 
   @Test
   public void testSecretDeletion_filterByDate_noSecretsRemoved() {
-    runCommandWithConfirmationAndDate("yes", "2017-02-01T00:00:00Z");
+    runCommandWithConfirmationAndDate("yes", "2017-02-01T00:00:00Z", 0);
 
     // check the database state; no secrets should have been deleted
     checkExpectedSecretSeries(ImmutableList.of(series1, series2, series3), ImmutableList.of());
@@ -196,7 +196,7 @@ public class DropDeletedSecretsCommandTest {
 
   @Test
   public void testSecretDeletion_futureDate() {
-    runCommandWithConfirmationAndDate("yes", "5000-02-01T00:00:00Z");
+    runCommandWithConfirmationAndDate("yes", "5000-02-01T00:00:00Z", 0);
 
     // check the database state; secrets should NOT have been deleted
     checkExpectedSecretSeries(ImmutableList.of(series1, series2, series3), ImmutableList.of());
@@ -206,7 +206,7 @@ public class DropDeletedSecretsCommandTest {
 
   @Test
   public void testSecretDeletion_invalidDate() {
-    runCommandWithConfirmationAndDate("yes", "notadate");
+    runCommandWithConfirmationAndDate("yes", "notadate", 0);
 
     // check the database state; secrets should NOT have been deleted
     checkExpectedSecretSeries(ImmutableList.of(series1, series2, series3), ImmutableList.of());
@@ -216,7 +216,7 @@ public class DropDeletedSecretsCommandTest {
 
   @Test
   public void testSecretDeletion_noConfirmation() {
-    runCommandWithConfirmationAndDate("no", "2019-02-01T00:00:00Z");
+    runCommandWithConfirmationAndDate("no", "2019-02-01T00:00:00Z", 0);
 
     // check the database state; secrets should NOT have been deleted
     checkExpectedSecretSeries(ImmutableList.of(series1, series2, series3), ImmutableList.of());
@@ -224,7 +224,18 @@ public class DropDeletedSecretsCommandTest {
         ImmutableList.of());
   }
 
-  private void runCommandWithConfirmationAndDate(String confirmation, String date) {
+  @Test
+  public void testSecretDeletion_negativeSleep() {
+    runCommandWithConfirmationAndDate("no", "2019-02-01T00:00:00Z", -10);
+
+    // check the database state; secrets should NOT have been deleted
+    checkExpectedSecretSeries(ImmutableList.of(series1, series2, series3), ImmutableList.of());
+    checkExpectedSecretContents(ImmutableList.of(content1, content2a, content2b, content3),
+        ImmutableList.of());
+  }
+
+  private void runCommandWithConfirmationAndDate(String confirmation, String date,
+      int sleepMillis) {
     SecretDAO secretDAO = secretDAOFactory.readwrite();
     // confirm that the expected secrets are present
     checkExpectedSecretSeries(ImmutableList.of(series1, series2, series3), ImmutableList.of());
@@ -237,7 +248,10 @@ public class DropDeletedSecretsCommandTest {
     InputStream in = new ByteArrayInputStream(confirmation.getBytes(UTF_8));
     System.setIn(in);
     command.run(null,
-        new Namespace(ImmutableMap.of(DropDeletedSecretsCommand.INPUT_DELETED_BEFORE, date)),
+        new Namespace(
+            ImmutableMap.of(
+                DropDeletedSecretsCommand.INPUT_DELETED_BEFORE, date,
+                DropDeletedSecretsCommand.INPUT_SLEEP_MILLIS, sleepMillis)),
         null);
     System.setIn(System.in);
   }

@@ -525,7 +525,7 @@ public class SecretDAOTest {
   }
 
   @Test
-  public void permanentlyRemoveSecret() {
+  public void permanentlyRemoveSecret() throws Exception {
     // Initially, all secrets should be present in the database
     checkExpectedSecretSeriesInDatabase(ImmutableList.of(series1, series2, series3),
         ImmutableList.of());
@@ -541,7 +541,7 @@ public class SecretDAOTest {
         ImmutableList.of(content1, content2a, content2b, content3), ImmutableList.of());
 
     // This method does not validate whether the date is in the future, though the command does
-    secretDAO.dangerPermanentlyRemoveSecretsDeletedBeforeDate(DateTime.now().plusDays(30));
+    secretDAO.dangerPermanentlyRemoveSecretsDeletedBeforeDate(DateTime.now().plusDays(30), 0);
 
     // series2 and series3's associated information should be missing from the database.
     checkExpectedSecretSeriesInDatabase(ImmutableList.of(series1),
