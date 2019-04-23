@@ -17,9 +17,10 @@
 package keywhiz.service.daos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
 import java.util.AbstractMap.SimpleEntry;
+import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -27,12 +28,14 @@ import javax.ws.rs.NotFoundException;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
+import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
+import org.joda.time.DateTime;
 import org.jooq.DSLContext;
 import org.jooq.Table;
 import org.jooq.exception.DataAccessException;
@@ -41,6 +44,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,25 +59,33 @@ public class SecretDAOTest {
   private final static ApiDate date = ApiDate.now();
   private ImmutableMap<String, String> emptyMetadata = ImmutableMap.of();
 
-  private SecretSeries series1 = SecretSeries.of(1, "secret1", "desc1", date, "creator", date, "updater", null, null, 101L);
+  private SecretSeries series1 =
+      SecretSeries.of(1, "secret1", "desc1", date, "creator", date, "updater", null, null, 101L);
   private String content = "c2VjcmV0MQ==";
-  private String encryptedContent = cryptographer.encryptionKeyDerivedFrom(series1.name()).encrypt(content);
-  private SecretContent content1 = SecretContent.of(101, 1, encryptedContent, "checksum", date, "creator", date, "updater", emptyMetadata,
-      0);
+  private String encryptedContent =
+      cryptographer.encryptionKeyDerivedFrom(series1.name()).encrypt(content);
+  private SecretContent content1 =
+      SecretContent.of(101, 1, encryptedContent, "checksum", date, "creator", date, "updater",
+          emptyMetadata, 0);
   private SecretSeriesAndContent secret1 = SecretSeriesAndContent.of(series1, content1);
 
-  private SecretSeries series2 = SecretSeries.of(2, "secret2", "desc2", date, "creator", date, "updater", null, null, 103L);
-  private SecretContent content2a = SecretContent.of(102, 2, encryptedContent, "checksum", date, "creator", date, "updater", emptyMetadata,
-      0);
+  private SecretSeries series2 =
+      SecretSeries.of(2, "secret2", "desc2", date, "creator", date, "updater", null, null, 103L);
+  private SecretContent content2a =
+      SecretContent.of(102, 2, encryptedContent, "checksum", date, "creator", date, "updater",
+          emptyMetadata, 0);
   private SecretSeriesAndContent secret2a = SecretSeriesAndContent.of(series2, content2a);
 
-  private SecretContent content2b = SecretContent.of(103, 2, "some other content", "checksum", date, "creator", date, "updater",
-      emptyMetadata, 0);
+  private SecretContent content2b =
+      SecretContent.of(103, 2, "some other content", "checksum", date, "creator", date, "updater",
+          emptyMetadata, 0);
   private SecretSeriesAndContent secret2b = SecretSeriesAndContent.of(series2, content2b);
 
-  private SecretSeries series3 = SecretSeries.of(3, "secret3", "desc3", date, "creator", date, "updater", null, null, null);
-  private SecretContent content3 = SecretContent.of(104, 3, encryptedContent, "checksum", date, "creator", date, "updater", emptyMetadata,
-      0);
+  private SecretSeries series3 =
+      SecretSeries.of(3, "secret3", "desc3", date, "creator", date, "updater", null, null, null);
+  private SecretContent content3 =
+      SecretContent.of(104, 3, encryptedContent, "checksum", date, "creator", date, "updater",
+          emptyMetadata, 0);
   private SecretSeriesAndContent secret3 = SecretSeriesAndContent.of(series3, content3);
 
   private SecretDAO secretDAO;
@@ -124,7 +136,8 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.CREATEDAT, secret2a.content().createdAt().toEpochSecond())
         .set(SECRETS_CONTENT.UPDATEDBY, secret2a.content().updatedBy())
         .set(SECRETS_CONTENT.UPDATEDAT, secret2a.content().updatedAt().toEpochSecond())
-        .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret2a.content().metadata()))
+        .set(SECRETS_CONTENT.METADATA,
+            objectMapper.writeValueAsString(secret2a.content().metadata()))
         .execute();
 
     jooqContext.insertInto(SECRETS_CONTENT)
@@ -136,7 +149,8 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.CREATEDAT, secret2b.content().createdAt().toEpochSecond())
         .set(SECRETS_CONTENT.UPDATEDBY, secret2b.content().updatedBy())
         .set(SECRETS_CONTENT.UPDATEDAT, secret2b.content().updatedAt().toEpochSecond())
-        .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret2b.content().metadata()))
+        .set(SECRETS_CONTENT.METADATA,
+            objectMapper.writeValueAsString(secret2b.content().metadata()))
         .execute();
 
     jooqContext.insertInto(SECRETS)
@@ -159,9 +173,9 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.CREATEDAT, secret3.content().createdAt().toEpochSecond())
         .set(SECRETS_CONTENT.UPDATEDBY, secret3.content().updatedBy())
         .set(SECRETS_CONTENT.UPDATEDAT, secret3.content().updatedAt().toEpochSecond())
-        .set(SECRETS_CONTENT.METADATA, objectMapper.writeValueAsString(secret3.content().metadata()))
+        .set(SECRETS_CONTENT.METADATA,
+            objectMapper.writeValueAsString(secret3.content().metadata()))
         .execute();
-
 
     secretDAO = secretDAOFactory.readwrite();
   }
@@ -192,33 +206,40 @@ public class SecretDAOTest {
   @Test(expected = DataAccessException.class)
   public void createSecretFailsIfSecretExists() {
     String name = "newSecret";
-    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
-    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
+        null, ImmutableMap.of());
+    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
+        null, ImmutableMap.of());
   }
 
   @Test(expected = BadRequestException.class)
   public void createSecretFailsIfNameHasLeadingPeriod() {
     String name = ".newSecret";
-    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
+        null, ImmutableMap.of());
   }
 
   @Test(expected = BadRequestException.class)
   public void createSecretFailsIfNameIsTooLong() {
-    String name = "newSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecret";
-    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+    String name =
+        "newSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecret";
+    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
+        null, ImmutableMap.of());
   }
 
   @Test public void createSecretSucceedsIfCurrentVersionIsNull() {
     String name = "newSecret";
-    long firstId = secretDAO.createSecret(name, "content1", cryptographer.computeHmac("content1".getBytes(UTF_8)), "creator1",
+    long firstId = secretDAO.createSecret(name, "content1",
+        cryptographer.computeHmac("content1".getBytes(UTF_8)), "creator1",
         ImmutableMap.of("foo", "bar"), 1000, "description1", "type1", ImmutableMap.of());
 
     jooqContext.update(SECRETS)
-        .set(SECRETS.CURRENT, (Long)null)
+        .set(SECRETS.CURRENT, (Long) null)
         .where(SECRETS.ID.eq(firstId))
         .execute();
 
-    long secondId = secretDAO.createSecret(name, "content2", cryptographer.computeHmac("content2".getBytes(UTF_8)), "creator2",
+    long secondId = secretDAO.createSecret(name, "content2",
+        cryptographer.computeHmac("content2".getBytes(UTF_8)), "creator2",
         ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
     assertThat(secondId).isGreaterThan(firstId);
 
@@ -257,10 +278,12 @@ public class SecretDAOTest {
 
   @Test public void createOrUpdateSecretWhenSecretExists() {
     String name = "newSecret";
-    long firstId = secretDAO.createSecret(name, "content1", cryptographer.computeHmac("content1".getBytes(UTF_8)), "creator1",
+    long firstId = secretDAO.createSecret(name, "content1",
+        cryptographer.computeHmac("content1".getBytes(UTF_8)), "creator1",
         ImmutableMap.of("foo", "bar"), 1000, "description1", "type1", ImmutableMap.of());
 
-    long secondId = secretDAO.createOrUpdateSecret(name, "content2", cryptographer.computeHmac("content2".getBytes(UTF_8)), "creator2",
+    long secondId = secretDAO.createOrUpdateSecret(name, "content2",
+        cryptographer.computeHmac("content2".getBytes(UTF_8)), "creator2",
         ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
     assertThat(secondId).isEqualTo(firstId);
 
@@ -364,7 +387,6 @@ public class SecretDAOTest {
     assertThat(newSecret.content().expiry()).isEqualTo(12345L);
   }
 
-
   //---------------------------------------------------------------------------------------
 
   @Test public void getSecretByName() {
@@ -376,7 +398,7 @@ public class SecretDAOTest {
     String name = secret1.series().name();
 
     jooqContext.update(SECRETS)
-        .set(SECRETS.CURRENT, (Long)null)
+        .set(SECRETS.CURRENT, (Long) null)
         .where(SECRETS.ID.eq(series1.id()))
         .execute();
     assertThat(secretDAO.getSecretByName(name)).isEmpty();
@@ -386,7 +408,9 @@ public class SecretDAOTest {
     String name = "nonExistantSecret";
     assertThat(secretDAO.getSecretByName(name).isPresent()).isFalse();
 
-    long newId = secretDAO.createSecret(name, "content", cryptographer.computeHmac("content".getBytes(UTF_8)), "creator", ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+    long newId = secretDAO.createSecret(name, "content",
+        cryptographer.computeHmac("content".getBytes(UTF_8)), "creator", ImmutableMap.of(), 0, "",
+        null, ImmutableMap.of());
     SecretSeriesAndContent newSecret = secretDAO.getSecretById(newId).get();
 
     assertThat(secretDAO.getSecretByName(name).isPresent()).isTrue();
@@ -404,7 +428,7 @@ public class SecretDAOTest {
 
   @Test public void getSecretByIdOneReturnsEmptyWhenCurrentVersionIsNull() {
     jooqContext.update(SECRETS)
-        .set(SECRETS.CURRENT, (Long)null)
+        .set(SECRETS.CURRENT, (Long) null)
         .where(SECRETS.ID.eq(series2.id()))
         .execute();
     assertThat(secretDAO.getSecretById(series2.id())).isEmpty();
@@ -435,12 +459,14 @@ public class SecretDAOTest {
   }
 
   @Test public void deleteSecretsByName() {
-    secretDAO.createSecret("toBeDeleted_deleteSecretsByName", "encryptedShhh", cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8)), "creator",
+    secretDAO.createSecret("toBeDeleted_deleteSecretsByName", "encryptedShhh",
+        cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8)), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
     secretDAO.deleteSecretsByName("toBeDeleted_deleteSecretsByName");
 
-    Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName("toBeDeleted_deleteSecretsByName");
+    Optional<SecretSeriesAndContent> secret =
+        secretDAO.getSecretByName("toBeDeleted_deleteSecretsByName");
     assertThat(secret.isPresent()).isFalse();
   }
 
@@ -454,10 +480,115 @@ public class SecretDAOTest {
     Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
     assertThat(secret.isPresent()).isFalse();
 
-    secretDAO.createSecret("toBeDeletedAndReplaced", "secretsgohere", cryptographer.computeHmac("secretsgohere".getBytes(UTF_8)), "creator",
+    secretDAO.createSecret("toBeDeletedAndReplaced", "secretsgohere",
+        cryptographer.computeHmac("secretsgohere".getBytes(UTF_8)), "creator",
         ImmutableMap.of(), 0, "", null, null);
     secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
     assertThat(secret.isPresent()).isTrue();
+  }
+
+  @Test public void deleteSecretsByNameAndRecreateWithUpdate() {
+    secretDAO.createSecret("toBeDeletedAndReplaced", "encryptedShhh",
+        cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8)), "creator",
+        ImmutableMap.of(), 0, "", null, null);
+
+    secretDAO.deleteSecretsByName("toBeDeletedAndReplaced");
+
+    Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
+    assertThat(secret.isPresent()).isFalse();
+
+    secretDAO.createOrUpdateSecret("toBeDeletedAndReplaced", "secretsgohere",
+        cryptographer.computeHmac("secretsgohere".getBytes(UTF_8)), "creator",
+        ImmutableMap.of(), 0, "", null, null);
+    secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
+    assertThat(secret.isPresent()).isTrue();
+
+    // The old version of the secret should not be available
+    Optional<ImmutableList<SanitizedSecret>> versions =
+        secretDAO.getSecretVersionsByName("toBeDeletedAndReplaced", 0, 50);
+    assertThat(versions.isPresent()).isTrue();
+    assertThat(versions.get().size()).isEqualTo(1);
+  }
+
+  //---------------------------------------------------------------------------------------
+  // permanentlyRemoveSecret
+  //---------------------------------------------------------------------------------------
+  @Test
+  public void countDeletedSecrets() {
+    // one secret was deleted in the initial test setup
+    assertThat(secretDAO.countDeletedSecrets()).isEqualTo(1);
+
+    // delete a secret and recount
+    secretDAO.deleteSecretsByName(series2.name());
+    assertThat(secretDAO.countDeletedSecrets()).isEqualTo(2);
+  }
+
+  @Test
+  public void countSecretsDeletedBeforeDate() {
+    // some secrets may have been deleted in test setup
+    int initialCount = secretDAO.countSecretsDeletedBeforeDate(DateTime.now().plusDays(30));
+
+    // delete a secret and recount
+    secretDAO.deleteSecretsByName(series2.name());
+    assertThat(secretDAO.countSecretsDeletedBeforeDate(DateTime.now().plusDays(30))).isEqualTo(
+        initialCount + 1);
+  }
+
+  @Test
+  public void permanentlyRemoveSecret() throws Exception {
+    // Initially, all secrets should be present in the database
+    checkExpectedSecretSeriesInDatabase(ImmutableList.of(series1, series2, series3),
+        ImmutableList.of());
+    checkExpectedSecretContentsInDatabase(
+        ImmutableList.of(content1, content2a, content2b, content3), ImmutableList.of());
+
+    // After deleting the secret, the secrets should still be present in the database
+    // (though the series will have current = null)
+    secretDAO.deleteSecretsByName(series2.name());
+    checkExpectedSecretSeriesInDatabase(ImmutableList.of(series1, series2, series3),
+        ImmutableList.of());
+    checkExpectedSecretContentsInDatabase(
+        ImmutableList.of(content1, content2a, content2b, content3), ImmutableList.of());
+
+    // This method does not validate whether the date is in the future, though the command does
+    secretDAO.dangerPermanentlyRemoveSecretsDeletedBeforeDate(DateTime.now().plusDays(30), 0);
+
+    // series2 and series3's associated information should be missing from the database.
+    checkExpectedSecretSeriesInDatabase(ImmutableList.of(series1),
+        ImmutableList.of(series2, series3));
+    checkExpectedSecretContentsInDatabase(ImmutableList.of(content1),
+        ImmutableList.of(content2a, content2b, content3));
+  }
+
+  /**
+   * Verify that the given sets of secrets are present/not present in the database.
+   */
+  private void checkExpectedSecretSeriesInDatabase(List<SecretSeries> expectedPresentSeries,
+      List<SecretSeries> expectedMissingSeries) {
+    List<Long> secretSeriesIds = jooqContext.select(SECRETS.ID).from(SECRETS).fetch(SECRETS.ID);
+    assertThat(secretSeriesIds).containsAll(
+        expectedPresentSeries.stream().map(SecretSeries::id).collect(toList()));
+
+    if (!expectedMissingSeries.isEmpty()) {
+      assertThat(secretSeriesIds).doesNotContainAnyElementsOf(
+          expectedMissingSeries.stream().map(SecretSeries::id).collect(toList()));
+    }
+  }
+
+  /**
+   * Verify that the given sets of secrets are present/not present in the database.
+   */
+  private void checkExpectedSecretContentsInDatabase(List<SecretContent> expectedPresentContents,
+      List<SecretContent> expectedMissingContents) {
+    List<Long> secretContentsIds =
+        jooqContext.select(SECRETS_CONTENT.ID).from(SECRETS_CONTENT).fetch(SECRETS_CONTENT.ID);
+    assertThat(secretContentsIds).containsAll(
+        expectedPresentContents.stream().map(SecretContent::id).collect(toList()));
+
+    if (!expectedMissingContents.isEmpty()) {
+      assertThat(secretContentsIds).doesNotContainAnyElementsOf(
+          expectedMissingContents.stream().map(SecretContent::id).collect(toList()));
+    }
   }
 
   private int tableSize(Table table) {

@@ -34,6 +34,7 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
+import org.joda.time.DateTime;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -47,6 +48,7 @@ import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
+import static org.jooq.impl.DSL.count;
 import static org.jooq.impl.DSL.decode;
 import static org.jooq.impl.DSL.least;
 import static org.jooq.impl.DSL.val;
@@ -160,12 +162,14 @@ public class SecretSeriesDAO {
   }
 
   public Optional<SecretSeries> getSecretSeriesById(long id) {
-    SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNotNull()));
+    SecretsRecord r =
+        dslContext.fetchOne(SECRETS, SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNotNull()));
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
   public Optional<SecretSeries> getSecretSeriesByName(String name) {
-    SecretsRecord r = dslContext.fetchOne(SECRETS, SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()));
+    SecretsRecord r =
+        dslContext.fetchOne(SECRETS, SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()));
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
@@ -212,7 +216,8 @@ public class SecretSeriesDAO {
   public void deleteSecretSeriesByName(String name) {
     long now = OffsetDateTime.now().toEpochSecond();
     dslContext.transaction(configuration -> {
-      SecretsRecord r = DSL.using(configuration).fetchOne(SECRETS, SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()));
+      SecretsRecord r = DSL.using(configuration)
+          .fetchOne(SECRETS, SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()));
       if (r != null) {
         DSL.using(configuration)
             .update(SECRETS)
@@ -245,6 +250,44 @@ public class SecretSeriesDAO {
           .where(ACCESSGRANTS.SECRETID.eq(id))
           .execute();
     });
+  }
+
+  /**
+   * Count the number of deleted secret series
+   */
+  public int countDeletedSecretSeries() {
+    return dslContext.selectCount()
+        .from(SECRETS)
+        .where(SECRETS.CURRENT.isNull())
+        .fetchOne()
+        .value1();
+  }
+
+  /**
+   * Identify all secret series which were deleted before the given date.
+   *
+   * @param deleteBefore the cutoff date; secrets deleted before this date will be counted
+   */
+  public List<Long> getIdsForSecretSeriesDeletedBeforeDate(DateTime deleteBefore) {
+    long deleteBeforeSeconds = deleteBefore.getMillis() / 1000;
+    return dslContext.select(SECRETS.ID)
+        .from(SECRETS)
+        .where(SECRETS.CURRENT.isNull())
+        .and(SECRETS.UPDATEDAT.le(deleteBeforeSeconds))
+        .fetch(SECRETS.ID);
+  }
+
+  /**
+   * PERMANENTLY REMOVE database records from `secrets` which have the given list of IDs. Does not
+   * affect the `secrets_content` table.
+   *
+   * @param ids the IDs in the `secrets` table to be PERMANENTLY REMOVED
+   * @returns the number of records which were removed
+   */
+  public long dangerPermanentlyRemoveRecordsForGivenIDs(List<Long> ids) {
+    return dslContext.deleteFrom(SECRETS)
+        .where(SECRETS.ID.in(ids))
+        .execute();
   }
 
   public static class SecretSeriesDAOFactory implements DAOFactory<SecretSeriesDAO> {

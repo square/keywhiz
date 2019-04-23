@@ -132,8 +132,7 @@ class SecretContentDAO {
   }
 
   public Optional<ImmutableList<SecretContent>> getSecretVersionsBySecretId(long id,
-      int versionIdx,
-      int numVersions) {
+      int versionIdx, int numVersions) {
     Result<SecretsContentRecord> r = dslContext.selectFrom(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.SECRETID.eq(id))
         .orderBy(SECRETS_CONTENT.CREATEDAT.desc())
@@ -147,6 +146,20 @@ class SecretContentDAO {
     } else {
       return Optional.empty();
     }
+  }
+
+  /**
+   * PERMANENTLY REMOVE database records from `secrets_contents` which are associated with the given
+   * list of SECRETS IDs.  (Does not affect the `secrets` table.)
+   *
+   * @param ids IDs in the `secrets` table; `secrets_contents` records linked to these by
+   * `secrets_content.secretid` will be PERMANENTLY REMOVED
+   * @returns the number of records which were removed
+   */
+  public long dangerPermanentlyRemoveRecordsForGivenSecretsIDs(List<Long> ids) {
+    return dslContext.deleteFrom(SECRETS_CONTENT)
+        .where(SECRETS_CONTENT.SECRETID.in(ids))
+        .execute();
   }
 
   public static class SecretContentDAOFactory implements DAOFactory<SecretContentDAO> {
