@@ -432,8 +432,8 @@ public class SecretDAO {
    * Unlike the "delete" endpoints above, THIS REMOVAL IS PERMANENT and cannot be undone by editing
    * the database to restore the "current" entries.
    *
-   * @param deletedBefore the cutoff date; secrets deleted before this date will be removed from
-   * the database
+   * @param deletedBefore the cutoff date; secrets deleted before this date will be removed from the
+   * database
    * @param sleepMillis how many milliseconds to sleep between each batch of removals
    */
   public void dangerPermanentlyRemoveSecretsDeletedBeforeDate(DateTime deletedBefore,

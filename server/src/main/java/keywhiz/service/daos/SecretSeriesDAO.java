@@ -48,7 +48,6 @@ import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
-import static org.jooq.impl.DSL.count;
 import static org.jooq.impl.DSL.decode;
 import static org.jooq.impl.DSL.least;
 import static org.jooq.impl.DSL.val;
@@ -238,17 +237,21 @@ public class SecretSeriesDAO {
   public void deleteSecretSeriesById(long id) {
     long now = OffsetDateTime.now().toEpochSecond();
     dslContext.transaction(configuration -> {
-      DSL.using(configuration)
-          .update(SECRETS)
-          .set(SECRETS.CURRENT, (Long) null)
-          .set(SECRETS.UPDATEDAT, now)
-          .where(SECRETS.ID.eq(id))
-          .execute();
-
-      DSL.using(configuration)
-          .delete(ACCESSGRANTS)
-          .where(ACCESSGRANTS.SECRETID.eq(id))
-          .execute();
+      SecretsRecord r = DSL.using(configuration)
+          .fetchOne(SECRETS, SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNotNull()));
+      if (r != null) {
+        DSL.using(configuration)
+            .update(SECRETS)
+            .set(SECRETS.NAME, transformNameForDeletion(r.getName()))
+            .set(SECRETS.CURRENT, (Long) null)
+            .set(SECRETS.UPDATEDAT, now)
+            .where(SECRETS.ID.eq(id))
+            .execute();
+        DSL.using(configuration)
+            .delete(ACCESSGRANTS)
+            .where(ACCESSGRANTS.SECRETID.eq(id))
+            .execute();
+      }
     });
   }
 

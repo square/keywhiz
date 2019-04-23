@@ -18,18 +18,16 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
-import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.Optional;
 
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,15 +55,15 @@ public class SecretSeriesDAOTest {
         "checksum", "creator", null, 0, now);
     secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
 
-    SecretSeries expected = SecretSeries.of(id, "newSecretSeries", "desc", nowDate, "creator", nowDate,
-        "creator", null, ImmutableMap.of("foo", "bar"), contentId);
+    SecretSeries expected =
+        SecretSeries.of(id, "newSecretSeries", "desc", nowDate, "creator", nowDate,
+            "creator", null, ImmutableMap.of("foo", "bar"), contentId);
 
     assertThat(tableSize()).isEqualTo(before + 1);
 
     SecretSeries actual = secretSeriesDAO.getSecretSeriesById(id)
         .orElseThrow(RuntimeException::new);
-    assertThat(actual).isEqualToIgnoringGivenFields(expected,"id");
-
+    assertThat(actual).isEqualToIgnoringGivenFields(expected, "id");
 
     actual = secretSeriesDAO.getSecretSeriesByName("newSecretSeries")
         .orElseThrow(RuntimeException::new);
@@ -111,10 +109,14 @@ public class SecretSeriesDAOTest {
     long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
     secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
-    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName").get().currentVersion().isPresent()).isTrue();
+    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName")
+        .get()
+        .currentVersion()
+        .isPresent()).isTrue();
 
     secretSeriesDAO.deleteSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName");
-    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName").isPresent()).isFalse();
+    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName")
+        .isPresent()).isFalse();
     assertThat(secretSeriesDAO.getSecretSeriesById(id).isPresent()).isFalse();
   }
 
@@ -125,10 +127,14 @@ public class SecretSeriesDAOTest {
     long contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
     secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
-    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeletedAndReplaced").get().currentVersion().isPresent()).isTrue();
+    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeletedAndReplaced")
+        .get()
+        .currentVersion()
+        .isPresent()).isTrue();
 
     secretSeriesDAO.deleteSecretSeriesByName("toBeDeletedAndReplaced");
-    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeletedAndReplaced").isPresent()).isFalse();
+    assertThat(
+        secretSeriesDAO.getSecretSeriesByName("toBeDeletedAndReplaced").isPresent()).isFalse();
     assertThat(secretSeriesDAO.getSecretSeriesById(id).isPresent()).isFalse();
 
     id = secretSeriesDAO.createSecretSeries("toBeDeletedAndReplaced", "creator",
@@ -136,7 +142,10 @@ public class SecretSeriesDAOTest {
     contentId = secretContentDAOFactory.readwrite().createSecretContent(id, "blah2",
         "checksum", "creator", null, 0, now);
     secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
-    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeletedAndReplaced").get().currentVersion().isPresent()).isTrue();
+    assertThat(secretSeriesDAO.getSecretSeriesByName("toBeDeletedAndReplaced")
+        .get()
+        .currentVersion()
+        .isPresent()).isTrue();
   }
 
   @Test public void deleteSecretSeriesById() {
