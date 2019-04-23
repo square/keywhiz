@@ -227,30 +227,23 @@ public class SecretDAOTest {
         null, ImmutableMap.of());
   }
 
-  @Test public void createSecretSucceedsIfCurrentVersionIsNull() {
+  @Test(expected = DataAccessException.class)
+  public void createSecretFailsIfNameMatchesDeletedSecret() {
     String name = "newSecret";
     long firstId = secretDAO.createSecret(name, "content1",
         cryptographer.computeHmac("content1".getBytes(UTF_8)), "creator1",
         ImmutableMap.of("foo", "bar"), 1000, "description1", "type1", ImmutableMap.of());
 
+    // When a secret is deleted, its name should be changed.  However, if the name is not changed
+    // for some reason or a name matching the altered name is used, secret creation will fail.
     jooqContext.update(SECRETS)
         .set(SECRETS.CURRENT, (Long) null)
         .where(SECRETS.ID.eq(firstId))
         .execute();
 
-    long secondId = secretDAO.createSecret(name, "content2",
+     secretDAO.createSecret(name, "content2",
         cryptographer.computeHmac("content2".getBytes(UTF_8)), "creator2",
         ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
-    assertThat(secondId).isGreaterThan(firstId);
-
-    SecretSeriesAndContent newSecret = secretDAO.getSecretById(secondId).get();
-    assertThat(newSecret.series().createdBy()).isEqualTo("creator2");
-    assertThat(newSecret.series().updatedBy()).isEqualTo("creator2");
-    assertThat(newSecret.series().description()).isEqualTo("description2");
-    assertThat(newSecret.series().type().get()).isEqualTo("type2");
-    assertThat(newSecret.content().createdBy()).isEqualTo("creator2");
-    assertThat(newSecret.content().encryptedContent()).isEqualTo("content2");
-    assertThat(newSecret.content().metadata()).isEqualTo(ImmutableMap.of("foo2", "bar2"));
   }
 
   //---------------------------------------------------------------------------------------
