@@ -399,20 +399,20 @@ public class SecretDAOTest {
 
   @Test public void getSecretByNameOneReturnsEmptyWhenRowIsMissing() {
     String name = "nonExistantSecret";
-    assertThat(secretDAO.getSecretByName(name).isPresent()).isFalse();
+    assertThat(secretDAO.getSecretByName(name)).isEmpty();
 
     long newId = secretDAO.createSecret(name, "content",
         cryptographer.computeHmac("content".getBytes(UTF_8)), "creator", ImmutableMap.of(), 0, "",
         null, ImmutableMap.of());
     SecretSeriesAndContent newSecret = secretDAO.getSecretById(newId).get();
 
-    assertThat(secretDAO.getSecretByName(name).isPresent()).isTrue();
+    assertThat(secretDAO.getSecretByName(name)).isPresent();
 
     jooqContext.deleteFrom(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.ID.eq(newSecret.content().id()))
         .execute();
 
-    assertThat(secretDAO.getSecretByName(name).isPresent()).isFalse();
+    assertThat(secretDAO.getSecretByName(name)).isEmpty();
   }
 
   @Test public void getSecretById() {
@@ -460,7 +460,7 @@ public class SecretDAOTest {
 
     Optional<SecretSeriesAndContent> secret =
         secretDAO.getSecretByName("toBeDeleted_deleteSecretsByName");
-    assertThat(secret.isPresent()).isFalse();
+    assertThat(secret).isEmpty();
   }
 
   @Test public void deleteSecretsByNameAndRecreate() {
@@ -471,13 +471,13 @@ public class SecretDAOTest {
     secretDAO.deleteSecretsByName("toBeDeletedAndReplaced");
 
     Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
-    assertThat(secret.isPresent()).isFalse();
+    assertThat(secret).isEmpty();
 
     secretDAO.createSecret("toBeDeletedAndReplaced", "secretsgohere",
         cryptographer.computeHmac("secretsgohere".getBytes(UTF_8)), "creator",
         ImmutableMap.of(), 0, "", null, null);
     secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
-    assertThat(secret.isPresent()).isTrue();
+    assertThat(secret).isPresent();
   }
 
   @Test public void deleteSecretsByNameAndRecreateWithUpdate() {
@@ -488,18 +488,18 @@ public class SecretDAOTest {
     secretDAO.deleteSecretsByName("toBeDeletedAndReplaced");
 
     Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
-    assertThat(secret.isPresent()).isFalse();
+    assertThat(secret).isEmpty();
 
     secretDAO.createOrUpdateSecret("toBeDeletedAndReplaced", "secretsgohere",
         cryptographer.computeHmac("secretsgohere".getBytes(UTF_8)), "creator",
         ImmutableMap.of(), 0, "", null, null);
     secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
-    assertThat(secret.isPresent()).isTrue();
+    assertThat(secret).isPresent();
 
     // The old version of the secret should not be available
     Optional<ImmutableList<SanitizedSecret>> versions =
         secretDAO.getSecretVersionsByName("toBeDeletedAndReplaced", 0, 50);
-    assertThat(versions.isPresent()).isTrue();
+    assertThat(versions).isPresent();
     assertThat(versions.get().size()).isEqualTo(1);
   }
 

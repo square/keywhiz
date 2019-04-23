@@ -55,7 +55,7 @@ public class UserDAOTest {
 
   @Test
   public void getNonexistentUser() {
-    assertThat(userDAO.getHashedPassword("non-user").isPresent()).isFalse();
+    assertThat(userDAO.getHashedPassword("non-user")).isEmpty();
   }
 
 }
