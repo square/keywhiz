@@ -48,6 +48,7 @@ import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
+import static org.jooq.impl.DSL.count;
 import static org.jooq.impl.DSL.decode;
 import static org.jooq.impl.DSL.least;
 import static org.jooq.impl.DSL.val;
@@ -249,6 +250,17 @@ public class SecretSeriesDAO {
           .where(ACCESSGRANTS.SECRETID.eq(id))
           .execute();
     });
+  }
+
+  /**
+   * Count the number of deleted secret series
+   */
+  public int countDeletedSecretSeries() {
+    return dslContext.selectCount()
+        .from(SECRETS)
+        .where(SECRETS.CURRENT.isNull())
+        .fetchOne()
+        .value1();
   }
 
   /**

@@ -514,6 +514,16 @@ public class SecretDAOTest {
   // permanentlyRemoveSecret
   //---------------------------------------------------------------------------------------
   @Test
+  public void countDeletedSecrets() {
+    // one secret was deleted in the initial test setup
+    assertThat(secretDAO.countDeletedSecrets()).isEqualTo(1);
+
+    // delete a secret and recount
+    secretDAO.deleteSecretsByName(series2.name());
+    assertThat(secretDAO.countDeletedSecrets()).isEqualTo(2);
+  }
+
+  @Test
   public void countSecretsDeletedBeforeDate() {
     // some secrets may have been deleted in test setup
     int initialCount = secretDAO.countSecretsDeletedBeforeDate(DateTime.now().plusDays(30));

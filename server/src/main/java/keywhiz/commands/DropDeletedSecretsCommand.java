@@ -11,8 +11,6 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import org.joda.time.DateTime;
 
-import static java.lang.String.format;
-
 /**
  * Secrets which are deleted from Keywhiz--whether through the admin client or the automation
  * interface--are not actually removed from Keywhiz' database.  Instead, the link between the
@@ -61,16 +59,25 @@ public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> 
 
     Integer sleepMillis = namespace.getInt(INPUT_SLEEP_MILLIS);
     if (sleepMillis < 0) {
-      System.out.format("Milliseconds to sleep must be nonnegative; got %d", sleepMillis);
+      System.out.format("Milliseconds to sleep must be nonnegative; got %d\n", sleepMillis);
       return;
     }
 
     // determine how many secrets would be affected and get user confirmation
+    long totalDeletedCount = secretDAO.countDeletedSecrets();
     long affectedCount = secretDAO.countSecretsDeletedBeforeDate(deletedBefore);
 
+    if (affectedCount == 0) {
+      System.out.format(
+          "No secrets deleted before %s were found (out of %d deleted secrets); not altering the database.\n",
+          deletedBefore.toString(), totalDeletedCount);
+      return;
+    }
+
     System.out.format(
-        "WARNING: This will PERMANENTLY remove all secrets deleted before %s.  %d secrets will be removed.  Confirm? (y/n)\n",
-        deletedBefore.toString(), affectedCount);
+        "WARNING: This will PERMANENTLY remove all secrets deleted before %s.  "
+            + "%d secrets will be removed, out of %d deleted secrets.  Confirm? (y/n)\n",
+        deletedBefore.toString(), affectedCount, totalDeletedCount);
 
     String confirm;
     if (System.console() != null) {
@@ -118,9 +125,9 @@ public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> 
 
     // the date must be in the past
     if (before.isAfterNow() || before.isEqualNow()) {
-      System.out.println(
-          format("Cutoff date for deletion must be before current time; input of %s was invalid",
-              before.toString()));
+      System.out.format(
+          "Cutoff date for deletion must be before current time; input of %s was invalid.\n",
+          before.toString());
       return null;
     }
 

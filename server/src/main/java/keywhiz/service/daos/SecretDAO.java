@@ -404,6 +404,14 @@ public class SecretDAO {
   }
 
   /**
+   * Counts the total number of deleted secrets.
+   */
+  public int countDeletedSecrets() {
+    return secretSeriesDAOFactory.using(dslContext.configuration())
+        .countDeletedSecretSeries();
+  }
+
+  /**
    * Counts the number of secrets deleted before the specified cutoff.
    *
    * @param deleteBefore the cutoff date; secrets deleted before this date will be counted
@@ -424,17 +432,18 @@ public class SecretDAO {
    * Unlike the "delete" endpoints above, THIS REMOVAL IS PERMANENT and cannot be undone by editing
    * the database to restore the "current" entries.
    *
-   * @param deleteBefore the cutoff date; secrets deleted before this date will be deleted
+   * @param deletedBefore the cutoff date; secrets deleted before this date will be removed from
+   * the database
    * @param sleepMillis how many milliseconds to sleep between each batch of removals
    */
-  public void dangerPermanentlyRemoveSecretsDeletedBeforeDate(DateTime deleteBefore,
+  public void dangerPermanentlyRemoveSecretsDeletedBeforeDate(DateTime deletedBefore,
       int sleepMillis) throws InterruptedException {
-    checkArgument(deleteBefore != null);
+    checkArgument(deletedBefore != null);
     SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
     SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
 
     // identify the secrets deleted before this date
-    List<Long> ids = secretSeriesDAO.getIdsForSecretSeriesDeletedBeforeDate(deleteBefore);
+    List<Long> ids = secretSeriesDAO.getIdsForSecretSeriesDeletedBeforeDate(deletedBefore);
 
     // batch the list of secrets to be removed, to reduce load on the database
     List<List<Long>> partitionedIds = Lists.partition(ids, MAX_ROWS_REMOVED_PER_TRANSACTION);
