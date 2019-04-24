@@ -32,9 +32,11 @@ import keywhiz.auth.mutualssl.ClientCertificateFilter;
 import keywhiz.auth.xsrf.XsrfServletFilter;
 import keywhiz.commands.AddUserCommand;
 import keywhiz.commands.DbSeedCommand;
+import keywhiz.commands.DropDeletedSecretsCommand;
 import keywhiz.commands.GenerateAesKeyCommand;
 import keywhiz.commands.MigrateCommand;
 import keywhiz.commands.PreviewMigrateCommand;
+import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.filters.CookieRenewingFilter;
 import keywhiz.service.filters.SecurityHeadersFilter;
 import keywhiz.service.providers.AuthResolver;
@@ -103,6 +105,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     bootstrap.addCommand(new DbSeedCommand());
     bootstrap.addCommand(new GenerateAesKeyCommand());
     bootstrap.addCommand(new AddUserCommand());
+    bootstrap.addCommand(new DropDeletedSecretsCommand());
   }
 
   @SuppressWarnings("unchecked")

@@ -76,7 +76,7 @@ public class SecretDAO {
   // to permanently remove secrets
   private static final int MAX_ROWS_REMOVED_PER_TRANSACTION = 1000;
 
-  private SecretDAO(DSLContext dslContext, SecretContentDAOFactory secretContentDAOFactory,
+  public SecretDAO(DSLContext dslContext, SecretContentDAOFactory secretContentDAOFactory,
       SecretSeriesDAOFactory secretSeriesDAOFactory, ContentCryptographer cryptographer) {
     this.dslContext = dslContext;
     this.secretContentDAOFactory = secretContentDAOFactory;
