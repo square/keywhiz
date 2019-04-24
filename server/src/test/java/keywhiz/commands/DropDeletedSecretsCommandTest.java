@@ -165,7 +165,7 @@ public class DropDeletedSecretsCommandTest {
   }
 
   @Test
-  public void testSecretDeletion_allDeletedSecrets() {
+  public void testSecretDeletion_allDeletedSecrets() throws Exception {
     runCommandWithConfirmationAndDate("yes", "2019-02-01T00:00:00Z", 0);
 
     // check the database state; secret2 and secret3 should have been removed
@@ -175,7 +175,7 @@ public class DropDeletedSecretsCommandTest {
   }
 
   @Test
-  public void testSecretDeletion_filterByDate_someSecretsRemoved() {
+  public void testSecretDeletion_filterByDate_someSecretsRemoved() throws Exception {
     runCommandWithConfirmationAndDate("yes", "2018-02-01T00:00:00Z", 0);
 
     // check the database state; only secret2 should have been removed
@@ -185,7 +185,7 @@ public class DropDeletedSecretsCommandTest {
   }
 
   @Test
-  public void testSecretDeletion_filterByDate_noSecretsRemoved() {
+  public void testSecretDeletion_filterByDate_noSecretsRemoved() throws Exception {
     runCommandWithConfirmationAndDate("yes", "2017-02-01T00:00:00Z", 0);
 
     // check the database state; no secrets should have been removed
@@ -195,7 +195,7 @@ public class DropDeletedSecretsCommandTest {
   }
 
   @Test
-  public void testSecretDeletion_futureDate() {
+  public void testSecretDeletion_futureDate() throws Exception {
     runCommandWithConfirmationAndDate("yes", "5000-02-01T00:00:00Z", 0);
 
     // check the database state; secrets should NOT have been removed
@@ -205,7 +205,7 @@ public class DropDeletedSecretsCommandTest {
   }
 
   @Test
-  public void testSecretDeletion_invalidDate() {
+  public void testSecretDeletion_invalidDate() throws Exception {
     runCommandWithConfirmationAndDate("yes", "notadate", 0);
 
     // check the database state; secrets should NOT have been removed
@@ -215,7 +215,7 @@ public class DropDeletedSecretsCommandTest {
   }
 
   @Test
-  public void testSecretDeletion_noConfirmation() {
+  public void testSecretDeletion_noConfirmation() throws Exception {
     runCommandWithConfirmationAndDate("no", "2019-02-01T00:00:00Z", 0);
 
     // check the database state; secrets should NOT have been removed
@@ -225,8 +225,8 @@ public class DropDeletedSecretsCommandTest {
   }
 
   @Test
-  public void testSecretDeletion_negativeSleep() {
-    runCommandWithConfirmationAndDate("no", "2019-02-01T00:00:00Z", -10);
+  public void testSecretDeletion_negativeSleep() throws Exception {
+    runCommandWithConfirmationAndDate("yes", "2019-02-01T00:00:00Z", -10);
 
     // check the database state; secrets should NOT have been removed
     checkExpectedSecretSeries(ImmutableList.of(series1, series2, series3), ImmutableList.of());
@@ -235,7 +235,7 @@ public class DropDeletedSecretsCommandTest {
   }
 
   private void runCommandWithConfirmationAndDate(String confirmation, String date,
-      int sleepMillis) {
+      int sleepMillis) throws Exception {
     SecretDAO secretDAO = secretDAOFactory.readwrite();
     // confirm that the expected secrets are present
     checkExpectedSecretSeries(ImmutableList.of(series1, series2, series3), ImmutableList.of());

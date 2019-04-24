@@ -1,15 +1,28 @@
 package keywhiz.commands;
 
+import com.codahale.metrics.MetricRegistry;
+import com.google.common.annotations.VisibleForTesting;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import java.io.Console;
+import java.sql.SQLException;
 import java.util.Scanner;
 import javax.inject.Inject;
+import javax.sql.DataSource;
 import keywhiz.KeywhizConfig;
+import keywhiz.service.crypto.ContentCryptographer;
+import keywhiz.service.daos.SecretContentDAO;
+import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
+import keywhiz.service.daos.SecretContentMapper;
 import keywhiz.service.daos.SecretDAO;
+import keywhiz.service.daos.SecretSeriesDAO;
+import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
+import keywhiz.service.daos.SecretSeriesMapper;
+import keywhiz.utility.DSLContexts;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import org.joda.time.DateTime;
+import org.jooq.DSLContext;
 
 /**
  * Secrets which are deleted from Keywhiz--whether through the admin client or the automation
@@ -24,15 +37,23 @@ import org.joda.time.DateTime;
 public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> {
   protected static final String INPUT_DELETED_BEFORE = "deleted-before";
   protected static final String INPUT_SLEEP_MILLIS = "sleep-millis";
+
   private SecretDAO secretDAO;
 
-  @Inject
-  protected DropDeletedSecretsCommand(SecretDAO secretDAO) {
+  public DropDeletedSecretsCommand() {
+    super("drop-deleted-secrets", "PERMANENTLY REMOVES database records for deleted secrets");
+  }
+
+  @VisibleForTesting
+  public DropDeletedSecretsCommand(SecretDAO secretDAO) {
     super("drop-deleted-secrets", "PERMANENTLY REMOVES database records for deleted secrets");
     this.secretDAO = secretDAO;
   }
 
   @Override public void configure(Subparser subparser) {
+    // Necessary to retain the positional config-file argument
+    super.configure(subparser);
+
     subparser.addArgument("--deleted-before")
         .dest(INPUT_DELETED_BEFORE)
         .type(String.class)
@@ -41,14 +62,18 @@ public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> 
             "secrets deleted before this date will be PERMANENTLY REMOVED.  Format: 2006-01-02T15:04:05Z");
 
     subparser.addArgument("--sleep-millis")
-        .dest(INPUT_DELETED_BEFORE)
+        .dest(INPUT_SLEEP_MILLIS)
         .type(Integer.class)
         .setDefault(500)
         .help("how many milliseconds to sleep between batches of removals");
   }
 
   @Override public void run(Bootstrap<KeywhizConfig> bootstrap, Namespace namespace,
-      KeywhizConfig config) {
+      KeywhizConfig config) throws Exception {
+    if (secretDAO == null) {
+      secretDAO = getSecretDAO(bootstrap, config);
+    }
+
     // validate the input
     String deletedBeforeStr = namespace.getString(INPUT_DELETED_BEFORE);
     DateTime deletedBefore = getDateIfValid(deletedBeforeStr);
@@ -102,6 +127,33 @@ public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> 
       System.out.println("Error removing secrets; please retry command");
       e.printStackTrace();
     }
+  }
+
+  private SecretDAO getSecretDAO(Bootstrap<KeywhizConfig> bootstrap, KeywhizConfig config) throws SQLException {
+    DataSource dataSource = config.getDataSourceFactory()
+        .build(new MetricRegistry(), "drop-deleted-secrets-datasource");
+    DSLContext dslContext = DSLContexts.databaseAgnostic(dataSource);
+
+    SecretContentDAOFactory secretContentDAOFactory = new SecretContentDAOFactory(
+        dslContext,
+        dslContext,
+        bootstrap.getObjectMapper(),
+        new SecretContentMapper(bootstrap.getObjectMapper())
+    );
+
+    SecretSeriesDAOFactory secretSeriesDAOFactory = new SecretSeriesDAOFactory(
+        dslContext,
+        dslContext,
+        bootstrap.getObjectMapper(),
+        new SecretSeriesMapper(bootstrap.getObjectMapper())
+    );
+
+    return new SecretDAO(
+        dslContext,
+        secretContentDAOFactory,
+        secretSeriesDAOFactory,
+        null
+    );
   }
 
   private DateTime getDateIfValid(String deletedBeforeStr) {

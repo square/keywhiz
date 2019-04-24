@@ -26,12 +26,12 @@ import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import org.jooq.RecordMapper;
 
-class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSeries> {
+public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSeries> {
   private static final TypeReference MAP_STRING_STRING_TYPE =
       new TypeReference<Map<String, String>>() {};
   private final ObjectMapper mapper;
 
-  @Inject SecretSeriesMapper(ObjectMapper mapper) {
+  @Inject public SecretSeriesMapper(ObjectMapper mapper) {
     this.mapper = mapper;
   }
 

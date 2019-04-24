@@ -42,7 +42,7 @@ import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 /**
  * Interacts with 'secrets_content' table and actions on {@link SecretContent} entities.
  */
-class SecretContentDAO {
+public class SecretContentDAO {
   // Number of old contents we keep around before we prune
   @VisibleForTesting static final int PRUNE_CUTOFF_ITEMS = 10;
 
