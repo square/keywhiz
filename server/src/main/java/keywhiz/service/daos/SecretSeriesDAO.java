@@ -215,8 +215,13 @@ public class SecretSeriesDAO {
   public void deleteSecretSeriesByName(String name) {
     long now = OffsetDateTime.now().toEpochSecond();
     dslContext.transaction(configuration -> {
+      // find the record and lock it until this transaction is complete
       SecretsRecord r = DSL.using(configuration)
-          .fetchOne(SECRETS, SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()));
+          .select()
+          .from(SECRETS)
+          .where(SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()))
+          .forUpdate()
+          .fetchOneInto(SECRETS);
       if (r != null) {
         DSL.using(configuration)
             .update(SECRETS)
@@ -237,8 +242,13 @@ public class SecretSeriesDAO {
   public void deleteSecretSeriesById(long id) {
     long now = OffsetDateTime.now().toEpochSecond();
     dslContext.transaction(configuration -> {
+      // find the record and lock it until this transaction is complete
       SecretsRecord r = DSL.using(configuration)
-          .fetchOne(SECRETS, SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNotNull()));
+          .select()
+          .from(SECRETS)
+          .where(SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNotNull()))
+          .forUpdate()
+          .fetchOneInto(SECRETS);
       if (r != null) {
         DSL.using(configuration)
             .update(SECRETS)
