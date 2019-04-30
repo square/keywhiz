@@ -114,14 +114,14 @@ public class SecretContentDAOTest {
     assertThat(tableSize()).isEqualTo(before + PRUNE_CUTOFF_ITEMS + 1);
 
     for (int i = 0; i < (ids.length - PRUNE_CUTOFF_ITEMS - 1); i++) {
-      assertThat(secretContentDAO.getSecretContentById(ids[i]).isPresent()).isFalse();
+      assertThat(secretContentDAO.getSecretContentById(ids[i])).isEmpty();
     }
     for (int i = (ids.length - PRUNE_CUTOFF_ITEMS - 1); i < ids.length; i++) {
-      assertThat(secretContentDAO.getSecretContentById(ids[i]).isPresent()).isTrue();
+      assertThat(secretContentDAO.getSecretContentById(ids[i])).isPresent();
     }
 
     // Other secrets contents left intact
-    assertThat(secretContentDAO.getSecretContentById(secretContent1.id()).isPresent()).isTrue();
+    assertThat(secretContentDAO.getSecretContentById(secretContent1.id())).isPresent();
   }
 
   @Test public void pruneIgnores45DaysOrLess() throws Exception {
@@ -154,7 +154,7 @@ public class SecretContentDAOTest {
 
     // Nothing pruned
     for (int i = 0; i < ids.length; i++) {
-      assertThat(secretContentDAO.getSecretContentById(ids[i]).isPresent()).isTrue();
+      assertThat(secretContentDAO.getSecretContentById(ids[i])).isPresent();
     }
   }
 

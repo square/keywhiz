@@ -63,7 +63,7 @@ public class BcryptAuthenticatorTest {
 
     Optional<User> missingUser =
         bcryptAuthenticator.authenticate(new BasicCredentials("sysadmin", "badpass"));
-    assertThat(missingUser.isPresent()).isFalse();
+    assertThat(missingUser).isEmpty();
   }
 
   @Test
@@ -73,7 +73,7 @@ public class BcryptAuthenticatorTest {
 
     Optional<User> missingUser =
         bcryptAuthenticator.authenticate(new BasicCredentials("invaliduser", "validpass"));
-    assertThat(missingUser.isPresent()).isFalse();
+    assertThat(missingUser).isEmpty();
   }
 
   @Test
@@ -81,7 +81,7 @@ public class BcryptAuthenticatorTest {
     String crazyUsername = "sysadmin)`~!@#$%^&*()+=[]{}\\|;:'\",<>?/\r\n\t";
     Optional<User> missingUser =
         bcryptAuthenticator.authenticate(new BasicCredentials(crazyUsername, "validpass"));
-    assertThat(missingUser.isPresent()).isFalse();
+    assertThat(missingUser).isEmpty();
   }
 
 }

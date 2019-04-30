@@ -106,7 +106,7 @@ public class LdapAuthenticatorTest {
 
     Optional<User> missingUser =
         ldapAuthenticator.authenticate(new BasicCredentials("sysadmin", "badpass"));
-    assertThat(missingUser.isPresent()).isFalse();
+    assertThat(missingUser).isEmpty();
   }
 
   @Ignore
@@ -115,13 +115,13 @@ public class LdapAuthenticatorTest {
     String crazyUsername = "sysadmin)`~!@#$%^&*()+=[]{}\\|;:'\",<>?/\r\n\t";
     Optional<User> missingUser =
         ldapAuthenticator.authenticate(new BasicCredentials(crazyUsername, "badpass"));
-    assertThat(missingUser.isPresent()).isFalse();
+    assertThat(missingUser).isEmpty();
   }
 
   @Ignore
   @Test
   public void ldapAuthenticatorRejectsEmptyPassword() throws Exception {
     Optional<User> user = ldapAuthenticator.authenticate(new BasicCredentials("sysadmin", ""));
-    assertThat(user.isPresent()).isFalse();
+    assertThat(user).isEmpty();
   }
 }

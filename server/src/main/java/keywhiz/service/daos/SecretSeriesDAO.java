@@ -48,7 +48,6 @@ import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
-import static org.jooq.impl.DSL.count;
 import static org.jooq.impl.DSL.decode;
 import static org.jooq.impl.DSL.least;
 import static org.jooq.impl.DSL.val;
@@ -216,8 +215,13 @@ public class SecretSeriesDAO {
   public void deleteSecretSeriesByName(String name) {
     long now = OffsetDateTime.now().toEpochSecond();
     dslContext.transaction(configuration -> {
+      // find the record and lock it until this transaction is complete
       SecretsRecord r = DSL.using(configuration)
-          .fetchOne(SECRETS, SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()));
+          .select()
+          .from(SECRETS)
+          .where(SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()))
+          .forUpdate()
+          .fetchOneInto(SECRETS);
       if (r != null) {
         DSL.using(configuration)
             .update(SECRETS)
@@ -238,17 +242,26 @@ public class SecretSeriesDAO {
   public void deleteSecretSeriesById(long id) {
     long now = OffsetDateTime.now().toEpochSecond();
     dslContext.transaction(configuration -> {
-      DSL.using(configuration)
-          .update(SECRETS)
-          .set(SECRETS.CURRENT, (Long) null)
-          .set(SECRETS.UPDATEDAT, now)
-          .where(SECRETS.ID.eq(id))
-          .execute();
-
-      DSL.using(configuration)
-          .delete(ACCESSGRANTS)
-          .where(ACCESSGRANTS.SECRETID.eq(id))
-          .execute();
+      // find the record and lock it until this transaction is complete
+      SecretsRecord r = DSL.using(configuration)
+          .select()
+          .from(SECRETS)
+          .where(SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNotNull()))
+          .forUpdate()
+          .fetchOneInto(SECRETS);
+      if (r != null) {
+        DSL.using(configuration)
+            .update(SECRETS)
+            .set(SECRETS.NAME, transformNameForDeletion(r.getName()))
+            .set(SECRETS.CURRENT, (Long) null)
+            .set(SECRETS.UPDATEDAT, now)
+            .where(SECRETS.ID.eq(id))
+            .execute();
+        DSL.using(configuration)
+            .delete(ACCESSGRANTS)
+            .where(ACCESSGRANTS.SECRETID.eq(id))
+            .execute();
+      }
     });
   }
 
