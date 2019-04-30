@@ -7,15 +7,11 @@ import io.dropwizard.setup.Bootstrap;
 import java.io.Console;
 import java.sql.SQLException;
 import java.util.Scanner;
-import javax.inject.Inject;
 import javax.sql.DataSource;
 import keywhiz.KeywhizConfig;
-import keywhiz.service.crypto.ContentCryptographer;
-import keywhiz.service.daos.SecretContentDAO;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretContentMapper;
 import keywhiz.service.daos.SecretDAO;
-import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.daos.SecretSeriesMapper;
 import keywhiz.utility.DSLContexts;
@@ -23,6 +19,10 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import org.joda.time.DateTime;
 import org.jooq.DSLContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static java.lang.String.format;
 
 /**
  * Secrets which are deleted from Keywhiz--whether through the admin client or the automation
@@ -35,6 +35,7 @@ import org.jooq.DSLContext;
  * need to be manually recovered.
  */
 public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> {
+  private static final Logger logger = LoggerFactory.getLogger(DropDeletedSecretsCommand.class);
   protected static final String INPUT_DELETED_BEFORE = "deleted-before";
   protected static final String INPUT_SLEEP_MILLIS = "sleep-millis";
 
@@ -96,6 +97,10 @@ public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> 
       System.out.format(
           "No secrets deleted before %s were found (out of %d deleted secrets); not altering the database.\n",
           deletedBefore.toString(), totalDeletedCount);
+
+      logger.info(format(
+          "drop-deleted-secrets: No secrets deleted before %s were found (out of %d deleted secrets); not altering the database.",
+          deletedBefore.toString(), totalDeletedCount));
       return;
     }
 
@@ -121,15 +126,24 @@ public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> 
     // remove the secrets
     System.out.format("Removing %d secrets which were deleted before %s from the database\n",
         affectedCount, deletedBefore.toString());
+
+    logger.info(format(
+        "drop-deleted-secrets: Removing %d secrets which were deleted before %s from the database",
+        affectedCount, deletedBefore.toString()));
     try {
       secretDAO.dangerPermanentlyRemoveSecretsDeletedBeforeDate(deletedBefore, sleepMillis);
     } catch (InterruptedException e) {
       System.out.println("Error removing secrets; please retry command");
       e.printStackTrace();
+
+      logger.info(format(
+          "drop-deleted-secrets: error removing secrets (some secrets may already be deleted): %s",
+          e.getMessage()));
     }
   }
 
-  private SecretDAO getSecretDAO(Bootstrap<KeywhizConfig> bootstrap, KeywhizConfig config) throws SQLException {
+  private SecretDAO getSecretDAO(Bootstrap<KeywhizConfig> bootstrap, KeywhizConfig config)
+      throws SQLException {
     DataSource dataSource = config.getDataSourceFactory()
         .build(new MetricRegistry(), "drop-deleted-secrets-datasource");
     DSLContext dslContext = DSLContexts.databaseAgnostic(dataSource);
