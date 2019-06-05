@@ -41,13 +41,8 @@ public class SecretsResponse {
 
   @Override
   public boolean equals(Object o) {
-    if (o instanceof SecretsResponse) {
-      SecretsResponse that = (SecretsResponse) o;
-      if (Objects.equal(this.secrets, that.secrets)) {
-        return true;
-      }
-    }
-    return false;
+    if (!(o instanceof SecretsResponse)) return false;
+    return Objects.equal(this.secrets, ((SecretsResponse) o).secrets);
   }
 
   @Override
