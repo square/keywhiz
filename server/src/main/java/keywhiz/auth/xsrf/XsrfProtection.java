@@ -71,7 +71,7 @@ public class XsrfProtection {
         config.getPath(), -1, config.isHttpOnly(), config.isSecure());
     Response response = newResponse();
     response.addCookie(cookie);
-    return NewCookie.valueOf(response.getHttpFields().getStringField(HttpHeader.SET_COOKIE));
+    return NewCookie.valueOf(response.getHttpFields().get(HttpHeader.SET_COOKIE));
   }
 
   public static boolean isValid(String header, String session) {
