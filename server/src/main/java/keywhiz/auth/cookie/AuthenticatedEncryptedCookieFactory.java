@@ -123,7 +123,7 @@ public class AuthenticatedEncryptedCookieFactory {
 
     Response response = newResponse();
     response.addCookie(cookie);
-    return NewCookie.valueOf(response.getHttpFields().getStringField(HttpHeader.SET_COOKIE));
+    return NewCookie.valueOf(response.getHttpFields().get(HttpHeader.SET_COOKIE));
   }
 
   private Response newResponse() {
