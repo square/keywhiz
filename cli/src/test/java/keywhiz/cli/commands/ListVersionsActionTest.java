@@ -1,7 +1,6 @@
 package keywhiz.cli.commands;
 
 import com.google.common.collect.ImmutableMap;
-import java.util.Arrays;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
@@ -15,10 +14,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 

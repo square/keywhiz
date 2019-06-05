@@ -41,7 +41,6 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.isNotNull;
 import static org.mockito.Mockito.when;
 
 public class AutomationGroupResourceTest {
