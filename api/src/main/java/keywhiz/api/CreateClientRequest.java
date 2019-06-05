@@ -35,12 +35,7 @@ public class CreateClientRequest {
 
   @Override public boolean equals(Object o) {
     if (this == o) return true;
-    if (o instanceof CreateClientRequest) {
-      CreateClientRequest that = (CreateClientRequest) o;
-      if (Objects.equal(this.name, that.name)) {
-        return true;
-      }
-    }
-    return false;
+    if (!(o instanceof CreateClientRequest)) return false;
+    return Objects.equal(this.name, ((CreateClientRequest) o).name);
   }
 }
