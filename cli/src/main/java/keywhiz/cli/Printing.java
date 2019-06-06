@@ -226,7 +226,7 @@ public class Printing {
       return;
     }
 
-    System.out.println(versions.get(0).name() + "\n");
+    System.out.println(versions.get(0).name() + '\n');
 
     if (currentVersion < 0) {
       System.out.println("Current secret version unknown!");

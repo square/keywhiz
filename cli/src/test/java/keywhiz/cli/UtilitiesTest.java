@@ -50,7 +50,7 @@ public class UtilitiesTest {
         "*", "+", "=", "\0", "\u0002", "\000");
 
     for (String name : specialCharacters) {
-      assertFalse("Failed character: \"" + name + "\"", validName(name));
+      assertFalse("Failed character: \"" + name + '"', validName(name));
     }
   }
 }

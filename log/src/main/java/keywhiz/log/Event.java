@@ -66,7 +66,7 @@ public class Event {
         .append(user)
         .append("\" Additional information: \"")
         .append(extraInfo)
-        .append("\"")
+        .append('"')
         .toString();
   }
 }
