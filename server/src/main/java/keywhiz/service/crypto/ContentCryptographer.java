@@ -221,7 +221,7 @@ public class ContentCryptographer {
   }
 
   // Preferable to signify encryption mode as an enum. javax.crypto.Cipher uses ints.
-  private static enum Mode {
+  private enum Mode {
     ENCRYPT(ENCRYPT_MODE), DECRYPT(DECRYPT_MODE);
 
     public final int cipherMode;
