@@ -6,13 +6,5 @@
     "path" : "/admin",
     "secure" : true,
     "httpOnly" : true
-  },
-  {
-    "name" : "XSRF-TOKEN",
-    "value" : "xsrf-contents",
-    "domain" : "localhost",
-    "path" : "/",
-    "secure" : true,
-    "httpOnly" : false
   }
 ]

@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.net.HttpHeaders;
 import io.dropwizard.jackson.Jackson;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -45,16 +44,10 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-import javax.servlet.http.Cookie;
 import okhttp3.ConnectionSpec;
-import okhttp3.Interceptor;
 import okhttp3.JavaNetCookieJar;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import org.eclipse.jetty.server.CookieCutter;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.net.CookiePolicy.ACCEPT_ALL;
 import static java.nio.file.StandardOpenOption.CREATE;
@@ -118,8 +111,6 @@ public class ClientUtils {
         .followSslRedirects(false);
 
     client.retryOnConnectionFailure(false);
-    client.networkInterceptors()
-        .add(new XsrfTokenInterceptor("XSRF-TOKEN", "X-XSRF-TOKEN"));
 
     cookies.forEach(c -> getCookieManager().getCookieStore().add(null, c));
     client.cookieJar(new JavaNetCookieJar(getCookieManager()));
@@ -189,43 +180,6 @@ public class ClientUtils {
     } else {
       throw new RuntimeException("Please login by running a command without piping.\n"
           + "For example: keywhiz.cli login");
-    }
-  }
-
-  /**
-   * HttpClient request interceptor to handle server-side XSRF protection.
-   *
-   *
-   * If the server set a cookie with a specified name, the client will send a header with each
-   * request with a specified name and value of the server-supplied cookie.
-   */
-  public static class XsrfTokenInterceptor implements Interceptor {
-    private final String xsrfCookieName;
-    private final String xsrfHeaderName;
-
-    public XsrfTokenInterceptor(String xsrfCookieName, String xsrfHeaderName) {
-      checkArgument(!xsrfCookieName.isEmpty());
-      checkArgument(!xsrfHeaderName.isEmpty());
-
-      this.xsrfCookieName = xsrfCookieName;
-      this.xsrfHeaderName = xsrfHeaderName;
-    }
-
-    @Override public Response intercept(Chain chain) throws IOException {
-      Request request = chain.request();
-      for (String header : request.headers(HttpHeaders.COOKIE)) {
-        CookieCutter cookieCutter = new CookieCutter();
-        cookieCutter.addCookieField(header);
-
-        for (Cookie cookie : cookieCutter.getCookies()) {
-          if (cookie.getName().equals(xsrfCookieName)) {
-            request = request.newBuilder()
-                .addHeader(xsrfHeaderName, cookie.getValue())
-                .build();
-          }
-        }
-      }
-      return chain.proceed(request);
     }
   }
 }

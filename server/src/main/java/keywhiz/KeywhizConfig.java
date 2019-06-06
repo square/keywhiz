@@ -61,7 +61,6 @@ public class KeywhizConfig extends Configuration {
   @JsonProperty
   private CookieConfig sessionCookie;
 
-  @NotNull
   @JsonProperty
   private CookieConfig xsrfCookie;
 
@@ -148,15 +147,6 @@ public class KeywhizConfig extends Configuration {
   /** @return Configuration for authenticating session cookie provided by admin login. */
   public CookieConfig getSessionCookieConfig() {
     return sessionCookie;
-  }
-
-  /**
-   * @return Configuration for cross-site request forgery (XSRF) prevention cookie.
-   *
-   * Admin clients must set an XSRF header for requests with the value of this cookie.
-   */
-  public CookieConfig getXsrfCookieConfig() {
-    return xsrfCookie;
   }
 
   /** @return Base64-encoded key used to encrypt authenticating cookies. */

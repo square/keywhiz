@@ -80,11 +80,6 @@ sessionCookie:
   name: session
   path: /admin
 
-xsrfCookie:
-  name: XSRF-TOKEN
-  path: /
-  httpOnly: false
-
 contentKeyStore:
   path: ${CONTENT_KEYSTORE_PATH}
   type: JCEKS

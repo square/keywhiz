@@ -23,7 +23,6 @@ import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.util.Map;
 import javax.annotation.Nullable;
-import javax.servlet.http.Cookie;
 import javax.ws.rs.core.MediaType;
 import keywhiz.client.KeywhizClient;
 import keywhiz.testing.HttpClients;
@@ -31,7 +30,6 @@ import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.eclipse.jetty.server.CookieCutter;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -69,44 +67,6 @@ public class AuthHelper {
         .post(body)
         .addHeader("Content-Type", MediaType.APPLICATION_JSON)
         .build();
-  }
-
-  /**
-   * HttpClient request interceptor to handle server-side XSRF protection.
-   *
-   * If the server set a cookie with a specified name, the client will send a header with each
-   * request with a specified name and value of the server-supplied cookie.
-   */
-  public static class XsrfRequestInterceptor implements Interceptor {
-    private final String xsrfCookieName;
-    private final String xsrfHeaderName;
-
-    public XsrfRequestInterceptor(String xsrfCookieName, String xsrfHeaderName) {
-      checkArgument(!xsrfCookieName.isEmpty());
-      checkArgument(!xsrfHeaderName.isEmpty());
-
-      this.xsrfCookieName = xsrfCookieName;
-      this.xsrfHeaderName = xsrfHeaderName;
-    }
-
-
-    @Override public Response intercept(Interceptor.Chain chain) throws IOException {
-      Request request = chain.request();
-      for (String header : request.headers(HttpHeaders.COOKIE)) {
-
-        CookieCutter cookieCutter = new CookieCutter();
-        cookieCutter.addCookieField(header);
-
-        for (Cookie cookie : cookieCutter.getCookies()) {
-          if (cookie.getName().equals(xsrfCookieName)) {
-            request = request.newBuilder()
-                .addHeader(xsrfHeaderName, cookie.getValue())
-                .build();
-          }
-        }
-      }
-      return chain.proceed(request);
-    }
   }
 
   public static class AcceptRequestInterceptor implements Interceptor {

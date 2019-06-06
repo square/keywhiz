@@ -34,14 +34,11 @@ import keywhiz.auth.cookie.CookieConfig;
 import keywhiz.auth.cookie.GCMEncryptor;
 import keywhiz.auth.cookie.SessionCookie;
 import keywhiz.auth.ldap.LdapAuthenticator;
-import keywhiz.auth.xsrf.Xsrf;
-import keywhiz.auth.xsrf.XsrfProtection;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 
-import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -52,7 +49,6 @@ public class SessionLoginResourceTest {
   @Inject ObjectMapper mapper;
   @Inject GCMEncryptor GCMEncryptor;
   @Inject @SessionCookie CookieConfig sessionCookieConfig;
-  @Inject @Xsrf CookieConfig xsrfCookieConfig;
 
   SessionLoginResource sessionLoginResource;
   CookieAuthenticator cookieAuthenticator;
@@ -63,9 +59,8 @@ public class SessionLoginResourceTest {
   public void setUp() throws Exception {
     AuthenticatedEncryptedCookieFactory cookieFactory =
         new AuthenticatedEncryptedCookieFactory(Clock.systemUTC(), mapper, GCMEncryptor, sessionCookieConfig);
-    XsrfProtection xsrfProtection = new XsrfProtection(xsrfCookieConfig);
 
-    sessionLoginResource = new SessionLoginResource(ldapAuthenticator, cookieFactory, xsrfProtection);
+    sessionLoginResource = new SessionLoginResource(ldapAuthenticator, cookieFactory);
     cookieAuthenticator = new CookieAuthenticator(mapper, GCMEncryptor);
   }
 
@@ -85,7 +80,7 @@ public class SessionLoginResourceTest {
     assertThat(response.getStatus()).isEqualTo(200);
 
     Map<String, NewCookie> responseCookies = response.getCookies();
-    assertThat(responseCookies).hasSize(2).containsOnlyKeys("session", "XSRF-TOKEN");
+    assertThat(responseCookies).hasSize(1).containsOnlyKeys("session");
 
     User authUser = cookieAuthenticator.authenticate(responseCookies.get("session"))
         .orElseThrow(RuntimeException::new);

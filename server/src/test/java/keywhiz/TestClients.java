@@ -49,7 +49,6 @@ public class TestClients {
 
     return HttpClients.builder()
         .addRequestInterceptors(
-            new AuthHelper.XsrfRequestInterceptor("XSRF-TOKEN", "X-XSRF-TOKEN"),
             new AuthHelper.AcceptRequestInterceptor(MediaType.APPLICATION_JSON))
         .build(trustStore);
   }
@@ -77,7 +76,7 @@ public class TestClients {
         .build(trustStore);
   }
 
-  public static OkHttpClient noCertNoXsrfClient() {
+  public static OkHttpClient noCertClient() {
     String password = "ponies";
     KeyStore trustStore = keyStoreFromResource("dev_and_test_truststore.p12", password);
 
@@ -92,7 +91,6 @@ public class TestClients {
 
     OkHttpClient httpClient = HttpClients.builder()
         .addRequestInterceptors(
-            new AuthHelper.XsrfRequestInterceptor("XSRF-TOKEN", "X-XSRF-TOKEN"),
             new AuthHelper.AcceptRequestInterceptor(MediaType.APPLICATION_JSON))
         .build(trustStore);
 

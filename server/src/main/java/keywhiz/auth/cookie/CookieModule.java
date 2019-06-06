@@ -19,7 +19,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import java.security.SecureRandom;
 import java.util.Base64;
-import keywhiz.auth.xsrf.Xsrf;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -28,11 +27,6 @@ public class CookieModule extends AbstractModule {
 
   public CookieModule(String cookieKey) {
     this.cookieKey = checkNotNull(cookieKey);
-  }
-
-  @Override
-  protected void configure() {
-    bindConstant().annotatedWith(Xsrf.class).to("X-XSRF-TOKEN");
   }
 
   @Provides GCMEncryptor gcmEncryptor(SecureRandom secureRandom) {

@@ -77,8 +77,6 @@ public class SessionLoginResourceIntegrationTest {
       }
     }
 
-    assertThat(cookieNames).containsOnly("session", "XSRF-TOKEN");
-
     Pattern pattern = Pattern.compile("^session=(.+)$");
     assertThat(sessionCookie).matches(pattern);
   }
