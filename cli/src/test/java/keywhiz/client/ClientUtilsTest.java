@@ -51,15 +51,6 @@ public class ClientUtilsTest {
   @Mock CookieStore cookieStore;
   @Mock CliConfiguration config;
 
-  private HttpCookie xsrfCookie = new HttpCookie("XSRF-TOKEN", "xsrf-contents");
-  {
-    xsrfCookie.setPath("/");
-    xsrfCookie.setDomain("localhost");
-    xsrfCookie.setVersion(1);
-    xsrfCookie.setHttpOnly(false);
-    xsrfCookie.setSecure(true);
-  }
-
   private HttpCookie sessionCookie = new HttpCookie("session", "session-contents");
   {
     sessionCookie.setPath("/admin");
@@ -69,7 +60,7 @@ public class ClientUtilsTest {
     sessionCookie.setSecure(true);
   }
 
-  private ImmutableList<HttpCookie> cookieList = ImmutableList.of(sessionCookie, xsrfCookie);
+  private ImmutableList<HttpCookie> cookieList = ImmutableList.of(sessionCookie);
 
   private Path cookiePath;
 
@@ -85,7 +76,6 @@ public class ClientUtilsTest {
 
     assertThat(sslClient.followSslRedirects()).isFalse();
     assertThat(sslClient.sslSocketFactory()).isNotNull();
-    assertThat(sslClient.networkInterceptors()).isNotEmpty();
 
     assertThat(sslClient.cookieJar()).isNotNull();
     java.util.List<HttpCookie> cookieList = ClientUtils.getCookieManager().getCookieStore().getCookies();
@@ -98,16 +88,14 @@ public class ClientUtilsTest {
     assertThat(sslClient.followSslRedirects()).isFalse();
     assertThat(sslClient.cookieJar()).isNotNull();
     assertThat(sslClient.sslSocketFactory()).isNotNull();
-    assertThat(sslClient.networkInterceptors()).isNotEmpty();
 
     java.util.List<HttpCookie> cookieList = ClientUtils.getCookieManager().getCookieStore().getCookies();
-    assertThat(cookieList).contains(xsrfCookie);
     assertThat(cookieList).contains(sessionCookie);
   }
 
   @Test public void testSaveCookies() throws Exception {
     when(cookieManager.getCookieStore()).thenReturn(cookieStore);
-    when(cookieStore.getCookies()).thenReturn(ImmutableList.of(xsrfCookie, sessionCookie));
+    when(cookieStore.getCookies()).thenReturn(ImmutableList.of(sessionCookie));
 
     ClientUtils.saveCookies(cookieManager, cookiePath);
 
@@ -133,7 +121,7 @@ public class ClientUtilsTest {
 
   @Test public void testSaveAndLoadCookies() throws Exception {
     when(cookieManager.getCookieStore()).thenReturn(cookieStore);
-    when(cookieStore.getCookies()).thenReturn(ImmutableList.of(xsrfCookie, sessionCookie));
+    when(cookieStore.getCookies()).thenReturn(ImmutableList.of(sessionCookie));
     ClientUtils.saveCookies(cookieManager, cookiePath);
 
     assertThat(ClientUtils.loadCookies(cookiePath)).hasSameElementsAs(cookieList);

@@ -145,11 +145,6 @@ sessionCookie:
   name: session
   path: /admin
 
-xsrfCookie:
-  name: XSRF-TOKEN
-  path: /
-  httpOnly: false
-
 contentKeyStore:
   path: derivation.jceks
   type: JCEKS

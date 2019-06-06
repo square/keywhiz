@@ -29,14 +29,12 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import javax.sql.DataSource;
 import keywhiz.auth.mutualssl.ClientCertificateFilter;
-import keywhiz.auth.xsrf.XsrfServletFilter;
 import keywhiz.commands.AddUserCommand;
 import keywhiz.commands.DbSeedCommand;
 import keywhiz.commands.DropDeletedSecretsCommand;
 import keywhiz.commands.GenerateAesKeyCommand;
 import keywhiz.commands.MigrateCommand;
 import keywhiz.commands.PreviewMigrateCommand;
-import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.filters.CookieRenewingFilter;
 import keywhiz.service.filters.SecurityHeadersFilter;
 import keywhiz.service.providers.AuthResolver;
@@ -125,10 +123,6 @@ public class KeywhizService extends Application<KeywhizConfig> {
         .addMappingForUrlPatterns(null, /* Default is for requests */
             false /* Can be after other filters */, "/*" /* Every request */);
     jersey.register(injector.getInstance(CookieRenewingFilter.class));
-
-    environment.servlets().addFilter("xsrf-filter", injector.getInstance(XsrfServletFilter.class))
-        .addMappingForUrlPatterns(null /* Default is for requests */, false /* Can be after other filters */,
-            "/admin/*" /* Path to filter on */);
 
     logger.debug("Registering providers");
     jersey.register(new AuthResolver.Binder(injector.getInstance(ClientAuthFactory.class),

@@ -36,7 +36,6 @@ import javax.ws.rs.core.Response;
 import keywhiz.api.LoginRequest;
 import keywhiz.auth.User;
 import keywhiz.auth.cookie.AuthenticatedEncryptedCookieFactory;
-import keywhiz.auth.xsrf.XsrfProtection;
 import keywhiz.service.config.Readonly;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,14 +53,12 @@ public class SessionLoginResource {
 
   private final Authenticator<BasicCredentials, User> userAuthenticator;
   private final AuthenticatedEncryptedCookieFactory cookieFactory;
-  private final XsrfProtection xsrfProtection;
 
   @Inject
   public SessionLoginResource(@Readonly Authenticator<BasicCredentials, User> userAuthenticator,
-      AuthenticatedEncryptedCookieFactory cookieFactory, XsrfProtection xsrfProtection) {
+      AuthenticatedEncryptedCookieFactory cookieFactory) {
     this.userAuthenticator = userAuthenticator;
     this.cookieFactory = cookieFactory;
-    this.xsrfProtection = xsrfProtection;
   }
 
   /**
@@ -107,8 +104,7 @@ public class SessionLoginResource {
     String session = cookieFactory.getSession(user, expiration);
 
     NewCookie cookie = cookieFactory.cookieFor(session, expiration);
-    NewCookie xsrfCookie = xsrfProtection.generate(session);
 
-    return ImmutableList.of(cookie, xsrfCookie);
+    return ImmutableList.of(cookie);
   }
 }

@@ -32,7 +32,6 @@ import keywhiz.auth.User;
 import keywhiz.auth.cookie.CookieConfig;
 import keywhiz.auth.cookie.CookieModule;
 import keywhiz.auth.cookie.SessionCookie;
-import keywhiz.auth.xsrf.Xsrf;
 import keywhiz.log.AuditLog;
 import keywhiz.log.SimpleLogger;
 import keywhiz.service.config.Readonly;
@@ -70,8 +69,6 @@ public class ServiceModule extends AbstractModule {
 
     bind(CookieConfig.class).annotatedWith(SessionCookie.class)
         .toInstance(config.getSessionCookieConfig());
-    bind(CookieConfig.class).annotatedWith(Xsrf.class)
-        .toInstance(config.getXsrfCookieConfig());
 
     // TODO(justin): Consider https://github.com/HubSpot/dropwizard-guice.
     bind(Environment.class).toInstance(environment);

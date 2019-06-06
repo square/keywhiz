@@ -85,14 +85,12 @@ public class CookieRenewingFilterTest {
     when(authenticator.authenticate(cookie)).thenReturn(Optional.of(user));
 
     NewCookie newCookie1 = new NewCookie(SESSION_COOKIE, "new session");
-    NewCookie newCookie2 = new NewCookie("XSRF", "new xsrf");
     when(sessionLoginResource.cookiesForUser(user))
-        .thenReturn(ImmutableList.of(newCookie1, newCookie2));
+        .thenReturn(ImmutableList.of(newCookie1));
 
     filter.filter(request, response);
     assertThat(getCookieMap(response)).contains(
-        entry(newCookie1.getName(), newCookie1.getValue()),
-        entry(newCookie2.getName(), newCookie2.getValue()));
+        entry(newCookie1.getName(), newCookie1.getValue()));
   }
 
   @Test public void doesNothingWhenCookieInvalid() throws Exception {
