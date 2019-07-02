@@ -904,7 +904,7 @@ public class SecretResourceTest {
   List<String> listExpiring(Long time, String groupName) throws IOException {
     String requestURL = "/automation/v2/secrets/expiring/";
     if (time != null && time > 0) {
-      requestURL += time.toString() + "/";
+      requestURL += time.toString() + '/';
     }
     if (groupName != null && groupName.length() > 0) {
       requestURL += groupName;
@@ -919,7 +919,7 @@ public class SecretResourceTest {
   List<SanitizedSecret> listExpiringV2(Long time, String groupName) throws IOException {
     String requestURL = "/automation/v2/secrets/expiring/v2/";
     if (time != null && time > 0) {
-      requestURL += time.toString() + "/";
+      requestURL += time.toString() + '/';
     }
     if (groupName != null && groupName.length() > 0) {
       requestURL += groupName;
@@ -934,7 +934,7 @@ public class SecretResourceTest {
   List<SanitizedSecretWithGroups> listExpiringV3(Long time, String groupName) throws IOException {
     String requestURL = "/automation/v2/secrets/expiring/v3/";
     if (time != null && time > 0) {
-      requestURL += time.toString() + "/";
+      requestURL += time.toString() + '/';
     }
     if (groupName != null && groupName.length() > 0) {
       requestURL += groupName;
