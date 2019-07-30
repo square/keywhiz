@@ -371,6 +371,10 @@ public class AclDAOTest {
     assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
       aclDAO.getSanitizedSecretsFor(client2);
     }).withMessage("Invalid HMAC for group membership");
+
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretFor(client2, secret1.getName());
+    }).withMessage("Invalid HMAC for group membership");
   }
 
   @Test public void modifyClientId() {
@@ -389,32 +393,15 @@ public class AclDAOTest {
         .where(CLIENTS.ID.eq(client2.getId()))
         .execute();
 
-    Client maliciousClient = clientDAO.getClient(client2.getName()).get();
+    Client maliciousClient = clientDAO.getClient(client2.getName()).orElseThrow();
 
-    assertThat(aclDAO.getSanitizedSecretsFor(maliciousClient)).containsExactly(
-              SanitizedSecret.fromSecret(secret1));
-  }
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretsFor(maliciousClient);
+    }).withMessage("Invalid HMAC for client");
 
-  @Test public void modifyGroupId() {
-    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
-    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
-    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
-
-
-    jooqContext.update(GROUPS)
-        .set(GROUPS.ID, 1337L)
-        .where(GROUPS.ID.eq(group1.getId()))
-        .execute();
-
-    jooqContext.update(GROUPS)
-        .set(GROUPS.ID, group1.getId())
-        .where(GROUPS.ID.eq(group2.getId()))
-        .execute();
-
-    Group maliciousGroup = groupDAO.getGroup(group2.getName()).get();
-
-    assertThat(aclDAO.getSanitizedSecretsFor(maliciousGroup)).containsExactly(
-        SanitizedSecret.fromSecret(secret1));
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretFor(maliciousClient, secret1.getName());
+    }).withMessage("Invalid HMAC for client");
   }
 
   @Test public void modifySecretId() {
@@ -436,6 +423,9 @@ public class AclDAOTest {
     SanitizedSecret sanitizedSecret = (SanitizedSecret) aclDAO.getSanitizedSecretsFor(client2)
         .toArray()[0];
     assertThat(sanitizedSecret.name()).isEqualTo(secret1.getName());
+    SanitizedSecret sanitizedSecret2 = aclDAO.getSanitizedSecretFor(
+        client2, secret1.getName()).orElseThrow();
+    assertThat(sanitizedSecret2.name()).isEqualTo(secret1.getName());
   }
 
   private int accessGrantsTableSize() {

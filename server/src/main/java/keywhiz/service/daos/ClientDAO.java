@@ -75,7 +75,7 @@ public class ClientDAO {
     long generatedId = generateIdByteBuffer.getLong();
 
     String hmacContent = CLIENTS.getName() + "|" + name + "|" + generatedId;
-    String verificationHmac = cryptographer.computeHmac(hmacContent.getBytes(UTF_8));
+    String rowHmac = cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
 
     r.setId(generatedId);
     r.setName(name);
@@ -87,7 +87,7 @@ public class ClientDAO {
     r.setDescription(description);
     r.setEnabled(true);
     r.setAutomationallowed(false);
-    r.setRowHmac(verificationHmac);
+    r.setRowHmac(rowHmac);
     r.store();
 
     return r.getId();

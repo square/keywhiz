@@ -278,17 +278,25 @@ public class AclDAO {
     query.addSelect(ACCESSGRANTS.ROW_HMAC);
     query.addSelect(MEMBERSHIPS.ROW_HMAC);
     query.addSelect(MEMBERSHIPS.GROUPID);
+    query.addSelect(CLIENTS.ROW_HMAC);
     query.fetch()
         .map(row -> {
           SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
 
-          String membershipsHmac = generateVerificationHmac(
+          String clientHmac = generateRowHmac(
+              CLIENTS.getName(), client.getName(), client.getId()
+          );
+          if (!clientHmac.equals(row.getValue(CLIENTS.ROW_HMAC))) {
+            throw new AssertionError("Invalid HMAC for client");
+          }
+
+          String membershipsHmac = generateRowHmac(
               MEMBERSHIPS.getName(), client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
           if (!membershipsHmac.equals(row.getValue(MEMBERSHIPS.ROW_HMAC))) {
             throw new AssertionError("Invalid HMAC for group membership");
           }
 
-          String accessgrantsHmac = generateVerificationHmac(
+          String accessgrantsHmac = generateRowHmac(
               ACCESSGRANTS.getName(), row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
           if (!accessgrantsHmac.equals(row.getValue(ACCESSGRANTS.ROW_HMAC))) {
             throw new AssertionError("Invalid HMAC for access grant");
@@ -352,17 +360,25 @@ public class AclDAO {
     query.addSelect(ACCESSGRANTS.ROW_HMAC);
     query.addSelect(MEMBERSHIPS.ROW_HMAC);
     query.addSelect(MEMBERSHIPS.GROUPID);
+    query.addSelect(CLIENTS.ROW_HMAC);
     return Optional.ofNullable(query.fetchOne())
         .map(row -> {
           SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
 
-          String membershipsHmac = generateVerificationHmac(
+          String clientHmac = generateRowHmac(
+              CLIENTS.getName(), client.getName(), client.getId()
+          );
+          if (!clientHmac.equals(row.getValue(CLIENTS.ROW_HMAC))) {
+            throw new AssertionError("Invalid HMAC for client");
+          }
+
+          String membershipsHmac = generateRowHmac(
               MEMBERSHIPS.getName(), client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
           if (!membershipsHmac.equals(row.getValue(MEMBERSHIPS.ROW_HMAC))) {
             throw new AssertionError("Invalid HMAC for group membership");
           }
 
-          String accessgrantsHmac = generateVerificationHmac(
+          String accessgrantsHmac = generateRowHmac(
               ACCESSGRANTS.getName(), row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
           if (!accessgrantsHmac.equals(row.getValue(ACCESSGRANTS.ROW_HMAC))) {
             throw new AssertionError("Invalid HMAC for access grant");
@@ -419,7 +435,7 @@ public class AclDAO {
       return;
     }
 
-    String verificationHmac = generateVerificationHmac(ACCESSGRANTS.getName(), groupId, secretId);
+    String verificationHmac = generateRowHmac(ACCESSGRANTS.getName(), groupId, secretId);
 
     DSL.using(configuration)
         .insertInto(ACCESSGRANTS)
@@ -450,7 +466,7 @@ public class AclDAO {
       return;
     }
 
-    String verificationHmac = generateVerificationHmac(MEMBERSHIPS.getName(), clientId, groupId);
+    String verificationHmac = generateRowHmac(MEMBERSHIPS.getName(), clientId, groupId);
 
     DSL.using(configuration)
         .insertInto(MEMBERSHIPS)
@@ -482,9 +498,14 @@ public class AclDAO {
     return ImmutableSet.copyOf(r);
   }
 
-  private String generateVerificationHmac(String table, long id1, long id2) {
+  private String generateRowHmac(String table, String name, long id) {
+    String hmacContent = table + "|" + name + "|" + id;
+    return cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
+  }
+
+  private String generateRowHmac(String table, long id1, long id2) {
     String hmacContent = table + "|" + id1 + "|" + id2;
-    return cryptographer.computeHmac(hmacContent.getBytes(UTF_8));
+    return cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
   }
 
   /**

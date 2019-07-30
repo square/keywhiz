@@ -436,7 +436,7 @@ public class SecretResource {
     if (!secretContent.hmac().isEmpty()) {
       return true; // No need to backfill
     }
-    String hmac = cryptographer.computeHmac(cryptographer.decrypt(secretContent.encryptedContent()).getBytes(UTF_8));
+    String hmac = cryptographer.computeHmac(cryptographer.decrypt(secretContent.encryptedContent()).getBytes(UTF_8), "hmackey");
     return secretSeriesDAO.setHmac(secretContent.id(), hmac) == 1; // We expect only one row to be changed
   }
 
