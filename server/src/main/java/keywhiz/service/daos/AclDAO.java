@@ -40,6 +40,7 @@ import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
@@ -55,6 +56,7 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
@@ -75,11 +77,12 @@ public class AclDAO {
   private final GroupMapper groupMapper;
   private final SecretSeriesMapper secretSeriesMapper;
   private final SecretContentMapper secretContentMapper;
+  private final ContentCryptographer cryptographer;
 
   private AclDAO(DSLContext dslContext, ClientDAOFactory clientDAOFactory, GroupDAOFactory groupDAOFactory,
                  SecretContentDAOFactory secretContentDAOFactory, SecretSeriesDAOFactory secretSeriesDAOFactory,
                  ClientMapper clientMapper, GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper,
-                 SecretContentMapper secretContentMapper) {
+                 SecretContentMapper secretContentMapper, ContentCryptographer cryptographer) {
     this.dslContext = dslContext;
     this.clientDAOFactory = clientDAOFactory;
     this.groupDAOFactory = groupDAOFactory;
@@ -89,6 +92,7 @@ public class AclDAO {
     this.groupMapper = groupMapper;
     this.secretSeriesMapper = secretSeriesMapper;
     this.secretContentMapper = secretContentMapper;
+    this.cryptographer = cryptographer;
   }
 
   public void findAndAllowAccess(long secretId, long groupId, AuditLog auditLog, String user, Map<String, String> extraInfo) {
@@ -271,9 +275,25 @@ public class AclDAO {
     query.addSelect(SECRETS_CONTENT.CREATEDBY);
     query.addSelect(SECRETS_CONTENT.METADATA);
     query.addSelect(SECRETS_CONTENT.EXPIRY);
+    query.addSelect(ACCESSGRANTS.VERIFICATION_HMAC);
+    query.addSelect(MEMBERSHIPS.VERIFICATION_HMAC);
+    query.addSelect(MEMBERSHIPS.GROUPID);
     query.fetch()
         .map(row -> {
           SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
+
+          String membershipsHmac = generateVerificationHmac(
+              MEMBERSHIPS.getName(), client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
+          if (!membershipsHmac.equals(row.getValue(MEMBERSHIPS.VERIFICATION_HMAC))) {
+            throw new AssertionError("Invalid HMAC for group membership");
+          }
+
+          String accessgrantsHmac = generateVerificationHmac(
+              ACCESSGRANTS.getName(), row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
+          if (!accessgrantsHmac.equals(row.getValue(ACCESSGRANTS.VERIFICATION_HMAC))) {
+            throw new AssertionError("Invalid HMAC for access grant");
+          }
+
           return SanitizedSecret.of(
               series.id(),
               series.name(),
@@ -329,9 +349,25 @@ public class AclDAO {
     query.addSelect(SECRETS_CONTENT.CREATEDBY);
     query.addSelect(SECRETS_CONTENT.METADATA);
     query.addSelect(SECRETS_CONTENT.EXPIRY);
+    query.addSelect(ACCESSGRANTS.VERIFICATION_HMAC);
+    query.addSelect(MEMBERSHIPS.VERIFICATION_HMAC);
+    query.addSelect(MEMBERSHIPS.GROUPID);
     return Optional.ofNullable(query.fetchOne())
         .map(row -> {
           SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
+
+          String membershipsHmac = generateVerificationHmac(
+              MEMBERSHIPS.getName(), client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
+          if (!membershipsHmac.equals(row.getValue(MEMBERSHIPS.VERIFICATION_HMAC))) {
+            throw new AssertionError("Invalid HMAC for group membership");
+          }
+
+          String accessgrantsHmac = generateVerificationHmac(
+              ACCESSGRANTS.getName(), row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
+          if (!accessgrantsHmac.equals(row.getValue(ACCESSGRANTS.VERIFICATION_HMAC))) {
+            throw new AssertionError("Invalid HMAC for access grant");
+          }
+
           return SanitizedSecret.of(
               series.id(),
               series.name(),
@@ -383,12 +419,15 @@ public class AclDAO {
       return;
     }
 
+    String verificationHmac = generateVerificationHmac(ACCESSGRANTS.getName(), groupId, secretId);
+
     DSL.using(configuration)
         .insertInto(ACCESSGRANTS)
         .set(ACCESSGRANTS.SECRETID, secretId)
         .set(ACCESSGRANTS.GROUPID, groupId)
         .set(ACCESSGRANTS.CREATEDAT, now)
         .set(ACCESSGRANTS.UPDATEDAT, now)
+        .set(ACCESSGRANTS.VERIFICATION_HMAC, verificationHmac)
         .execute();
   }
 
@@ -411,12 +450,15 @@ public class AclDAO {
       return;
     }
 
+    String verificationHmac = generateVerificationHmac(MEMBERSHIPS.getName(), clientId, groupId);
+
     DSL.using(configuration)
         .insertInto(MEMBERSHIPS)
         .set(MEMBERSHIPS.GROUPID, groupId)
         .set(MEMBERSHIPS.CLIENTID, clientId)
         .set(MEMBERSHIPS.CREATEDAT, now)
         .set(MEMBERSHIPS.UPDATEDAT, now)
+        .set(MEMBERSHIPS.VERIFICATION_HMAC, verificationHmac)
         .execute();
   }
 
@@ -438,6 +480,11 @@ public class AclDAO {
         .fetchInto(SECRETS)
         .map(secretSeriesMapper);
     return ImmutableSet.copyOf(r);
+  }
+
+  private String generateVerificationHmac(String table, long id1, long id2) {
+    String hmacContent = table + "|" + id1 + "|" + id2;
+    return cryptographer.computeHmac(hmacContent.getBytes(UTF_8));
   }
 
   /**
@@ -472,12 +519,13 @@ public class AclDAO {
     private final GroupMapper groupMapper;
     private final SecretSeriesMapper secretSeriesMapper;
     private final SecretContentMapper secretContentMapper;
+    private final ContentCryptographer cryptographer;
 
     @Inject public AclDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq, ClientDAOFactory clientDAOFactory,
                                  GroupDAOFactory groupDAOFactory, SecretContentDAOFactory secretContentDAOFactory,
                                  SecretSeriesDAOFactory secretSeriesDAOFactory, ClientMapper clientMapper,
                                  GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper,
-                                 SecretContentMapper secretContentMapper) {
+                                 SecretContentMapper secretContentMapper, ContentCryptographer cryptographer) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.clientDAOFactory = clientDAOFactory;
@@ -488,22 +536,26 @@ public class AclDAO {
       this.groupMapper = groupMapper;
       this.secretSeriesMapper = secretSeriesMapper;
       this.secretContentMapper = secretContentMapper;
+      this.cryptographer = cryptographer;
     }
 
     @Override public AclDAO readwrite() {
       return new AclDAO(jooq, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper);
+          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper,
+          cryptographer);
     }
 
     @Override public AclDAO readonly() {
       return new AclDAO(readonlyJooq, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper);
+          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper,
+          cryptographer);
     }
 
     @Override public AclDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
       return new AclDAO(dslContext, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper);
+          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper,
+          cryptographer);
     }
   }
 }

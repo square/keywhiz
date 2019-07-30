@@ -40,8 +40,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
+import static keywhiz.jooq.tables.Clients.CLIENTS;
+import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
+import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @RunWith(KeywhizTestRunner.class)
 public class AclDAOTest {
@@ -333,6 +337,101 @@ public class AclDAOTest {
 
     Set<SanitizedSecret> secret = aclDAO.getSanitizedSecretsFor(client1);
     assertThat(secret).hasSize(1);
+  }
+
+  @Test public void modifySecretGroup() {
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+
+    jooqContext.update(ACCESSGRANTS)
+        .set(ACCESSGRANTS.GROUPID, group2.getId())
+        .where(ACCESSGRANTS.SECRETID.eq(group1.getId()))
+        .execute();
+
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretsFor(client2);
+    }).withMessage("Invalid HMAC for access grant");
+  }
+
+  @Test public void modifyClientGroup() {
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+
+    jooqContext.update(MEMBERSHIPS)
+        .set(MEMBERSHIPS.CLIENTID, client2.getId())
+        .where(MEMBERSHIPS.GROUPID.eq(group1.getId()))
+        .execute();
+
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretsFor(client2);
+    }).withMessage("Invalid HMAC for group membership");
+  }
+
+  @Test public void modifyClientId() {
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+
+
+    jooqContext.update(CLIENTS)
+        .set(CLIENTS.ID, 1337L)
+        .where(CLIENTS.ID.eq(client1.getId()))
+        .execute();
+
+    jooqContext.update(CLIENTS)
+        .set(CLIENTS.ID, client1.getId())
+        .where(CLIENTS.ID.eq(client2.getId()))
+        .execute();
+
+    Client maliciousClient = clientDAO.getClient(client2.getName()).get();
+
+    assertThat(aclDAO.getSanitizedSecretsFor(maliciousClient)).containsExactly(
+              SanitizedSecret.fromSecret(secret1));
+  }
+
+  @Test public void modifyGroupId() {
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+
+
+    jooqContext.update(GROUPS)
+        .set(GROUPS.ID, 1337L)
+        .where(GROUPS.ID.eq(group1.getId()))
+        .execute();
+
+    jooqContext.update(GROUPS)
+        .set(GROUPS.ID, group1.getId())
+        .where(GROUPS.ID.eq(group2.getId()))
+        .execute();
+
+    Group maliciousGroup = groupDAO.getGroup(group2.getName()).get();
+
+    assertThat(aclDAO.getSanitizedSecretsFor(maliciousGroup)).containsExactly(
+        SanitizedSecret.fromSecret(secret1));
+  }
+
+  @Test public void modifySecretId() {
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group2.getId());
+
+    jooqContext.update(SECRETS)
+        .set(SECRETS.ID, 1337L)
+        .where(SECRETS.ID.eq(secret2.getId()))
+        .execute();
+
+    jooqContext.update(SECRETS)
+        .set(SECRETS.ID, secret2.getId())
+        .where(SECRETS.ID.eq(secret1.getId()))
+        .execute();
+
+    SanitizedSecret sanitizedSecret = (SanitizedSecret) aclDAO.getSanitizedSecretsFor(client2)
+        .toArray()[0];
+    assertThat(sanitizedSecret.name()).isEqualTo(secret1.getName());
   }
 
   private int accessGrantsTableSize() {
