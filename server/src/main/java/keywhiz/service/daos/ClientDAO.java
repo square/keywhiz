@@ -87,7 +87,7 @@ public class ClientDAO {
     r.setDescription(description);
     r.setEnabled(true);
     r.setAutomationallowed(false);
-    r.setVerificationHmac(verificationHmac);
+    r.setRowHmac(verificationHmac);
     r.store();
 
     return r.getId();

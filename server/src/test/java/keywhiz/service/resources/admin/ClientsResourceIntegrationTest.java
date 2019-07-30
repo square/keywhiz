@@ -118,7 +118,7 @@ public class ClientsResourceIntegrationTest {
 
   @Test public void deletesClients() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-    int clientId = Ints.checkedCast(keywhizClient.createClient("deletesClientTest").id);
+    long clientId = keywhizClient.createClient("deletesClientTest").id;
 
     keywhizClient.deleteClientWithId(clientId);
 
