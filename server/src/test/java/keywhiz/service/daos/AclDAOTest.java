@@ -346,11 +346,15 @@ public class AclDAOTest {
 
     jooqContext.update(ACCESSGRANTS)
         .set(ACCESSGRANTS.GROUPID, group2.getId())
-        .where(ACCESSGRANTS.SECRETID.eq(group1.getId()))
+        .where(ACCESSGRANTS.GROUPID.eq(group1.getId()))
         .execute();
 
     assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
       aclDAO.getSanitizedSecretsFor(client2);
+    }).withMessage("Invalid HMAC for access grant");
+
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretFor(client2, secret1.getName());
     }).withMessage("Invalid HMAC for access grant");
   }
 

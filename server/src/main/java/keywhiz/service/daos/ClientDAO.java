@@ -18,7 +18,9 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
 
+import java.nio.ByteBuffer;
 import java.security.Principal;
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -31,16 +33,19 @@ import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.CertificatePrincipal;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.crypto.ContentCryptographer;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Param;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Instant.EPOCH;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 import static org.jooq.impl.DSL.greatest;
+import static org.jooq.impl.DSL.rand;
 import static org.jooq.impl.DSL.when;
 
 public class ClientDAO {
@@ -48,10 +53,15 @@ public class ClientDAO {
 
   private final DSLContext dslContext;
   private final ClientMapper clientMapper;
+  private final ContentCryptographer cryptographer;
+  private final SecureRandom random;
 
-  private ClientDAO(DSLContext dslContext, ClientMapper clientMapper) {
+  private ClientDAO(DSLContext dslContext, ClientMapper clientMapper,
+                    ContentCryptographer cryptographer, SecureRandom random) {
     this.dslContext = dslContext;
     this.clientMapper = clientMapper;
+    this.cryptographer = cryptographer;
+    this.random = random;
   }
 
   public long createClient(String name, String user, String description) {
@@ -59,6 +69,15 @@ public class ClientDAO {
 
     long now = OffsetDateTime.now().toEpochSecond();
 
+    byte[] generateIdBytes = new byte[8];
+    random.nextBytes(generateIdBytes);
+    ByteBuffer generateIdByteBuffer = ByteBuffer.wrap(generateIdBytes);
+    long generatedId = generateIdByteBuffer.getLong();
+
+    String hmacContent = CLIENTS.getName() + "|" + name + "|" + generatedId;
+    String verificationHmac = cryptographer.computeHmac(hmacContent.getBytes(UTF_8));
+
+    r.setId(generatedId);
     r.setName(name);
     r.setCreatedby(user);
     r.setCreatedat(now);
@@ -68,6 +87,7 @@ public class ClientDAO {
     r.setDescription(description);
     r.setEnabled(true);
     r.setAutomationallowed(false);
+    r.setVerificationHmac(verificationHmac);
     r.store();
 
     return r.getId();
@@ -144,25 +164,29 @@ public class ClientDAO {
     private final DSLContext jooq;
     private final DSLContext readonlyJooq;
     private final ClientMapper clientMapper;
+    private final ContentCryptographer cryptographer;
+    private final SecureRandom random;
 
     @Inject public ClientDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
-        ClientMapper clientMapper) {
+        ClientMapper clientMapper, ContentCryptographer cryptographer, SecureRandom random) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.clientMapper = clientMapper;
+      this.cryptographer = cryptographer;
+      this.random = random;
     }
 
     @Override public ClientDAO readwrite() {
-      return new ClientDAO(jooq, clientMapper);
+      return new ClientDAO(jooq, clientMapper, cryptographer, random);
     }
 
     @Override public ClientDAO readonly() {
-      return new ClientDAO(readonlyJooq, clientMapper);
+      return new ClientDAO(readonlyJooq, clientMapper, cryptographer, random);
     }
 
     @Override public ClientDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new ClientDAO(dslContext, clientMapper);
+      return new ClientDAO(dslContext, clientMapper, cryptographer, random);
     }
   }
 }
