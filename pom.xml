@@ -44,7 +44,7 @@
     <!-- Some jackson libraries have not received a patch update, so peg them to the latest 2.9.x -->
     <jackson-annotations.version>2.9.9</jackson-annotations.version>
     <jackson-jdk8.version>2.9.9</jackson-jdk8.version>
-    <jooq.version>3.11.5</jooq.version>
+    <jooq.version>3.11.11</jooq.version>
     <powermock.version>1.7.4</powermock.version>
     <slf4j.version>1.7.25</slf4j.version>
     <mysql.version>5.1.45</mysql.version>
@@ -182,7 +182,7 @@
       <dependency>
         <groupId>com.unboundid</groupId>
         <artifactId>unboundid-ldapsdk</artifactId>
-        <version>4.0.1</version>
+        <version>4.0.11</version>
       </dependency>
       <dependency>
         <groupId>io.dropwizard</groupId>
