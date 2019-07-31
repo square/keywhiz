@@ -285,7 +285,7 @@ public class AclDAO {
           SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
 
           String secretHmac = generateRowHmac(
-              SECRETS.getName(), row.getValue(SECRETS.NAME), row.getValue(SECRETS.ID)
+              SECRETS.getName(), series.name(), series.id()
           );
           if (!secretHmac.equals(row.getValue(SECRETS.ROW_HMAC))) {
             throw new AssertionError("Invalid HMAC for secret");
@@ -397,7 +397,7 @@ public class AclDAO {
           String accessgrantsHmac = generateRowHmac(
               ACCESSGRANTS.getName(), row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
           if (!accessgrantsHmac.equals(row.getValue(ACCESSGRANTS.ROW_HMAC))) {
-            throw new AssertionError("Invalid HMAC for access grant");
+            throw new AssertionError("Invalid HMAC for accessgrant");
           }
 
           return SanitizedSecret.of(

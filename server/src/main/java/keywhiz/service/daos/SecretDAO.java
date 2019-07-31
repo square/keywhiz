@@ -382,7 +382,6 @@ public class SecretDAO {
    */
   public void setCurrentSecretVersionByName(String name, long versionId, String updater) {
     checkArgument(!name.isEmpty());
-    checkArgument(versionId >= 0);
 
     SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
     SecretSeries series = secretSeriesDAO.getSecretSeriesByName(name).orElseThrow(

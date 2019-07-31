@@ -21,21 +21,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import java.nio.ByteBuffer;
+import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.swing.text.html.Option;
 import keywhiz.api.model.SecretContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.crypto.ContentCryptographer;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
@@ -52,12 +58,17 @@ public class SecretContentDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretContentMapper secretContentMapper;
+  private final ContentCryptographer cryptographer;
+  private final SecureRandom random;
 
   private SecretContentDAO(DSLContext dslContext, ObjectMapper mapper,
-      SecretContentMapper secretContentMapper) {
+      SecretContentMapper secretContentMapper, ContentCryptographer cryptographer,
+      SecureRandom random) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretContentMapper = secretContentMapper;
+    this.cryptographer = cryptographer;
+    this.random = random;
   }
 
   public long createSecretContent(long secretId, String encryptedContent, String hmac,
@@ -72,6 +83,15 @@ public class SecretContentDAO {
       throw Throwables.propagate(e);
     }
 
+    byte[] generateIdBytes = new byte[8];
+    random.nextBytes(generateIdBytes);
+    ByteBuffer generateIdByteBuffer = ByteBuffer.wrap(generateIdBytes);
+    long generatedId = generateIdByteBuffer.getLong();
+
+    String hmacContent = SECRETS_CONTENT.getName() + "|" + encryptedContent + "|" + generatedId;
+    String rowHmac = cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
+
+    r.setId(generatedId);
     r.setSecretid(secretId);
     r.setEncryptedContent(encryptedContent);
     r.setContentHmac(hmac);
@@ -81,6 +101,7 @@ public class SecretContentDAO {
     r.setUpdatedat(now);
     r.setMetadata(jsonMetadata);
     r.setExpiry(expiry);
+    r.setRowHmac(rowHmac);
     r.store();
 
     pruneOldContents(secretId);
@@ -115,7 +136,7 @@ public class SecretContentDAO {
             .where(SECRETS_CONTENT.SECRETID.eq(secretId))
             .and(SECRETS_CONTENT.CREATEDAT.lt(cutoff))
             .and(SECRETS_CONTENT.ID.ne(secret.getCurrent()))
-            .orderBy(SECRETS_CONTENT.ID.desc())
+            .orderBy(SECRETS_CONTENT.CREATEDAT.desc())
             .fetch(SECRETS_CONTENT.ID);
 
     // Always keep last X items, prune otherwise
@@ -128,7 +149,20 @@ public class SecretContentDAO {
 
   public Optional<SecretContent> getSecretContentById(long id) {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT, SECRETS_CONTENT.ID.eq(id));
-    return Optional.ofNullable(r).map(secretContentMapper::map);
+    Optional<SecretContent> result = Optional.ofNullable(r).map(secretContentMapper::map);
+
+    if (result.isEmpty()) {
+      return result;
+    }
+
+    String hmacContent = SECRETS_CONTENT.getName() + "|" + r.getEncryptedContent() + "|" + r.getId();
+    String rowHmac = cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
+
+    if (!rowHmac.equals(r.getRowHmac())) {
+      throw new AssertionError("Invalid HMAC for secret content");
+    }
+
+    return result;
   }
 
   public Optional<ImmutableList<SecretContent>> getSecretVersionsBySecretId(long id,
@@ -167,26 +201,33 @@ public class SecretContentDAO {
     private final DSLContext readonlyJooq;
     private final ObjectMapper objectMapper;
     private final SecretContentMapper secretContentMapper;
+    private final ContentCryptographer cryptographer;
+    private final SecureRandom random;
 
     @Inject public SecretContentDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
-        ObjectMapper objectMapper, SecretContentMapper secretContentMapper) {
+        ObjectMapper objectMapper, SecretContentMapper secretContentMapper,
+        ContentCryptographer cryptographer, SecureRandom random) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
       this.secretContentMapper = secretContentMapper;
+      this.cryptographer = cryptographer;
+      this.random = random;
     }
 
     @Override public SecretContentDAO readwrite() {
-      return new SecretContentDAO(jooq, objectMapper, secretContentMapper);
+      return new SecretContentDAO(jooq, objectMapper, secretContentMapper, cryptographer, random);
     }
 
     @Override public SecretContentDAO readonly() {
-      return new SecretContentDAO(readonlyJooq, objectMapper, secretContentMapper);
+      return new SecretContentDAO(readonlyJooq, objectMapper, secretContentMapper,
+          cryptographer, random);
     }
 
     @Override public SecretContentDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretContentDAO(dslContext, objectMapper, secretContentMapper);
+      return new SecretContentDAO(dslContext, objectMapper, secretContentMapper,
+          cryptographer, random);
     }
   }
 }
