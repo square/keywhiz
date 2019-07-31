@@ -159,7 +159,9 @@ public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> 
         dslContext,
         dslContext,
         bootstrap.getObjectMapper(),
-        new SecretSeriesMapper(bootstrap.getObjectMapper())
+        new SecretSeriesMapper(bootstrap.getObjectMapper()),
+        null,
+        null
     );
 
     return new SecretDAO(

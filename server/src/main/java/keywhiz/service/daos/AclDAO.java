@@ -279,9 +279,17 @@ public class AclDAO {
     query.addSelect(MEMBERSHIPS.ROW_HMAC);
     query.addSelect(MEMBERSHIPS.GROUPID);
     query.addSelect(CLIENTS.ROW_HMAC);
+    query.addSelect(SECRETS.ROW_HMAC);
     query.fetch()
         .map(row -> {
           SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
+
+          String secretHmac = generateRowHmac(
+              SECRETS.getName(), row.getValue(SECRETS.NAME), row.getValue(SECRETS.ID)
+          );
+          if (!secretHmac.equals(row.getValue(SECRETS.ROW_HMAC))) {
+            throw new AssertionError("Invalid HMAC for secret");
+          }
 
           String clientHmac = generateRowHmac(
               CLIENTS.getName(), client.getName(), client.getId()
@@ -299,7 +307,7 @@ public class AclDAO {
           String accessgrantsHmac = generateRowHmac(
               ACCESSGRANTS.getName(), row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
           if (!accessgrantsHmac.equals(row.getValue(ACCESSGRANTS.ROW_HMAC))) {
-            throw new AssertionError("Invalid HMAC for access grant");
+            throw new AssertionError("Invalid HMAC for accessgrant");
           }
 
           return SanitizedSecret.of(
@@ -361,9 +369,17 @@ public class AclDAO {
     query.addSelect(MEMBERSHIPS.ROW_HMAC);
     query.addSelect(MEMBERSHIPS.GROUPID);
     query.addSelect(CLIENTS.ROW_HMAC);
+    query.addSelect(SECRETS.ROW_HMAC);
     return Optional.ofNullable(query.fetchOne())
         .map(row -> {
           SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
+
+          String secretHmac = generateRowHmac(
+              SECRETS.getName(), secretName, row.getValue(SECRETS.ID)
+          );
+          if (!secretHmac.equals(row.getValue(SECRETS.ROW_HMAC))) {
+            throw new AssertionError("Invalid HMAC for secret");
+          }
 
           String clientHmac = generateRowHmac(
               CLIENTS.getName(), client.getName(), client.getId()

@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.nio.ByteBuffer;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -34,6 +36,7 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.crypto.ContentCryptographer;
 import org.joda.time.DateTime;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
@@ -44,7 +47,9 @@ import org.jooq.SelectQuery;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
+import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
@@ -59,18 +64,32 @@ public class SecretSeriesDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretSeriesMapper secretSeriesMapper;
+  private final ContentCryptographer cryptographer;
+  private final SecureRandom random;
 
   private SecretSeriesDAO(DSLContext dslContext, ObjectMapper mapper,
-      SecretSeriesMapper secretSeriesMapper) {
+      SecretSeriesMapper secretSeriesMapper, ContentCryptographer cryptographer,
+      SecureRandom random) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretSeriesMapper = secretSeriesMapper;
+    this.cryptographer = cryptographer;
+    this.random = random;
   }
 
   long createSecretSeries(String name, String creator, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions, long now) {
     SecretsRecord r = dslContext.newRecord(SECRETS);
 
+    byte[] generateIdBytes = new byte[8];
+    random.nextBytes(generateIdBytes);
+    ByteBuffer generateIdByteBuffer = ByteBuffer.wrap(generateIdBytes);
+    long generatedId = generateIdByteBuffer.getLong();
+
+    String hmacContent = SECRETS.getName() + "|" + name + "|" + generatedId;
+    String rowHmac = cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
+
+    r.setId(generatedId);
     r.setName(name);
     r.setDescription(description);
     r.setCreatedby(creator);
@@ -78,6 +97,7 @@ public class SecretSeriesDAO {
     r.setUpdatedby(creator);
     r.setUpdatedat(now);
     r.setType(type);
+    r.setRowHmac(rowHmac);
     if (generationOptions != null) {
       try {
         r.setOptions(mapper.writeValueAsString(generationOptions));
@@ -100,6 +120,9 @@ public class SecretSeriesDAO {
     }
 
     try {
+      String hmacContent = SECRETS.getName() + "|" + name + "|" + secretId;
+      String rowHmac = cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
+
       dslContext.update(SECRETS)
           .set(SECRETS.NAME, name)
           .set(SECRETS.DESCRIPTION, description)
@@ -107,6 +130,7 @@ public class SecretSeriesDAO {
           .set(SECRETS.UPDATEDAT, now)
           .set(SECRETS.TYPE, type)
           .set(SECRETS.OPTIONS, mapper.writeValueAsString(generationOptions))
+          .set(SECRETS.ROW_HMAC, rowHmac)
           .where(SECRETS.ID.eq(secretId))
           .execute();
     } catch (JsonProcessingException e) {
@@ -308,26 +332,33 @@ public class SecretSeriesDAO {
     private final DSLContext readonlyJooq;
     private final ObjectMapper objectMapper;
     private final SecretSeriesMapper secretSeriesMapper;
+    private final ContentCryptographer cryptographer;
+    private final SecureRandom random;
 
     @Inject public SecretSeriesDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
-        ObjectMapper objectMapper, SecretSeriesMapper secretSeriesMapper) {
+        ObjectMapper objectMapper, SecretSeriesMapper secretSeriesMapper,
+        ContentCryptographer cryptographer, SecureRandom random) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
       this.secretSeriesMapper = secretSeriesMapper;
+      this.cryptographer = cryptographer;
+      this.random = random;
     }
 
     @Override public SecretSeriesDAO readwrite() {
-      return new SecretSeriesDAO(jooq, objectMapper, secretSeriesMapper);
+      return new SecretSeriesDAO(jooq, objectMapper, secretSeriesMapper, cryptographer, random);
     }
 
     @Override public SecretSeriesDAO readonly() {
-      return new SecretSeriesDAO(readonlyJooq, objectMapper, secretSeriesMapper);
+      return new SecretSeriesDAO(readonlyJooq, objectMapper, secretSeriesMapper,
+                                 cryptographer, random);
     }
 
     @Override public SecretSeriesDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper);
+      return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper,
+                                 cryptographer, random);
     }
   }
 

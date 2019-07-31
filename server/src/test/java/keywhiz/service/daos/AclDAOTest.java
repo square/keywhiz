@@ -351,11 +351,11 @@ public class AclDAOTest {
 
     assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
       aclDAO.getSanitizedSecretsFor(client2);
-    }).withMessage("Invalid HMAC for access grant");
+    }).withMessage("Invalid HMAC for accessgrant");
 
     assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
       aclDAO.getSanitizedSecretFor(client2, secret1.getName());
-    }).withMessage("Invalid HMAC for access grant");
+    }).withMessage("Invalid HMAC for accessgrant");
   }
 
   @Test public void modifyClientGroup() {
@@ -420,12 +420,13 @@ public class AclDAOTest {
         .where(SECRETS.ID.eq(secret1.getId()))
         .execute();
 
-    SanitizedSecret sanitizedSecret = (SanitizedSecret) aclDAO.getSanitizedSecretsFor(client2)
-        .toArray()[0];
-    assertThat(sanitizedSecret.name()).isEqualTo(secret1.getName());
-    SanitizedSecret sanitizedSecret2 = aclDAO.getSanitizedSecretFor(
-        client2, secret1.getName()).orElseThrow();
-    assertThat(sanitizedSecret2.name()).isEqualTo(secret1.getName());
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretsFor(client2);
+    }).withMessage("Invalid HMAC for secret");
+
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretFor(client2, secret1.getName());
+    }).withMessage("Invalid HMAC for secret");
   }
 
   private int accessGrantsTableSize() {
