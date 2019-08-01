@@ -606,7 +606,7 @@
         <plugin>
           <groupId>org.flywaydb</groupId>
           <artifactId>flyway-maven-plugin</artifactId>
-          <version>5.2.0</version>
+          <version>5.2.4</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
