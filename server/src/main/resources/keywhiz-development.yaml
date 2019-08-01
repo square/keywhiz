@@ -108,3 +108,5 @@ contentKeyStore:
   type: JCEKS
   password: CHANGE
   alias: basekey
+
+rowHmacCheck: logging

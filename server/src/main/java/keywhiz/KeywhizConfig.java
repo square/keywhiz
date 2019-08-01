@@ -86,6 +86,13 @@ public class KeywhizConfig extends Configuration {
   @JsonProperty
   private String statusCacheExpiry;
 
+  @JsonProperty
+  private String rowHmacCheck;
+
+  public enum RowHmacCheck {
+    DISABLED, LOGGING, ENABLED
+  }
+
   public String getEnvironment() {
     return environment;
   }
@@ -174,6 +181,15 @@ public class KeywhizConfig extends Configuration {
       return null;
     }
     return backupExportKeys.get(name);
+  }
+
+  public RowHmacCheck getRowHmacCheck() {
+    if (rowHmacCheck.equals("enabled")) {
+      return RowHmacCheck.ENABLED;
+    } else if (rowHmacCheck.equals("logging")) {
+      return RowHmacCheck.LOGGING;
+    }
+    return RowHmacCheck.DISABLED;
   }
 
   public static class TemplatedDataSourceFactory extends DataSourceFactory {

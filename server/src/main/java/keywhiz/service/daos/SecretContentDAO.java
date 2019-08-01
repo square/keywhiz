@@ -38,6 +38,8 @@ import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -49,6 +51,7 @@ import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
  * Interacts with 'secrets_content' table and actions on {@link SecretContent} entities.
  */
 public class SecretContentDAO {
+  private static final Logger logger = LoggerFactory.getLogger(AclDAO.class);
   // Number of old contents we keep around before we prune
   @VisibleForTesting static final int PRUNE_CUTOFF_ITEMS = 10;
 
@@ -159,6 +162,7 @@ public class SecretContentDAO {
     String rowHmac = cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
 
     if (!rowHmac.equals(r.getRowHmac())) {
+      logger.info("Secret Content HMAC verification failed for secretContent: {}", r.getId());
       throw new AssertionError("Invalid HMAC for secret content");
     }
 
