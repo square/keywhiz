@@ -167,7 +167,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>23.5-jre</version>
+        <version>28.0-jre</version>
       </dependency>
       <dependency>
         <groupId>com.squareup.okhttp3</groupId>
