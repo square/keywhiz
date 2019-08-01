@@ -16,11 +16,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) for details on submitting patches.
 
 Build keywhiz: 
 
-    # Build keywhiz for H2
-    mvn install -P h2
-
-    # Build keywhiz for MySQL
-    mvn install -P mysql
+    mvn install
 
 Run Keywhiz:
 
@@ -30,12 +26,12 @@ Useful commands to get started are `migrate`, `add-user` and `server`. Use with
 `--help` for a list of all available commands. Use with `[COMMAND] --help` to
 get help on a particular command.
 
-For example, to run Keywhiz with an H2 database in development mode:
+For example, to run Keywhiz with a mysql database in development mode:
 
     SERVER_JAR="server/target/keywhiz-server-*-shaded.jar"
-    KEYWHIZ_CONFIG="server/target/classes/keywhiz-development.yaml.h2"
+    KEYWHIZ_CONFIG="server/target/classes/keywhiz-development.yaml"
 
-    # Initialize dev database (H2)
+    # Initialize dev database
     java -jar $SERVER_JAR migrate $KEYWHIZ_CONFIG
 
     # Add an administrative user

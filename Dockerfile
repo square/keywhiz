@@ -45,8 +45,6 @@
 #
 FROM maven:3.5-jdk-11
 
-ARG MAVEN_PROFILE=docker
-
 RUN apt-get update && \
     apt-get install -y --no-install-recommends --no-upgrade \
       gettext vim-common && \
@@ -65,7 +63,7 @@ COPY model/pom.xml /usr/src/app/model/
 COPY server/pom.xml /usr/src/app/server/
 COPY testing/pom.xml /usr/src/app/testing/
 COPY log/pom.xml /usr/src/app/log/
-RUN mvn dependency:copy-dependencies -P $MAVEN_PROFILE --fail-never
+RUN mvn dependency:copy-dependencies --fail-never
 
 # copy source required for build and install
 COPY api /usr/src/app/api/
@@ -76,7 +74,7 @@ COPY model /usr/src/app/model/
 COPY server /usr/src/app/server/
 COPY testing /usr/src/app/testing/
 COPY log /usr/src/app/log/
-RUN mvn install -P $MAVEN_PROFILE
+RUN mvn install
 
 # Drop privs inside container
 RUN useradd -ms /bin/false keywhiz && \

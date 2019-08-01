@@ -44,32 +44,32 @@ logging:
 environment: docker
 
 database:
-  driverClass: org.h2.Driver
-  url: jdbc:h2:/data/keywhizdb_development
+  driverClass: com.mysql.jdbc.Driver
+  url: jdbc:mysql://localhost/keywhizdb_docker?useUnicode=true&characterEncoding=utf8
   user: root
   properties:
     charSet: UTF-8
-  initialSize: 10
-  minSize: 10
-  maxSize: 10
+  initialSize: 2
+  minSize: 2
+  maxSize: 2
   # There is explicitly no password. Do not uncomment.
   # password:
 
 readonlyDatabase:
-  driverClass: org.h2.Driver
-  url: jdbc:h2:/data/keywhizdb_development
+  driverClass: com.mysql.jdbc.Driver
+  url: jdbc:mysql://localhost/keywhizdb_docker?useUnicode=true&characterEncoding=utf8
   user: root
   properties:
     charSet: UTF-8
   readOnlyByDefault: true
-  initialSize: 32
-  minSize: 32
-  maxSize: 32
+  initialSize: 1
+  minSize: 1
+  maxSize: 1
   # There is explicitly no password. Do not uncomment.
   # password:
 
 migrationsDir:
-  db/h2/migration
+  db/mysql/migration
 
 userAuth:
   type: bcrypt

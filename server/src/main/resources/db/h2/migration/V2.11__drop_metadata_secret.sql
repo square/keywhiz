@@ -1,1 +1,0 @@
-ALTER TABLE secrets DROP COLUMN IF EXISTS metadata;

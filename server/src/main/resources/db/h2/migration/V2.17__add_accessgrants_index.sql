@@ -1,1 +1,0 @@
-CREATE INDEX accessgrants_secretid_idx ON accessgrants (secretid);
