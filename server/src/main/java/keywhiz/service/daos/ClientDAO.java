@@ -17,10 +17,7 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
-
-import java.nio.ByteBuffer;
 import java.security.Principal;
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -28,12 +25,11 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-
 import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.CertificatePrincipal;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import keywhiz.service.config.Readonly;
-import keywhiz.service.crypto.ContentCryptographer;
+import keywhiz.service.crypto.RowHmacGenerator;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Param;
@@ -51,13 +47,13 @@ public class ClientDAO {
 
   private final DSLContext dslContext;
   private final ClientMapper clientMapper;
-  private final ContentCryptographer cryptographer;
+  private final RowHmacGenerator rowHmacGenerator;
 
   private ClientDAO(DSLContext dslContext, ClientMapper clientMapper,
-                    ContentCryptographer cryptographer) {
+                    RowHmacGenerator rowHmacGenerator) {
     this.dslContext = dslContext;
     this.clientMapper = clientMapper;
-    this.cryptographer = cryptographer;
+    this.rowHmacGenerator = rowHmacGenerator;
   }
 
   public long createClient(String name, String user, String description) {
@@ -65,8 +61,8 @@ public class ClientDAO {
 
     long now = OffsetDateTime.now().toEpochSecond();
 
-    long generatedId = cryptographer.getNextLongSecure();
-    String rowHmac = cryptographer.computeRowHmac(CLIENTS.getName(), name, generatedId);
+    long generatedId = rowHmacGenerator.getNextLongSecure();
+    String rowHmac = rowHmacGenerator.computeRowHmac(CLIENTS.getName(), name, generatedId);
 
     r.setId(generatedId);
     r.setName(name);
@@ -155,27 +151,27 @@ public class ClientDAO {
     private final DSLContext jooq;
     private final DSLContext readonlyJooq;
     private final ClientMapper clientMapper;
-    private final ContentCryptographer cryptographer;
+    private final RowHmacGenerator rowHmacGenerator;
 
     @Inject public ClientDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
-        ClientMapper clientMapper, ContentCryptographer cryptographer) {
+        ClientMapper clientMapper, RowHmacGenerator rowHmacGenerator) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.clientMapper = clientMapper;
-      this.cryptographer = cryptographer;
+      this.rowHmacGenerator = rowHmacGenerator;
     }
 
     @Override public ClientDAO readwrite() {
-      return new ClientDAO(jooq, clientMapper, cryptographer);
+      return new ClientDAO(jooq, clientMapper, rowHmacGenerator);
     }
 
     @Override public ClientDAO readonly() {
-      return new ClientDAO(readonlyJooq, clientMapper, cryptographer);
+      return new ClientDAO(readonlyJooq, clientMapper, rowHmacGenerator);
     }
 
     @Override public ClientDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new ClientDAO(dslContext, clientMapper, cryptographer);
+      return new ClientDAO(dslContext, clientMapper, rowHmacGenerator);
     }
   }
 }

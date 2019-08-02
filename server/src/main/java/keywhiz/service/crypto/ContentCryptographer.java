@@ -154,6 +154,10 @@ public class ContentCryptographer {
 
   public String computeHmac(byte[] data, String derivationKey) {
     SecretKey hmacKey = deriveKey(32, derivationKey);
+    return computeHmacWithSecretKey(data, hmacKey);
+  }
+
+  String computeHmacWithSecretKey(byte[] data, SecretKey hmacKey) {
     try {
       Mac mac = Mac.getInstance("HmacSHA256");
       mac.init(hmacKey);
@@ -164,7 +168,7 @@ public class ContentCryptographer {
     }
   }
 
-  private SecretKey deriveKey(int blockSize, String info) {
+  SecretKey deriveKey(int blockSize, String info) {
     Hkdf hkdf = Hkdf.usingProvider(derivationProvider);
     byte[] infoBytes = info.getBytes(UTF_8);
     byte[] derivedKeyBytes = hkdf.expand(key, infoBytes, blockSize);
@@ -183,18 +187,8 @@ public class ContentCryptographer {
     }
   }
 
-  public String computeRowHmac(String table, String name, long id) {
-    String hmacContent = table + "|" + name + "|" + id;
-    return computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
-  }
-
-  public String computeRowHmac(String table, long id1, long id2) {
-    String hmacContent = table + "|" + id1 + "|" + id2;
-    return computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
-  }
-
   /**
-   * The random log generated with random.nextLong only uses 48 bits of randomness,
+   * The random long generated with random.nextLong only uses 48 bits of randomness,
    * meaning it will not return all possible long values. Instead we generate a long from 8
    * random bytes.
    */

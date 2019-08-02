@@ -17,7 +17,6 @@ package keywhiz.service.resources.admin;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.google.common.primitives.Ints;
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;

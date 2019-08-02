@@ -34,6 +34,7 @@ import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
+import keywhiz.service.crypto.RowHmacGenerator;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import org.joda.time.DateTime;
 import org.jooq.DSLContext;
@@ -56,6 +57,8 @@ public class SecretDAOTest {
   @Inject private SecretDAOFactory secretDAOFactory;
 
   private final static ContentCryptographer cryptographer = CryptoFixtures.contentCryptographer();
+  private final static RowHmacGenerator rowHmacGenerator =
+      RowHmacGenerator.getInstance(cryptographer);
   private final static ApiDate date = ApiDate.now();
   private ImmutableMap<String, String> emptyMetadata = ImmutableMap.of();
 
@@ -114,7 +117,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.UPDATEDAT, secret1.content().updatedAt().toEpochSecond())
         .set(SECRETS_CONTENT.METADATA,
             objectMapper.writeValueAsString(secret1.content().metadata()))
-        .set(SECRETS_CONTENT.ROW_HMAC, cryptographer.computeRowHmac(SECRETS_CONTENT.getName(),
+        .set(SECRETS_CONTENT.ROW_HMAC, rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
             secret1.content().encryptedContent(), secret1.content().id()))
         .execute();
 
@@ -140,7 +143,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.UPDATEDAT, secret2a.content().updatedAt().toEpochSecond())
         .set(SECRETS_CONTENT.METADATA,
             objectMapper.writeValueAsString(secret2a.content().metadata()))
-        .set(SECRETS_CONTENT.ROW_HMAC, cryptographer.computeRowHmac(SECRETS_CONTENT.getName(),
+        .set(SECRETS_CONTENT.ROW_HMAC, rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
             secret2a.content().encryptedContent(), secret2a.content().id()))
         .execute();
 
@@ -155,7 +158,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.UPDATEDAT, secret2b.content().updatedAt().toEpochSecond())
         .set(SECRETS_CONTENT.METADATA,
             objectMapper.writeValueAsString(secret2b.content().metadata()))
-        .set(SECRETS_CONTENT.ROW_HMAC, cryptographer.computeRowHmac(SECRETS_CONTENT.getName(),
+        .set(SECRETS_CONTENT.ROW_HMAC, rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
             secret2b.content().encryptedContent(), secret2b.content().id()))
         .execute();
 
@@ -181,7 +184,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.UPDATEDAT, secret3.content().updatedAt().toEpochSecond())
         .set(SECRETS_CONTENT.METADATA,
             objectMapper.writeValueAsString(secret3.content().metadata()))
-        .set(SECRETS_CONTENT.ROW_HMAC, cryptographer.computeRowHmac(SECRETS_CONTENT.getName(),
+        .set(SECRETS_CONTENT.ROW_HMAC, rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
             secret3.content().encryptedContent(), secret3.content().id()))
         .execute();
 

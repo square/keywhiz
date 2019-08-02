@@ -21,8 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.nio.ByteBuffer;
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -36,7 +34,7 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
-import keywhiz.service.crypto.ContentCryptographer;
+import keywhiz.service.crypto.RowHmacGenerator;
 import org.joda.time.DateTime;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
@@ -62,22 +60,22 @@ public class SecretSeriesDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretSeriesMapper secretSeriesMapper;
-  private final ContentCryptographer cryptographer;
+  private final RowHmacGenerator rowHmacGenerator;
 
   private SecretSeriesDAO(DSLContext dslContext, ObjectMapper mapper,
-      SecretSeriesMapper secretSeriesMapper, ContentCryptographer cryptographer) {
+      SecretSeriesMapper secretSeriesMapper, RowHmacGenerator rowHmacGenerator) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretSeriesMapper = secretSeriesMapper;
-    this.cryptographer = cryptographer;
+    this.rowHmacGenerator = rowHmacGenerator;
   }
 
   long createSecretSeries(String name, String creator, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions, long now) {
     SecretsRecord r = dslContext.newRecord(SECRETS);
 
-    long generatedId = cryptographer.getNextLongSecure();
-    String rowHmac = cryptographer.computeRowHmac(SECRETS.getName(), name, generatedId);
+    long generatedId = rowHmacGenerator.getNextLongSecure();
+    String rowHmac = rowHmacGenerator.computeRowHmac(SECRETS.getName(), name, generatedId);
 
     r.setId(generatedId);
     r.setName(name);
@@ -110,7 +108,7 @@ public class SecretSeriesDAO {
     }
 
     try {
-      String rowHmac = cryptographer.computeRowHmac(SECRETS.getName(), name, secretId);
+      String rowHmac = rowHmacGenerator.computeRowHmac(SECRETS.getName(), name, secretId);
 
       dslContext.update(SECRETS)
           .set(SECRETS.NAME, name)
@@ -321,29 +319,29 @@ public class SecretSeriesDAO {
     private final DSLContext readonlyJooq;
     private final ObjectMapper objectMapper;
     private final SecretSeriesMapper secretSeriesMapper;
-    private final ContentCryptographer cryptographer;
+    private final RowHmacGenerator rowHmacGenerator;
 
     @Inject public SecretSeriesDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
         ObjectMapper objectMapper, SecretSeriesMapper secretSeriesMapper,
-        ContentCryptographer cryptographer) {
+        RowHmacGenerator rowHmacGenerator) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
       this.secretSeriesMapper = secretSeriesMapper;
-      this.cryptographer = cryptographer;
+      this.rowHmacGenerator = rowHmacGenerator;
     }
 
     @Override public SecretSeriesDAO readwrite() {
-      return new SecretSeriesDAO(jooq, objectMapper, secretSeriesMapper, cryptographer);
+      return new SecretSeriesDAO(jooq, objectMapper, secretSeriesMapper, rowHmacGenerator);
     }
 
     @Override public SecretSeriesDAO readonly() {
-      return new SecretSeriesDAO(readonlyJooq, objectMapper, secretSeriesMapper, cryptographer);
+      return new SecretSeriesDAO(readonlyJooq, objectMapper, secretSeriesMapper, rowHmacGenerator);
     }
 
     @Override public SecretSeriesDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper, cryptographer);
+      return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper, rowHmacGenerator);
     }
   }
 

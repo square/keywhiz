@@ -35,6 +35,7 @@ import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
+import keywhiz.service.crypto.RowHmacGenerator;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Result;
@@ -60,16 +61,16 @@ public class SecretContentDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretContentMapper secretContentMapper;
-  private final ContentCryptographer cryptographer;
+  private final RowHmacGenerator rowHmacGenerator;
   private final KeywhizConfig config;
 
   private SecretContentDAO(DSLContext dslContext, ObjectMapper mapper,
-      SecretContentMapper secretContentMapper, ContentCryptographer cryptographer,
+      SecretContentMapper secretContentMapper, RowHmacGenerator rowHmacGenerator,
       KeywhizConfig config) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretContentMapper = secretContentMapper;
-    this.cryptographer = cryptographer;
+    this.rowHmacGenerator = rowHmacGenerator;
     this.config = config;
   }
 
@@ -85,8 +86,8 @@ public class SecretContentDAO {
       throw Throwables.propagate(e);
     }
 
-    long generatedId = cryptographer.getNextLongSecure();
-    String rowHmac = cryptographer.computeRowHmac(
+    long generatedId = rowHmacGenerator.getNextLongSecure();
+    String rowHmac = rowHmacGenerator.computeRowHmac(
         SECRETS_CONTENT.getName(), encryptedContent, generatedId);
 
     r.setId(generatedId);
@@ -153,7 +154,7 @@ public class SecretContentDAO {
       return result;
     }
 
-    String rowHmac = cryptographer.computeRowHmac(
+    String rowHmac = rowHmacGenerator.computeRowHmac(
         SECRETS_CONTENT.getName(), r.getEncryptedContent(), r.getId());
 
     if (!rowHmac.equals(r.getRowHmac())) {
@@ -206,32 +207,33 @@ public class SecretContentDAO {
     private final DSLContext readonlyJooq;
     private final ObjectMapper objectMapper;
     private final SecretContentMapper secretContentMapper;
-    private final ContentCryptographer cryptographer;
+    private final RowHmacGenerator rowHmacGenerator;
     private final KeywhizConfig config;
 
     @Inject public SecretContentDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
         ObjectMapper objectMapper, SecretContentMapper secretContentMapper,
-        ContentCryptographer cryptographer, KeywhizConfig config) {
+        RowHmacGenerator rowHmacGenerator, KeywhizConfig config) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
       this.secretContentMapper = secretContentMapper;
-      this.cryptographer = cryptographer;
+      this.rowHmacGenerator = rowHmacGenerator;
       this.config = config;
     }
 
     @Override public SecretContentDAO readwrite() {
-      return new SecretContentDAO(jooq, objectMapper, secretContentMapper, cryptographer, config);
+      return new SecretContentDAO(jooq, objectMapper, secretContentMapper, rowHmacGenerator,
+          config);
     }
 
     @Override public SecretContentDAO readonly() {
-      return new SecretContentDAO(readonlyJooq, objectMapper, secretContentMapper, cryptographer,
+      return new SecretContentDAO(readonlyJooq, objectMapper, secretContentMapper, rowHmacGenerator,
           config);
     }
 
     @Override public SecretContentDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretContentDAO(dslContext, objectMapper, secretContentMapper, cryptographer,
+      return new SecretContentDAO(dslContext, objectMapper, secretContentMapper, rowHmacGenerator,
           config);
     }
   }

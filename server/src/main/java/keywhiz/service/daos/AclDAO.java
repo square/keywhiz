@@ -43,6 +43,7 @@ import keywhiz.log.Event;
 import keywhiz.log.EventTag;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
+import keywhiz.service.crypto.RowHmacGenerator;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
@@ -78,13 +79,13 @@ public class AclDAO {
   private final GroupMapper groupMapper;
   private final SecretSeriesMapper secretSeriesMapper;
   private final SecretContentMapper secretContentMapper;
-  private final ContentCryptographer cryptographer;
+  private final RowHmacGenerator rowHmacGenerator;
   private final KeywhizConfig config;
 
   private AclDAO(DSLContext dslContext, ClientDAOFactory clientDAOFactory, GroupDAOFactory groupDAOFactory,
                  SecretContentDAOFactory secretContentDAOFactory, SecretSeriesDAOFactory secretSeriesDAOFactory,
                  ClientMapper clientMapper, GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper,
-                 SecretContentMapper secretContentMapper, ContentCryptographer cryptographer,
+                 SecretContentMapper secretContentMapper, RowHmacGenerator rowHmacGenerator,
                  KeywhizConfig config) {
     this.dslContext = dslContext;
     this.clientDAOFactory = clientDAOFactory;
@@ -95,7 +96,7 @@ public class AclDAO {
     this.groupMapper = groupMapper;
     this.secretSeriesMapper = secretSeriesMapper;
     this.secretContentMapper = secretContentMapper;
-    this.cryptographer = cryptographer;
+    this.rowHmacGenerator = rowHmacGenerator;
     this.config = config;
   }
 
@@ -339,7 +340,7 @@ public class AclDAO {
 
     SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
 
-    String secretHmac = cryptographer.computeRowHmac(
+    String secretHmac = rowHmacGenerator.computeRowHmac(
         SECRETS.getName(), row.getValue(SECRETS.NAME), row.getValue(SECRETS.ID)
     );
     if (!secretHmac.equals(row.getValue(SECRETS.ROW_HMAC))) {
@@ -353,7 +354,7 @@ public class AclDAO {
       }
     }
 
-    String clientHmac = cryptographer.computeRowHmac(
+    String clientHmac = rowHmacGenerator.computeRowHmac(
         CLIENTS.getName(), client.getName(), client.getId()
     );
     if (!clientHmac.equals(row.getValue(CLIENTS.ROW_HMAC))) {
@@ -367,7 +368,7 @@ public class AclDAO {
       }
     }
 
-    String membershipsHmac = cryptographer.computeRowHmac(
+    String membershipsHmac = rowHmacGenerator.computeRowHmac(
         MEMBERSHIPS.getName(), client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
     if (!membershipsHmac.equals(row.getValue(MEMBERSHIPS.ROW_HMAC))) {
       String errorMessage = String.format(
@@ -381,7 +382,7 @@ public class AclDAO {
       }
     }
 
-    String accessgrantsHmac = cryptographer.computeRowHmac(
+    String accessgrantsHmac = rowHmacGenerator.computeRowHmac(
         ACCESSGRANTS.getName(), row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
     if (!accessgrantsHmac.equals(row.getValue(ACCESSGRANTS.ROW_HMAC))) {
       String errorMessage = String.format(
@@ -445,7 +446,7 @@ public class AclDAO {
       return;
     }
 
-    String verificationHmac = cryptographer.computeRowHmac(
+    String verificationHmac = rowHmacGenerator.computeRowHmac(
         ACCESSGRANTS.getName(), groupId, secretId);
 
     DSL.using(configuration)
@@ -477,7 +478,7 @@ public class AclDAO {
       return;
     }
 
-    String verificationHmac = cryptographer.computeRowHmac(
+    String verificationHmac = rowHmacGenerator.computeRowHmac(
         MEMBERSHIPS.getName(), clientId, groupId);
 
     DSL.using(configuration)
@@ -542,14 +543,14 @@ public class AclDAO {
     private final GroupMapper groupMapper;
     private final SecretSeriesMapper secretSeriesMapper;
     private final SecretContentMapper secretContentMapper;
-    private final ContentCryptographer cryptographer;
+    private final RowHmacGenerator rowHmacGenerator;
     private final KeywhizConfig config;
 
     @Inject public AclDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq, ClientDAOFactory clientDAOFactory,
                                  GroupDAOFactory groupDAOFactory, SecretContentDAOFactory secretContentDAOFactory,
                                  SecretSeriesDAOFactory secretSeriesDAOFactory, ClientMapper clientMapper,
                                  GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper,
-                                 SecretContentMapper secretContentMapper, ContentCryptographer cryptographer,
+                                 SecretContentMapper secretContentMapper, RowHmacGenerator rowHmacGenerator,
                                  KeywhizConfig config) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
@@ -561,27 +562,27 @@ public class AclDAO {
       this.groupMapper = groupMapper;
       this.secretSeriesMapper = secretSeriesMapper;
       this.secretContentMapper = secretContentMapper;
-      this.cryptographer = cryptographer;
+      this.rowHmacGenerator = rowHmacGenerator;
       this.config = config;
     }
 
     @Override public AclDAO readwrite() {
       return new AclDAO(jooq, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
           secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper,
-          cryptographer, config);
+          rowHmacGenerator, config);
     }
 
     @Override public AclDAO readonly() {
       return new AclDAO(readonlyJooq, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
           secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper,
-          cryptographer, config);
+          rowHmacGenerator, config);
     }
 
     @Override public AclDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
       return new AclDAO(dslContext, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
           secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper,
-          cryptographer, config);
+          rowHmacGenerator, config);
     }
   }
 }
