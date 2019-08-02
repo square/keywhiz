@@ -264,9 +264,6 @@ public class AclDAO {
   public ImmutableSet<SanitizedSecret> getSanitizedSecretsFor(Client client) {
     checkNotNull(client);
 
-    boolean rowHmacLog = config.getRowHmacCheck() != RowHmacCheck.DISABLED;
-    boolean rowHmacFail = config.getRowHmacCheck() == RowHmacCheck.ENABLED;
-
     ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
 
     SelectQuery<Record> query = dslContext.select(SECRETS.fields())
@@ -337,8 +334,8 @@ public class AclDAO {
   }
 
   private SanitizedSecret processSanitizedSecretRow(Record row, Client client) {
-    boolean rowHmacLog = config.getRowHmacCheck() != RowHmacCheck.DISABLED;
-    boolean rowHmacFail = config.getRowHmacCheck() == RowHmacCheck.ENABLED;
+    boolean rowHmacLog = config.getRowHmacCheck() == RowHmacCheck.DISABLED_BUT_LOG;
+    boolean rowHmacFail = config.getRowHmacCheck() == RowHmacCheck.ENFORCED;
 
     SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
 
@@ -346,12 +343,13 @@ public class AclDAO {
         SECRETS.getName(), row.getValue(SECRETS.NAME), row.getValue(SECRETS.ID)
     );
     if (!secretHmac.equals(row.getValue(SECRETS.ROW_HMAC))) {
+      String errorMessage = String.format(
+          "Secret HMAC verification failed for secret: %s", row.getValue(SECRETS.NAME));
       if (rowHmacLog) {
-        logger.info("Secret HMAC verification failed for secret: {}",
-            row.getValue(SECRETS.NAME));
+        logger.info(errorMessage);
       }
       if (rowHmacFail) {
-        throw new AssertionError("Invalid HMAC for secret");
+        throw new AssertionError(errorMessage);
       }
     }
 
@@ -359,35 +357,41 @@ public class AclDAO {
         CLIENTS.getName(), client.getName(), client.getId()
     );
     if (!clientHmac.equals(row.getValue(CLIENTS.ROW_HMAC))) {
+      String errorMessage = String.format(
+          "Client HMAC verification failed for client: %s", client.getName());
       if (rowHmacLog) {
-        logger.info("Client HMAC verification failed for client: {}", client.getName());
+        logger.info(errorMessage);
       }
       if (rowHmacFail) {
-        throw new AssertionError("Invalid HMAC for client");
+        throw new AssertionError(errorMessage);
       }
     }
 
     String membershipsHmac = cryptographer.computeRowHmac(
         MEMBERSHIPS.getName(), client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
     if (!membershipsHmac.equals(row.getValue(MEMBERSHIPS.ROW_HMAC))) {
+      String errorMessage = String.format(
+          "Memberships HMAC verification failed for clientId: %d in groupId: %d",
+          client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
       if (rowHmacLog) {
-        logger.info("Memberships HMAC verification failed for clientId: {} in groupId: {}",
-            client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
+        logger.info(errorMessage);
       }
       if (rowHmacFail) {
-        throw new AssertionError("Invalid HMAC for group membership");
+        throw new AssertionError(errorMessage);
       }
     }
 
     String accessgrantsHmac = cryptographer.computeRowHmac(
         ACCESSGRANTS.getName(), row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
     if (!accessgrantsHmac.equals(row.getValue(ACCESSGRANTS.ROW_HMAC))) {
+      String errorMessage = String.format(
+          "Access Grants HMAC verification failed for groupId: %d in secretId: %d",
+          row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
       if (rowHmacLog) {
-        logger.info("Access Grants HMAC verification failed for groupId: {} for secretId: {}",
-            row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
+        logger.info(errorMessage);
       }
       if (rowHmacFail) {
-        throw new AssertionError("Invalid HMAC for accessgrant");
+        throw new AssertionError(errorMessage);
       }
     }
 

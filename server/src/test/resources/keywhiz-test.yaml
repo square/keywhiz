@@ -148,4 +148,4 @@ contentKeyStore:
   password: CHANGE
   alias: basekey
 
-rowHmacCheck: enabled
+rowHmacCheck: enforced

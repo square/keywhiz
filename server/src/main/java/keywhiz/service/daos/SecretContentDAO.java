@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
+import keywhiz.KeywhizConfig;
+import keywhiz.KeywhizConfig.RowHmacCheck;
 import keywhiz.api.model.SecretContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
@@ -59,16 +61,16 @@ public class SecretContentDAO {
   private final ObjectMapper mapper;
   private final SecretContentMapper secretContentMapper;
   private final ContentCryptographer cryptographer;
-  private final SecureRandom random;
+  private final KeywhizConfig config;
 
   private SecretContentDAO(DSLContext dslContext, ObjectMapper mapper,
       SecretContentMapper secretContentMapper, ContentCryptographer cryptographer,
-      SecureRandom random) {
+      KeywhizConfig config) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretContentMapper = secretContentMapper;
     this.cryptographer = cryptographer;
-    this.random = random;
+    this.config = config;
   }
 
   public long createSecretContent(long secretId, String encryptedContent, String hmac,
@@ -83,11 +85,7 @@ public class SecretContentDAO {
       throw Throwables.propagate(e);
     }
 
-    byte[] generateIdBytes = new byte[8];
-    random.nextBytes(generateIdBytes);
-    ByteBuffer generateIdByteBuffer = ByteBuffer.wrap(generateIdBytes);
-    long generatedId = generateIdByteBuffer.getLong();
-
+    long generatedId = cryptographer.getNextLongSecure();
     String rowHmac = cryptographer.computeRowHmac(
         SECRETS_CONTENT.getName(), encryptedContent, generatedId);
 
@@ -159,8 +157,14 @@ public class SecretContentDAO {
         SECRETS_CONTENT.getName(), r.getEncryptedContent(), r.getId());
 
     if (!rowHmac.equals(r.getRowHmac())) {
-      logger.info("Secret Content HMAC verification failed for secretContent: {}", r.getId());
-      throw new AssertionError("Invalid HMAC for secret content");
+      String errorMessage = String.format(
+          "Secret Content HMAC verification failed for secretContent: %d", r.getId());
+      if (config.getRowHmacCheck() == RowHmacCheck.DISABLED_BUT_LOG) {
+        logger.info(errorMessage);
+      }
+      if (config.getRowHmacCheck() == RowHmacCheck.ENFORCED) {
+        throw new AssertionError(errorMessage);
+      }
     }
 
     return result;
@@ -203,32 +207,32 @@ public class SecretContentDAO {
     private final ObjectMapper objectMapper;
     private final SecretContentMapper secretContentMapper;
     private final ContentCryptographer cryptographer;
-    private final SecureRandom random;
+    private final KeywhizConfig config;
 
     @Inject public SecretContentDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
         ObjectMapper objectMapper, SecretContentMapper secretContentMapper,
-        ContentCryptographer cryptographer, SecureRandom random) {
+        ContentCryptographer cryptographer, KeywhizConfig config) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
       this.secretContentMapper = secretContentMapper;
       this.cryptographer = cryptographer;
-      this.random = random;
+      this.config = config;
     }
 
     @Override public SecretContentDAO readwrite() {
-      return new SecretContentDAO(jooq, objectMapper, secretContentMapper, cryptographer, random);
+      return new SecretContentDAO(jooq, objectMapper, secretContentMapper, cryptographer, config);
     }
 
     @Override public SecretContentDAO readonly() {
-      return new SecretContentDAO(readonlyJooq, objectMapper, secretContentMapper,
-          cryptographer, random);
+      return new SecretContentDAO(readonlyJooq, objectMapper, secretContentMapper, cryptographer,
+          config);
     }
 
     @Override public SecretContentDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretContentDAO(dslContext, objectMapper, secretContentMapper,
-          cryptographer, random);
+      return new SecretContentDAO(dslContext, objectMapper, secretContentMapper, cryptographer,
+          config);
     }
   }
 }

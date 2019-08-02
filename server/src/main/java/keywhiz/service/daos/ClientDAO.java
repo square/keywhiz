@@ -52,14 +52,12 @@ public class ClientDAO {
   private final DSLContext dslContext;
   private final ClientMapper clientMapper;
   private final ContentCryptographer cryptographer;
-  private final SecureRandom random;
 
   private ClientDAO(DSLContext dslContext, ClientMapper clientMapper,
-                    ContentCryptographer cryptographer, SecureRandom random) {
+                    ContentCryptographer cryptographer) {
     this.dslContext = dslContext;
     this.clientMapper = clientMapper;
     this.cryptographer = cryptographer;
-    this.random = random;
   }
 
   public long createClient(String name, String user, String description) {
@@ -67,11 +65,7 @@ public class ClientDAO {
 
     long now = OffsetDateTime.now().toEpochSecond();
 
-    byte[] generateIdBytes = new byte[8];
-    random.nextBytes(generateIdBytes);
-    ByteBuffer generateIdByteBuffer = ByteBuffer.wrap(generateIdBytes);
-    long generatedId = generateIdByteBuffer.getLong();
-
+    long generatedId = cryptographer.getNextLongSecure();
     String rowHmac = cryptographer.computeRowHmac(CLIENTS.getName(), name, generatedId);
 
     r.setId(generatedId);
@@ -162,28 +156,26 @@ public class ClientDAO {
     private final DSLContext readonlyJooq;
     private final ClientMapper clientMapper;
     private final ContentCryptographer cryptographer;
-    private final SecureRandom random;
 
     @Inject public ClientDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
-        ClientMapper clientMapper, ContentCryptographer cryptographer, SecureRandom random) {
+        ClientMapper clientMapper, ContentCryptographer cryptographer) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.clientMapper = clientMapper;
       this.cryptographer = cryptographer;
-      this.random = random;
     }
 
     @Override public ClientDAO readwrite() {
-      return new ClientDAO(jooq, clientMapper, cryptographer, random);
+      return new ClientDAO(jooq, clientMapper, cryptographer);
     }
 
     @Override public ClientDAO readonly() {
-      return new ClientDAO(readonlyJooq, clientMapper, cryptographer, random);
+      return new ClientDAO(readonlyJooq, clientMapper, cryptographer);
     }
 
     @Override public ClientDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new ClientDAO(dslContext, clientMapper, cryptographer, random);
+      return new ClientDAO(dslContext, clientMapper, cryptographer);
     }
   }
 }

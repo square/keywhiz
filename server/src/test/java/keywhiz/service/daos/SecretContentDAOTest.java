@@ -193,7 +193,8 @@ public class SecretContentDAOTest {
 
     assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
       secretContentDAO.getSecretContentById(maliciousId);
-    }).withMessage("Invalid HMAC for secret content");
+    }).withMessage(
+        String.format("Secret Content HMAC verification failed for secretContent: %d", maliciousId));
   }
 
   private int tableSize() {

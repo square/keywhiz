@@ -63,27 +63,20 @@ public class SecretSeriesDAO {
   private final ObjectMapper mapper;
   private final SecretSeriesMapper secretSeriesMapper;
   private final ContentCryptographer cryptographer;
-  private final SecureRandom random;
 
   private SecretSeriesDAO(DSLContext dslContext, ObjectMapper mapper,
-      SecretSeriesMapper secretSeriesMapper, ContentCryptographer cryptographer,
-      SecureRandom random) {
+      SecretSeriesMapper secretSeriesMapper, ContentCryptographer cryptographer) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretSeriesMapper = secretSeriesMapper;
     this.cryptographer = cryptographer;
-    this.random = random;
   }
 
   long createSecretSeries(String name, String creator, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions, long now) {
     SecretsRecord r = dslContext.newRecord(SECRETS);
 
-    byte[] generateIdBytes = new byte[8];
-    random.nextBytes(generateIdBytes);
-    ByteBuffer generateIdByteBuffer = ByteBuffer.wrap(generateIdBytes);
-    long generatedId = generateIdByteBuffer.getLong();
-
+    long generatedId = cryptographer.getNextLongSecure();
     String rowHmac = cryptographer.computeRowHmac(SECRETS.getName(), name, generatedId);
 
     r.setId(generatedId);
@@ -329,32 +322,28 @@ public class SecretSeriesDAO {
     private final ObjectMapper objectMapper;
     private final SecretSeriesMapper secretSeriesMapper;
     private final ContentCryptographer cryptographer;
-    private final SecureRandom random;
 
     @Inject public SecretSeriesDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
         ObjectMapper objectMapper, SecretSeriesMapper secretSeriesMapper,
-        ContentCryptographer cryptographer, SecureRandom random) {
+        ContentCryptographer cryptographer) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
       this.secretSeriesMapper = secretSeriesMapper;
       this.cryptographer = cryptographer;
-      this.random = random;
     }
 
     @Override public SecretSeriesDAO readwrite() {
-      return new SecretSeriesDAO(jooq, objectMapper, secretSeriesMapper, cryptographer, random);
+      return new SecretSeriesDAO(jooq, objectMapper, secretSeriesMapper, cryptographer);
     }
 
     @Override public SecretSeriesDAO readonly() {
-      return new SecretSeriesDAO(readonlyJooq, objectMapper, secretSeriesMapper,
-                                 cryptographer, random);
+      return new SecretSeriesDAO(readonlyJooq, objectMapper, secretSeriesMapper, cryptographer);
     }
 
     @Override public SecretSeriesDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper,
-                                 cryptographer, random);
+      return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper, cryptographer);
     }
   }
 

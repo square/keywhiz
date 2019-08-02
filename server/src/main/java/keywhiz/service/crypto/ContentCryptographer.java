@@ -26,6 +26,7 @@ import com.google.common.base.Throwables;
 import com.google.common.io.BaseEncoding;
 import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -190,6 +191,18 @@ public class ContentCryptographer {
   public String computeRowHmac(String table, long id1, long id2) {
     String hmacContent = table + "|" + id1 + "|" + id2;
     return computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
+  }
+
+  /**
+   * The random log generated with random.nextLong only uses 48 bits of randomness,
+   * meaning it will not return all possible long values. Instead we generate a long from 8
+   * random bytes.
+   */
+  public long getNextLongSecure() {
+    byte[] generateIdBytes = new byte[8];
+    random.nextBytes(generateIdBytes);
+    ByteBuffer generateIdByteBuffer = ByteBuffer.wrap(generateIdBytes);
+    return generateIdByteBuffer.getLong();
   }
 
   /**

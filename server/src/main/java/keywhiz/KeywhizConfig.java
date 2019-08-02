@@ -90,7 +90,7 @@ public class KeywhizConfig extends Configuration {
   private String rowHmacCheck;
 
   public enum RowHmacCheck {
-    DISABLED, LOGGING, ENABLED
+    DISABLED, DISABLED_BUT_LOG, ENFORCED
   }
 
   public String getEnvironment() {
@@ -184,12 +184,18 @@ public class KeywhizConfig extends Configuration {
   }
 
   public RowHmacCheck getRowHmacCheck() {
-    if (rowHmacCheck.equals("enabled")) {
-      return RowHmacCheck.ENABLED;
-    } else if (rowHmacCheck.equals("logging")) {
-      return RowHmacCheck.LOGGING;
+    switch (rowHmacCheck) {
+      case "enforced":
+        return RowHmacCheck.ENFORCED;
+      case "logging":
+        return RowHmacCheck.DISABLED_BUT_LOG;
+      case "disabled":
+        return RowHmacCheck.DISABLED;
+      default:
+        throw new IllegalArgumentException(
+            String.format("%s is an invalid rowHmacCheck parameter", rowHmacCheck)
+        );
     }
-    return RowHmacCheck.DISABLED;
   }
 
   public static class TemplatedDataSourceFactory extends DataSourceFactory {
