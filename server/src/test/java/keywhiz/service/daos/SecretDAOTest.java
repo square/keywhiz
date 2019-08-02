@@ -114,7 +114,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.UPDATEDAT, secret1.content().updatedAt().toEpochSecond())
         .set(SECRETS_CONTENT.METADATA,
             objectMapper.writeValueAsString(secret1.content().metadata()))
-        .set(SECRETS_CONTENT.ROW_HMAC, generateRowHmac(SECRETS_CONTENT.getName(),
+        .set(SECRETS_CONTENT.ROW_HMAC, cryptographer.computeRowHmac(SECRETS_CONTENT.getName(),
             secret1.content().encryptedContent(), secret1.content().id()))
         .execute();
 
@@ -140,7 +140,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.UPDATEDAT, secret2a.content().updatedAt().toEpochSecond())
         .set(SECRETS_CONTENT.METADATA,
             objectMapper.writeValueAsString(secret2a.content().metadata()))
-        .set(SECRETS_CONTENT.ROW_HMAC, generateRowHmac(SECRETS_CONTENT.getName(),
+        .set(SECRETS_CONTENT.ROW_HMAC, cryptographer.computeRowHmac(SECRETS_CONTENT.getName(),
             secret2a.content().encryptedContent(), secret2a.content().id()))
         .execute();
 
@@ -155,7 +155,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.UPDATEDAT, secret2b.content().updatedAt().toEpochSecond())
         .set(SECRETS_CONTENT.METADATA,
             objectMapper.writeValueAsString(secret2b.content().metadata()))
-        .set(SECRETS_CONTENT.ROW_HMAC, generateRowHmac(SECRETS_CONTENT.getName(),
+        .set(SECRETS_CONTENT.ROW_HMAC, cryptographer.computeRowHmac(SECRETS_CONTENT.getName(),
             secret2b.content().encryptedContent(), secret2b.content().id()))
         .execute();
 
@@ -181,7 +181,7 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.UPDATEDAT, secret3.content().updatedAt().toEpochSecond())
         .set(SECRETS_CONTENT.METADATA,
             objectMapper.writeValueAsString(secret3.content().metadata()))
-        .set(SECRETS_CONTENT.ROW_HMAC, generateRowHmac(SECRETS_CONTENT.getName(),
+        .set(SECRETS_CONTENT.ROW_HMAC, cryptographer.computeRowHmac(SECRETS_CONTENT.getName(),
             secret3.content().encryptedContent(), secret3.content().id()))
         .execute();
 
@@ -590,16 +590,6 @@ public class SecretDAOTest {
       assertThat(secretContentsIds).doesNotContainAnyElementsOf(
           expectedMissingContents.stream().map(SecretContent::id).collect(toList()));
     }
-  }
-
-  private String generateRowHmac(String table, String name, long id) {
-    String hmacContent = table + "|" + name + "|" + id;
-    return cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
-  }
-
-  private String generateRowHmac(String table, long id1, long id2) {
-    String hmacContent = table + "|" + id1 + "|" + id2;
-    return cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
   }
 
   private int tableSize(Table table) {

@@ -182,6 +182,16 @@ public class ContentCryptographer {
     }
   }
 
+  public String computeRowHmac(String table, String name, long id) {
+    String hmacContent = table + "|" + name + "|" + id;
+    return computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
+  }
+
+  public String computeRowHmac(String table, long id1, long id2) {
+    String hmacContent = table + "|" + id1 + "|" + id2;
+    return computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
+  }
+
   /**
    * Non-public value type representing JSON serialized fields for encrypted data.
    */

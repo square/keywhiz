@@ -58,7 +58,6 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
@@ -343,7 +342,7 @@ public class AclDAO {
 
     SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
 
-    String secretHmac = generateRowHmac(
+    String secretHmac = cryptographer.computeRowHmac(
         SECRETS.getName(), row.getValue(SECRETS.NAME), row.getValue(SECRETS.ID)
     );
     if (!secretHmac.equals(row.getValue(SECRETS.ROW_HMAC))) {
@@ -356,7 +355,7 @@ public class AclDAO {
       }
     }
 
-    String clientHmac = generateRowHmac(
+    String clientHmac = cryptographer.computeRowHmac(
         CLIENTS.getName(), client.getName(), client.getId()
     );
     if (!clientHmac.equals(row.getValue(CLIENTS.ROW_HMAC))) {
@@ -368,7 +367,7 @@ public class AclDAO {
       }
     }
 
-    String membershipsHmac = generateRowHmac(
+    String membershipsHmac = cryptographer.computeRowHmac(
         MEMBERSHIPS.getName(), client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
     if (!membershipsHmac.equals(row.getValue(MEMBERSHIPS.ROW_HMAC))) {
       if (rowHmacLog) {
@@ -380,7 +379,7 @@ public class AclDAO {
       }
     }
 
-    String accessgrantsHmac = generateRowHmac(
+    String accessgrantsHmac = cryptographer.computeRowHmac(
         ACCESSGRANTS.getName(), row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
     if (!accessgrantsHmac.equals(row.getValue(ACCESSGRANTS.ROW_HMAC))) {
       if (rowHmacLog) {
@@ -442,7 +441,8 @@ public class AclDAO {
       return;
     }
 
-    String verificationHmac = generateRowHmac(ACCESSGRANTS.getName(), groupId, secretId);
+    String verificationHmac = cryptographer.computeRowHmac(
+        ACCESSGRANTS.getName(), groupId, secretId);
 
     DSL.using(configuration)
         .insertInto(ACCESSGRANTS)
@@ -473,7 +473,8 @@ public class AclDAO {
       return;
     }
 
-    String verificationHmac = generateRowHmac(MEMBERSHIPS.getName(), clientId, groupId);
+    String verificationHmac = cryptographer.computeRowHmac(
+        MEMBERSHIPS.getName(), clientId, groupId);
 
     DSL.using(configuration)
         .insertInto(MEMBERSHIPS)
@@ -503,16 +504,6 @@ public class AclDAO {
         .fetchInto(SECRETS)
         .map(secretSeriesMapper);
     return ImmutableSet.copyOf(r);
-  }
-
-  private String generateRowHmac(String table, String name, long id) {
-    String hmacContent = table + "|" + name + "|" + id;
-    return cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
-  }
-
-  private String generateRowHmac(String table, long id1, long id2) {
-    String hmacContent = table + "|" + id1 + "|" + id2;
-    return cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
   }
 
   /**

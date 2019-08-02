@@ -47,9 +47,7 @@ import org.jooq.SelectQuery;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
-import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
@@ -86,8 +84,7 @@ public class SecretSeriesDAO {
     ByteBuffer generateIdByteBuffer = ByteBuffer.wrap(generateIdBytes);
     long generatedId = generateIdByteBuffer.getLong();
 
-    String hmacContent = SECRETS.getName() + "|" + name + "|" + generatedId;
-    String rowHmac = cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
+    String rowHmac = cryptographer.computeRowHmac(SECRETS.getName(), name, generatedId);
 
     r.setId(generatedId);
     r.setName(name);
@@ -120,8 +117,7 @@ public class SecretSeriesDAO {
     }
 
     try {
-      String hmacContent = SECRETS.getName() + "|" + name + "|" + secretId;
-      String rowHmac = cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
+      String rowHmac = cryptographer.computeRowHmac(SECRETS.getName(), name, secretId);
 
       dslContext.update(SECRETS)
           .set(SECRETS.NAME, name)

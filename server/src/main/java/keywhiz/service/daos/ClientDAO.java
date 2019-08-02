@@ -40,12 +40,10 @@ import org.jooq.Param;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Instant.EPOCH;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 import static org.jooq.impl.DSL.greatest;
-import static org.jooq.impl.DSL.rand;
 import static org.jooq.impl.DSL.when;
 
 public class ClientDAO {
@@ -74,8 +72,7 @@ public class ClientDAO {
     ByteBuffer generateIdByteBuffer = ByteBuffer.wrap(generateIdBytes);
     long generatedId = generateIdByteBuffer.getLong();
 
-    String hmacContent = CLIENTS.getName() + "|" + name + "|" + generatedId;
-    String rowHmac = cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
+    String rowHmac = cryptographer.computeRowHmac(CLIENTS.getName(), name, generatedId);
 
     r.setId(generatedId);
     r.setName(name);

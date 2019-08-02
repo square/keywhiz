@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.swing.text.html.Option;
 import keywhiz.api.model.SecretContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
@@ -42,8 +41,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
@@ -91,8 +88,8 @@ public class SecretContentDAO {
     ByteBuffer generateIdByteBuffer = ByteBuffer.wrap(generateIdBytes);
     long generatedId = generateIdByteBuffer.getLong();
 
-    String hmacContent = SECRETS_CONTENT.getName() + "|" + encryptedContent + "|" + generatedId;
-    String rowHmac = cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
+    String rowHmac = cryptographer.computeRowHmac(
+        SECRETS_CONTENT.getName(), encryptedContent, generatedId);
 
     r.setId(generatedId);
     r.setSecretid(secretId);
@@ -158,8 +155,8 @@ public class SecretContentDAO {
       return result;
     }
 
-    String hmacContent = SECRETS_CONTENT.getName() + "|" + r.getEncryptedContent() + "|" + r.getId();
-    String rowHmac = cryptographer.computeHmac(hmacContent.getBytes(UTF_8), "row_hmac");
+    String rowHmac = cryptographer.computeRowHmac(
+        SECRETS_CONTENT.getName(), r.getEncryptedContent(), r.getId());
 
     if (!rowHmac.equals(r.getRowHmac())) {
       logger.info("Secret Content HMAC verification failed for secretContent: {}", r.getId());
