@@ -2,6 +2,7 @@ language: java
 
 services:
   - docker
+  - mysql
 
 jdk:
   - openjdk11
@@ -10,12 +11,15 @@ cache:
   directories:
     - $HOME/.m2
 
+before_install:
+  - mysql -e 'CREATE DATABASE keywhizdb_docker;'
+
 install:
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V -q
   # Build Docker container
-  - docker build -t squareup/keywhiz .
+  - docker build --network=host -t squareup/keywhiz .
   # Make sure Docker image runs
-  - docker run --rm squareup/keywhiz --version
+  - docker run --network=host --rm squareup/keywhiz --version
 
 script:
-  - mvn test jacoco:report coveralls:report -B -P h2 -q
+  - mvn test jacoco:report coveralls:report -B -q

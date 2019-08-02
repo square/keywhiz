@@ -11,6 +11,17 @@
   <artifactId>keywhiz-model</artifactId>
   <name>Keywhiz Model</name>
 
+  <properties>
+    <db.driver>com.mysql.jdbc.Driver</db.driver>
+    <db.create-url>jdbc:mysql://localhost/?useUnicode=true&amp;characterEncoding=utf8</db.create-url>
+    <db.migrate-url>jdbc:mysql://localhost/keywhizdb_test?useUnicode=true&amp;characterEncoding=utf8</db.migrate-url>
+    <db.username>root</db.username>
+    <db.migrations-path>mysql/migration</db.migrations-path>
+    <jooq.dialect>org.jooq.meta.mysql.MySQLDatabase</jooq.dialect>
+    <jooq.excludes>mysql.*</jooq.excludes>
+    <jooq.input-schema>keywhizdb_test</jooq.input-schema>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.jooq</groupId>
@@ -25,10 +36,6 @@
       <artifactId>jooq-codegen</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-    </dependency>
     <dependency>
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
@@ -47,57 +54,6 @@
     </dependency>
   </dependencies>
 
-  <profiles>
-    <profile>
-      <id>mysql</id>
-      <activation>
-        <!-- If you change the default database, make sure to also update the server's pom.xml -->
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <properties>
-        <skipResetDatabase>false</skipResetDatabase>
-        <db.driver>com.mysql.jdbc.Driver</db.driver>
-        <db.create-url>jdbc:mysql://localhost/?useUnicode=true&amp;characterEncoding=utf8</db.create-url>
-        <db.migrate-url>jdbc:mysql://localhost/keywhizdb_test?useUnicode=true&amp;characterEncoding=utf8</db.migrate-url>
-        <db.username>root</db.username>
-        <db.migrations-path>mysql/migration</db.migrations-path>
-        <jooq.dialect>org.jooq.meta.mysql.MySQLDatabase</jooq.dialect>
-        <jooq.excludes>mysql.*</jooq.excludes>
-        <jooq.input-schema>keywhizdb_test</jooq.input-schema>
-      </properties>
-    </profile>
-
-    <profile>
-      <id>h2</id>
-      <properties>
-        <skipResetDatabase>true</skipResetDatabase>
-        <db.driver>org.h2.Driver</db.driver>
-        <db.create-url>jdbc:h2:/tmp/h2_data/keywhizdb_test</db.create-url>
-        <db.migrate-url>jdbc:h2:/tmp/h2_data/keywhizdb_test</db.migrate-url>
-        <db.username>root</db.username>
-        <db.migrations-path>h2/migration</db.migrations-path>
-        <jooq.dialect>org.jooq.meta.h2.H2Database</jooq.dialect>
-        <jooq.excludes />
-        <jooq.input-schema>PUBLIC</jooq.input-schema>
-      </properties>
-    </profile>
-
-    <profile>
-      <id>docker</id>
-      <properties>
-        <skipResetDatabase>true</skipResetDatabase>
-        <db.driver>org.h2.Driver</db.driver>
-        <db.create-url>jdbc:h2:/tmp/h2_data/keywhizdb_test</db.create-url>
-        <db.migrate-url>jdbc:h2:/tmp/h2_data/keywhizdb_test</db.migrate-url>
-        <db.username>root</db.username>
-        <db.migrations-path>h2/migration</db.migrations-path>
-        <jooq.dialect>org.jooq.meta.h2.H2Database</jooq.dialect>
-        <jooq.excludes />
-        <jooq.input-schema>PUBLIC</jooq.input-schema>
-      </properties>
-    </profile>
-  </profiles>
-
   <build>
     <plugins>
       <!-- Creates (or re-creates) a keywhizdb_test database. -->
@@ -114,7 +70,6 @@
         </executions>
 
         <configuration>
-          <skip>${skipResetDatabase}</skip>
           <driver>${db.driver}</driver>
           <url>${db.create-url}</url>
           <username>${db.username}</username>
