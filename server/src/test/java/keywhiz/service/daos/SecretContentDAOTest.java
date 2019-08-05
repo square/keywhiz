@@ -67,6 +67,7 @@ public class SecretContentDAOTest {
         .set(SECRETS_CONTENT.UPDATEDBY, secretContent1.updatedBy())
         .set(SECRETS_CONTENT.METADATA, JSONObject.toJSONString(secretContent1.metadata()))
         .set(SECRETS_CONTENT.EXPIRY, 1136214245L)
+        .set(SECRETS_CONTENT.ROW_HMAC, "2FE12084DF2D9E60B2362AE6CCF63C8059552640E805B07CD65E4A92930E3922")
         .execute();
   }
 
@@ -91,16 +92,11 @@ public class SecretContentDAOTest {
     long[] ids = new long[15];
     for (int i = 0; i < ids.length; i++) {
       long id = secretContentDAO.createSecretContent(secretSeriesId, "encrypted", "checksum",
-          "creator", metadata, 1136214245, now);
+          "creator", metadata, 1136214245, i);
       ids[i] = id;
     }
 
     assertThat(tableSize()).isEqualTo(before + ids.length);
-
-    // Update created_at to make all secrets older than cutoff
-    jooqContext.update(SECRETS_CONTENT)
-        .set(SECRETS_CONTENT.CREATEDAT, 1L)
-        .execute();
 
     // Make most recent id be the current version for the secret series and prune
     jooqContext.update(SECRETS)

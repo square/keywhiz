@@ -16,9 +16,15 @@
 package keywhiz.commands;
 
 import com.codahale.metrics.MetricRegistry;
+import com.google.common.io.BaseEncoding;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.sql.DataSource;
 import keywhiz.KeywhizConfig;
 import keywhiz.service.daos.UserDAO;
@@ -26,6 +32,7 @@ import keywhiz.utility.DSLContexts;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.jooq.DSLContext;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
@@ -52,6 +59,12 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
   public static final String defaultUser = "keywhizAdmin";
   public static final String defaultPassword = "adminPass";
 
+  private static final String KEY_ALGORITHM = "AES";
+  private static final byte[] KEY_BYTES = {
+      18, -91, 116, -114, -50, 49, -35, -70, -120, -37, 0, -45, 104, 7, -114, -28, 97, 30, 83, 102,
+      -61, 78, 92, -3, -63, 116, 101, -119, 40, 64, -87, 45
+  };
+
   public DbSeedCommand() {
     super("db-seed", "Populates database with development data.");
   }
@@ -68,6 +81,27 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
 
     DSLContext dslContext = DSLContexts.databaseAgnostic(dataSource);
     doImport(dslContext);
+  }
+
+  private static String computeHmac(byte[] data) {
+    SecretKey hmacKey = new SecretKeySpec(KEY_BYTES, KEY_ALGORITHM);
+    try {
+      Mac mac = Mac.getInstance("HmacSHA256");
+      mac.init(hmacKey);
+      return BaseEncoding.base16().encode(mac.doFinal(data));
+    } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+      return null;
+    }
+  }
+
+  private static String computeRowHmac(String table, String name, long id) {
+    String hmacContent = table + "|" + name + "|" + id;
+    return computeHmac(hmacContent.getBytes(UTF_8));
+  }
+
+  private static String computeRowHmac(String table, long id1, long id2) {
+    String hmacContent = table + "|" + id1 + "|" + id2;
+    return computeHmac(hmacContent.getBytes(UTF_8));
   }
 
   /**
@@ -88,66 +122,76 @@ public class DbSeedCommand extends ConfiguredCommand<KeywhizConfig> {
         .execute();
 
     dslContext
-        .insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT, SECRETS.UPDATEDAT, SECRETS.CURRENT)
-        .values(737L, "Nobody_PgPass", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 937L)
-        .values(738L, "Hacking_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 938L)
-        .values(739L, "Database_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 939L)
-        .values(740L, "General_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 940L)
-        .values(741L, "NonexistentOwner_Pass", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 941L)
-        .values(742L, "Versioned_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 942L)
-        .values(743L, "Deleted_Secret", OffsetDateTime.parse("2016-06-08T02:03:04Z").toEpochSecond(), OffsetDateTime.parse("2016-06-08T02:03:04Z").toEpochSecond(), null)
+        .insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT, SECRETS.UPDATEDAT, SECRETS.CURRENT, SECRETS.ROW_HMAC)
+        .values(737L, "Nobody_PgPass", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 937L, computeRowHmac(SECRETS.getName(), "Nobody_PgPass", 737L))
+        .values(738L, "Hacking_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 938L, computeRowHmac(SECRETS.getName(), "Hacking_Password", 738L))
+        .values(739L, "Database_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 939L, computeRowHmac(SECRETS.getName(), "Database_Password", 739L))
+        .values(740L, "General_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 940L, computeRowHmac(SECRETS.getName(), "General_Password", 740L))
+        .values(741L, "NonexistentOwner_Pass", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 941L, computeRowHmac(SECRETS.getName(), "NonexistentOwner_Pass", 741L))
+        .values(742L, "Versioned_Password", OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), 942L, computeRowHmac(SECRETS.getName(), "Versioned_Password", 742L))
+        .values(743L, "Deleted_Secret", OffsetDateTime.parse("2016-06-08T02:03:04Z").toEpochSecond(), OffsetDateTime.parse("2016-06-08T02:03:04Z").toEpochSecond(), null, computeRowHmac(SECRETS.getName(), "Deleted_Secret", 743L))
+        .execute();
+
+    String encrypted937 = "{\"derivationInfo\":\"Nobody_PgPass\",\"content\":\"5Eq97Y/6LMLUqH8rlXxEkOeMFmc3cYhQny0eotojNrF3DTFdQPyHVG5HeP5vzaFxqttcZkO56NvIwdD8k2xyIL5YRbCIA5MQ9LOnKN4tpnwb+Q\",\"iv\":\"jQAFJizi1MKZUcCxb6mTCA\"}";
+    String encrypted938 = "{\"derivationInfo\":\"Hacking_Password\",\"content\":\"jpNVoXZao+b+f591w+CHWTj7D1M\",\"iv\":\"W+pT37jJP4uDGHmuczXVCA\"}";
+    String encrypted939 = "{\"derivationInfo\":\"Database_Password\",\"content\":\"etQQFqMHQQpGr4aDlj5gDjiABkOb\",\"iv\":\"ia+YixjAEqp9W3JEjaYLvQ\"}";
+    String encrypted940 = "{\"derivationInfo\":\"General_Password\",\"content\":\"A6kBLXwmx0EVtuIGTzxHiEZ/6yrXgg\",\"iv\":\"e4I0c3fog0TKqTAC2UxYtQ\"}";
+    String encrypted941 = "{\"derivationInfo\":\"NonexistentOwner_Pass\",\"content\":\"+Pu1B5YgqGRIHzh17s5tPT3AYb+W\",\"iv\":\"ewRV3RhFfLnbWxY5pr401g\"}";
+    String encrypted942 = "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}";
+    String encrypted943 = "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}";
+    String encrypted944 = "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}";
+    String encrypted945 = "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}";
+    String encrypted946 = "{\"derivationInfo\":\"Deleted_Secret\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}";
+    dslContext
+        .insertInto(SECRETS_CONTENT, SECRETS_CONTENT.ID, SECRETS_CONTENT.SECRETID, SECRETS_CONTENT.CREATEDAT, SECRETS_CONTENT.UPDATEDAT, SECRETS_CONTENT.ENCRYPTED_CONTENT, SECRETS_CONTENT.METADATA, SECRETS_CONTENT.ROW_HMAC)
+        .values(937L, 737L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:00:47Z").toEpochSecond(), encrypted937, "{\"mode\":\"0400\",\"owner\":\"nobody\"}", computeRowHmac(SECRETS_CONTENT.getName(), encrypted937, 937L))
+        .values(938L, 738L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:01:59Z").toEpochSecond(), encrypted938, "", computeRowHmac(SECRETS_CONTENT.getName(), encrypted938, 938L))
+        .values(939L, 739L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:02:06Z").toEpochSecond(), encrypted939, "", computeRowHmac(SECRETS_CONTENT.getName(), encrypted939, 939L))
+        .values(940L, 740L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:02:06Z").toEpochSecond(), encrypted940, "", computeRowHmac(SECRETS_CONTENT.getName(), encrypted940, 940L))
+        .values(941L, 741L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:02:06Z").toEpochSecond(), encrypted941, "{\"owner\":\"NonExistant\",\"mode\":\"0400\"}", computeRowHmac(SECRETS_CONTENT.getName(), encrypted941, 941L))
+        .values(942L, 742L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:02:06Z").toEpochSecond(), encrypted942, "", computeRowHmac(SECRETS_CONTENT.getName(), encrypted942, 942L))
+        .values(943L, 742L, OffsetDateTime.parse("2011-09-29T16:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T16:46:00Z").toEpochSecond(), encrypted943, "", computeRowHmac(SECRETS_CONTENT.getName(), encrypted943, 943L))
+        .values(944L, 742L, OffsetDateTime.parse("2011-09-29T17:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T17:46:00Z").toEpochSecond(), encrypted944, "", computeRowHmac(SECRETS_CONTENT.getName(), encrypted944, 944L))
+        .values(945L, 742L, OffsetDateTime.parse("2011-09-29T18:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T18:46:00Z").toEpochSecond(), encrypted945, "", computeRowHmac(SECRETS_CONTENT.getName(), encrypted945, 945L))
+        .values(946L, 743L, OffsetDateTime.parse("2016-06-08T02:03:04Z").toEpochSecond(), OffsetDateTime.parse("2016-06-08T02:03:04Z").toEpochSecond(), encrypted946, "", computeRowHmac(SECRETS_CONTENT.getName(), encrypted946, 946L))
         .execute();
 
     dslContext
-        .insertInto(SECRETS_CONTENT, SECRETS_CONTENT.ID, SECRETS_CONTENT.SECRETID, SECRETS_CONTENT.CREATEDAT, SECRETS_CONTENT.UPDATEDAT, SECRETS_CONTENT.ENCRYPTED_CONTENT, SECRETS_CONTENT.METADATA)
-        .values(937L, 737L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:00:47Z").toEpochSecond(), "{\"derivationInfo\":\"Nobody_PgPass\",\"content\":\"5Eq97Y/6LMLUqH8rlXxEkOeMFmc3cYhQny0eotojNrF3DTFdQPyHVG5HeP5vzaFxqttcZkO56NvIwdD8k2xyIL5YRbCIA5MQ9LOnKN4tpnwb+Q\",\"iv\":\"jQAFJizi1MKZUcCxb6mTCA\"}", "{\"mode\":\"0400\",\"owner\":\"nobody\"}")
-        .values(938L, 738L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:01:59Z").toEpochSecond(), "{\"derivationInfo\":\"Hacking_Password\",\"content\":\"jpNVoXZao+b+f591w+CHWTj7D1M\",\"iv\":\"W+pT37jJP4uDGHmuczXVCA\"}", "")
-        .values(939L, 739L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:02:06Z").toEpochSecond(), "{\"derivationInfo\":\"Database_Password\",\"content\":\"etQQFqMHQQpGr4aDlj5gDjiABkOb\",\"iv\":\"ia+YixjAEqp9W3JEjaYLvQ\"}", "")
-        .values(940L, 740L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:02:06Z").toEpochSecond(), "{\"derivationInfo\":\"General_Password\",\"content\":\"A6kBLXwmx0EVtuIGTzxHiEZ/6yrXgg\",\"iv\":\"e4I0c3fog0TKqTAC2UxYtQ\"}", "")
-        .values(941L, 741L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:02:06Z").toEpochSecond(), "{\"derivationInfo\":\"NonexistentOwner_Pass\",\"content\":\"+Pu1B5YgqGRIHzh17s5tPT3AYb+W\",\"iv\":\"ewRV3RhFfLnbWxY5pr401g\"}", "{\"owner\":\"NonExistant\",\"mode\":\"0400\"}")
-        .values(942L, 742L, OffsetDateTime.parse("2011-09-29T15:46:00Z").toEpochSecond(), OffsetDateTime.parse("2015-01-07T12:02:06Z").toEpochSecond(), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
-        .values(943L, 742L, OffsetDateTime.parse("2011-09-29T16:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T16:46:00Z").toEpochSecond(), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
-        .values(944L, 742L, OffsetDateTime.parse("2011-09-29T17:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T17:46:00Z").toEpochSecond(), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
-        .values(945L, 742L, OffsetDateTime.parse("2011-09-29T18:46:00Z").toEpochSecond(), OffsetDateTime.parse("2011-09-29T18:46:00Z").toEpochSecond(), "{\"derivationInfo\":\"Versioned_Password\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
-        .values(946L, 743L, OffsetDateTime.parse("2016-06-08T02:03:04Z").toEpochSecond(), OffsetDateTime.parse("2016-06-08T02:03:04Z").toEpochSecond(), "{\"derivationInfo\":\"Deleted_Secret\",\"content\":\"GC8/ZvEfqpxhtAkThgZ8/+vPesh9\",\"iv\":\"oRf3CMnB7jv63K33dJFeFg\"}", "")
+        .insertInto(CLIENTS, CLIENTS.ID, CLIENTS.NAME, CLIENTS.CREATEDAT, CLIENTS.UPDATEDAT, CLIENTS.ENABLED, CLIENTS.AUTOMATIONALLOWED, CLIENTS.ROW_HMAC)
+        .values(768L, "client", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), true, true, computeRowHmac(CLIENTS.getName(), "client", 768L))
+        .values(769L, "CN=User1", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), true, false, computeRowHmac(CLIENTS.getName(), "CN=User1", 769L))
+        .values(770L, "CN=User2", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(),  OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), true, false, computeRowHmac(CLIENTS.getName(), "CN=User2", 770L))
+        .values(771L, "CN=User3", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), true, false, computeRowHmac(CLIENTS.getName(), "CN=User3", 771L))
+        .values(772L, "CN=User4", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), true, false, computeRowHmac(CLIENTS.getName(), "CN=User4", 772L))
         .execute();
 
     dslContext
-        .insertInto(CLIENTS, CLIENTS.ID, CLIENTS.NAME, CLIENTS.CREATEDAT, CLIENTS.UPDATEDAT, CLIENTS.ENABLED, CLIENTS.AUTOMATIONALLOWED)
-        .values(768L, "client", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), true, true)
-        .values(769L, "CN=User1", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), true, false)
-        .values(770L, "CN=User2", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(),  OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), true, false)
-        .values(771L, "CN=User3", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), true, false)
-        .values(772L, "CN=User4", OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), true, false)
+        .insertInto(ACCESSGRANTS, ACCESSGRANTS.ID, ACCESSGRANTS.GROUPID, ACCESSGRANTS.SECRETID, ACCESSGRANTS.CREATEDAT, ACCESSGRANTS.UPDATEDAT, ACCESSGRANTS.ROW_HMAC)
+        .values(617L, 918L, 737L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(ACCESSGRANTS.getName(), 918L, 737L))
+        .values(618L, 917L, 737L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(ACCESSGRANTS.getName(), 917L, 737L))
+        .values(619L, 916L, 738L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(ACCESSGRANTS.getName(), 916L, 738L))
+        .values(620L, 918L, 739L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(ACCESSGRANTS.getName(), 918L, 739L))
+        .values(621L, 917L, 739L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(ACCESSGRANTS.getName(), 917L, 739L))
+        .values(622L, 918L, 740L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(ACCESSGRANTS.getName(), 918L, 740L))
+        .values(623L, 919L, 740L, OffsetDateTime.parse("2012-06-21T14:38:10Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:10Z").toEpochSecond(), computeRowHmac(ACCESSGRANTS.getName(), 919L, 740L))
+        .values(624L, 916L, 740L, OffsetDateTime.parse("2012-06-21T14:38:10Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:10Z").toEpochSecond(), computeRowHmac(ACCESSGRANTS.getName(), 916L, 740L))
+        .values(625L, 917L, 740L, OffsetDateTime.parse("2012-06-21T14:38:10Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:10Z").toEpochSecond(), computeRowHmac(ACCESSGRANTS.getName(), 917L, 740L))
+        .values(626L, 918L, 741L, OffsetDateTime.parse("2012-06-21T14:38:11Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:11Z").toEpochSecond(), computeRowHmac(ACCESSGRANTS.getName(), 918L, 741L))
+        .values(627L, 917L, 741L, OffsetDateTime.parse("2012-06-21T14:38:11Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:11Z").toEpochSecond(), computeRowHmac(ACCESSGRANTS.getName(), 917L, 741L))
         .execute();
 
     dslContext
-        .insertInto(ACCESSGRANTS, ACCESSGRANTS.ID, ACCESSGRANTS.GROUPID, ACCESSGRANTS.SECRETID, ACCESSGRANTS.CREATEDAT, ACCESSGRANTS.UPDATEDAT)
-        .values(617L, 918L, 737L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(618L, 917L, 737L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(619L, 916L, 738L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(620L, 918L, 739L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(621L, 917L, 739L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(622L, 918L, 740L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(623L, 919L, 740L, OffsetDateTime.parse("2012-06-21T14:38:10Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:10Z").toEpochSecond())
-        .values(624L, 916L, 740L, OffsetDateTime.parse("2012-06-21T14:38:10Z").toEpochSecond(),  OffsetDateTime.parse("2012-06-21T14:38:10Z").toEpochSecond())
-        .values(625L, 917L, 740L, OffsetDateTime.parse("2012-06-21T14:38:10Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:10Z").toEpochSecond())
-        .values(626L, 918L, 741L, OffsetDateTime.parse("2012-06-21T14:38:11Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:11Z").toEpochSecond())
-        .values(627L, 917L, 741L, OffsetDateTime.parse("2012-06-21T14:38:11Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:11Z").toEpochSecond())
-        .execute();
-
-    dslContext
-        .insertInto(MEMBERSHIPS, MEMBERSHIPS.ID, MEMBERSHIPS.GROUPID, MEMBERSHIPS.CLIENTID, MEMBERSHIPS.CREATEDAT, MEMBERSHIPS.UPDATEDAT)
-        .values(659L, 917L, 768L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(660L, 918L, 769L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(661L, 916L, 769L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(662L, 917L, 769L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(663L, 919L, 770L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(664L, 917L, 770L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(665L, 918L, 771L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(666L, 919L, 771L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(667L, 918L, 772L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
-        .values(668L, 917L, 772L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond())
+        .insertInto(MEMBERSHIPS, MEMBERSHIPS.ID, MEMBERSHIPS.GROUPID, MEMBERSHIPS.CLIENTID, MEMBERSHIPS.CREATEDAT, MEMBERSHIPS.UPDATEDAT, MEMBERSHIPS.ROW_HMAC)
+        .values(659L, 917L, 768L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(MEMBERSHIPS.getName(), 768L, 917L))
+        .values(660L, 918L, 769L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(MEMBERSHIPS.getName(), 769L, 918L))
+        .values(661L, 916L, 769L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(MEMBERSHIPS.getName(), 769L, 916L))
+        .values(662L, 917L, 769L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(MEMBERSHIPS.getName(), 769L, 917L))
+        .values(663L, 919L, 770L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(MEMBERSHIPS.getName(), 770L, 919L))
+        .values(664L, 917L, 770L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(MEMBERSHIPS.getName(), 770L, 917L))
+        .values(665L, 918L, 771L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(MEMBERSHIPS.getName(), 771L, 918L))
+        .values(666L, 919L, 771L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(MEMBERSHIPS.getName(), 771L, 919L))
+        .values(667L, 918L, 772L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(MEMBERSHIPS.getName(), 772L, 918L))
+        .values(668L, 917L, 772L, OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), OffsetDateTime.parse("2012-06-21T14:38:09Z").toEpochSecond(), computeRowHmac(MEMBERSHIPS.getName(), 772L, 917L))
         .execute();
 
     new UserDAO(dslContext).createUserAt(
