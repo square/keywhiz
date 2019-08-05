@@ -17,7 +17,6 @@ package keywhiz.service.resources.admin;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.google.common.primitives.Ints;
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -118,7 +117,7 @@ public class ClientsResourceIntegrationTest {
 
   @Test public void deletesClients() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-    int clientId = Ints.checkedCast(keywhizClient.createClient("deletesClientTest").id);
+    long clientId = keywhizClient.createClient("deletesClientTest").id;
 
     keywhizClient.deleteClientWithId(clientId);
 
