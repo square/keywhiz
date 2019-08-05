@@ -191,7 +191,7 @@ public class SecretDAO {
       // Mirrors hmac-creation in SecretController
       if (request.contentPresent()) {
         hmac = cryptographer.computeHmac(
-            request.content().getBytes(UTF_8)); // Compute HMAC on base64 encoded data
+            request.content().getBytes(UTF_8), "hmackey"); // Compute HMAC on base64 encoded data
         if (hmac == null) {
           throw new ContentEncodingException("Error encoding content for SecretBuilder!");
         }

@@ -54,7 +54,7 @@ public class SecretFixtures {
    * @return created secret model
    */
   public Secret createSecret(String name, String content) {
-    String hmac = cryptographer.computeHmac(content.getBytes(UTF_8));
+    String hmac = cryptographer.computeHmac(content.getBytes(UTF_8), "hmackey");
     if (hmac == null) {
       throw new ContentEncodingException("Error encoding content in SecretFixture!");
     }

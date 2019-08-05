@@ -190,7 +190,7 @@ public class SecretDAOTest {
 
     String name = "newSecret";
     String content = "c2VjcmV0MQ==";
-    String hmac = cryptographer.computeHmac(content.getBytes(UTF_8));
+    String hmac = cryptographer.computeHmac(content.getBytes(UTF_8), "hmackey");
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
     long newId = secretDAO.createSecret(name, encryptedContent, hmac, "creator",
         ImmutableMap.of(), 0, "", null, ImmutableMap.of());
@@ -231,7 +231,7 @@ public class SecretDAOTest {
   public void createSecretFailsIfNameMatchesDeletedSecret() {
     String name = "newSecret";
     long firstId = secretDAO.createSecret(name, "content1",
-        cryptographer.computeHmac("content1".getBytes(UTF_8)), "creator1",
+        cryptographer.computeHmac("content1".getBytes(UTF_8), "hmackey"), "creator1",
         ImmutableMap.of("foo", "bar"), 1000, "description1", "type1", ImmutableMap.of());
 
     // When a secret is deleted, its name should be changed.  However, if the name is not changed
@@ -242,7 +242,7 @@ public class SecretDAOTest {
         .execute();
 
      secretDAO.createSecret(name, "content2",
-        cryptographer.computeHmac("content2".getBytes(UTF_8)), "creator2",
+        cryptographer.computeHmac("content2".getBytes(UTF_8), "hmackey"), "creator2",
         ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
   }
 
@@ -256,7 +256,7 @@ public class SecretDAOTest {
 
     String name = "newSecret";
     String content = "c2VjcmV0MQ==";
-    String hmac = cryptographer.computeHmac(content.getBytes(UTF_8));
+    String hmac = cryptographer.computeHmac(content.getBytes(UTF_8), "hmackey");
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
     long newId = secretDAO.createOrUpdateSecret(name, encryptedContent, hmac, "creator",
         ImmutableMap.of(), 0, "", null, ImmutableMap.of());
@@ -272,11 +272,11 @@ public class SecretDAOTest {
   @Test public void createOrUpdateSecretWhenSecretExists() {
     String name = "newSecret";
     long firstId = secretDAO.createSecret(name, "content1",
-        cryptographer.computeHmac("content1".getBytes(UTF_8)), "creator1",
+        cryptographer.computeHmac("content1".getBytes(UTF_8), "hmackey"), "creator1",
         ImmutableMap.of("foo", "bar"), 1000, "description1", "type1", ImmutableMap.of());
 
     long secondId = secretDAO.createOrUpdateSecret(name, "content2",
-        cryptographer.computeHmac("content2".getBytes(UTF_8)), "creator2",
+        cryptographer.computeHmac("content2".getBytes(UTF_8), "hmackey"), "creator2",
         ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
     assertThat(secondId).isEqualTo(firstId);
 
@@ -356,7 +356,7 @@ public class SecretDAOTest {
     assertThat(newSecret.series().type().get()).isEqualTo("type1");
     assertThat(newSecret.content().createdBy()).isEqualTo("creator1");
     assertThat(newSecret.content().hmac()).isEqualTo(
-        cryptographer.computeHmac("content1".getBytes(UTF_8)));
+        cryptographer.computeHmac("content1".getBytes(UTF_8), "hmackey"));
     assertThat(newSecret.content().metadata()).isEqualTo(secret1.content().metadata());
     assertThat(newSecret.content().expiry()).isEqualTo(secret1.content().expiry());
 
@@ -402,7 +402,7 @@ public class SecretDAOTest {
     assertThat(secretDAO.getSecretByName(name)).isEmpty();
 
     long newId = secretDAO.createSecret(name, "content",
-        cryptographer.computeHmac("content".getBytes(UTF_8)), "creator", ImmutableMap.of(), 0, "",
+        cryptographer.computeHmac("content".getBytes(UTF_8), "hmackey"), "creator", ImmutableMap.of(), 0, "",
         null, ImmutableMap.of());
     SecretSeriesAndContent newSecret = secretDAO.getSecretById(newId).get();
 
@@ -453,7 +453,7 @@ public class SecretDAOTest {
 
   @Test public void deleteSecretsByName() {
     secretDAO.createSecret("toBeDeleted_deleteSecretsByName", "encryptedShhh",
-        cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8)), "creator",
+        cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
     secretDAO.deleteSecretsByName("toBeDeleted_deleteSecretsByName");
@@ -465,7 +465,7 @@ public class SecretDAOTest {
 
   @Test public void deleteSecretsByNameAndRecreate() {
     secretDAO.createSecret("toBeDeletedAndReplaced", "encryptedShhh",
-        cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8)), "creator",
+        cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
     secretDAO.deleteSecretsByName("toBeDeletedAndReplaced");
@@ -474,7 +474,7 @@ public class SecretDAOTest {
     assertThat(secret).isEmpty();
 
     secretDAO.createSecret("toBeDeletedAndReplaced", "secretsgohere",
-        cryptographer.computeHmac("secretsgohere".getBytes(UTF_8)), "creator",
+        cryptographer.computeHmac("secretsgohere".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
     secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
     assertThat(secret).isPresent();
@@ -482,7 +482,7 @@ public class SecretDAOTest {
 
   @Test public void deleteSecretsByNameAndRecreateWithUpdate() {
     secretDAO.createSecret("toBeDeletedAndReplaced", "encryptedShhh",
-        cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8)), "creator",
+        cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
     secretDAO.deleteSecretsByName("toBeDeletedAndReplaced");
@@ -491,7 +491,7 @@ public class SecretDAOTest {
     assertThat(secret).isEmpty();
 
     secretDAO.createOrUpdateSecret("toBeDeletedAndReplaced", "secretsgohere",
-        cryptographer.computeHmac("secretsgohere".getBytes(UTF_8)), "creator",
+        cryptographer.computeHmac("secretsgohere".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
     secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
     assertThat(secret).isPresent();
