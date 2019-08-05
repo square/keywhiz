@@ -86,6 +86,13 @@ public class KeywhizConfig extends Configuration {
   @JsonProperty
   private String statusCacheExpiry;
 
+  @JsonProperty
+  private String rowHmacCheck;
+
+  public enum RowHmacCheck {
+    DISABLED, DISABLED_BUT_LOG, ENFORCED
+  }
+
   public String getEnvironment() {
     return environment;
   }
@@ -174,6 +181,21 @@ public class KeywhizConfig extends Configuration {
       return null;
     }
     return backupExportKeys.get(name);
+  }
+
+  public RowHmacCheck getRowHmacCheck() {
+    switch (rowHmacCheck) {
+      case "enforced":
+        return RowHmacCheck.ENFORCED;
+      case "logging":
+        return RowHmacCheck.DISABLED_BUT_LOG;
+      case "disabled":
+        return RowHmacCheck.DISABLED;
+      default:
+        throw new IllegalArgumentException(
+            String.format("%s is an invalid rowHmacCheck parameter", rowHmacCheck)
+        );
+    }
   }
 
   public static class TemplatedDataSourceFactory extends DataSourceFactory {
