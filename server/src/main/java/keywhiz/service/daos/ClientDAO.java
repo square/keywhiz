@@ -26,23 +26,29 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import keywhiz.api.model.Client;
+import keywhiz.api.model.SecretSeries;
 import keywhiz.auth.mutualssl.CertificatePrincipal;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.RowHmacGenerator;
+import keywhiz.service.resources.automation.v2.BackfillRowHmacResource;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Param;
 import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.time.Instant.EPOCH;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
+import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.jooq.impl.DSL.greatest;
 import static org.jooq.impl.DSL.when;
 
 public class ClientDAO {
+  private static final Logger logger = LoggerFactory.getLogger(ClientDAO.class);
   private final static Duration LAST_SEEN_THRESHOLD = Duration.ofSeconds(24 * 60 * 60);
 
   private final DSLContext dslContext;
@@ -145,6 +151,17 @@ public class ClientDAO {
         .fetch()
         .map(clientMapper);
     return ImmutableSet.copyOf(r);
+  }
+
+  public int setRowHmac(Client client) {
+    logger.info(client.getName());
+    String rowHmac = rowHmacGenerator.computeRowHmac(
+        CLIENTS.getName(), client.getName(), client.getId());
+
+    return dslContext.update(CLIENTS)
+        .set(CLIENTS.ROW_HMAC, rowHmac)
+        .where(CLIENTS.ID.eq(client.getId()))
+        .execute();
   }
 
   public static class ClientDAOFactory implements DAOFactory<ClientDAO> {

@@ -37,6 +37,8 @@ import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
+import keywhiz.jooq.tables.records.AccessgrantsRecord;
+import keywhiz.jooq.tables.records.MembershipsRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
@@ -487,6 +489,34 @@ public class AclDAO {
         .set(MEMBERSHIPS.CREATEDAT, now)
         .set(MEMBERSHIPS.UPDATEDAT, now)
         .set(MEMBERSHIPS.ROW_HMAC, verificationHmac)
+        .execute();
+  }
+
+  public int setMembershipsRowHmac(long membershipId) {
+    MembershipsRecord membershipsRecord = dslContext.selectFrom(MEMBERSHIPS)
+        .where(MEMBERSHIPS.ID.eq(membershipId))
+        .fetchOneInto(MembershipsRecord.class);
+
+    String verificationHmac = rowHmacGenerator.computeRowHmac(
+        MEMBERSHIPS.getName(), membershipsRecord.getClientid(), membershipsRecord.getGroupid());
+
+    return dslContext.update(MEMBERSHIPS)
+        .set(MEMBERSHIPS.ROW_HMAC, verificationHmac)
+        .where(MEMBERSHIPS.ID.eq(membershipId))
+        .execute();
+  }
+
+  public int setAccessgrantsRowHmac(long accessgrantsId) {
+    AccessgrantsRecord accessgrantsRecord = dslContext.selectFrom(ACCESSGRANTS)
+        .where(ACCESSGRANTS.ID.eq(accessgrantsId))
+        .fetchOneInto(AccessgrantsRecord.class);
+
+    String verificationHmac = rowHmacGenerator.computeRowHmac(
+        ACCESSGRANTS.getName(), accessgrantsRecord.getGroupid(), accessgrantsRecord.getSecretid());
+
+    return dslContext.update(ACCESSGRANTS)
+        .set(ACCESSGRANTS.ROW_HMAC, verificationHmac)
+        .where(ACCESSGRANTS.ID.eq(accessgrantsId))
         .execute();
   }
 
