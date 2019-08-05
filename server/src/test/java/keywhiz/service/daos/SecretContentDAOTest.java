@@ -33,6 +33,7 @@ import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 import static keywhiz.service.daos.SecretContentDAO.PRUNE_CUTOFF_ITEMS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @RunWith(KeywhizTestRunner.class)
 public class SecretContentDAOTest {
@@ -156,6 +157,44 @@ public class SecretContentDAOTest {
 
   @Test public void getSecretContentById() {
     assertThat(secretContentDAO.getSecretContentById(secretContent1.id())).contains(secretContent1);
+  }
+
+  @Test public void preventSwapSecretContent() {
+    long now = OffsetDateTime.now().toEpochSecond();
+    long validSeriesId = 666;
+    long maliciousSeriesId = 667;
+    String secretName = "validSecretForRowHmacTest";
+    String encryptedSecret = "encrypted";
+
+    // Create a valid secret
+    jooqContext.insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT, SECRETS.UPDATEDAT)
+        .values(validSeriesId, secretName, now, now)
+        .execute();
+    secretContentDAO.createSecretContent(validSeriesId, encryptedSecret, "checksum",
+        "creator", metadata, 1136214245, now);
+
+    // Delete valid secret series
+    jooqContext.deleteFrom(SECRETS)
+        .where(SECRETS.ID.eq(validSeriesId))
+        .execute();
+    // Steal valid secret series names
+    jooqContext.insertInto(SECRETS, SECRETS.ID, SECRETS.NAME, SECRETS.CREATEDAT, SECRETS.UPDATEDAT)
+        .values(maliciousSeriesId, secretName, now, now)
+        .execute();
+
+    long maliciousId = secretContentDAO.createSecretContent(maliciousSeriesId, "fake", "checksum",
+        "creator", metadata, 1136214245, now);
+
+    // Replace malicious secret_content with encrypted secret
+    jooqContext.update(SECRETS_CONTENT)
+        .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, encryptedSecret)
+        .where(SECRETS_CONTENT.ID.eq(maliciousId))
+        .execute();
+
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      secretContentDAO.getSecretContentById(maliciousId);
+    }).withMessage(
+        String.format("Secret Content HMAC verification failed for secretContent: %d", maliciousId));
   }
 
   private int tableSize() {
