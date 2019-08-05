@@ -151,8 +151,12 @@ public class ContentCryptographer {
     return getEncoder().encodeToString(plaintext);
   }
 
-  public String computeHmac(byte[] data) {
-    SecretKey hmacKey = deriveKey(32, "hmackey");
+  public String computeHmac(byte[] data, String derivationKey) {
+    SecretKey hmacKey = deriveKey(32, derivationKey);
+    return computeHmacWithSecretKey(data, hmacKey);
+  }
+
+  String computeHmacWithSecretKey(byte[] data, SecretKey hmacKey) {
     try {
       Mac mac = Mac.getInstance("HmacSHA256");
       mac.init(hmacKey);
@@ -163,7 +167,7 @@ public class ContentCryptographer {
     }
   }
 
-  private SecretKey deriveKey(int blockSize, String info) {
+  public SecretKey deriveKey(int blockSize, String info) {
     Hkdf hkdf = Hkdf.usingProvider(derivationProvider);
     byte[] infoBytes = info.getBytes(UTF_8);
     byte[] derivedKeyBytes = hkdf.expand(key, infoBytes, blockSize);

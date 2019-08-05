@@ -139,7 +139,7 @@ public class SecretController {
     checkArgument(!name.isEmpty());
     checkArgument(!secret.isEmpty());
     checkArgument(!creator.isEmpty());
-    String hmac = cryptographer.computeHmac(secret.getBytes(UTF_8)); // Compute HMAC on base64 encoded data
+    String hmac = cryptographer.computeHmac(secret.getBytes(UTF_8), "hmackey"); // Compute HMAC on base64 encoded data
     if (hmac == null) {
       throw new ContentEncodingException("Error encoding content for SecretBuilder!");
     }
