@@ -26,14 +26,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
+import keywhiz.KeywhizConfig;
+import keywhiz.KeywhizConfig.RowHmacCheck;
 import keywhiz.api.model.SecretContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.crypto.RowHmacGenerator;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
@@ -43,6 +48,7 @@ import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
  * Interacts with 'secrets_content' table and actions on {@link SecretContent} entities.
  */
 public class SecretContentDAO {
+  private static final Logger logger = LoggerFactory.getLogger(AclDAO.class);
   // Number of old contents we keep around before we prune
   @VisibleForTesting static final int PRUNE_CUTOFF_ITEMS = 10;
 
@@ -52,12 +58,17 @@ public class SecretContentDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretContentMapper secretContentMapper;
+  private final RowHmacGenerator rowHmacGenerator;
+  private final KeywhizConfig config;
 
   private SecretContentDAO(DSLContext dslContext, ObjectMapper mapper,
-      SecretContentMapper secretContentMapper) {
+      SecretContentMapper secretContentMapper, RowHmacGenerator rowHmacGenerator,
+      KeywhizConfig config) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretContentMapper = secretContentMapper;
+    this.rowHmacGenerator = rowHmacGenerator;
+    this.config = config;
   }
 
   public long createSecretContent(long secretId, String encryptedContent, String hmac,
@@ -72,6 +83,11 @@ public class SecretContentDAO {
       throw Throwables.propagate(e);
     }
 
+    long generatedId = rowHmacGenerator.getNextLongSecure();
+    String rowHmac = rowHmacGenerator.computeRowHmac(
+        SECRETS_CONTENT.getName(), encryptedContent, generatedId);
+
+    r.setId(generatedId);
     r.setSecretid(secretId);
     r.setEncryptedContent(encryptedContent);
     r.setContentHmac(hmac);
@@ -81,6 +97,7 @@ public class SecretContentDAO {
     r.setUpdatedat(now);
     r.setMetadata(jsonMetadata);
     r.setExpiry(expiry);
+    r.setRowHmac(rowHmac);
     r.store();
 
     pruneOldContents(secretId);
@@ -115,7 +132,7 @@ public class SecretContentDAO {
             .where(SECRETS_CONTENT.SECRETID.eq(secretId))
             .and(SECRETS_CONTENT.CREATEDAT.lt(cutoff))
             .and(SECRETS_CONTENT.ID.ne(secret.getCurrent()))
-            .orderBy(SECRETS_CONTENT.ID.desc())
+            .orderBy(SECRETS_CONTENT.CREATEDAT.desc())
             .fetch(SECRETS_CONTENT.ID);
 
     // Always keep last X items, prune otherwise
@@ -128,7 +145,27 @@ public class SecretContentDAO {
 
   public Optional<SecretContent> getSecretContentById(long id) {
     SecretsContentRecord r = dslContext.fetchOne(SECRETS_CONTENT, SECRETS_CONTENT.ID.eq(id));
-    return Optional.ofNullable(r).map(secretContentMapper::map);
+    Optional<SecretContent> result = Optional.ofNullable(r).map(secretContentMapper::map);
+
+    if (result.isEmpty()) {
+      return result;
+    }
+
+    String rowHmac = rowHmacGenerator.computeRowHmac(
+        SECRETS_CONTENT.getName(), r.getEncryptedContent(), r.getId());
+
+    if (!rowHmac.equals(r.getRowHmac())) {
+      String errorMessage = String.format(
+          "Secret Content HMAC verification failed for secretContent: %d", r.getId());
+      if (config.getRowHmacCheck() == RowHmacCheck.DISABLED_BUT_LOG) {
+        logger.info(errorMessage);
+      }
+      if (config.getRowHmacCheck() == RowHmacCheck.ENFORCED) {
+        throw new AssertionError(errorMessage);
+      }
+    }
+
+    return result;
   }
 
   public Optional<ImmutableList<SecretContent>> getSecretVersionsBySecretId(long id,
@@ -167,26 +204,34 @@ public class SecretContentDAO {
     private final DSLContext readonlyJooq;
     private final ObjectMapper objectMapper;
     private final SecretContentMapper secretContentMapper;
+    private final RowHmacGenerator rowHmacGenerator;
+    private final KeywhizConfig config;
 
     @Inject public SecretContentDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
-        ObjectMapper objectMapper, SecretContentMapper secretContentMapper) {
+        ObjectMapper objectMapper, SecretContentMapper secretContentMapper,
+        RowHmacGenerator rowHmacGenerator, KeywhizConfig config) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
       this.secretContentMapper = secretContentMapper;
+      this.rowHmacGenerator = rowHmacGenerator;
+      this.config = config;
     }
 
     @Override public SecretContentDAO readwrite() {
-      return new SecretContentDAO(jooq, objectMapper, secretContentMapper);
+      return new SecretContentDAO(jooq, objectMapper, secretContentMapper, rowHmacGenerator,
+          config);
     }
 
     @Override public SecretContentDAO readonly() {
-      return new SecretContentDAO(readonlyJooq, objectMapper, secretContentMapper);
+      return new SecretContentDAO(readonlyJooq, objectMapper, secretContentMapper, rowHmacGenerator,
+          config);
     }
 
     @Override public SecretContentDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretContentDAO(dslContext, objectMapper, secretContentMapper);
+      return new SecretContentDAO(dslContext, objectMapper, secretContentMapper, rowHmacGenerator,
+          config);
     }
   }
 }

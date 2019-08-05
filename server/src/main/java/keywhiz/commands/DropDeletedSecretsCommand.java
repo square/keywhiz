@@ -152,14 +152,17 @@ public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> 
         dslContext,
         dslContext,
         bootstrap.getObjectMapper(),
-        new SecretContentMapper(bootstrap.getObjectMapper())
+        new SecretContentMapper(bootstrap.getObjectMapper()),
+        null,
+        null
     );
 
     SecretSeriesDAOFactory secretSeriesDAOFactory = new SecretSeriesDAOFactory(
         dslContext,
         dslContext,
         bootstrap.getObjectMapper(),
-        new SecretSeriesMapper(bootstrap.getObjectMapper())
+        new SecretSeriesMapper(bootstrap.getObjectMapper()),
+        null
     );
 
     return new SecretDAO(
