@@ -40,8 +40,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
+import static keywhiz.jooq.tables.Clients.CLIENTS;
+import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
+import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @RunWith(KeywhizTestRunner.class)
 public class AclDAOTest {
@@ -333,6 +337,106 @@ public class AclDAOTest {
 
     Set<SanitizedSecret> secret = aclDAO.getSanitizedSecretsFor(client1);
     assertThat(secret).hasSize(1);
+  }
+
+  @Test public void modifySecretGroup() {
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+
+    jooqContext.update(ACCESSGRANTS)
+        .set(ACCESSGRANTS.GROUPID, group2.getId())
+        .where(ACCESSGRANTS.GROUPID.eq(group1.getId()))
+        .execute();
+
+    String errorMessage = String.format(
+        "Access Grants HMAC verification failed for groupId: %d in secretId: %d",
+        group2.getId(), secret1.getId());
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretsFor(client2);
+    }).withMessage(errorMessage);
+
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretFor(client2, secret1.getName());
+    }).withMessage(errorMessage);
+  }
+
+  @Test public void modifyClientGroup() {
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+
+    jooqContext.update(MEMBERSHIPS)
+        .set(MEMBERSHIPS.CLIENTID, client2.getId())
+        .where(MEMBERSHIPS.GROUPID.eq(group1.getId()))
+        .execute();
+
+    String errorMessage = String.format(
+        "Memberships HMAC verification failed for clientId: %d in groupId: %d",
+        client2.getId(), group1.getId());
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretsFor(client2);
+    }).withMessage(errorMessage);
+
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretFor(client2, secret1.getName());
+    }).withMessage(errorMessage);
+  }
+
+  @Test public void modifyClientId() {
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+
+
+    jooqContext.update(CLIENTS)
+        .set(CLIENTS.ID, 1337L)
+        .where(CLIENTS.ID.eq(client1.getId()))
+        .execute();
+
+    jooqContext.update(CLIENTS)
+        .set(CLIENTS.ID, client1.getId())
+        .where(CLIENTS.ID.eq(client2.getId()))
+        .execute();
+
+    Client maliciousClient = clientDAO.getClient(client2.getName()).orElseThrow();
+
+    String errorMessage = String.format(
+        "Client HMAC verification failed for client: %s", client2.getName());
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretsFor(maliciousClient);
+    }).withMessage(errorMessage);
+
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretFor(maliciousClient, secret1.getName());
+    }).withMessage(errorMessage);
+  }
+
+  @Test public void modifySecretId() {
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.enrollClient(jooqContext.configuration(), client2.getId(), group2.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group2.getId());
+
+    jooqContext.update(SECRETS)
+        .set(SECRETS.ID, 1337L)
+        .where(SECRETS.ID.eq(secret2.getId()))
+        .execute();
+
+    jooqContext.update(SECRETS)
+        .set(SECRETS.ID, secret2.getId())
+        .where(SECRETS.ID.eq(secret1.getId()))
+        .execute();
+
+    String errorMessage = String.format(
+        "Secret HMAC verification failed for secret: %s", secret1.getName());
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretsFor(client2);
+    }).withMessage(errorMessage);
+
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
+      aclDAO.getSanitizedSecretFor(client2, secret1.getName());
+    }).withMessage(errorMessage);
   }
 
   private int accessGrantsTableSize() {
