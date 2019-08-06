@@ -27,6 +27,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import keywhiz.KeywhizConfig;
+import keywhiz.KeywhizConfig.RowHmacCheck;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
@@ -40,6 +42,7 @@ import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.crypto.RowHmacGenerator;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
@@ -75,11 +78,14 @@ public class AclDAO {
   private final GroupMapper groupMapper;
   private final SecretSeriesMapper secretSeriesMapper;
   private final SecretContentMapper secretContentMapper;
+  private final RowHmacGenerator rowHmacGenerator;
+  private final KeywhizConfig config;
 
   private AclDAO(DSLContext dslContext, ClientDAOFactory clientDAOFactory, GroupDAOFactory groupDAOFactory,
                  SecretContentDAOFactory secretContentDAOFactory, SecretSeriesDAOFactory secretSeriesDAOFactory,
                  ClientMapper clientMapper, GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper,
-                 SecretContentMapper secretContentMapper) {
+                 SecretContentMapper secretContentMapper, RowHmacGenerator rowHmacGenerator,
+                 KeywhizConfig config) {
     this.dslContext = dslContext;
     this.clientDAOFactory = clientDAOFactory;
     this.groupDAOFactory = groupDAOFactory;
@@ -89,6 +95,8 @@ public class AclDAO {
     this.groupMapper = groupMapper;
     this.secretSeriesMapper = secretSeriesMapper;
     this.secretContentMapper = secretContentMapper;
+    this.rowHmacGenerator = rowHmacGenerator;
+    this.config = config;
   }
 
   public void findAndAllowAccess(long secretId, long groupId, AuditLog auditLog, String user, Map<String, String> extraInfo) {
@@ -271,26 +279,13 @@ public class AclDAO {
     query.addSelect(SECRETS_CONTENT.CREATEDBY);
     query.addSelect(SECRETS_CONTENT.METADATA);
     query.addSelect(SECRETS_CONTENT.EXPIRY);
+    query.addSelect(ACCESSGRANTS.ROW_HMAC);
+    query.addSelect(MEMBERSHIPS.ROW_HMAC);
+    query.addSelect(MEMBERSHIPS.GROUPID);
+    query.addSelect(CLIENTS.ROW_HMAC);
+    query.addSelect(SECRETS.ROW_HMAC);
     query.fetch()
-        .map(row -> {
-          SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
-          return SanitizedSecret.of(
-              series.id(),
-              series.name(),
-              series.description(),
-              row.getValue(SECRETS_CONTENT.CONTENT_HMAC),
-              series.createdAt(),
-              series.createdBy(),
-              series.updatedAt(),
-              series.updatedBy(),
-              secretContentMapper.tryToReadMapFromMetadata(row.getValue(SECRETS_CONTENT.METADATA)),
-              series.type().orElse(null),
-              series.generationOptions(),
-              row.getValue(SECRETS_CONTENT.EXPIRY),
-              series.currentVersion().orElse(null),
-              new ApiDate(row.getValue(SECRETS_CONTENT.CREATEDAT)),
-              row.getValue(SECRETS_CONTENT.CREATEDBY));
-        })
+        .map(row -> processSanitizedSecretRow(row, client))
         .forEach(sanitizedSet::add);
 
     return sanitizedSet.build();
@@ -329,26 +324,93 @@ public class AclDAO {
     query.addSelect(SECRETS_CONTENT.CREATEDBY);
     query.addSelect(SECRETS_CONTENT.METADATA);
     query.addSelect(SECRETS_CONTENT.EXPIRY);
+    query.addSelect(ACCESSGRANTS.ROW_HMAC);
+    query.addSelect(MEMBERSHIPS.ROW_HMAC);
+    query.addSelect(MEMBERSHIPS.GROUPID);
+    query.addSelect(CLIENTS.ROW_HMAC);
+    query.addSelect(SECRETS.ROW_HMAC);
     return Optional.ofNullable(query.fetchOne())
-        .map(row -> {
-          SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
-          return SanitizedSecret.of(
-              series.id(),
-              series.name(),
-              series.description(),
-              row.getValue(SECRETS_CONTENT.CONTENT_HMAC),
-              series.createdAt(),
-              series.createdBy(),
-              series.updatedAt(),
-              series.updatedBy(),
-              secretContentMapper.tryToReadMapFromMetadata(row.getValue(SECRETS_CONTENT.METADATA)),
-              series.type().orElse(null),
-              series.generationOptions(),
-              row.getValue(SECRETS_CONTENT.EXPIRY),
-              series.currentVersion().orElse(null),
-              new ApiDate(row.getValue(SECRETS_CONTENT.CREATEDAT)),
-              row.getValue(SECRETS_CONTENT.CREATEDBY));
-        });
+        .map(row -> processSanitizedSecretRow(row, client));
+  }
+
+  private SanitizedSecret processSanitizedSecretRow(Record row, Client client) {
+    boolean rowHmacLog = config.getRowHmacCheck() == RowHmacCheck.DISABLED_BUT_LOG;
+    boolean rowHmacFail = config.getRowHmacCheck() == RowHmacCheck.ENFORCED;
+
+    SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
+
+    String secretHmac = rowHmacGenerator.computeRowHmac(
+        SECRETS.getName(), row.getValue(SECRETS.NAME), row.getValue(SECRETS.ID)
+    );
+    if (!secretHmac.equals(row.getValue(SECRETS.ROW_HMAC))) {
+      String errorMessage = String.format(
+          "Secret HMAC verification failed for secret: %s", row.getValue(SECRETS.NAME));
+      if (rowHmacLog) {
+        logger.info(errorMessage);
+      }
+      if (rowHmacFail) {
+        throw new AssertionError(errorMessage);
+      }
+    }
+
+    String clientHmac = rowHmacGenerator.computeRowHmac(
+        CLIENTS.getName(), client.getName(), client.getId()
+    );
+    if (!clientHmac.equals(row.getValue(CLIENTS.ROW_HMAC))) {
+      String errorMessage = String.format(
+          "Client HMAC verification failed for client: %s", client.getName());
+      if (rowHmacLog) {
+        logger.info(errorMessage);
+      }
+      if (rowHmacFail) {
+        throw new AssertionError(errorMessage);
+      }
+    }
+
+    String membershipsHmac = rowHmacGenerator.computeRowHmac(
+        MEMBERSHIPS.getName(), client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
+    if (!membershipsHmac.equals(row.getValue(MEMBERSHIPS.ROW_HMAC))) {
+      String errorMessage = String.format(
+          "Memberships HMAC verification failed for clientId: %d in groupId: %d",
+          client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
+      if (rowHmacLog) {
+        logger.info(errorMessage);
+      }
+      if (rowHmacFail) {
+        throw new AssertionError(errorMessage);
+      }
+    }
+
+    String accessgrantsHmac = rowHmacGenerator.computeRowHmac(
+        ACCESSGRANTS.getName(), row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
+    if (!accessgrantsHmac.equals(row.getValue(ACCESSGRANTS.ROW_HMAC))) {
+      String errorMessage = String.format(
+          "Access Grants HMAC verification failed for groupId: %d in secretId: %d",
+          row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
+      if (rowHmacLog) {
+        logger.info(errorMessage);
+      }
+      if (rowHmacFail) {
+        throw new AssertionError(errorMessage);
+      }
+    }
+
+    return SanitizedSecret.of(
+        series.id(),
+        series.name(),
+        series.description(),
+        row.getValue(SECRETS_CONTENT.CONTENT_HMAC),
+        series.createdAt(),
+        series.createdBy(),
+        series.updatedAt(),
+        series.updatedBy(),
+        secretContentMapper.tryToReadMapFromMetadata(row.getValue(SECRETS_CONTENT.METADATA)),
+        series.type().orElse(null),
+        series.generationOptions(),
+        row.getValue(SECRETS_CONTENT.EXPIRY),
+        series.currentVersion().orElse(null),
+        new ApiDate(row.getValue(SECRETS_CONTENT.CREATEDAT)),
+        row.getValue(SECRETS_CONTENT.CREATEDBY));
   }
 
   public Map<Long, List<Group>> getGroupsForSecrets(Set<Long> secretIdList) {
@@ -383,12 +445,16 @@ public class AclDAO {
       return;
     }
 
+    String verificationHmac = rowHmacGenerator.computeRowHmac(
+        ACCESSGRANTS.getName(), groupId, secretId);
+
     DSL.using(configuration)
         .insertInto(ACCESSGRANTS)
         .set(ACCESSGRANTS.SECRETID, secretId)
         .set(ACCESSGRANTS.GROUPID, groupId)
         .set(ACCESSGRANTS.CREATEDAT, now)
         .set(ACCESSGRANTS.UPDATEDAT, now)
+        .set(ACCESSGRANTS.ROW_HMAC, verificationHmac)
         .execute();
   }
 
@@ -411,12 +477,16 @@ public class AclDAO {
       return;
     }
 
+    String verificationHmac = rowHmacGenerator.computeRowHmac(
+        MEMBERSHIPS.getName(), clientId, groupId);
+
     DSL.using(configuration)
         .insertInto(MEMBERSHIPS)
         .set(MEMBERSHIPS.GROUPID, groupId)
         .set(MEMBERSHIPS.CLIENTID, clientId)
         .set(MEMBERSHIPS.CREATEDAT, now)
         .set(MEMBERSHIPS.UPDATEDAT, now)
+        .set(MEMBERSHIPS.ROW_HMAC, verificationHmac)
         .execute();
   }
 
@@ -472,12 +542,15 @@ public class AclDAO {
     private final GroupMapper groupMapper;
     private final SecretSeriesMapper secretSeriesMapper;
     private final SecretContentMapper secretContentMapper;
+    private final RowHmacGenerator rowHmacGenerator;
+    private final KeywhizConfig config;
 
     @Inject public AclDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq, ClientDAOFactory clientDAOFactory,
                                  GroupDAOFactory groupDAOFactory, SecretContentDAOFactory secretContentDAOFactory,
                                  SecretSeriesDAOFactory secretSeriesDAOFactory, ClientMapper clientMapper,
                                  GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper,
-                                 SecretContentMapper secretContentMapper) {
+                                 SecretContentMapper secretContentMapper, RowHmacGenerator rowHmacGenerator,
+                                 KeywhizConfig config) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.clientDAOFactory = clientDAOFactory;
@@ -488,22 +561,27 @@ public class AclDAO {
       this.groupMapper = groupMapper;
       this.secretSeriesMapper = secretSeriesMapper;
       this.secretContentMapper = secretContentMapper;
+      this.rowHmacGenerator = rowHmacGenerator;
+      this.config = config;
     }
 
     @Override public AclDAO readwrite() {
       return new AclDAO(jooq, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper);
+          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper,
+          rowHmacGenerator, config);
     }
 
     @Override public AclDAO readonly() {
       return new AclDAO(readonlyJooq, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper);
+          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper,
+          rowHmacGenerator, config);
     }
 
     @Override public AclDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
       return new AclDAO(dslContext, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper);
+          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper,
+          rowHmacGenerator, config);
     }
   }
 }

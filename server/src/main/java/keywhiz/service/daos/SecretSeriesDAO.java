@@ -34,6 +34,7 @@ import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.crypto.RowHmacGenerator;
 import org.joda.time.DateTime;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
@@ -59,18 +60,24 @@ public class SecretSeriesDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretSeriesMapper secretSeriesMapper;
+  private final RowHmacGenerator rowHmacGenerator;
 
   private SecretSeriesDAO(DSLContext dslContext, ObjectMapper mapper,
-      SecretSeriesMapper secretSeriesMapper) {
+      SecretSeriesMapper secretSeriesMapper, RowHmacGenerator rowHmacGenerator) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretSeriesMapper = secretSeriesMapper;
+    this.rowHmacGenerator = rowHmacGenerator;
   }
 
   long createSecretSeries(String name, String creator, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions, long now) {
     SecretsRecord r = dslContext.newRecord(SECRETS);
 
+    long generatedId = rowHmacGenerator.getNextLongSecure();
+    String rowHmac = rowHmacGenerator.computeRowHmac(SECRETS.getName(), name, generatedId);
+
+    r.setId(generatedId);
     r.setName(name);
     r.setDescription(description);
     r.setCreatedby(creator);
@@ -78,6 +85,7 @@ public class SecretSeriesDAO {
     r.setUpdatedby(creator);
     r.setUpdatedat(now);
     r.setType(type);
+    r.setRowHmac(rowHmac);
     if (generationOptions != null) {
       try {
         r.setOptions(mapper.writeValueAsString(generationOptions));
@@ -100,6 +108,8 @@ public class SecretSeriesDAO {
     }
 
     try {
+      String rowHmac = rowHmacGenerator.computeRowHmac(SECRETS.getName(), name, secretId);
+
       dslContext.update(SECRETS)
           .set(SECRETS.NAME, name)
           .set(SECRETS.DESCRIPTION, description)
@@ -107,6 +117,7 @@ public class SecretSeriesDAO {
           .set(SECRETS.UPDATEDAT, now)
           .set(SECRETS.TYPE, type)
           .set(SECRETS.OPTIONS, mapper.writeValueAsString(generationOptions))
+          .set(SECRETS.ROW_HMAC, rowHmac)
           .where(SECRETS.ID.eq(secretId))
           .execute();
     } catch (JsonProcessingException e) {
@@ -308,26 +319,29 @@ public class SecretSeriesDAO {
     private final DSLContext readonlyJooq;
     private final ObjectMapper objectMapper;
     private final SecretSeriesMapper secretSeriesMapper;
+    private final RowHmacGenerator rowHmacGenerator;
 
     @Inject public SecretSeriesDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
-        ObjectMapper objectMapper, SecretSeriesMapper secretSeriesMapper) {
+        ObjectMapper objectMapper, SecretSeriesMapper secretSeriesMapper,
+        RowHmacGenerator rowHmacGenerator) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
       this.secretSeriesMapper = secretSeriesMapper;
+      this.rowHmacGenerator = rowHmacGenerator;
     }
 
     @Override public SecretSeriesDAO readwrite() {
-      return new SecretSeriesDAO(jooq, objectMapper, secretSeriesMapper);
+      return new SecretSeriesDAO(jooq, objectMapper, secretSeriesMapper, rowHmacGenerator);
     }
 
     @Override public SecretSeriesDAO readonly() {
-      return new SecretSeriesDAO(readonlyJooq, objectMapper, secretSeriesMapper);
+      return new SecretSeriesDAO(readonlyJooq, objectMapper, secretSeriesMapper, rowHmacGenerator);
     }
 
     @Override public SecretSeriesDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper);
+      return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper, rowHmacGenerator);
     }
   }
 
