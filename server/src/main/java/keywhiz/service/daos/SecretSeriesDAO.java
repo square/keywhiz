@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import keywhiz.api.model.Group;
+import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
@@ -141,6 +142,16 @@ public class SecretSeriesDAO {
     return dslContext.update(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.CONTENT_HMAC, hmac)
         .where(SECRETS_CONTENT.ID.eq(secretContentId))
+        .execute();
+  }
+
+  public int setSecretsRowHmac(SecretSeries secretSeries) {
+    String rowHmac = rowHmacGenerator.computeRowHmac(
+        SECRETS.getName(), secretSeries.name(), secretSeries.id());
+
+    return dslContext.update(SECRETS)
+        .set(SECRETS.ROW_HMAC, rowHmac)
+        .where(SECRETS.ID.eq(secretSeries.id()))
         .execute();
   }
 

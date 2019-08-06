@@ -199,6 +199,16 @@ public class SecretContentDAO {
         .execute();
   }
 
+  public int setRowHmac(SecretContent secretContent) {
+    String rowHmac = rowHmacGenerator.computeRowHmac(
+        SECRETS_CONTENT.getName(), secretContent.encryptedContent(), secretContent.id());
+
+    return dslContext.update(SECRETS_CONTENT)
+        .set(SECRETS_CONTENT.ROW_HMAC, rowHmac)
+        .where(SECRETS_CONTENT.ID.eq(secretContent.id()))
+        .execute();
+  }
+
   public static class SecretContentDAOFactory implements DAOFactory<SecretContentDAO> {
     private final DSLContext jooq;
     private final DSLContext readonlyJooq;

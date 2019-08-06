@@ -424,7 +424,7 @@ public class SecretResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public boolean backfillHmac(@Auth AutomationClient automationClient, @PathParam("name") String name, List<String> passwords) {
+  public boolean backfillHmac(@Auth AutomationClient automationClient, @PathParam("name") String name) {
     Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName(name);
 
     if (!secret.isPresent()) {
