@@ -20,7 +20,7 @@ server:
       # We want clients to provide a client cert.
       wantClientAuth: true
       # In the dev_and_test key material, we use the same CA for the client and server for easy
-      # management, but in production we issue client certs off a seperate root.  Because only
+      # management, but in production we issue client certs off a separate root.  Because only
       # that root is in the trustStore above, Dropwizard must be told not to validate its own cert
       validateCerts: false
       # Dropwizard changed validatePeers and validateCerts defaults from true to false in 1.1.x
