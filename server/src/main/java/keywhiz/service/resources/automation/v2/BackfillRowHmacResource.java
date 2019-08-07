@@ -72,7 +72,8 @@ public class BackfillRowHmacResource {
       Optional<SecretSeriesAndContent> secret = secretDAO.getSecretById(secretId);
 
       if (secret.isEmpty()) {
-        return false;
+        logger.info("backfill-secrets {}: does not exist", secretId);
+        continue;
       }
 
       SecretSeries secretSeries = secret.get().series();
@@ -105,7 +106,8 @@ public class BackfillRowHmacResource {
           secretContentDAO.getSecretContentById(secretContentId);
 
       if (secretContent.isEmpty()) {
-        return false;
+        logger.info("backfill-secrets-content {}: does not exist", secretContentId);
+        continue;
       }
 
       int resultRows = secretContentDAO.setRowHmac(secretContent.get());
@@ -136,7 +138,8 @@ public class BackfillRowHmacResource {
       Optional<Client> client = clientDAO.getClientById(clientId);
 
       if (client.isEmpty()) {
-        return false;
+        logger.info("backfill-clients {}: does not exist", clientId);
+        continue;
       }
 
       int resultRows = clientDAO.setRowHmac(client.get());
