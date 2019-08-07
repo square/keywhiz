@@ -68,7 +68,8 @@ public class ClientDAO {
     long now = OffsetDateTime.now().toEpochSecond();
 
     long generatedId = rowHmacGenerator.getNextLongSecure();
-    String rowHmac = rowHmacGenerator.computeRowHmac(CLIENTS.getName(), name, generatedId);
+    String rowHmac = rowHmacGenerator.computeRowHmac(
+        CLIENTS.getName(), List.of(name, generatedId));
 
     r.setId(generatedId);
     r.setName(name);
@@ -156,7 +157,7 @@ public class ClientDAO {
   public int setRowHmac(Client client) {
     logger.info(client.getName());
     String rowHmac = rowHmacGenerator.computeRowHmac(
-        CLIENTS.getName(), client.getName(), client.getId());
+        CLIENTS.getName(), List.of(client.getName(), client.getId()));
 
     return dslContext.update(CLIENTS)
         .set(CLIENTS.ROW_HMAC, rowHmac)

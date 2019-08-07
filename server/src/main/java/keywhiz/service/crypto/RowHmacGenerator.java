@@ -2,6 +2,9 @@ package keywhiz.service.crypto;
 
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -25,18 +28,11 @@ public class RowHmacGenerator {
     this.hmacKey = cryptographer.deriveKey(32, "row_hmac");
   }
 
-  public String computeRowHmac(String table, String name, long id) {
-    String hmacContent = table + "|" + name + "|" + id;
-    return cryptographer.computeHmacWithSecretKey(hmacContent.getBytes(UTF_8), hmacKey);
-  }
-
-  public String computeRowHmac(String table, long id1, long id2) {
-    String hmacContent = table + "|" + id1 + "|" + id2;
-    return cryptographer.computeHmacWithSecretKey(hmacContent.getBytes(UTF_8), hmacKey);
-  }
-
-  public String computeRowHmac(String table, String content, String metadata, long id) {
-    String hmacContent = table + "|" + content + "|" + metadata + "|" + id;
+  public String computeRowHmac(String table, List<Object> fields) {
+    String joinedFields = fields.stream()
+        .map(object -> Objects.toString(object, null))
+        .collect(Collectors.joining("|"));
+    String hmacContent = table + "|" + joinedFields;
     return cryptographer.computeHmacWithSecretKey(hmacContent.getBytes(UTF_8), hmacKey);
   }
 
