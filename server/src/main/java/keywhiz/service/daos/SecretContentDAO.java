@@ -85,7 +85,7 @@ public class SecretContentDAO {
 
     long generatedId = rowHmacGenerator.getNextLongSecure();
     String rowHmac = rowHmacGenerator.computeRowHmac(
-        SECRETS_CONTENT.getName(), encryptedContent, generatedId);
+        SECRETS_CONTENT.getName(), encryptedContent, jsonMetadata, generatedId);
 
     r.setId(generatedId);
     r.setSecretid(secretId);
@@ -152,7 +152,7 @@ public class SecretContentDAO {
     }
 
     String rowHmac = rowHmacGenerator.computeRowHmac(
-        SECRETS_CONTENT.getName(), r.getEncryptedContent(), r.getId());
+        SECRETS_CONTENT.getName(), r.getEncryptedContent(), r.getMetadata(), r.getId());
 
     if (!rowHmac.equals(r.getRowHmac())) {
       String errorMessage = String.format(
@@ -200,8 +200,17 @@ public class SecretContentDAO {
   }
 
   public int setRowHmac(SecretContent secretContent) {
+    String jsonMetadata;
+    try {
+      jsonMetadata = mapper.writeValueAsString(secretContent.metadata());
+    } catch (JsonProcessingException e) {
+      // Serialization of a Map<String, String> can never fail.
+      throw Throwables.propagate(e);
+    }
+
     String rowHmac = rowHmacGenerator.computeRowHmac(
-        SECRETS_CONTENT.getName(), secretContent.encryptedContent(), secretContent.id());
+        SECRETS_CONTENT.getName(), secretContent.encryptedContent(), jsonMetadata,
+        secretContent.id());
 
     return dslContext.update(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.ROW_HMAC, rowHmac)
