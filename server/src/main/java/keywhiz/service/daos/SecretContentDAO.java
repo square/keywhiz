@@ -85,7 +85,7 @@ public class SecretContentDAO {
 
     long generatedId = rowHmacGenerator.getNextLongSecure();
     String rowHmac = rowHmacGenerator.computeRowHmac(
-        SECRETS_CONTENT.getName(), encryptedContent, jsonMetadata, generatedId);
+        SECRETS_CONTENT.getName(), List.of(encryptedContent, jsonMetadata, generatedId));
 
     r.setId(generatedId);
     r.setSecretid(secretId);
@@ -152,7 +152,7 @@ public class SecretContentDAO {
     }
 
     String rowHmac = rowHmacGenerator.computeRowHmac(
-        SECRETS_CONTENT.getName(), r.getEncryptedContent(), r.getMetadata(), r.getId());
+        SECRETS_CONTENT.getName(), List.of(r.getEncryptedContent(), r.getMetadata(), r.getId()));
 
     if (!rowHmac.equals(r.getRowHmac())) {
       String errorMessage = String.format(
@@ -209,8 +209,8 @@ public class SecretContentDAO {
     }
 
     String rowHmac = rowHmacGenerator.computeRowHmac(
-        SECRETS_CONTENT.getName(), secretContent.encryptedContent(), jsonMetadata,
-        secretContent.id());
+        SECRETS_CONTENT.getName(),
+        List.of(secretContent.encryptedContent(), jsonMetadata, secretContent.id()));
 
     return dslContext.update(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.ROW_HMAC, rowHmac)

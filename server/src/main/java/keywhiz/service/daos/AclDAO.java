@@ -342,7 +342,7 @@ public class AclDAO {
     SecretSeries series = secretSeriesMapper.map(row.into(SECRETS));
 
     String secretHmac = rowHmacGenerator.computeRowHmac(
-        SECRETS.getName(), row.getValue(SECRETS.NAME), row.getValue(SECRETS.ID)
+        SECRETS.getName(), List.of(row.getValue(SECRETS.NAME), row.getValue(SECRETS.ID))
     );
     if (!secretHmac.equals(row.getValue(SECRETS.ROW_HMAC))) {
       String errorMessage = String.format(
@@ -356,7 +356,7 @@ public class AclDAO {
     }
 
     String clientHmac = rowHmacGenerator.computeRowHmac(
-        CLIENTS.getName(), client.getName(), client.getId()
+        CLIENTS.getName(), List.of(client.getName(), client.getId())
     );
     if (!clientHmac.equals(row.getValue(CLIENTS.ROW_HMAC))) {
       String errorMessage = String.format(
@@ -370,7 +370,7 @@ public class AclDAO {
     }
 
     String membershipsHmac = rowHmacGenerator.computeRowHmac(
-        MEMBERSHIPS.getName(), client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
+        MEMBERSHIPS.getName(), List.of(client.getId(), row.getValue(MEMBERSHIPS.GROUPID)));
     if (!membershipsHmac.equals(row.getValue(MEMBERSHIPS.ROW_HMAC))) {
       String errorMessage = String.format(
           "Memberships HMAC verification failed for clientId: %d in groupId: %d",
@@ -384,7 +384,8 @@ public class AclDAO {
     }
 
     String accessgrantsHmac = rowHmacGenerator.computeRowHmac(
-        ACCESSGRANTS.getName(), row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
+        ACCESSGRANTS.getName(),
+        List.of(row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID)));
     if (!accessgrantsHmac.equals(row.getValue(ACCESSGRANTS.ROW_HMAC))) {
       String errorMessage = String.format(
           "Access Grants HMAC verification failed for groupId: %d in secretId: %d",
@@ -448,7 +449,7 @@ public class AclDAO {
     }
 
     String verificationHmac = rowHmacGenerator.computeRowHmac(
-        ACCESSGRANTS.getName(), groupId, secretId);
+        ACCESSGRANTS.getName(), List.of(groupId, secretId));
 
     DSL.using(configuration)
         .insertInto(ACCESSGRANTS)
@@ -480,7 +481,7 @@ public class AclDAO {
     }
 
     String verificationHmac = rowHmacGenerator.computeRowHmac(
-        MEMBERSHIPS.getName(), clientId, groupId);
+        MEMBERSHIPS.getName(), List.of(clientId, groupId));
 
     DSL.using(configuration)
         .insertInto(MEMBERSHIPS)
@@ -498,7 +499,8 @@ public class AclDAO {
         .fetchOneInto(MembershipsRecord.class);
 
     String verificationHmac = rowHmacGenerator.computeRowHmac(
-        MEMBERSHIPS.getName(), membershipsRecord.getClientid(), membershipsRecord.getGroupid());
+        MEMBERSHIPS.getName(),
+        List.of(membershipsRecord.getClientid(), membershipsRecord.getGroupid()));
 
     return dslContext.update(MEMBERSHIPS)
         .set(MEMBERSHIPS.ROW_HMAC, verificationHmac)
@@ -512,7 +514,8 @@ public class AclDAO {
         .fetchOneInto(AccessgrantsRecord.class);
 
     String verificationHmac = rowHmacGenerator.computeRowHmac(
-        ACCESSGRANTS.getName(), accessgrantsRecord.getGroupid(), accessgrantsRecord.getSecretid());
+        ACCESSGRANTS.getName(),
+        List.of(accessgrantsRecord.getGroupid(), accessgrantsRecord.getSecretid()));
 
     return dslContext.update(ACCESSGRANTS)
         .set(ACCESSGRANTS.ROW_HMAC, verificationHmac)

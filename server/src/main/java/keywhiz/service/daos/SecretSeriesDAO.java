@@ -76,7 +76,8 @@ public class SecretSeriesDAO {
     SecretsRecord r = dslContext.newRecord(SECRETS);
 
     long generatedId = rowHmacGenerator.getNextLongSecure();
-    String rowHmac = rowHmacGenerator.computeRowHmac(SECRETS.getName(), name, generatedId);
+    String rowHmac = rowHmacGenerator.computeRowHmac(
+        SECRETS.getName(), List.of(name, generatedId));
 
     r.setId(generatedId);
     r.setName(name);
@@ -109,7 +110,8 @@ public class SecretSeriesDAO {
     }
 
     try {
-      String rowHmac = rowHmacGenerator.computeRowHmac(SECRETS.getName(), name, secretId);
+      String rowHmac = rowHmacGenerator.computeRowHmac(
+          SECRETS.getName(), List.of(name, secretId));
 
       dslContext.update(SECRETS)
           .set(SECRETS.NAME, name)
@@ -147,7 +149,7 @@ public class SecretSeriesDAO {
 
   public int setSecretsRowHmac(SecretSeries secretSeries) {
     String rowHmac = rowHmacGenerator.computeRowHmac(
-        SECRETS.getName(), secretSeries.name(), secretSeries.id());
+        SECRETS.getName(), List.of(secretSeries.name(), secretSeries.id()));
 
     return dslContext.update(SECRETS)
         .set(SECRETS.ROW_HMAC, rowHmac)

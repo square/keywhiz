@@ -18,6 +18,7 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
+import java.util.List;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
@@ -71,8 +72,11 @@ public class SecretContentDAOTest {
         .set(SECRETS_CONTENT.METADATA, JSONObject.toJSONString(secretContent1.metadata()))
         .set(SECRETS_CONTENT.EXPIRY, 1136214245L)
         .set(SECRETS_CONTENT.ROW_HMAC, rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
-            secretContent1.encryptedContent(), JSONObject.toJSONString(secretContent1.metadata()),
-            secretContent1.id()))
+            List.of(
+                secretContent1.encryptedContent(),
+                JSONObject.toJSONString(secretContent1.metadata()),
+                secretContent1.id())
+        ))
         .execute();
   }
 
