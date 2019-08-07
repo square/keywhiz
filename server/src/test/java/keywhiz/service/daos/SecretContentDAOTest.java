@@ -22,6 +22,7 @@ import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
+import keywhiz.service.crypto.RowHmacGenerator;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import org.jooq.DSLContext;
 import org.jooq.tools.json.JSONObject;
@@ -39,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 public class SecretContentDAOTest {
   @Inject DSLContext jooqContext;
   @Inject SecretContentDAOFactory secretContentDAOFactory;
+  @Inject private RowHmacGenerator rowHmacGenerator;
 
   final static ApiDate date = ApiDate.now();
   ImmutableMap<String, String> metadata = ImmutableMap.of("foo", "bar");
@@ -68,7 +70,9 @@ public class SecretContentDAOTest {
         .set(SECRETS_CONTENT.UPDATEDBY, secretContent1.updatedBy())
         .set(SECRETS_CONTENT.METADATA, JSONObject.toJSONString(secretContent1.metadata()))
         .set(SECRETS_CONTENT.EXPIRY, 1136214245L)
-        .set(SECRETS_CONTENT.ROW_HMAC, "2FE12084DF2D9E60B2362AE6CCF63C8059552640E805B07CD65E4A92930E3922")
+        .set(SECRETS_CONTENT.ROW_HMAC, rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
+            secretContent1.encryptedContent(), JSONObject.toJSONString(secretContent1.metadata()),
+            secretContent1.id()))
         .execute();
   }
 

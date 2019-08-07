@@ -35,6 +35,11 @@ public class RowHmacGenerator {
     return cryptographer.computeHmacWithSecretKey(hmacContent.getBytes(UTF_8), hmacKey);
   }
 
+  public String computeRowHmac(String table, String content, String metadata, long id) {
+    String hmacContent = table + "|" + content + "|" + metadata + "|" + id;
+    return cryptographer.computeHmacWithSecretKey(hmacContent.getBytes(UTF_8), hmacKey);
+  }
+
   /**
    * The random long generated with random.nextLong only uses 48 bits of randomness,
    * meaning it will not return all possible long values. Instead we generate a long from 8

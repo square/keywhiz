@@ -117,7 +117,9 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.METADATA,
             objectMapper.writeValueAsString(secret1.content().metadata()))
         .set(SECRETS_CONTENT.ROW_HMAC, rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
-            secret1.content().encryptedContent(), secret1.content().id()))
+            secret1.content().encryptedContent(),
+            objectMapper.writeValueAsString(secret1.content().metadata()),
+            secret1.content().id()))
         .execute();
 
     jooqContext.insertInto(SECRETS)
@@ -143,7 +145,9 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.METADATA,
             objectMapper.writeValueAsString(secret2a.content().metadata()))
         .set(SECRETS_CONTENT.ROW_HMAC, rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
-            secret2a.content().encryptedContent(), secret2a.content().id()))
+            secret2a.content().encryptedContent(),
+            objectMapper.writeValueAsString(secret2a.content().metadata()),
+            secret2a.content().id()))
         .execute();
 
     jooqContext.insertInto(SECRETS_CONTENT)
@@ -158,7 +162,9 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.METADATA,
             objectMapper.writeValueAsString(secret2b.content().metadata()))
         .set(SECRETS_CONTENT.ROW_HMAC, rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
-            secret2b.content().encryptedContent(), secret2b.content().id()))
+            secret2b.content().encryptedContent(),
+            objectMapper.writeValueAsString(secret2b.content().metadata()),
+            secret2b.content().id()))
         .execute();
 
     jooqContext.insertInto(SECRETS)
@@ -184,7 +190,9 @@ public class SecretDAOTest {
         .set(SECRETS_CONTENT.METADATA,
             objectMapper.writeValueAsString(secret3.content().metadata()))
         .set(SECRETS_CONTENT.ROW_HMAC, rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
-            secret3.content().encryptedContent(), secret3.content().id()))
+            secret3.content().encryptedContent(),
+            objectMapper.writeValueAsString(secret3.content().metadata()),
+            secret3.content().id()))
         .execute();
 
     secretDAO = secretDAOFactory.readwrite();
