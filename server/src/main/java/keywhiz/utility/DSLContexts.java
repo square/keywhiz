@@ -48,6 +48,7 @@ public class DSLContexts {
     }
     return DSL.using(dataSource, dialect,
             new Settings()
+                .withFetchWarnings(false)
                 .withRenderSchema(false)
                 .withRenderNameStyle(RenderNameStyle.AS_IS));
     }
