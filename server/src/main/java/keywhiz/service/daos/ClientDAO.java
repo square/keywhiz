@@ -154,17 +154,6 @@ public class ClientDAO {
     return ImmutableSet.copyOf(r);
   }
 
-  public int setRowHmac(Client client) {
-    logger.info(client.getName());
-    String rowHmac = rowHmacGenerator.computeRowHmac(
-        CLIENTS.getName(), List.of(client.getName(), client.getId()));
-
-    return dslContext.update(CLIENTS)
-        .set(CLIENTS.ROW_HMAC, rowHmac)
-        .where(CLIENTS.ID.eq(client.getId()))
-        .execute();
-  }
-
   public static class ClientDAOFactory implements DAOFactory<ClientDAO> {
     private final DSLContext jooq;
     private final DSLContext readonlyJooq;

@@ -493,35 +493,6 @@ public class AclDAO {
         .execute();
   }
 
-  public int setMembershipsRowHmac(long membershipId) {
-    MembershipsRecord membershipsRecord = dslContext.selectFrom(MEMBERSHIPS)
-        .where(MEMBERSHIPS.ID.eq(membershipId))
-        .fetchOneInto(MembershipsRecord.class);
-
-    String verificationHmac = rowHmacGenerator.computeRowHmac(
-        MEMBERSHIPS.getName(),
-        List.of(membershipsRecord.getClientid(), membershipsRecord.getGroupid()));
-
-    return dslContext.update(MEMBERSHIPS)
-        .set(MEMBERSHIPS.ROW_HMAC, verificationHmac)
-        .where(MEMBERSHIPS.ID.eq(membershipId))
-        .execute();
-  }
-
-  public int setAccessgrantsRowHmac(long accessgrantsId) {
-    AccessgrantsRecord accessgrantsRecord = dslContext.selectFrom(ACCESSGRANTS)
-        .where(ACCESSGRANTS.ID.eq(accessgrantsId))
-        .fetchOneInto(AccessgrantsRecord.class);
-
-    String verificationHmac = rowHmacGenerator.computeRowHmac(
-        ACCESSGRANTS.getName(),
-        List.of(accessgrantsRecord.getGroupid(), accessgrantsRecord.getSecretid()));
-
-    return dslContext.update(ACCESSGRANTS)
-        .set(ACCESSGRANTS.ROW_HMAC, verificationHmac)
-        .where(ACCESSGRANTS.ID.eq(accessgrantsId))
-        .execute();
-  }
 
   protected void evictClient(Configuration configuration, long clientId, long groupId) {
     DSL.using(configuration)

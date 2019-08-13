@@ -147,16 +147,6 @@ public class SecretSeriesDAO {
         .execute();
   }
 
-  public int setSecretsRowHmac(SecretSeries secretSeries) {
-    String rowHmac = rowHmacGenerator.computeRowHmac(
-        SECRETS.getName(), List.of(secretSeries.name(), secretSeries.id()));
-
-    return dslContext.update(SECRETS)
-        .set(SECRETS.ROW_HMAC, rowHmac)
-        .where(SECRETS.ID.eq(secretSeries.id()))
-        .execute();
-  }
-
   public int setCurrentVersion(long secretId, long secretContentId, String updater, long now) {
     long checkId;
     Record1<Long> r = dslContext.select(SECRETS_CONTENT.SECRETID)
