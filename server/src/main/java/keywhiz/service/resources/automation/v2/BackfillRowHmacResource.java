@@ -2,7 +2,12 @@ package keywhiz.service.resources.automation.v2;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Throwables;
 import io.dropwizard.auth.Auth;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -12,9 +17,17 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
+import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
+import keywhiz.jooq.tables.Secrets;
+import keywhiz.jooq.tables.records.AccessgrantsRecord;
+import keywhiz.jooq.tables.records.ClientsRecord;
+import keywhiz.jooq.tables.records.MembershipsRecord;
+import keywhiz.jooq.tables.records.SecretsContentRecord;
+import keywhiz.jooq.tables.records.SecretsRecord;
+import keywhiz.service.crypto.RowHmacGenerator;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.ClientDAO;
@@ -25,10 +38,21 @@ import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
+import org.jooq.DSLContext;
+import org.jooq.Record1;
+import org.jooq.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static keywhiz.jooq.Tables.ACCESSGRANTS;
+import static keywhiz.jooq.Tables.CLIENTS;
+import static keywhiz.jooq.Tables.MEMBERSHIPS;
+import static keywhiz.jooq.Tables.SECRETS;
+import static keywhiz.jooq.Tables.SECRETS_CONTENT;
+import static org.jooq.impl.DSL.log;
+import static org.jooq.impl.DSL.max;
+import static org.jooq.impl.DSL.min;
 
 /**
  * @parentEndpointName automation/v2-backfill-row-hmac
@@ -38,170 +62,265 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 public class BackfillRowHmacResource {
   private static final Logger logger = LoggerFactory.getLogger(BackfillRowHmacResource.class);
 
-  private final AclDAO aclDAO;
-  private final ClientDAO clientDAO;
-  private final SecretDAO secretDAO;
-  private final SecretContentDAO secretContentDAO;
-  private final SecretSeriesDAO secretSeriesDAO;
+  private final DSLContext jooq;
+  private final RowHmacGenerator rowHmacGenerator;
 
   @Inject
-  public BackfillRowHmacResource(AclDAOFactory aclDAOFactory,
-      ClientDAOFactory clientDAOFactory, SecretDAOFactory secretDAOFactory,
-      SecretContentDAOFactory secretContentDAOFactory,
-      SecretSeriesDAOFactory secretSeriesDAOFactory) {
-    this.aclDAO = aclDAOFactory.readwrite();
-    this.clientDAO = clientDAOFactory.readwrite();
-    this.secretDAO = secretDAOFactory.readwrite();
-    this.secretContentDAO = secretContentDAOFactory.readwrite();
-    this.secretSeriesDAO = secretSeriesDAOFactory.readwrite();
+  public BackfillRowHmacResource(DSLContext jooq, RowHmacGenerator rowHmacGenerator) {
+    this.jooq = jooq;
+    this.rowHmacGenerator = rowHmacGenerator;
   }
 
   /**
    * Backfill row_hmac for this secret.
    */
   @Timed @ExceptionMetered
-  @Path("{secretIdFrom}/{secretIdTo}/backfill-secrets")
+  @Path("backfill-secrets/{cursor_start}/{max_rows}")
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public boolean backfillSecretsRowHmac(@Auth AutomationClient automationClient,
-      @PathParam("secretIdFrom") Long secretIdFrom, @PathParam("secretIdTo") Long secretIdTo) {
-    int modifiedRows = 0;
-    logger.info("backfill-secrets: processing secrets from {} to {}", secretIdFrom, secretIdTo);
-    for (long secretId = secretIdFrom; secretId < secretIdTo; secretId++) {
-      Optional<SecretSeriesAndContent> secret = secretDAO.getSecretById(secretId);
-
-      if (secret.isEmpty()) {
-        logger.info("backfill-secrets {}: does not exist", secretId);
-        continue;
-      }
-
-      SecretSeries secretSeries = secret.get().series();
-      int resultRows = secretSeriesDAO.setSecretsRowHmac(secretSeries);
-      if (resultRows != 1) {
-        logger.info("backfill-secrets {}: unexpectedly modified {} rows", secretId, resultRows);
-      }
-      modifiedRows += resultRows;
+  public void backfillSecretsRowHmac(@PathParam("cursor_start") Long cursorStart,
+      @PathParam("max_rows") Long maxRows) {
+    logger.info("backfill-secrets: processing secrets");
+    long cursor;
+    if (cursorStart != 0) {
+      cursor = cursorStart;
+    } else {
+      cursor = jooq.select(min(SECRETS.ID))
+          .from(SECRETS)
+          .fetch().get(0).value1();
     }
 
-    return modifiedRows == secretIdTo - secretIdFrom;
+    long processedRows = 0;
+
+    while (processedRows < maxRows) {
+      Result<SecretsRecord> rows = jooq.selectFrom(SECRETS)
+          .where(SECRETS.ID.greaterOrEqual(cursor))
+          .orderBy(SECRETS.ID)
+          .limit(1000)
+          .fetchInto(SECRETS);
+      if (rows.isEmpty()) {
+        break;
+      }
+
+      for (var row : rows) {
+        cursor = row.getId();
+        if (!row.getRowHmac().isEmpty()) {
+          continue;
+        }
+
+        String rowHmac = rowHmacGenerator.computeRowHmac(SECRETS.getName(),
+            List.of(row.getName(), row.getId()));
+        jooq.update(SECRETS)
+            .set(SECRETS.ROW_HMAC, rowHmac)
+            .where(SECRETS.ID.eq(row.getId()))
+            .execute();
+
+        processedRows += 1;
+      }
+
+      logger.info("backfill-secrets: updating from {} with {} rows processed",
+          cursor, processedRows);
+    }
   }
 
   /**
    * Backfill row_hmac for this secrets content.
    */
   @Timed @ExceptionMetered
-  @Path("{secretContentIdFrom}/{secretContentIdTo}/backfill-secrets-content")
+  @Path("backfill-secrets-content/{cursor_start}/{max_rows}")
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public boolean backfillSecretsContentRowHmac(@Auth AutomationClient automationClient,
-      @PathParam("secretContentIdFrom") Long secretContentIdFrom,
-      @PathParam("secretContentIdTo") Long secretContentIdTo) {
-    int modifiedRows = 0;
-    logger.info("backfill-secrets-content: processing secrets content from {} to {}",
-        secretContentIdFrom, secretContentIdTo);
-    for (long secretContentId = secretContentIdFrom; secretContentId < secretContentIdTo; secretContentId++) {
-      Optional<SecretContent> secretContent =
-          secretContentDAO.getSecretContentById(secretContentId);
-
-      if (secretContent.isEmpty()) {
-        logger.info("backfill-secrets-content {}: does not exist", secretContentId);
-        continue;
-      }
-
-      int resultRows = secretContentDAO.setRowHmac(secretContent.get());
-      if (resultRows != 1) {
-        logger.info("backfill-secrets-content {}: unexpectedly modified {} rows",
-            secretContentId, resultRows);
-      }
-      modifiedRows += resultRows;
+  public void backfillSecretsContentRowHmac(@PathParam("cursor_start") Long cursorStart,
+      @PathParam("max_rows") Long maxRows) {
+    logger.info("backfill-secrets-content: processing secrets content");
+    long cursor;
+    if (cursorStart != 0) {
+      cursor = cursorStart;
+    } else {
+      cursor = jooq.select(min(SECRETS_CONTENT.ID))
+          .from(SECRETS_CONTENT)
+          .fetch().get(0).value1();
     }
 
-    return modifiedRows == secretContentIdTo - secretContentIdFrom;
+    long processedRows = 0;
+
+    while (processedRows < maxRows) {
+      Result<SecretsContentRecord> rows = jooq.selectFrom(SECRETS_CONTENT)
+          .where(SECRETS_CONTENT.ID.greaterOrEqual(cursor))
+          .orderBy(SECRETS_CONTENT.ID)
+          .limit(1000)
+          .fetchInto(SECRETS_CONTENT);
+      if (rows.isEmpty()) {
+        break;
+      }
+
+      for (var row : rows) {
+        cursor = row.getId();
+
+        String rowHmac = rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
+            List.of(row.getEncryptedContent(), row.getMetadata(), row.getId()));
+        jooq.update(SECRETS_CONTENT)
+            .set(SECRETS_CONTENT.ROW_HMAC, rowHmac)
+            .where(SECRETS_CONTENT.ID.eq(row.getId()))
+            .execute();
+
+        processedRows += 1;
+      }
+
+      logger.info("backfill-secrets-content: updating from {} with {} rows processed",
+          cursor, processedRows);
+    }
   }
 
   /**
    * Backfill row_hmac for this client.
    */
   @Timed @ExceptionMetered
-  @Path("{clientIdFrom}/{clientIdTo}/backfill-clients")
+  @Path("backfill-clients/{cursor_start}/{max_rows}")
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public boolean backfillClientsRowHmac(@Auth AutomationClient automationClient,
-      @PathParam("clientIdFrom") Long clientIdFrom, @PathParam("clientIdTo") Long clientIdTo) {
-    int modifiedRows = 0;
-    logger.info("backfill-clients: processing clients from {} to {}",
-        clientIdFrom, clientIdTo);
-    for (long clientId = clientIdFrom; clientId < clientIdTo; clientId++) {
-      Optional<Client> client = clientDAO.getClientById(clientId);
-
-      if (client.isEmpty()) {
-        logger.info("backfill-clients {}: does not exist", clientId);
-        continue;
-      }
-
-      int resultRows = clientDAO.setRowHmac(client.get());
-      if (resultRows != 1) {
-        logger.info("backfill-clients {}: unexpectedly modified {} rows", clientId, resultRows);
-      }
-      modifiedRows += resultRows;
+  public void backfillClientsRowHmac(@PathParam("cursor_start") Long cursorStart,
+      @PathParam("max_rows") Long maxRows) {
+    logger.info("backfill-clients: processing clients");
+    long cursor;
+    if (cursorStart != 0) {
+      cursor = cursorStart;
+    } else {
+      cursor = jooq.select(min(CLIENTS.ID))
+          .from(CLIENTS)
+          .fetch().get(0).value1();
     }
 
-    return modifiedRows == clientIdTo - clientIdFrom;
+    long processedRows = 0;
+
+    while (processedRows < maxRows) {
+      Result<ClientsRecord> rows = jooq.selectFrom(CLIENTS)
+          .where(CLIENTS.ID.greaterOrEqual(cursor))
+          .orderBy(CLIENTS.ID)
+          .limit(1000)
+          .fetchInto(CLIENTS);
+      if (rows.isEmpty()) {
+        break;
+      }
+
+      for (var row : rows) {
+        cursor = row.getId();
+
+        String rowHmac = rowHmacGenerator.computeRowHmac(CLIENTS.getName(),
+            List.of(row.getName(), row.getId()));
+        jooq.update(CLIENTS)
+            .set(CLIENTS.ROW_HMAC, rowHmac)
+            .where(CLIENTS.ID.eq(row.getId()))
+            .execute();
+
+        processedRows += 1;
+      }
+
+      logger.info("backfill-clients: updating from {} with {} rows processed",
+          cursor, processedRows);
+    }
   }
 
   /**
    * Backfill row_hmac for this membership id.
    */
   @Timed @ExceptionMetered
-  @Path("{membershipIdFrom}/{membershipIdTo}/backfill-memberships")
+  @Path("backfill-memberships/{cursor_start}/{max_rows}")
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public boolean backfillMembershipsRowHmac(@Auth AutomationClient automationClient,
-      @PathParam("membershipIdFrom") Long membershipIdFrom,
-      @PathParam("membershipIdTo") Long membershipIdTo) {
-    int modifiedRows = 0;
-    logger.info("backfill-memberships: processing memberships from {} to {}",
-        membershipIdFrom, membershipIdTo);
-    for (long membershipId = membershipIdFrom; membershipId < membershipIdTo; membershipId++) {
-      int resultRows = aclDAO.setMembershipsRowHmac(membershipId);
-      if (resultRows != 1) {
-        logger.info("backfill-memberships {}: unexpectedly modified {} rows", membershipId,
-            resultRows);
-      }
-      modifiedRows += resultRows;
+  public void backfillMembershipsRowHmac(@PathParam("cursor_start") Long cursorStart,
+      @PathParam("max_rows") Long maxRows) {
+    logger.info("backfill-memberships: processing memberships");
+    long cursor;
+    if (cursorStart != 0) {
+      cursor = cursorStart;
+    } else {
+      cursor = jooq.select(min(MEMBERSHIPS.ID))
+          .from(MEMBERSHIPS)
+          .fetch().get(0).value1();
     }
 
-    return modifiedRows == membershipIdTo - membershipIdFrom;
+    long processedRows = 0;
+
+    while (processedRows < maxRows) {
+      Result<MembershipsRecord> rows = jooq.selectFrom(MEMBERSHIPS)
+          .where(MEMBERSHIPS.ID.greaterOrEqual(cursor))
+          .orderBy(MEMBERSHIPS.ID)
+          .limit(1000)
+          .fetchInto(MEMBERSHIPS);
+      if (rows.isEmpty()) {
+        break;
+      }
+
+      for (var row : rows) {
+        cursor = row.getId();
+
+        String rowHmac = rowHmacGenerator.computeRowHmac(MEMBERSHIPS.getName(),
+            List.of(row.getClientid(), row.getGroupid()));
+        jooq.update(MEMBERSHIPS)
+            .set(MEMBERSHIPS.ROW_HMAC, rowHmac)
+            .where(MEMBERSHIPS.ID.eq(row.getId()))
+            .execute();
+
+        processedRows += 1;
+      }
+
+      logger.info("backfill-memberships: updating from {} with {} rows processed",
+          cursor, processedRows);
+    }
   }
 
   /**
    * Backfill accessgrants for this membership id.
    */
   @Timed @ExceptionMetered
-  @Path("{accessgrantIdFrom}/{accessgrantIdTo}/backfill-accessgrants")
+  @Path("backfill-accessgrants/{cursor_start}/{max_rows}")
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public boolean backfillAccessgrantsRowHmac(@Auth AutomationClient automationClient,
-      @PathParam("accessgrantIdFrom") Long accessgrantIdFrom,
-      @PathParam("accessgrantIdTo") Long accessgrantIdTo) {
-    int modifiedRows = 0;
-    logger.info("backfill-accessgrants: processing accessgrants from {} to {}",
-        accessgrantIdFrom, accessgrantIdTo);
-    for (long accessgrantId = accessgrantIdFrom; accessgrantId < accessgrantIdTo; accessgrantId++) {
-      int resultRows = aclDAO.setAccessgrantsRowHmac(accessgrantId);
-      if (resultRows != 1) {
-        logger.info("backfill-accessgrants {}: unexpectedly modified {} rows",
-            accessgrantId, resultRows);
-      }
-      modifiedRows += resultRows;
+  public void backfillAccessgrantsRowHmac(@PathParam("cursor_start") Long cursorStart,
+      @PathParam("max_rows") Long maxRows) {
+    logger.info("backfill-accessgrants: processing accessgrants");
+    long cursor;
+    if (cursorStart != 0) {
+      cursor = cursorStart;
+    } else {
+      cursor = jooq.select(min(ACCESSGRANTS.ID))
+          .from(ACCESSGRANTS)
+          .fetch().get(0).value1();
     }
 
-    return modifiedRows == accessgrantIdTo - accessgrantIdFrom;
+    long processedRows = 0;
+
+    while (processedRows < maxRows) {
+      Result<AccessgrantsRecord> rows = jooq.selectFrom(ACCESSGRANTS)
+          .where(ACCESSGRANTS.ID.greaterOrEqual(cursor))
+          .orderBy(ACCESSGRANTS.ID)
+          .limit(1000)
+          .fetchInto(ACCESSGRANTS);
+      if (rows.isEmpty()) {
+        break;
+      }
+
+      for (var row : rows) {
+        cursor = row.getId();
+
+        String rowHmac = rowHmacGenerator.computeRowHmac(ACCESSGRANTS.getName(),
+            List.of(row.getGroupid(), row.getSecretid()));
+        jooq.update(ACCESSGRANTS)
+            .set(ACCESSGRANTS.ROW_HMAC, rowHmac)
+            .where(ACCESSGRANTS.ID.eq(row.getId()))
+            .execute();
+
+        processedRows += 1;
+      }
+      logger.info("backfill-accessgrants: updating from {} with {} rows processed",
+          cursor, processedRows);
+    }
   }
 }
 

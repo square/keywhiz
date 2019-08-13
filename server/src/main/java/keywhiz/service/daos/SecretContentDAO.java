@@ -199,25 +199,6 @@ public class SecretContentDAO {
         .execute();
   }
 
-  public int setRowHmac(SecretContent secretContent) {
-    String jsonMetadata;
-    try {
-      jsonMetadata = mapper.writeValueAsString(secretContent.metadata());
-    } catch (JsonProcessingException e) {
-      // Serialization of a Map<String, String> can never fail.
-      throw Throwables.propagate(e);
-    }
-
-    String rowHmac = rowHmacGenerator.computeRowHmac(
-        SECRETS_CONTENT.getName(),
-        List.of(secretContent.encryptedContent(), jsonMetadata, secretContent.id()));
-
-    return dslContext.update(SECRETS_CONTENT)
-        .set(SECRETS_CONTENT.ROW_HMAC, rowHmac)
-        .where(SECRETS_CONTENT.ID.eq(secretContent.id()))
-        .execute();
-  }
-
   public static class SecretContentDAOFactory implements DAOFactory<SecretContentDAO> {
     private final DSLContext jooq;
     private final DSLContext readonlyJooq;
