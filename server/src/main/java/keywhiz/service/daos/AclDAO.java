@@ -348,7 +348,7 @@ public class AclDAO {
       String errorMessage = String.format(
           "Secret HMAC verification failed for secret: %s", row.getValue(SECRETS.NAME));
       if (rowHmacLog) {
-        logger.info(errorMessage);
+        logger.warn(errorMessage);
       }
       if (rowHmacFail) {
         throw new AssertionError(errorMessage);
@@ -362,7 +362,7 @@ public class AclDAO {
       String errorMessage = String.format(
           "Client HMAC verification failed for client: %s", client.getName());
       if (rowHmacLog) {
-        logger.info(errorMessage);
+        logger.warn(errorMessage);
       }
       if (rowHmacFail) {
         throw new AssertionError(errorMessage);
@@ -376,7 +376,7 @@ public class AclDAO {
           "Memberships HMAC verification failed for clientId: %d in groupId: %d",
           client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
       if (rowHmacLog) {
-        logger.info(errorMessage);
+        logger.warn(errorMessage);
       }
       if (rowHmacFail) {
         throw new AssertionError(errorMessage);
@@ -391,7 +391,7 @@ public class AclDAO {
           "Access Grants HMAC verification failed for groupId: %d in secretId: %d",
           row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
       if (rowHmacLog) {
-        logger.info(errorMessage);
+        logger.warn(errorMessage);
       }
       if (rowHmacFail) {
         throw new AssertionError(errorMessage);

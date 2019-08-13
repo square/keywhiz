@@ -158,7 +158,7 @@ public class SecretContentDAO {
       String errorMessage = String.format(
           "Secret Content HMAC verification failed for secretContent: %d", r.getId());
       if (config.getRowHmacCheck() == RowHmacCheck.DISABLED_BUT_LOG) {
-        logger.info(errorMessage);
+        logger.warn(errorMessage);
       }
       if (config.getRowHmacCheck() == RowHmacCheck.ENFORCED) {
         throw new AssertionError(errorMessage);
