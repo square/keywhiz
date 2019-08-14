@@ -2,44 +2,20 @@ package keywhiz.service.resources.automation.v2;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Throwables;
-import io.dropwizard.auth.Auth;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import keywhiz.api.model.AutomationClient;
-import keywhiz.api.model.Client;
-import keywhiz.api.model.Secret;
-import keywhiz.api.model.SecretContent;
-import keywhiz.api.model.SecretSeries;
-import keywhiz.api.model.SecretSeriesAndContent;
-import keywhiz.jooq.tables.Secrets;
 import keywhiz.jooq.tables.records.AccessgrantsRecord;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import keywhiz.jooq.tables.records.MembershipsRecord;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.crypto.RowHmacGenerator;
-import keywhiz.service.daos.AclDAO;
-import keywhiz.service.daos.AclDAO.AclDAOFactory;
-import keywhiz.service.daos.ClientDAO;
-import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
-import keywhiz.service.daos.SecretContentDAO;
-import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
-import keywhiz.service.daos.SecretDAO;
-import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
-import keywhiz.service.daos.SecretSeriesDAO;
-import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import org.jooq.DSLContext;
-import org.jooq.Record1;
 import org.jooq.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,8 +26,6 @@ import static keywhiz.jooq.Tables.CLIENTS;
 import static keywhiz.jooq.Tables.MEMBERSHIPS;
 import static keywhiz.jooq.Tables.SECRETS;
 import static keywhiz.jooq.Tables.SECRETS_CONTENT;
-import static org.jooq.impl.DSL.log;
-import static org.jooq.impl.DSL.max;
 import static org.jooq.impl.DSL.min;
 
 /**
@@ -88,14 +62,14 @@ public class BackfillRowHmacResource {
     } else {
       cursor = jooq.select(min(SECRETS.ID))
           .from(SECRETS)
-          .fetch().get(0).value1();
+          .fetch().get(0).value1() - 1;
     }
 
     long processedRows = 0;
 
     while (processedRows < maxRows) {
       Result<SecretsRecord> rows = jooq.selectFrom(SECRETS)
-          .where(SECRETS.ID.greaterOrEqual(cursor))
+          .where(SECRETS.ID.greaterThan(cursor))
           .orderBy(SECRETS.ID)
           .limit(1000)
           .fetchInto(SECRETS);
@@ -141,14 +115,14 @@ public class BackfillRowHmacResource {
     } else {
       cursor = jooq.select(min(SECRETS_CONTENT.ID))
           .from(SECRETS_CONTENT)
-          .fetch().get(0).value1();
+          .fetch().get(0).value1() - 1;
     }
 
     long processedRows = 0;
 
     while (processedRows < maxRows) {
       Result<SecretsContentRecord> rows = jooq.selectFrom(SECRETS_CONTENT)
-          .where(SECRETS_CONTENT.ID.greaterOrEqual(cursor))
+          .where(SECRETS_CONTENT.ID.greaterThan(cursor))
           .orderBy(SECRETS_CONTENT.ID)
           .limit(1000)
           .fetchInto(SECRETS_CONTENT);
@@ -191,14 +165,14 @@ public class BackfillRowHmacResource {
     } else {
       cursor = jooq.select(min(CLIENTS.ID))
           .from(CLIENTS)
-          .fetch().get(0).value1();
+          .fetch().get(0).value1() - 1;
     }
 
     long processedRows = 0;
 
     while (processedRows < maxRows) {
       Result<ClientsRecord> rows = jooq.selectFrom(CLIENTS)
-          .where(CLIENTS.ID.greaterOrEqual(cursor))
+          .where(CLIENTS.ID.greaterThan(cursor))
           .orderBy(CLIENTS.ID)
           .limit(1000)
           .fetchInto(CLIENTS);
@@ -241,14 +215,14 @@ public class BackfillRowHmacResource {
     } else {
       cursor = jooq.select(min(MEMBERSHIPS.ID))
           .from(MEMBERSHIPS)
-          .fetch().get(0).value1();
+          .fetch().get(0).value1() - 1;
     }
 
     long processedRows = 0;
 
     while (processedRows < maxRows) {
       Result<MembershipsRecord> rows = jooq.selectFrom(MEMBERSHIPS)
-          .where(MEMBERSHIPS.ID.greaterOrEqual(cursor))
+          .where(MEMBERSHIPS.ID.greaterThan(cursor))
           .orderBy(MEMBERSHIPS.ID)
           .limit(1000)
           .fetchInto(MEMBERSHIPS);
@@ -291,14 +265,14 @@ public class BackfillRowHmacResource {
     } else {
       cursor = jooq.select(min(ACCESSGRANTS.ID))
           .from(ACCESSGRANTS)
-          .fetch().get(0).value1();
+          .fetch().get(0).value1() - 1;
     }
 
     long processedRows = 0;
 
     while (processedRows < maxRows) {
       Result<AccessgrantsRecord> rows = jooq.selectFrom(ACCESSGRANTS)
-          .where(ACCESSGRANTS.ID.greaterOrEqual(cursor))
+          .where(ACCESSGRANTS.ID.greaterThan(cursor))
           .orderBy(ACCESSGRANTS.ID)
           .limit(1000)
           .fetchInto(ACCESSGRANTS);
