@@ -45,7 +45,7 @@
     <!-- Some jackson libraries have not received a patch update, so peg them to the latest 2.9.x -->
     <jackson-annotations.version>2.9.9</jackson-annotations.version>
     <jackson-jdk8.version>2.9.9</jackson-jdk8.version>
-    <jooq.version>3.11.11</jooq.version>
+    <jooq.version>3.11.12</jooq.version>
     <powermock.version>1.7.4</powermock.version>
     <slf4j.version>1.7.28</slf4j.version>
     <mysql.version>5.1.48</mysql.version>
