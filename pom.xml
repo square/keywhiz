@@ -48,7 +48,7 @@
     <jooq.version>3.11.11</jooq.version>
     <powermock.version>1.7.4</powermock.version>
     <slf4j.version>1.7.28</slf4j.version>
-    <mysql.version>5.1.45</mysql.version>
+    <mysql.version>5.1.48</mysql.version>
     <logback.version>1.2.3</logback.version>
 
     <custom.build.directory>target</custom.build.directory>
