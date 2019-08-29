@@ -61,6 +61,14 @@
     <tag>HEAD</tag>
   </scm>
 
+  <distributionManagement>
+    <repository>
+      <id>nexus-staging</id>
+      <name>Nexus Staging Repo</name>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
+
   <issueManagement>
     <system>GitHub Issues</system>
     <url>https://github.com/square/keywhiz/issues</url>
