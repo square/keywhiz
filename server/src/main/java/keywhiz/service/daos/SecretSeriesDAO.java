@@ -198,14 +198,14 @@ public class SecretSeriesDAO {
       // Set a lower bound of "now" on the expiration only if it isn't configured separately
       if (expireMinTime == null || expireMinTime == 0) {
         long now = System.currentTimeMillis() / 1000L;
-        select.addConditions(SECRETS_CONTENT.EXPIRY.greaterOrEqual(now));
+        select.addConditions(SECRETS_CONTENT.EXPIRY.greaterThan(now));
       }
       select.addConditions(SECRETS_CONTENT.EXPIRY.lessOrEqual(expireMaxTime));
     }
 
     // Set a lower bound on expiration dates
     if (expireMinTime != null && expireMinTime > 0) {
-      select.addConditions(SECRETS_CONTENT.EXPIRY.greaterOrEqual(expireMinTime));
+      select.addConditions(SECRETS_CONTENT.EXPIRY.greaterThan(expireMinTime));
     }
 
     if (group != null) {

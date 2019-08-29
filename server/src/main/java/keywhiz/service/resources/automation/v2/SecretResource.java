@@ -338,7 +338,7 @@ public class SecretResource {
    *
    * @excludeParams automationClient
    * @param maxTime timestamp for farthest expiry to include (inclusive)
-   * @param minTime timestamp for nearest expiry to include (inclusive)
+   * @param minTime timestamp for nearest expiry to include (exclusive)
    * @param limit maximum number of secrets and groups to return
    * @param offset offset to use into the list of secrets and groups; ignored if "limit" is not
    *               specified

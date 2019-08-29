@@ -591,19 +591,19 @@ public class SecretResourceTest {
     assertThat(s5.get(1).secret().expiry()).isEqualTo(now + 86400 * 2);
     assertThat(s5.get(1).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15b");
 
-    List<SanitizedSecretWithGroups> s6 = listExpiringV3(now + 86400 * 4, null, now + 86400 * 2, null, null);
+    List<SanitizedSecretWithGroups> s6 = listExpiringV3(now + 86400 * 4, null, now + 86400, null, null);
     assertThat(s6).hasSize(2);
     assertThat(s6.get(0).secret().name()).isEqualTo("secret19");
     assertThat(s6.get(0).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15b");
     assertThat(s6.get(1).secret().name()).isEqualTo("secret17");
     assertThat(s6.get(1).groups().stream().map(Group::getName).collect(toList())).containsExactlyInAnyOrder("group15a", "group15b");
 
-    List<SanitizedSecretWithGroups> s7 = listExpiringV3(now + 86400 * 4, null, now + 86400 * 2, 3, 1);
+    List<SanitizedSecretWithGroups> s7 = listExpiringV3(now + 86400 * 4, null, now + 86400, 3, 1);
     assertThat(s7).hasSize(1);
     assertThat(s7.get(0).secret().name()).isEqualTo("secret17");
     assertThat(s7.get(0).groups().stream().map(Group::getName).collect(toList())).containsExactlyInAnyOrder("group15a", "group15b");
 
-    List<SanitizedSecretWithGroups> s8 = listExpiringV3(now + 86400 * 4, null, now + 86400 * 2, 1, 0);
+    List<SanitizedSecretWithGroups> s8 = listExpiringV3(now + 86400 * 4, null, now + 86400, 1, 0);
     assertThat(s8).hasSize(1);
     assertThat(s8.get(0).secret().name()).isEqualTo("secret19");
     assertThat(s8.get(0).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15b");
