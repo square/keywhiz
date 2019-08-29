@@ -325,19 +325,34 @@ public class SecretResource {
   }
 
   /**
-   * Retrieve listing of secrets expiring soon
+   * Retrieve listing of secrets expiring soon (i. e. before the time specified in "maxTime").
+   * The query parameters can be used to introduce pagination.  Instead of retrieving all secrets
+   * expiring before maxTime, clients can retrieve all secrets expiring between minTime and maxTime,
+   * or up to "limit" secrets expiring between minTime and maxTime, or "limit" secrets starting
+   * at offset "offset" between minTime and maxTime.
+   *
+   * Since limit + offset will be slow for large offsets, pagination should primarily be enforced
+   * by adjusting minTime and maxTime.
+   *
+   * The returned secrets will be sorted in increasing order of expiration time.
    *
    * @excludeParams automationClient
-   * @param time timestamp for farthest expiry to include
+   * @param maxTime timestamp for farthest expiry to include (inclusive)
+   * @param minTime timestamp for nearest expiry to include (inclusive)
+   * @param limit maximum number of secrets and groups to return
+   * @param offset offset to use into the list of secrets and groups; ignored if "limit" is not
+   *               specified
    *
    * @responseMessage 200 List of secrets expiring soon
    */
   @Timed @ExceptionMetered
-  @Path("expiring/v3/{time}")
+  @Path("expiring/v3/{maxtime}")
   @GET
   @Produces(APPLICATION_JSON)
-  public Iterable<SanitizedSecretWithGroups> secretListingExpiringV3(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
-    List<SanitizedSecretWithGroups> secrets = secretControllerReadOnly.getExpiringSanitizedSecrets(time);
+  public Iterable<SanitizedSecretWithGroups> secretListingExpiringV3(@Auth AutomationClient automationClient,
+      @PathParam("maxtime") Long maxTime, @QueryParam("mintime") Long minTime,
+      @QueryParam("limit") Integer limit, @QueryParam("offset") Integer offset) {
+    List<SanitizedSecretWithGroups> secrets = secretControllerReadOnly.getSanitizedSecretsWithGroups(maxTime, minTime, limit, offset);
     return secrets;
   }
 

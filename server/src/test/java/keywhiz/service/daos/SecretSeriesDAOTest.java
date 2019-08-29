@@ -16,9 +16,13 @@
 
 package keywhiz.service.daos;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
@@ -164,6 +168,88 @@ public class SecretSeriesDAOTest {
   @Test public void getNonExistentSecretSeries() {
     assertThat(secretSeriesDAO.getSecretSeriesByName("non-existent")).isEmpty();
     assertThat(secretSeriesDAO.getSecretSeriesById(-2328)).isEmpty();
+  }
+
+  @Test
+  public void getSecretSeries() {
+    // Create multiple secret series
+    long now = OffsetDateTime.now().toEpochSecond();
+    long firstExpiry = now + 10000;
+    long secondExpiry = now + 20000;
+    long thirdExpiry = now + 30000;
+    long fourthExpiry = now + 40000;
+    long firstId = secretSeriesDAO.createSecretSeries("expiringFirst",
+        "creator", "", null, null, now);
+    long firstContentId = secretContentDAOFactory.readwrite().createSecretContent(firstId,
+        "blah", "checksum", "creator", null, firstExpiry, now);
+    secretSeriesDAO.setCurrentVersion(firstId, firstContentId, "creator", now);
+
+    long secondId = secretSeriesDAO.createSecretSeries("expiringSecond",
+        "creator", "", null, null, now);
+    long secondContentId = secretContentDAOFactory.readwrite().createSecretContent(secondId, "blah",
+        "checksum", "creator", null, secondExpiry, now);
+    secretSeriesDAO.setCurrentVersion(secondId, secondContentId, "creator", now);
+
+    // Make sure the rows aren't ordered by expiry
+    long fourthId = secretSeriesDAO.createSecretSeries("expiringFourth",
+        "creator", "", null, null, now);
+    long fourthContentId = secretContentDAOFactory.readwrite().createSecretContent(fourthId, "blah",
+        "checksum", "creator", null, fourthExpiry, now);
+    secretSeriesDAO.setCurrentVersion(fourthId, fourthContentId, "creator", now);
+
+    long thirdId = secretSeriesDAO.createSecretSeries("expiringThird",
+        "creator", "", null, null, now);
+    long thirdContentId = secretContentDAOFactory.readwrite().createSecretContent(thirdId, "blah",
+        "checksum", "creator", null, thirdExpiry, now);
+    secretSeriesDAO.setCurrentVersion(thirdId, thirdContentId, "creator", now);
+
+    // Retrieving secrets with no parameters should retrieve all four secrets (although given
+    // the shared database, it's likely to also retrieve others)
+    ImmutableList<SecretSeries>
+        retrievedSeries = secretSeriesDAO.getSecretSeries(null, null, null, null, null);
+    assertListContainsSecretsWithIds(retrievedSeries, ImmutableList.of(firstId, secondId, thirdId, fourthId));
+
+    // Restrict expireMaxTime to exclude the fourth secret
+    retrievedSeries = secretSeriesDAO.getSecretSeries(fourthExpiry - 100, null, null, null, null);
+    assertListContainsSecretsWithIds(retrievedSeries, ImmutableList.of(firstId, secondId, thirdId));
+    assertListDoesNotContainSecretsWithIds(retrievedSeries, ImmutableList.of(fourthId));
+
+    // Restrict expireMinTime to exclude the first secret
+    retrievedSeries = secretSeriesDAO.getSecretSeries(fourthExpiry - 100, null, firstExpiry + 10, null, null);
+    assertListContainsSecretsWithIds(retrievedSeries, ImmutableList.of(secondId, thirdId));
+    assertListDoesNotContainSecretsWithIds(retrievedSeries, ImmutableList.of(firstId, fourthId));
+
+    // Adjust the limit and offset to exclude the second secret
+    retrievedSeries = secretSeriesDAO.getSecretSeries(fourthExpiry - 100, null, firstExpiry + 10, 2, 1);
+    assertListContainsSecretsWithIds(retrievedSeries, ImmutableList.of(thirdId));
+    assertListDoesNotContainSecretsWithIds(retrievedSeries, ImmutableList.of(firstId, secondId, fourthId));
+
+    // Adjust the limit and offset without limiting expireMinTime
+    retrievedSeries = secretSeriesDAO.getSecretSeries(null, null, null, 2, 1);
+    assertListContainsSecretsWithIds(retrievedSeries, ImmutableList.of(secondId, thirdId));
+    assertListDoesNotContainSecretsWithIds(retrievedSeries, ImmutableList.of(firstId, fourthId));
+  }
+
+  private void assertListContainsSecretsWithIds(List<SecretSeries> secrets, List<Long> ids) {
+    Set<Long> foundIds = new HashSet<>();
+    for (SecretSeries secret : secrets) {
+      if (ids.contains(secret.id())) {
+        foundIds.add(secret.id());
+      }
+    }
+    assertThat(foundIds).as("List should contain secrets with IDs %s; found IDs %s in secret list %s", ids, foundIds, secrets)
+        .containsExactlyInAnyOrderElementsOf(ids);
+  }
+
+  private void assertListDoesNotContainSecretsWithIds(List<SecretSeries> secrets, List<Long> ids) {
+    Set<Long> foundIds = new HashSet<>();
+    for (SecretSeries secret : secrets) {
+      if (ids.contains(secret.id())) {
+        foundIds.add(secret.id());
+      }
+    }
+    assertThat(foundIds).as("List should NOT contain secrets with IDs %s; found IDs %s in secret list %s", ids, foundIds, secrets)
+        .isEmpty();
   }
 
   private int tableSize() {

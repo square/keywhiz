@@ -285,14 +285,16 @@ public class SecretDAO {
 
   /** @return list of secrets. can limit/sort by expiry, and for group if given */
   public ImmutableList<SecretSeriesAndContent> getSecrets(@Nullable Long expireMaxTime,
-      Group group) {
+      @Nullable Group group, @Nullable Long expireMinTime, @Nullable Integer limit,
+      @Nullable Integer offset) {
     return dslContext.transactionResult(configuration -> {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
 
       ImmutableList.Builder<SecretSeriesAndContent> secretsBuilder = ImmutableList.builder();
 
-      for (SecretSeries series : secretSeriesDAO.getSecretSeries(expireMaxTime, group)) {
+      for (SecretSeries series : secretSeriesDAO.getSecretSeries(expireMaxTime, group,
+          expireMinTime, limit, offset)) {
         SecretContent content =
             secretContentDAO.getSecretContentById(series.currentVersion().get()).get();
         SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
