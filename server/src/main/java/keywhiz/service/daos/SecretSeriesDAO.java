@@ -31,7 +31,6 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import keywhiz.api.model.Group;
-import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
@@ -187,25 +186,32 @@ public class SecretSeriesDAO {
   }
 
   public ImmutableList<SecretSeries> getSecretSeries(@Nullable Long expireMaxTime,
-      @Nullable Group group, @Nullable Long expireMinTime, @Nullable Integer limit, @Nullable Integer offset) {
+      @Nullable Group group, @Nullable Long expireMinTime, @Nullable String minName,
+      @Nullable Integer limit, @Nullable Integer offset) {
     SelectQuery<Record> select = dslContext
-        .select().from(SECRETS).join(SECRETS_CONTENT).on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID))
-        .where(SECRETS.CURRENT.isNotNull()).getQuery();
-    select.addOrderBy(SECRETS_CONTENT.EXPIRY.asc().nullsLast());
+          .select()
+          .from(SECRETS)
+          .join(SECRETS_CONTENT)
+          .on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID))
+          .where(SECRETS.CURRENT.isNotNull())
+          .getQuery();
+    select.addOrderBy(SECRETS_CONTENT.EXPIRY.asc().nullsLast(), SECRETS.NAME.asc().nullsLast());
 
     // Set an upper bound on expiration dates
     if (expireMaxTime != null && expireMaxTime > 0) {
       // Set a lower bound of "now" on the expiration only if it isn't configured separately
       if (expireMinTime == null || expireMinTime == 0) {
         long now = System.currentTimeMillis() / 1000L;
-        select.addConditions(SECRETS_CONTENT.EXPIRY.greaterThan(now));
+        select.addConditions(SECRETS_CONTENT.EXPIRY.greaterOrEqual(now));
       }
-      select.addConditions(SECRETS_CONTENT.EXPIRY.lessOrEqual(expireMaxTime));
+      select.addConditions(SECRETS_CONTENT.EXPIRY.lessThan(expireMaxTime));
     }
 
-    // Set a lower bound on expiration dates
     if (expireMinTime != null && expireMinTime > 0) {
-      select.addConditions(SECRETS_CONTENT.EXPIRY.greaterThan(expireMinTime));
+      // set a lower bound on expiration dates, using the secret name as a tiebreaker
+      select.addConditions(SECRETS_CONTENT.EXPIRY.greaterThan(expireMinTime)
+          .or(SECRETS_CONTENT.EXPIRY.eq(expireMinTime)
+              .and(SECRETS.NAME.greaterOrEqual(minName))));
     }
 
     if (group != null) {

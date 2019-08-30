@@ -9,6 +9,7 @@ import com.google.common.io.Resources;
 import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.List;
@@ -25,9 +26,10 @@ import keywhiz.api.automation.v2.SecretContentsRequestV2;
 import keywhiz.api.automation.v2.SecretContentsResponseV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
-import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SanitizedSecretWithGroups;
+import keywhiz.api.model.SanitizedSecretWithGroupsListAndCursor;
+import keywhiz.api.model.SecretRetrievalCursor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -528,10 +530,10 @@ public class SecretResourceTest {
 
   @Test public void secretListingExpiry_success() throws Exception {
     // Listing without secret17,18,19
-    List<String> s = listing();
-    assertThat(s).doesNotContain("secret17");
-    assertThat(s).doesNotContain("secret18");
-    assertThat(s).doesNotContain("secret19");
+    List<String> initialList = listing();
+    assertThat(initialList).doesNotContain("secret17");
+    assertThat(initialList).doesNotContain("secret18");
+    assertThat(initialList).doesNotContain("secret19");
 
     // create groups
     createGroup("group15a");
@@ -571,42 +573,144 @@ public class SecretResourceTest {
     assertThat(s2).contains("secret19");
     assertThat(s2).doesNotContain("secret18");
 
-    List<String> s3 = listExpiring(now + 86400 * 2, null);
+    List<String> s3 = listExpiring(now + 86400 * 3, null);
     assertThat(s3).contains("secret18");
     assertThat(s3).doesNotContain("secret17");
 
-    List<SanitizedSecret> s4 = listExpiringV2(now + 86400 * 2, null);
-    assertThat(s4).hasSize(2);
-    assertThat(s4.get(0).name()).isEqualTo("secret18");
-    assertThat(s4.get(0).expiry()).isEqualTo(now + 86400);
-    assertThat(s4.get(1).name()).isEqualTo("secret19");
-    assertThat(s4.get(1).expiry()).isEqualTo(now + 86400 * 2);
+    List<SanitizedSecret> s4 = listExpiringV2(now + 86400 * 3, null);
+    List<String> s4Names = s4.stream().map(SanitizedSecret::name).collect(toList());
+    assertListContainsSecretsWithNames(s4Names, ImmutableList.of("secret18", "secret19"));
+    assertListDoesNotContainSecretsWithNames(s4Names, ImmutableList.of("secret17"));
 
-    List<SanitizedSecretWithGroups> s5 = listExpiringV3(now + 86400 * 2, null, null, null, null);
-    assertThat(s5).hasSize(2);
-    assertThat(s5.get(0).secret().name()).isEqualTo("secret18");
-    assertThat(s5.get(0).secret().expiry()).isEqualTo(now + 86400);
-    assertThat(s5.get(0).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15a");
-    assertThat(s5.get(1).secret().name()).isEqualTo("secret19");
-    assertThat(s5.get(1).secret().expiry()).isEqualTo(now + 86400 * 2);
-    assertThat(s5.get(1).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15b");
+    List<SanitizedSecretWithGroups> s5 = listExpiringV3(now + 86400 * 3, null, null, null, null);
+    List<String> s5Names = s5.stream().map(s -> s.secret().name()).collect(toList());
+    assertListContainsSecretsWithNames(s5Names, ImmutableList.of("secret18", "secret19"));
+    assertListDoesNotContainSecretsWithNames(s5Names, ImmutableList.of("secret17"));
 
-    List<SanitizedSecretWithGroups> s6 = listExpiringV3(now + 86400 * 4, null, now + 86400, null, null);
-    assertThat(s6).hasSize(2);
-    assertThat(s6.get(0).secret().name()).isEqualTo("secret19");
-    assertThat(s6.get(0).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15b");
-    assertThat(s6.get(1).secret().name()).isEqualTo("secret17");
-    assertThat(s6.get(1).groups().stream().map(Group::getName).collect(toList())).containsExactlyInAnyOrder("group15a", "group15b");
+    List<SanitizedSecretWithGroups> s6 = listExpiringV3(now + 86400 * 4, null, now + 86400 + 1, null, null);
+    List<String> s6Names = s6.stream().map(s -> s.secret().name()).collect(toList());
+    assertListContainsSecretsWithNames(s6Names, ImmutableList.of("secret19", "secret17"));
+    assertListDoesNotContainSecretsWithNames(s6Names, ImmutableList.of("secret18"));
 
-    List<SanitizedSecretWithGroups> s7 = listExpiringV3(now + 86400 * 4, null, now + 86400, 3, 1);
-    assertThat(s7).hasSize(1);
-    assertThat(s7.get(0).secret().name()).isEqualTo("secret17");
-    assertThat(s7.get(0).groups().stream().map(Group::getName).collect(toList())).containsExactlyInAnyOrder("group15a", "group15b");
+    List<SanitizedSecretWithGroups> s7 = listExpiringV3(now + 86400 * 4, null, now + 86400 + 1, 3, 1);
+    List<String> s7Names = s7.stream().map(s -> s.secret().name()).collect(toList());
+    assertListContainsSecretsWithNames(s7Names, ImmutableList.of("secret17"));
+    assertListDoesNotContainSecretsWithNames(s7Names, ImmutableList.of("secret18", "secret19"));
 
-    List<SanitizedSecretWithGroups> s8 = listExpiringV3(now + 86400 * 4, null, now + 86400, 1, 0);
-    assertThat(s8).hasSize(1);
-    assertThat(s8.get(0).secret().name()).isEqualTo("secret19");
-    assertThat(s8.get(0).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15b");
+    List<SanitizedSecretWithGroups> s8 = listExpiringV3(now + 86400 * 4, null, now + 86400 + 1, 1, 0);
+    List<String> s8Names = s8.stream().map(s -> s.secret().name()).collect(toList());
+    assertListContainsSecretsWithNames(s8Names, ImmutableList.of("secret19"));
+    assertListDoesNotContainSecretsWithNames(s8Names, ImmutableList.of("secret17", "secret18"));
+ }
+
+  @Test public void secretListingExpiry_successWithCursor() throws Exception {
+    // Listing without secret26,27,28
+    List<String> initialSecrets = listing();
+    assertThat(initialSecrets).doesNotContain("secret26");
+    assertThat(initialSecrets).doesNotContain("secret27");
+    assertThat(initialSecrets).doesNotContain("secret28");
+
+    // create groups
+    createGroup("group15a");
+    createGroup("group15b");
+
+    // get current time to calculate timestamps off for expiry
+    long now = System.currentTimeMillis() / 1000L;
+
+    // add some secrets
+    create(CreateSecretRequestV2.builder()
+        .name("secret26")
+        .content(encoder.encodeToString("supa secret26".getBytes(UTF_8)))
+        .expiry(now + 86400 * 3)
+        .groups("group15a", "group15b")
+        .build());
+
+    create(CreateSecretRequestV2.builder()
+        .name("secret27")
+        .content(encoder.encodeToString("supa secret27".getBytes(UTF_8)))
+        .expiry(now + 86400)
+        .groups("group15a")
+        .build());
+
+    create(CreateSecretRequestV2.builder()
+        .name("secret28")
+        .content(encoder.encodeToString("supa secret28".getBytes(UTF_8)))
+        .expiry(now + 86400 * 2)
+        .groups("group15b")
+        .build());
+
+    // check limiting by expiry
+    List<SanitizedSecretWithGroups> s1 = listExpiringV4HandlingCursor(now + 86400 * 3, null);
+    List<String> s1Names = s1.stream().map(s -> s.secret().name()).collect(toList());
+    assertListContainsSecretsWithNames(s1Names, ImmutableList.of("secret27", "secret28"));
+    assertListDoesNotContainSecretsWithNames(s1Names, ImmutableList.of("secret26"));
+
+    // check varying batch size limits
+    List<SanitizedSecretWithGroups> s2 = listExpiringV4HandlingCursor(now + 86400 * 5, 5);
+    List<String> s2Names = s2.stream().map(s -> s.secret().name()).collect(toList());
+    assertListContainsSecretsWithNames(s2Names, ImmutableList.of("secret27", "secret28", "secret26"));
+
+    List<SanitizedSecretWithGroups> s3 = listExpiringV4HandlingCursor(now + 86400 * 5, 2);
+    List<String> s3Names = s3.stream().map(s -> s.secret().name()).collect(toList());
+    assertListContainsSecretsWithNames(s3Names, ImmutableList.of("secret27", "secret28", "secret26"));
+
+    List<SanitizedSecretWithGroups> s4 = listExpiringV4HandlingCursor(now + 86400 * 5, 1);
+    List<String> s4Names = s4.stream().map(s -> s.secret().name()).collect(toList());
+    assertListContainsSecretsWithNames(s4Names, ImmutableList.of("secret27", "secret28", "secret26"));
+
+    // check max expiration limit with small batch size
+    List<SanitizedSecretWithGroups> s5 = listExpiringV4HandlingCursor(now + 86400 * 3, 1);
+    List<String> s5Names = s5.stream().map(s -> s.secret().name()).collect(toList());
+    assertListContainsSecretsWithNames(s5Names, ImmutableList.of("secret27", "secret28"));
+    assertListDoesNotContainSecretsWithNames(s5Names, ImmutableList.of("secret26"));
+  }
+
+  private List<SanitizedSecretWithGroups> listExpiringV4HandlingCursor(Long maxTime, Integer limit)
+      throws Exception {
+    List<SanitizedSecretWithGroups> allRetrievedSecrets = new ArrayList<>();
+    SecretRetrievalCursor cursor = null;
+    do {
+      SanitizedSecretWithGroupsListAndCursor retrievedSecretsAndCursor =
+          listExpiringV4(maxTime, limit, cursor);
+      cursor = retrievedSecretsAndCursor.decodedCursor();
+
+      List<SanitizedSecretWithGroups> secrets = retrievedSecretsAndCursor.secrets();
+      assertThat(secrets).isNotNull();
+      if (limit != null) {
+        assertThat(secrets.size()).isLessThanOrEqualTo(limit);
+      }
+
+      allRetrievedSecrets.addAll(secrets);
+    } while (cursor != null);
+    return allRetrievedSecrets;
+  }
+
+  private void assertListContainsSecretsWithNames(List<String> secretNames,
+      List<String> expectedNames) {
+    List<String> foundNames = new ArrayList<>();
+    for (String name : secretNames) {
+      if (expectedNames.contains(name)) {
+        foundNames.add(name);
+      }
+    }
+    assertThat(foundNames).as(
+        "List should contain secrets with names %s; found names %s in secret list %s", expectedNames,
+        foundNames, secretNames)
+        .containsExactlyElementsOf(expectedNames);
+  }
+
+  private void assertListDoesNotContainSecretsWithNames(List<String> secretNames,
+      List<String> names) {
+    List<String> foundNames = new ArrayList<>();
+    for (String name : secretNames) {
+      if (names.contains(name)) {
+        foundNames.add(name);
+      }
+    }
+    assertThat(foundNames).as(
+        "List should not contain secrets with names %s; found names %s in secret list %s", names,
+        foundNames, secretNames)
+        .isEmpty();
   }
 
   //---------------------------------------------------------------------------------------
@@ -979,6 +1083,43 @@ public class SecretResourceTest {
     assertThat(httpResponse.code()).isEqualTo(200);
     return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<SanitizedSecretWithGroups>>() {
     });
+  }
+
+  SanitizedSecretWithGroupsListAndCursor listExpiringV4(Long time, Integer limit, SecretRetrievalCursor cursor) throws IOException {
+    String requestURL = "/automation/v2/secrets/expiring/v4";
+    // This should probably be replaced with a proper query library
+    if (time != null || limit != null || cursor != null) {
+      requestURL += "?";
+
+      boolean firstQueryParam = true;
+      if (time != null) {
+        requestURL += "maxTime=";
+        requestURL += time.toString();
+        firstQueryParam = false;
+      }
+
+      if (limit != null) {
+        if(!firstQueryParam) {
+          requestURL += "&";
+        }
+        requestURL += "limit=";
+        requestURL += limit.toString();
+        firstQueryParam = false;
+      }
+
+      if (cursor != null) {
+        if(!firstQueryParam) {
+          requestURL += "&";
+        }
+        requestURL += "cursor=";
+        requestURL += SecretRetrievalCursor.toUrlEncodedString(cursor);
+      }
+    }
+
+    Request get = clientRequest(requestURL).get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), SanitizedSecretWithGroupsListAndCursor.class);
   }
 
   private List<SecretDetailResponseV2> listVersions(String name, int versionIdx, int numVersions)
