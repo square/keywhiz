@@ -75,7 +75,7 @@ public class SecretController {
    * @return all existing secrets matching criteria.
    * */
   public List<Secret> getSecretsForGroup(Group group) {
-    return secretDAO.getSecrets(null, group).stream()
+    return secretDAO.getSecrets(null, group, null, null, null).stream()
         .map(transformer::transform)
         .collect(toList());
   }
@@ -85,18 +85,23 @@ public class SecretController {
    * @param group limit results to secrets assigned to this group, if provided.
    * @return all existing sanitized secrets matching criteria.
    * */
-  public List<SanitizedSecret> getSanitizedSecrets(@Nullable Long expireMaxTime, Group group) {
-    return secretDAO.getSecrets(expireMaxTime, group).stream()
+  public List<SanitizedSecret> getSanitizedSecrets(@Nullable Long expireMaxTime, @Nullable Group group) {
+    return secretDAO.getSecrets(expireMaxTime, group, null, null, null).stream()
         .map(SanitizedSecret::fromSecretSeriesAndContent)
         .collect(toList());
   }
 
   /**
    * @param expireMaxTime timestamp for farthest expiry to include
+   * @param expireMinTime timestamp for smallest expiry to include
+   * @param limit limit on number of results to return
+   * @param offset offset into the list of results to use; must be specified with "limit"
    * @return all existing sanitized secrets and their groups matching criteria.
    * */
-  public List<SanitizedSecretWithGroups> getExpiringSanitizedSecrets(@Nullable Long expireMaxTime) {
-    ImmutableList<SecretSeriesAndContent> secrets = secretDAO.getSecrets(expireMaxTime, null);
+  public List<SanitizedSecretWithGroups> getSanitizedSecretsWithGroups(@Nullable Long expireMaxTime,
+      @Nullable Long expireMinTime, @Nullable Integer limit, @Nullable Integer offset) {
+    ImmutableList<SecretSeriesAndContent> secrets = secretDAO.getSecrets(expireMaxTime, null,
+        expireMinTime, limit, offset);
 
     Map<Long, SecretSeriesAndContent> secretIds = secrets.stream()
         .collect(toMap(s -> s.series().id(), s -> s));

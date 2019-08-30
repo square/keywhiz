@@ -186,16 +186,26 @@ public class SecretSeriesDAO {
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
-  public ImmutableList<SecretSeries> getSecretSeries(@Nullable Long expireMaxTime, Group group) {
+  public ImmutableList<SecretSeries> getSecretSeries(@Nullable Long expireMaxTime,
+      @Nullable Group group, @Nullable Long expireMinTime, @Nullable Integer limit, @Nullable Integer offset) {
     SelectQuery<Record> select = dslContext
         .select().from(SECRETS).join(SECRETS_CONTENT).on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID))
         .where(SECRETS.CURRENT.isNotNull()).getQuery();
+    select.addOrderBy(SECRETS_CONTENT.EXPIRY.asc().nullsLast());
 
+    // Set an upper bound on expiration dates
     if (expireMaxTime != null && expireMaxTime > 0) {
-      select.addOrderBy(SECRETS_CONTENT.EXPIRY.asc().nullsLast());
-      long now = System.currentTimeMillis() / 1000L;
-      select.addConditions(SECRETS_CONTENT.EXPIRY.greaterThan(now));
+      // Set a lower bound of "now" on the expiration only if it isn't configured separately
+      if (expireMinTime == null || expireMinTime == 0) {
+        long now = System.currentTimeMillis() / 1000L;
+        select.addConditions(SECRETS_CONTENT.EXPIRY.greaterThan(now));
+      }
       select.addConditions(SECRETS_CONTENT.EXPIRY.lessOrEqual(expireMaxTime));
+    }
+
+    // Set a lower bound on expiration dates
+    if (expireMinTime != null && expireMinTime > 0) {
+      select.addConditions(SECRETS_CONTENT.EXPIRY.greaterThan(expireMinTime));
     }
 
     if (group != null) {
@@ -203,6 +213,16 @@ public class SecretSeriesDAO {
       select.addJoin(GROUPS, GROUPS.ID.eq(ACCESSGRANTS.GROUPID));
       select.addConditions(GROUPS.NAME.eq(group.getName()));
     }
+
+    if (limit != null && limit >= 0) {
+      select.addLimit(limit);
+
+      // The offset syntax requires a limit to be specified
+      if (offset != null && offset >= 0) {
+        select.addOffset(offset);
+      }
+    }
+
     List<SecretSeries> r = select.fetchInto(SECRETS).map(secretSeriesMapper);
     return ImmutableList.copyOf(r);
   }

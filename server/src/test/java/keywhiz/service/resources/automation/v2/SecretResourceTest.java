@@ -184,7 +184,7 @@ public class SecretResourceTest {
     Response httpResponse = mutualSslClient.newCall(post).execute();
     assertThat(httpResponse.code()).isEqualTo(404);
   }
-  
+
   //---------------------------------------------------------------------------------------
   // secretInfo
   //---------------------------------------------------------------------------------------
@@ -355,7 +355,7 @@ public class SecretResourceTest {
         .name("secret12")
         .content(encoder.encodeToString("supa secret12".getBytes(UTF_8)))
         .build());
-    
+
     createGroup("testGroup");
     ModifyGroupsRequestV2 request = ModifyGroupsRequestV2.builder()
         .addGroups("testGroup", "secret12")
@@ -582,7 +582,7 @@ public class SecretResourceTest {
     assertThat(s4.get(1).name()).isEqualTo("secret19");
     assertThat(s4.get(1).expiry()).isEqualTo(now + 86400 * 2);
 
-    List<SanitizedSecretWithGroups> s5 = listExpiringV3(now + 86400 * 2, null);
+    List<SanitizedSecretWithGroups> s5 = listExpiringV3(now + 86400 * 2, null, null, null, null);
     assertThat(s5).hasSize(2);
     assertThat(s5.get(0).secret().name()).isEqualTo("secret18");
     assertThat(s5.get(0).secret().expiry()).isEqualTo(now + 86400);
@@ -590,6 +590,23 @@ public class SecretResourceTest {
     assertThat(s5.get(1).secret().name()).isEqualTo("secret19");
     assertThat(s5.get(1).secret().expiry()).isEqualTo(now + 86400 * 2);
     assertThat(s5.get(1).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15b");
+
+    List<SanitizedSecretWithGroups> s6 = listExpiringV3(now + 86400 * 4, null, now + 86400, null, null);
+    assertThat(s6).hasSize(2);
+    assertThat(s6.get(0).secret().name()).isEqualTo("secret19");
+    assertThat(s6.get(0).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15b");
+    assertThat(s6.get(1).secret().name()).isEqualTo("secret17");
+    assertThat(s6.get(1).groups().stream().map(Group::getName).collect(toList())).containsExactlyInAnyOrder("group15a", "group15b");
+
+    List<SanitizedSecretWithGroups> s7 = listExpiringV3(now + 86400 * 4, null, now + 86400, 3, 1);
+    assertThat(s7).hasSize(1);
+    assertThat(s7.get(0).secret().name()).isEqualTo("secret17");
+    assertThat(s7.get(0).groups().stream().map(Group::getName).collect(toList())).containsExactlyInAnyOrder("group15a", "group15b");
+
+    List<SanitizedSecretWithGroups> s8 = listExpiringV3(now + 86400 * 4, null, now + 86400, 1, 0);
+    assertThat(s8).hasSize(1);
+    assertThat(s8.get(0).secret().name()).isEqualTo("secret19");
+    assertThat(s8.get(0).groups().stream().map(Group::getName).collect(toList())).containsExactly("group15b");
   }
 
   //---------------------------------------------------------------------------------------
@@ -918,14 +935,45 @@ public class SecretResourceTest {
     });
   }
 
-  List<SanitizedSecretWithGroups> listExpiringV3(Long time, String groupName) throws IOException {
+  List<SanitizedSecretWithGroups> listExpiringV3(Long maxTime, String groupName, Long minTime,
+      Integer limit, Integer offset) throws IOException {
     String requestURL = "/automation/v2/secrets/expiring/v3/";
-    if (time != null && time > 0) {
-      requestURL += time.toString() + '/';
+    if (maxTime != null && maxTime > 0) {
+      requestURL += maxTime.toString() + '/';
     }
     if (groupName != null && groupName.length() > 0) {
       requestURL += groupName;
     }
+
+    // This should probably be replaced with a proper query library
+    if (minTime != null || limit != null || offset != null) {
+      requestURL += "?";
+
+      boolean firstQueryParam = true;
+      if (minTime != null) {
+        requestURL += "mintime=";
+        requestURL += minTime.toString();
+        firstQueryParam = false;
+      }
+
+      if (limit != null) {
+        if(!firstQueryParam) {
+          requestURL += "&";
+        }
+        requestURL += "limit=";
+        requestURL += limit.toString();
+        firstQueryParam = false;
+      }
+
+      if (offset != null) {
+        if(!firstQueryParam) {
+          requestURL += "&";
+        }
+        requestURL += "offset=";
+        requestURL += offset.toString();
+      }
+    }
+
     Request get = clientRequest(requestURL).get().build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
