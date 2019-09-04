@@ -42,8 +42,10 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SanitizedSecretWithGroups;
+import keywhiz.api.model.SanitizedSecretWithGroupsListAndCursor;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
+import keywhiz.api.model.SecretRetrievalCursor;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
@@ -337,8 +339,8 @@ public class SecretResource {
    * The returned secrets will be sorted in increasing order of expiration time.
    *
    * @excludeParams automationClient
-   * @param maxTime timestamp for farthest expiry to include (inclusive)
-   * @param minTime timestamp for nearest expiry to include (exclusive)
+   * @param maxTime timestamp for farthest expiry to include (exclusive)
+   * @param minTime timestamp for nearest expiry to include (inclusive)
    * @param limit maximum number of secrets and groups to return
    * @param offset offset to use into the list of secrets and groups; ignored if "limit" is not
    *               specified
@@ -354,6 +356,42 @@ public class SecretResource {
       @QueryParam("limit") Integer limit, @QueryParam("offset") Integer offset) {
     List<SanitizedSecretWithGroups> secrets = secretControllerReadOnly.getSanitizedSecretsWithGroups(maxTime, minTime, limit, offset);
     return secrets;
+  }
+
+  /**
+   * Retrieve listing of secrets expiring soon.  The resulting secrets will be sorted in increasing
+   * order of expiration time, and alphabetically within the same expiration time.
+   * <p>
+   * If names in Keywhiz are no longer unique, this endpoint will potentially skip secrets since it
+   * returns names strictly greater than the specified name.
+   * <p>
+   * If this method returns a cursor, that cursor should be passed back into this method until the
+   * returned cursor is null.  This allows pagination.
+   *
+   * @param maxTime timestamp for farthest expiry to include (exclusive)
+   * @param limit   maximum number of secrets and groups to return
+   * @param cursor  input allowing the server to return paginated output (as returned from this
+   *                method)
+   * @excludeParams automationClient
+   * @responseMessage 200 List of secrets expiring soon and a cursor which will be null only if all
+   * results matching the criteria have been returned, and otherwise should be passed into the next
+   * call to this method.
+   */
+  @Timed @ExceptionMetered
+  @Path("expiring/v4")
+  @GET
+  @Produces(APPLICATION_JSON)
+  public SanitizedSecretWithGroupsListAndCursor secretListingExpiringV4(
+      @Auth AutomationClient automationClient,
+      @QueryParam("maxTime") Long maxTime,
+      @QueryParam("limit") Integer limit,
+      @QueryParam("cursor") String cursor) {
+    SecretRetrievalCursor cursorDecoded = null;
+    if (cursor != null) {
+      cursorDecoded = SecretRetrievalCursor.fromUrlEncodedString(cursor);
+    }
+    return secretControllerReadOnly.getSanitizedSecretsWithGroupsAndCursor(maxTime, limit,
+        cursorDecoded);
   }
 
   /**
