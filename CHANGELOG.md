@@ -1,3 +1,46 @@
+v0.10.1: 2019-09-04
+
+  * Added pagination to endpoints for retrieving expiring secrets (#506, #503)
+  
+  * Add database-enforced uniqueness constraint on secret names and rename secrets when deleted (#408, #403)
+  
+  * Add HMAC on database rows to detect tampering (#461)
+  
+  * Updated dependencies
+    - assertj-core updated to 3.13.2
+    - assertj-guava updated to 3.2.1
+    - auto-service updated to 1.0-rc6
+    - autovalue.version updated to 1.6.6
+    - bcpg-jdk15on updated to 1.62
+    - bcprov-jdk15on updated to 1.62
+    - commons-lang3 updated to 3.9
+    - dropwizard.version updated to 1.3.14
+    - easymock updated to 4.0.2
+    - findbugs-maven-plugin updated to 3.0.5
+    - flyway-core updated to 5.2.4
+    - flyway-maven-plugin updated to 5.2.4
+    - guava updated to 28.1-jre
+    - h2 updated to 1.4.199
+    - hibernate-validator updated to 5.4.3.Final
+    - httpcore updated to 4.4.11
+    - jaxb-api updated to 2.4.0-b180830.0359
+    - jaxb-jxc updated to 2.4.0-b180830.0438
+    - jaxb-runtime updated to 2.4.0-b180830.0438
+    - jcommander updated to 1.78
+    - jooq.version updated to 3.12.0
+    - jpgpj updated to 0.6.1
+    - maven-checkstyle-plugin updated to 3.1.0
+    - maven-failsafe-plugin updated to 2.22.2
+    - maven-javadoc-plugin updated to 3.1.1
+    - maven-source-plugin updated to 3.1.0
+    - maven-surefire-plugin updated to 2.22.2
+    - mockito-core updated to 3.0.0
+    - mysql-connector-java updated to 5.1.48
+    - okhttp updated to 3.14.2
+    - okhttp-urlconnection updated to 3.14.2
+    - slf4j.version updated to 1.7.28
+    - unboundid-ldapsdk updated to 4.0.11
+   
 v0.9.0: 2018-11-07
 
   * Migrated to JDK 11 (now required to build Keywhiz)
