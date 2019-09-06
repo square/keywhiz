@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.squareup.keywhiz</groupId>
     <artifactId>keywhiz-parent</artifactId>
-    <version>0.10.1</version>
+    <version>0.10.2-SNAPSHOT</version>
   </parent>
 
   <artifactId>keywhiz-hkdf</artifactId>
