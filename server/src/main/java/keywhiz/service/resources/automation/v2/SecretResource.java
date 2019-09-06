@@ -340,22 +340,16 @@ public class SecretResource {
    *
    * @excludeParams automationClient
    * @param maxTime timestamp for farthest expiry to include (exclusive)
-   * @param minTime timestamp for nearest expiry to include (inclusive)
-   * @param limit maximum number of secrets and groups to return
-   * @param offset offset to use into the list of secrets and groups; ignored if "limit" is not
-   *               specified
    *
    * @responseMessage 200 List of secrets expiring soon
    */
   @Timed @ExceptionMetered
-  @Path("expiring/v3/{maxtime}")
+  @Path("expiring/v3/{time}")
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<SanitizedSecretWithGroups> secretListingExpiringV3(@Auth AutomationClient automationClient,
-      @PathParam("maxtime") Long maxTime, @QueryParam("mintime") Long minTime,
-      @QueryParam("limit") Integer limit, @QueryParam("offset") Integer offset) {
-    List<SanitizedSecretWithGroups> secrets = secretControllerReadOnly.getSanitizedSecretsWithGroups(maxTime, minTime, limit, offset);
-    return secrets;
+      @PathParam("time") Long maxTime) {
+    return secretControllerReadOnly.getSanitizedSecretsWithGroups(maxTime);
   }
 
   /**
