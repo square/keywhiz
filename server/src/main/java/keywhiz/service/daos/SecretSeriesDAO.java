@@ -187,7 +187,7 @@ public class SecretSeriesDAO {
 
   public ImmutableList<SecretSeries> getSecretSeries(@Nullable Long expireMaxTime,
       @Nullable Group group, @Nullable Long expireMinTime, @Nullable String minName,
-      @Nullable Integer limit, @Nullable Integer offset) {
+      @Nullable Integer limit) {
     SelectQuery<Record> select = dslContext
           .select()
           .from(SECRETS)
@@ -222,11 +222,6 @@ public class SecretSeriesDAO {
 
     if (limit != null && limit >= 0) {
       select.addLimit(limit);
-
-      // The offset syntax requires a limit to be specified
-      if (offset != null && offset >= 0) {
-        select.addOffset(offset);
-      }
     }
 
     List<SecretSeries> r = select.fetchInto(SECRETS).map(secretSeriesMapper);

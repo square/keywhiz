@@ -81,7 +81,7 @@ public class SecretController {
    * @return all existing secrets matching criteria.
    * */
   public List<Secret> getSecretsForGroup(Group group) {
-    return secretDAO.getSecrets(null, group, null, null, null, null).stream()
+    return secretDAO.getSecrets(null, group, null, null, null).stream()
         .map(transformer::transform)
         .collect(toList());
   }
@@ -92,22 +92,18 @@ public class SecretController {
    * @return all existing sanitized secrets matching criteria.
    * */
   public List<SanitizedSecret> getSanitizedSecrets(@Nullable Long expireMaxTime, @Nullable Group group) {
-    return secretDAO.getSecrets(expireMaxTime, group, null, null, null, null).stream()
+    return secretDAO.getSecrets(expireMaxTime, group, null, null, null).stream()
         .map(SanitizedSecret::fromSecretSeriesAndContent)
         .collect(toList());
   }
 
   /**
    * @param expireMaxTime timestamp for farthest expiry to include
-   * @param expireMinTime timestamp for smallest expiry to include
-   * @param limit limit on number of results to return
-   * @param offset offset into the list of results to use; must be specified with "limit"
    * @return all existing sanitized secrets and their groups matching criteria.
    * */
-  public List<SanitizedSecretWithGroups> getSanitizedSecretsWithGroups(@Nullable Long expireMaxTime,
-      @Nullable Long expireMinTime, @Nullable Integer limit, @Nullable Integer offset) {
+  public List<SanitizedSecretWithGroups> getSanitizedSecretsWithGroups(@Nullable Long expireMaxTime) {
     ImmutableList<SecretSeriesAndContent> secrets = secretDAO.getSecrets(expireMaxTime, null,
-        expireMinTime, null, limit, offset);
+        null, null, null);
 
     Map<Long, SecretSeriesAndContent> secretIds = secrets.stream()
         .collect(toMap(s -> s.series().id(), s -> s));
@@ -143,10 +139,10 @@ public class SecretController {
     }
 
     if (cursor == null) {
-      secrets = secretDAO.getSecrets(expireMaxTime, null, null, null, updatedLimit, 0);
+      secrets = secretDAO.getSecrets(expireMaxTime, null, null, null, updatedLimit);
     } else {
       secrets = secretDAO.getSecrets(expireMaxTime, null, cursor.expiry(), cursor.name(),
-          updatedLimit, 0);
+          updatedLimit);
     }
 
     // Set the cursor and strip the final record from the secrets if necessary

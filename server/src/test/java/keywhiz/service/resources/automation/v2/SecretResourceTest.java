@@ -582,25 +582,10 @@ public class SecretResourceTest {
     assertListContainsSecretsWithNames(s4Names, ImmutableList.of("secret18", "secret19"));
     assertListDoesNotContainSecretsWithNames(s4Names, ImmutableList.of("secret17"));
 
-    List<SanitizedSecretWithGroups> s5 = listExpiringV3(now + 86400 * 3, null, null, null, null);
+    List<SanitizedSecretWithGroups> s5 = listExpiringV3(now + 86400 * 3);
     List<String> s5Names = s5.stream().map(s -> s.secret().name()).collect(toList());
     assertListContainsSecretsWithNames(s5Names, ImmutableList.of("secret18", "secret19"));
     assertListDoesNotContainSecretsWithNames(s5Names, ImmutableList.of("secret17"));
-
-    List<SanitizedSecretWithGroups> s6 = listExpiringV3(now + 86400 * 4, null, now + 86400 + 1, null, null);
-    List<String> s6Names = s6.stream().map(s -> s.secret().name()).collect(toList());
-    assertListContainsSecretsWithNames(s6Names, ImmutableList.of("secret19", "secret17"));
-    assertListDoesNotContainSecretsWithNames(s6Names, ImmutableList.of("secret18"));
-
-    List<SanitizedSecretWithGroups> s7 = listExpiringV3(now + 86400 * 4, null, now + 86400 + 1, 3, 1);
-    List<String> s7Names = s7.stream().map(s -> s.secret().name()).collect(toList());
-    assertListContainsSecretsWithNames(s7Names, ImmutableList.of("secret17"));
-    assertListDoesNotContainSecretsWithNames(s7Names, ImmutableList.of("secret18", "secret19"));
-
-    List<SanitizedSecretWithGroups> s8 = listExpiringV3(now + 86400 * 4, null, now + 86400 + 1, 1, 0);
-    List<String> s8Names = s8.stream().map(s -> s.secret().name()).collect(toList());
-    assertListContainsSecretsWithNames(s8Names, ImmutableList.of("secret19"));
-    assertListDoesNotContainSecretsWithNames(s8Names, ImmutableList.of("secret17", "secret18"));
  }
 
   @Test public void secretListingExpiry_successWithCursor() throws Exception {
@@ -1039,45 +1024,11 @@ public class SecretResourceTest {
     });
   }
 
-  List<SanitizedSecretWithGroups> listExpiringV3(Long maxTime, String groupName, Long minTime,
-      Integer limit, Integer offset) throws IOException {
+  List<SanitizedSecretWithGroups> listExpiringV3(Long maxTime) throws IOException {
     String requestURL = "/automation/v2/secrets/expiring/v3/";
     if (maxTime != null && maxTime > 0) {
       requestURL += maxTime.toString() + '/';
     }
-    if (groupName != null && groupName.length() > 0) {
-      requestURL += groupName;
-    }
-
-    // This should probably be replaced with a proper query library
-    if (minTime != null || limit != null || offset != null) {
-      requestURL += "?";
-
-      boolean firstQueryParam = true;
-      if (minTime != null) {
-        requestURL += "mintime=";
-        requestURL += minTime.toString();
-        firstQueryParam = false;
-      }
-
-      if (limit != null) {
-        if(!firstQueryParam) {
-          requestURL += "&";
-        }
-        requestURL += "limit=";
-        requestURL += limit.toString();
-        firstQueryParam = false;
-      }
-
-      if (offset != null) {
-        if(!firstQueryParam) {
-          requestURL += "&";
-        }
-        requestURL += "offset=";
-        requestURL += offset.toString();
-      }
-    }
-
     Request get = clientRequest(requestURL).get().build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);

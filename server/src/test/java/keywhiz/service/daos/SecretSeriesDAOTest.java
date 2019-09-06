@@ -214,31 +214,26 @@ public class SecretSeriesDAOTest {
     // Retrieving secrets with no parameters should retrieve all created secrets (although given
     // the shared database, it's likely to also retrieve others)
     ImmutableList<SecretSeries>
-        retrievedSeries = secretSeriesDAO.getSecretSeries(null, null, null, null, null, null);
+        retrievedSeries = secretSeriesDAO.getSecretSeries(null, null, null, null, null);
     assertListContainsSecretsWithIds(retrievedSeries, ImmutableList.of(firstId, secondId, thirdId, fourthId, fifthId));
 
     // Restrict expireMaxTime to exclude the last secrets
-    retrievedSeries = secretSeriesDAO.getSecretSeries(fourthExpiry - 100, null, null,null, null, null);
+    retrievedSeries = secretSeriesDAO.getSecretSeries(fourthExpiry - 100, null, null,null, null);
     assertListContainsSecretsWithIds(retrievedSeries, ImmutableList.of(firstId, secondId, thirdId));
     assertListDoesNotContainSecretsWithIds(retrievedSeries, ImmutableList.of(fourthId, fifthId));
 
     // Restrict expireMinTime to exclude the first secret
-    retrievedSeries = secretSeriesDAO.getSecretSeries(fourthExpiry - 100, null, firstExpiry + 10, null,null, null);
+    retrievedSeries = secretSeriesDAO.getSecretSeries(fourthExpiry - 100, null, firstExpiry + 10, null,null);
     assertListContainsSecretsWithIds(retrievedSeries, ImmutableList.of(secondId, thirdId));
     assertListDoesNotContainSecretsWithIds(retrievedSeries, ImmutableList.of(firstId, fourthId, fifthId));
 
-    // Adjust the limit and offset to exclude the second secret
-    retrievedSeries = secretSeriesDAO.getSecretSeries(fourthExpiry - 100, null, firstExpiry + 10, null,2, 1);
-    assertListContainsSecretsWithIds(retrievedSeries, ImmutableList.of(thirdId));
-    assertListDoesNotContainSecretsWithIds(retrievedSeries, ImmutableList.of(firstId, secondId, fourthId, fifthId));
-
-    // Adjust the limit and offset without limiting expireMinTime
-    retrievedSeries = secretSeriesDAO.getSecretSeries(null, null, null, null, 2, 1);
-    assertListContainsSecretsWithIds(retrievedSeries, ImmutableList.of(secondId, thirdId));
-    assertListDoesNotContainSecretsWithIds(retrievedSeries, ImmutableList.of(firstId, fourthId, fifthId));
+    // Adjust the limit to exclude the third secret
+    retrievedSeries = secretSeriesDAO.getSecretSeries(fourthExpiry - 100, null, firstExpiry + 10, null,1);
+    assertListContainsSecretsWithIds(retrievedSeries, ImmutableList.of(secondId));
+    assertListDoesNotContainSecretsWithIds(retrievedSeries, ImmutableList.of(firstId, thirdId, fourthId, fifthId));
 
     // Restrict the minName to exclude the fourth secret
-    retrievedSeries = secretSeriesDAO.getSecretSeries(null, null, fourthExpiry, "laterInAlphabetExpiringFourth", null, null);
+    retrievedSeries = secretSeriesDAO.getSecretSeries(null, null, fourthExpiry, "laterInAlphabetExpiringFourth", null);
     assertListContainsSecretsWithIds(retrievedSeries, ImmutableList.of(fifthId));
     assertListDoesNotContainSecretsWithIds(retrievedSeries, ImmutableList.of(firstId, secondId, thirdId, fourthId));
   }
