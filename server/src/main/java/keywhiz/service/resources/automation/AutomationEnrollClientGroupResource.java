@@ -38,8 +38,8 @@ import keywhiz.service.resources.automation.v2.ClientResource;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName enroll-clients-automation
- * @resourceDescription Assign or unassign clients to groups
+ * parentEndpointName enroll-clients-automation
+ * resourceDescription Assign or unassign clients to groups
  * @deprecated Will be removed in a future release. Migrate to {@link ClientResource}.
  */
 @Deprecated
@@ -58,13 +58,15 @@ public class AutomationEnrollClientGroupResource {
   /**
    * Enroll Client in Group
    *
+   * @param automationClient the client with automation access performing this operation
    * @param clientId the ID of the Client to assign
    * @param groupId the ID of the Group to be assigned to
-   * @excludeParams automationClient
-   * @description Assigns the Client specified by the clientID to the Group specified by the
+   * @return 200 on success, 404 if client or group is missing
+   *
+   * description Assigns the Client specified by the clientID to the Group specified by the
    * groupID
-   * @responseMessage 200 Successfully enrolled Client in Group
-   * @responseMessage 404 Could not find Client or Group
+   * responseMessage 200 Successfully enrolled Client in Group
+   * responseMessage 404 Could not find Client or Group
    */
   @Timed @ExceptionMetered
   @PUT
@@ -88,13 +90,15 @@ public class AutomationEnrollClientGroupResource {
   /**
    * Remove Client from Group
    *
+   * @param automationClient the client with automation access performing this operation
    * @param clientId the ID of the Client to unassign
    * @param groupId the ID of the Group to be removed from
-   * @excludeParams automationClient
-   * @description Unassigns the Client specified by the clientID from the Group specified by the
+   * @return 200 on succes, 404 if client or group not present
+   *
+   * description Unassigns the Client specified by the clientID from the Group specified by the
    * groupID
-   * @responseMessage 200 Successfully removed Client from Group
-   * @responseMessage 404 Could not find Client or Group
+   * responseMessage 200 Successfully removed Client from Group
+   * responseMessage 404 Could not find Client or Group
    */
   @Timed @ExceptionMetered
   @DELETE

@@ -53,6 +53,7 @@ public abstract class KeyStoreConfig {
    * If the path does not exist on the filesystem, it is resolved as a resource.
    *
    * @return InputStream to the keystore at the resolved path
+   * @throws IOException if the path cannot be opened
    */
   public InputStream openPath() throws IOException {
     Path filePath = Paths.get(path());

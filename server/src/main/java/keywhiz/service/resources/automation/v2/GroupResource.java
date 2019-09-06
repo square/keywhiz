@@ -42,8 +42,8 @@ import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName automation/v2-group-management
- * @resourceDescription Automation endpoints to manage groups
+ * parentEndpointName automation/v2-group-management
+ * resourceDescription Automation endpoints to manage groups
  */
 @Path("/automation/v2/groups")
 public class GroupResource {
@@ -64,11 +64,10 @@ public class GroupResource {
   /**
    * Creates a group
    *
-   * @excludeParams automationClient
    * @param request JSON request to create a group
    *
-   * @responseMessage 201 Created group
-   * @responseMessage 409 Group already exists
+   * responseMessage 201 Created group
+   * responseMessage 409 Group already exists
    */
   @Timed @ExceptionMetered
   @POST
@@ -99,8 +98,7 @@ public class GroupResource {
   /**
    * Retrieve listing of group names
    *
-   * @excludeParams automationClient
-   * @responseMessage 200 List of group names
+   * responseMessage 200 List of group names
    */
   @Timed @ExceptionMetered
   @GET
@@ -114,11 +112,10 @@ public class GroupResource {
   /**
    * Retrieve information on a group
    *
-   * @excludeParams automationClient
    * @param name Group name
    *
-   * @responseMessage 200 Group information retrieved
-   * @responseMessage 404 Group not found
+   * responseMessage 200 Group information retrieved
+   * responseMessage 404 Group not found
    */
   @Timed @ExceptionMetered
   @GET
@@ -147,11 +144,10 @@ public class GroupResource {
   /**
    * Retrieve metadata for secrets in a particular group.
    *
-   * @excludeParams automationClient
    * @param name Group name
    *
-   * @responseMessage 200 Group information retrieved
-   * @responseMessage 404 Group not found
+   * responseMessage 200 Group information retrieved
+   * responseMessage 404 Group not found
    */
   @Timed @ExceptionMetered
   @GET
@@ -168,11 +164,10 @@ public class GroupResource {
   /**
    * Retrieve metadata for clients in a particular group.
    *
-   * @excludeParams automationClient
    * @param name Group name
    *
-   * @responseMessage 200 Group information retrieved
-   * @responseMessage 404 Group not found
+   * responseMessage 200 Group information retrieved
+   * responseMessage 404 Group not found
    */
   @Timed @ExceptionMetered
   @GET
@@ -189,11 +184,10 @@ public class GroupResource {
   /**
    * Delete a group
    *
-   * @excludeParams automationClient
    * @param name Group name to delete
    *
-   * @responseMessage 204 Group deleted
-   * @responseMessage 404 Group not found
+   * responseMessage 204 Group deleted
+   * responseMessage 404 Group not found
    */
   @Timed @ExceptionMetered
   @DELETE

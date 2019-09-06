@@ -54,6 +54,9 @@ public class HttpClients {
 
   /**
    * Builds a localhost URL for testing given a path.
+   *
+   * @param path the path to test
+   * @return the URL constructed from the localhost Keywhiz address and the input path
    */
   public static HttpUrl testUrl(String path) {
     String urlString = "https://localhost:4445" + path;

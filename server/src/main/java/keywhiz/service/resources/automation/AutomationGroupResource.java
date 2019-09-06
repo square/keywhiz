@@ -62,8 +62,8 @@ import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName groups-automation
- * @resourceDescription Create and retrieve groups
+ * parentEndpointName groups-automation
+ * resourceDescription Create and retrieve groups
  * @deprecated Will be removed in a future release. Migrate to {@link GroupResource}.
  */
 @Deprecated
@@ -93,11 +93,13 @@ public class AutomationGroupResource {
   /**
    * Retrieve Group by ID
    *
+   * @param automationClient the client with automation access performing this operation
    * @param groupId the ID of the group to retrieve
-   * @excludeParams automationClient
-   * @description Returns a single Group if found
-   * @responseMessage 200 Found and retrieved Group with given ID
-   * @responseMessage 404 Group with given ID not Found
+   * @return details on the specified group
+   *
+   * description Returns a single Group if found
+   * responseMessage 200 Found and retrieved Group with given ID
+   * responseMessage 404 Group with given ID not Found
    */
   @Timed @ExceptionMetered
   @GET
@@ -116,12 +118,14 @@ public class AutomationGroupResource {
   /**
    * Retrieve Group by a specified name, or all Groups if no name given
    *
+   * @param automationClient the client with automation access performing this operation
    * @param name the name of the Group to retrieve, if provided
-   * @excludeParams automationClient
-   * @optionalParams name
-   * @description Returns a single Group or a set of all Groups
-   * @responseMessage 200 Found and retrieved Group(s)
-   * @responseMessage 404 Group with given name not found (if name provided)
+   * @return details on the specified group, or an all groups if no name specified
+   *
+   * optionalParams name
+   * description Returns a single Group or a set of all Groups
+   * responseMessage 200 Found and retrieved Group(s)
+   * responseMessage 404 Group with given name not found (if name provided)
    */
   @Timed @ExceptionMetered
   @GET
@@ -152,11 +156,13 @@ public class AutomationGroupResource {
   /**
    * Create Group
    *
+   * @param automationClient the client with automation access performing this operation
    * @param groupRequest the JSON group request used to formulate the Group
-   * @excludeParams automationClient
-   * @description Creates a Group with the name from a valid group request
-   * @responseMessage 200 Successfully created Group
-   * @responseMessage 409 Group with given name already exists
+   * @return details on the newly-created group
+   *
+   * description Creates a Group with the name from a valid group request
+   * responseMessage 200 Successfully created Group
+   * responseMessage 409 Group with given name already exists
    */
   @Timed @ExceptionMetered
   @POST
@@ -190,11 +196,13 @@ public class AutomationGroupResource {
   /**
    * Deletes a group
    *
+   * @param automationClient the client with automation access performing this operation
    * @param groupId the ID of the group to delete
-   * @excludeParams automationClient
-   * @description Deletes a single group by id
-   * @responseMessage 200 Deleted group
-   * @responseMessage 404 Group not found by id
+   * @return 200 if the group was removed successfully, 404 if the group was not found
+   *
+   * description Deletes a single group by id
+   * responseMessage 200 Deleted group
+   * responseMessage 404 Group not found by id
    */
   @Timed @ExceptionMetered
   @DELETE

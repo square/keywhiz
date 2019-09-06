@@ -28,6 +28,8 @@ import org.jooq.DSLContext;
 public interface UserAuthenticatorFactory extends Discoverable {
   /**
    * Builds an authenticator from username/password credentials to a {@link User}.
+   * @param dslContext context for the credential storage
+   * @return an authenticator from credentials to a user
    */
   Authenticator<BasicCredentials, User> build(DSLContext dslContext);
 }

@@ -65,10 +65,10 @@ import static com.google.common.base.Strings.nullToEmpty;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName groups-admin
+ * parentEndpointName groups-admin
  *
- * @resourcePath /admin/groups
- * @resourceDescription Create, retrieve, and delete groups
+ * resourcePath /admin/groups
+ * resourceDescription Create, retrieve, and delete groups
  */
 @Path("/admin/groups")
 @Produces(APPLICATION_JSON)
@@ -93,14 +93,14 @@ public class GroupsResource {
   /**
    * Retrieve Group by a specified name, or all Groups if no name given
    *
-   * @excludeParams user
-   * @optionalParams name
+   * @param user the admin user performing this operation
    * @param name the name of the Group to retrieve, if provided
+   * @return the named group, or all groups if no name was given
    *
-   * @description Returns a single Group or a set of all Groups for this user.
+   * description Returns a single Group or a set of all Groups for this user.
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Found and retrieved Group(s)
-   * @responseMessage 404 Group with given name not found (if name provided)
+   * responseMessage 200 Found and retrieved Group(s)
+   * responseMessage 404 Group with given name not found (if name provided)
    */
   @Timed @ExceptionMetered
   @GET
@@ -125,13 +125,14 @@ public class GroupsResource {
   /**
    * Create Group
    *
-   * @excludeParams user
+   * @param user the admin user performing this operation
    * @param request the JSON client request used to formulate the Group
+   * @return 200 if the group was created, 409 if the name already existed
    *
-   * @description Creates a Group with the name from a valid group request.
+   * description Creates a Group with the name from a valid group request.
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Successfully created Group
-   * @responseMessage 400 Group with given name already exists
+   * responseMessage 200 Successfully created Group
+   * responseMessage 400 Group with given name already exists
    */
   @Timed @ExceptionMetered
   @POST
@@ -167,13 +168,14 @@ public class GroupsResource {
   /**
    * Retrieve Group by ID
    *
-   * @excludeParams user
+   * @param user the admin user performing this operation
    * @param groupId the ID of the Group to retrieve
+   * @return the specified group, if found
    *
-   * @description Returns a single Group if found.
+   * description Returns a single Group if found.
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Found and retrieved Group with given ID
-   * @responseMessage 404 Group with given ID not Found
+   * responseMessage 200 Found and retrieved Group with given ID
+   * responseMessage 404 Group with given ID not Found
    */
   @Path("{groupId}")
   @Timed @ExceptionMetered
@@ -186,13 +188,14 @@ public class GroupsResource {
   /**
    * Delete Group by ID
    *
-   * @excludeParams user
+   * @param user the admin user performing this operation
    * @param groupId the ID of the Group to be deleted
+   * @return 200 if the deletion succeeded, 404 if the group was not found
    *
-   * @description Deletes a single Group if found.
+   * description Deletes a single Group if found.
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Found and deleted Group with given ID
-   * @responseMessage 404 Group with given ID not Found
+   * responseMessage 200 Found and deleted Group with given ID
+   * responseMessage 404 Group with given ID not Found
    */
   @Path("{groupId}")
   @Timed @ExceptionMetered

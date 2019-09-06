@@ -50,8 +50,8 @@ import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName automation/v2-client-management
- * @resourceDescription Automation endpoints to manage clients
+ * parentEndpointName automation/v2-client-management
+ * resourceDescription Automation endpoints to manage clients
  */
 @Path("/automation/v2/clients")
 public class ClientResource {
@@ -77,11 +77,10 @@ public class ClientResource {
   /**
    * Creates a client and assigns to given groups
    *
-   * @excludeParams automationClient
    * @param request JSON request to create a client
    *
-   * @responseMessage 201 Created client and assigned to given groups
-   * @responseMessage 409 Client already exists
+   * responseMessage 201 Created client and assigned to given groups
+   * responseMessage 409 Client already exists
    */
   @Timed @ExceptionMetered
   @POST
@@ -112,8 +111,7 @@ public class ClientResource {
   /**
    * Retrieve listing of client names
    *
-   * @excludeParams automationClient
-   * @responseMessage 200 List of client names
+   * responseMessage 200 List of client names
    */
   @Timed @ExceptionMetered
   @GET
@@ -127,11 +125,10 @@ public class ClientResource {
   /**
    * Retrieve information on a client
    *
-   * @excludeParams automationClient
    * @param name Client name
    *
-   * @responseMessage 200 Client information retrieved
-   * @responseMessage 404 Client not found
+   * responseMessage 200 Client information retrieved
+   * responseMessage 404 Client not found
    */
   @Timed @ExceptionMetered
   @GET
@@ -148,12 +145,11 @@ public class ClientResource {
   /**
    * Listing of groups accessible to a client
    *
-   * @excludeParams automationClient
    * @param name Client name
    * @return Listing of groups the client has membership to
    *
-   * @responseMessage 200 Listing succeeded
-   * @responseMessage 404 Client not found
+   * responseMessage 200 Listing succeeded
+   * responseMessage 404 Client not found
    */
   @Timed @ExceptionMetered
   @GET
@@ -171,13 +167,12 @@ public class ClientResource {
   /**
    * Modify groups a client has membership in
    *
-   * @excludeParams automationClient
    * @param name Client name
    * @param request JSON request specifying which groups to add or remove
    * @return Listing of groups client has membership in
    *
-   * @responseMessage 201 Client modified successfully
-   * @responseMessage 404 Client not found
+   * responseMessage 201 Client modified successfully
+   * responseMessage 404 Client not found
    */
   @Timed @ExceptionMetered
   @PUT
@@ -215,12 +210,11 @@ public class ClientResource {
   /**
    * Listing of secrets accessible to a client
    *
-   * @excludeParams automationClient
    * @param name Client name
    * @return Listing of secrets accessible to client
    *
-   * @responseMessage 200 Client lookup succeeded
-   * @responseMessage 404 Client not found
+   * responseMessage 200 Client lookup succeeded
+   * responseMessage 404 Client not found
    */
   @Timed @ExceptionMetered
   @GET
@@ -238,11 +232,10 @@ public class ClientResource {
   /**
    * Delete a client
    *
-   * @excludeParams automationClient
    * @param name Client name
    *
-   * @responseMessage 204 Client deleted
-   * @responseMessage 404 Client not found
+   * responseMessage 204 Client deleted
+   * responseMessage 404 Client not found
    */
   @Timed @ExceptionMetered
   @DELETE
@@ -261,12 +254,11 @@ public class ClientResource {
   /**
    * Modify a client
    *
-   * @excludeParams automationClient
    * @param currentName Client name
    * @param request JSON request to modify the client
    *
-   * @responseMessage 201 Client updated
-   * @responseMessage 404 Client not found
+   * responseMessage 201 Client updated
+   * responseMessage 404 Client not found
    */
   @Timed @ExceptionMetered
   @POST

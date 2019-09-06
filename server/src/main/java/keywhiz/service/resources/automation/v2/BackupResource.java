@@ -48,8 +48,8 @@ import static org.c02e.jpgpj.FileMetadata.Format.UTF8;
 import static org.c02e.jpgpj.HashingAlgorithm.Unsigned;
 
 /**
- * @parentEndpointName automation/v2-backup
- * @resourceDescription Automation endpoints for backups
+ * parentEndpointName automation/v2-backup
+ * resourceDescription Automation endpoints for backups
  */
 @Path("/automation/v2/backup")
 public class BackupResource {
@@ -79,7 +79,6 @@ public class BackupResource {
    * Backup all secrets for a given group. Returns an encrypted encrypted to
    * the backup key in the main configuration file. Only accessible to automation clients.
    *
-   * @excludeParams automationClient
    * @param name Group name
    *
    * @return Encrypted archive

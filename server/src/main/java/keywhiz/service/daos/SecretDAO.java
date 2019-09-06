@@ -283,7 +283,16 @@ public class SecretDAO {
     return Optional.empty();
   }
 
-  /** @return list of secrets. can limit/sort by expiry, and for group if given */
+  /**
+   * @param expireMaxTime the maximum expiration date for secrets to return (exclusive)
+   * @param group the group secrets returned must be assigned to
+   * @param expireMinTime the minimum expiration date for secrets to return (inclusive)
+   * @param minName the minimum name (alphabetically) that will be returned for secrets
+   *                expiring on expireMinTime (inclusive)
+   * @param limit the maximum number of secrets to return
+   *               which to start the list of returned secrets
+   * @return list of secrets. can limit/sort by expiry, and for group if given
+   */
   public ImmutableList<SecretSeriesAndContent> getSecrets(@Nullable Long expireMaxTime,
       @Nullable Group group, @Nullable Long expireMinTime, @Nullable String minName,
       @Nullable Integer limit) {
@@ -380,6 +389,7 @@ public class SecretDAO {
   /**
    * @param name of secret series for which to reset secret version
    * @param versionId The identifier for the desired current version
+   * @param updater the user to be linked to this update
    * @throws NotFoundException if secret not found
    */
   public void setCurrentSecretVersionByName(String name, long versionId, String updater) {
@@ -405,7 +415,7 @@ public class SecretDAO {
   }
 
   /**
-   * Counts the total number of deleted secrets.
+   * @return the total number of deleted secrets.
    */
   public int countDeletedSecrets() {
     return secretSeriesDAOFactory.using(dslContext.configuration())
@@ -413,9 +423,8 @@ public class SecretDAO {
   }
 
   /**
-   * Counts the number of secrets deleted before the specified cutoff.
-   *
    * @param deleteBefore the cutoff date; secrets deleted before this date will be counted
+   * @return the number of secrets deleted before the specified cutoff.
    */
   public int countSecretsDeletedBeforeDate(DateTime deleteBefore) {
     checkArgument(deleteBefore != null);
@@ -436,6 +445,7 @@ public class SecretDAO {
    * @param deletedBefore the cutoff date; secrets deleted before this date will be removed from the
    * database
    * @param sleepMillis how many milliseconds to sleep between each batch of removals
+   * @throws InterruptedException if interrupted while sleeping between batches
    */
   public void dangerPermanentlyRemoveSecretsDeletedBeforeDate(DateTime deletedBefore,
       int sleepMillis) throws InterruptedException {

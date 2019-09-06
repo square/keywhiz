@@ -40,6 +40,8 @@ public class RowHmacGenerator {
    * The random long generated with random.nextLong only uses 48 bits of randomness,
    * meaning it will not return all possible long values. Instead we generate a long from 8
    * random bytes.
+   *
+   * @return a randomly generated long
    */
   public long getNextLongSecure() {
     byte[] generateIdBytes = new byte[8];

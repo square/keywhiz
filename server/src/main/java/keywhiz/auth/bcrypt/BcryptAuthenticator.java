@@ -56,12 +56,21 @@ public class BcryptAuthenticator implements Authenticator<BasicCredentials, User
     return Optional.ofNullable(user);
   }
 
-  /** Hash a password in a way compatible with this authenticator */
+  /**
+   * Hash a password in a way compatible with this authenticator
+   * @param password a password to be checked
+   * @return the hash of this password
+   */
   public static String hashPassword(String password) {
     return BCrypt.hashpw(password, BCrypt.gensalt());
   }
 
-  /** Constant-time password check */
+  /**
+   * Constant-time password check
+   * @param password a password to be checked
+   * @param hash a hash which may match the output of hashPassword for this password
+   * @return whether the password matches the hash
+   */
   private static boolean checkPassword(String password, Optional<String> hash) {
     // We want to check the password in constant time, to avoid leaking information about whether
     // a user is present in the database. In order to do this we pass a fake bcrypt hash into the

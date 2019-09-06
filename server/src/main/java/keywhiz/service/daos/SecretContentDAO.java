@@ -109,6 +109,8 @@ public class SecretContentDAO {
    * Prune old secret contents from the database, for the given secret id. Whenever a new secret
    * content entry is added for a secret series, we check the database for really old content
    * entries and clean them out to prevent the database from growing too large.
+   *
+   * @param secretId the ID whose old secret contents should be removed
    */
   @VisibleForTesting void pruneOldContents(long secretId) {
     // Fetch current version number
@@ -191,7 +193,7 @@ public class SecretContentDAO {
    *
    * @param ids IDs in the `secrets` table; `secrets_contents` records linked to these by
    * `secrets_content.secretid` will be PERMANENTLY REMOVED
-   * @returns the number of records which were removed
+   * @return the number of records which were removed
    */
   public long dangerPermanentlyRemoveRecordsForGivenSecretsIDs(List<Long> ids) {
     return dslContext.deleteFrom(SECRETS_CONTENT)

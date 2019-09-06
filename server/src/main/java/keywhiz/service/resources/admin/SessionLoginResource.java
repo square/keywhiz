@@ -43,9 +43,9 @@ import org.slf4j.LoggerFactory;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName login
+ * parentEndpointName login
  *
- * @resourceDescription Login to Keywhiz admin interface
+ * resourceDescription Login to Keywhiz admin interface
  */
 @Path("/admin/login")
 public class SessionLoginResource {
@@ -65,10 +65,11 @@ public class SessionLoginResource {
    * Login and set a session cookie
    *
    * @param request validated json request object
+   * @return 200 on success, 401 for invalid or unauthorized credentials
    *
-   * @description Logs in using LDAP and sets session cookies to authorize further requests
-   * @responseMessage 200 Logged in successfully
-   * @responseMessage 401 Incorrect credentials or not authorized
+   * description Logs in using LDAP and sets session cookies to authorize further requests
+   * responseMessage 200 Logged in successfully
+   * responseMessage 401 Incorrect credentials or not authorized
    */
   @Timed @ExceptionMetered
   @POST

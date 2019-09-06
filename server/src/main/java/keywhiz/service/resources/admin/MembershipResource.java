@@ -39,10 +39,10 @@ import org.slf4j.LoggerFactory;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName memberships-admin
+ * parentEndpointName memberships-admin
  *
- * @resourcePath /admin/memberships
- * @resourceDescription Manage group assignments
+ * resourcePath /admin/memberships
+ * resourceDescription Manage group assignments
  */
 @Path("/admin/memberships")
 @Produces(APPLICATION_JSON)
@@ -65,14 +65,15 @@ public class MembershipResource {
   /**
    * Allow a Group to access this Secret
    *
-   * @excludeParams user
+   * @param user the admin user performing this operation
    * @param secretId ID value of a Secret
    * @param groupId ID value of a Group
+   * @return 200 on success, 404 if secret or group is missing
    *
-   * @description Assigns the Secret specified by the secretID to the Group specified by the groupID
+   * description Assigns the Secret specified by the secretID to the Group specified by the groupID
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Successfully enrolled Secret in Group
-   * @responseMessage 404 Could not find Secret or Group
+   * responseMessage 200 Successfully enrolled Secret in Group
+   * responseMessage 404 Could not find Secret or Group
    */
   @Path("/secrets/{secretId}/groups/{groupId}")
   @Timed @ExceptionMetered
@@ -96,14 +97,15 @@ public class MembershipResource {
   /**
    * Disallow a Group to access this Secret
    *
-   * @excludeParams user
+   * @param user the admin user performing this operation
    * @param secretId ID value of a Secret
    * @param groupId ID value of a Group
+   * @return 200 if operation successful, 404 if secret or group not present
    *
-   * @description Unassigns the Secret specified by the secretID from the Group specified by the groupID
+   * description Unassigns the Secret specified by the secretID from the Group specified by the groupID
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Successfully removed Secret from Group
-   * @responseMessage 404 Could not find Secret or Group
+   * responseMessage 200 Successfully removed Secret from Group
+   * responseMessage 404 Could not find Secret or Group
    */
   @Path("/secrets/{secretId}/groups/{groupId}")
   @Timed @ExceptionMetered
@@ -127,13 +129,14 @@ public class MembershipResource {
   /**
    * Enroll a Client into a Group
    *
-   * @excludeParams user
+   * @param user the admin user performing this operation
    * @param clientId ID value of a Client
    * @param groupId ID value of a Group
+   * @return 200 on success, 404 if client or group not found
    *
-   * @description Assigns the Client specified by the clientID to the Group specified by the groupID
-   * @responseMessage 200 Successfully enrolled Client in Group
-   * @responseMessage 404 Could not find Client or Group
+   * description Assigns the Client specified by the clientID to the Group specified by the groupID
+   * responseMessage 200 Successfully enrolled Client in Group
+   * responseMessage 404 Could not find Client or Group
    */
   @Path("/clients/{clientId}/groups/{groupId}")
   @Timed @ExceptionMetered
@@ -157,13 +160,14 @@ public class MembershipResource {
   /**
    * Remove a Client from a Group
    *
-   * @excludeParams user
+   * @param user the admin user performing this operation
    * @param clientId ID value of a Client
    * @param groupId ID value of a Group
+   * @return 200 on success, 404 if client or group not found
    *
-   * @description Unassigns the Client specified by the clientID from the Group specified by the groupID
-   * @responseMessage 200 Successfully removed Client from Group
-   * @responseMessage 404 Could not find Client or Group
+   * description Unassigns the Client specified by the clientID from the Group specified by the groupID
+   * responseMessage 200 Successfully removed Client from Group
+   * responseMessage 404 Could not find Client or Group
    */
   @Path("/clients/{clientId}/groups/{groupId}")
   @Timed @ExceptionMetered

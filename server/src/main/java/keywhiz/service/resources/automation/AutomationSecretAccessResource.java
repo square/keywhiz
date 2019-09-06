@@ -41,8 +41,8 @@ import org.slf4j.LoggerFactory;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName enroll-secrets-automation
- * @resourceDescription Assign or unassign secrets to groups
+ * parentEndpointName enroll-secrets-automation
+ * resourceDescription Assign or unassign secrets to groups
  * @deprecated Will be removed in a future release. Migrate to {@link SecretResource}.
  */
 @Deprecated
@@ -62,13 +62,14 @@ public class AutomationSecretAccessResource {
   /**
    * Assign Secret to Group
    *
-   * @excludeParams automationClient
+   * @param automationClient the client with automation access performing this operation
    * @param secretId the ID of the Secret to assign
    * @param groupId the ID of the Group to be assigned to
+   * @return 200 on success, 404 if the secret or group is absent
    *
-   * @description Assigns the Secret specified by the secretID to the Group specified by the groupID
-   * @responseMessage 200 Successfully enrolled Secret in Group
-   * @responseMessage 404 Could not find Secret or Group
+   * description Assigns the Secret specified by the secretID to the Group specified by the groupID
+   * responseMessage 200 Successfully enrolled Secret in Group
+   * responseMessage 404 Could not find Secret or Group
    */
   @Timed @ExceptionMetered
   @PUT
@@ -93,13 +94,14 @@ public class AutomationSecretAccessResource {
   /**
    * Remove Secret from Group
    *
-   * @excludeParams automationClient
+   * @param automationClient the client with automation access performing this operation
    * @param secretId the ID of the Secret to unassign
    * @param groupId the ID of the Group to be removed from
+   * @return 200 on success, 404 if the secret or group is absent
    *
-   * @description Unassigns the Secret specified by the secretID from the Group specified by the groupID
-   * @responseMessage 200 Successfully removed Secret from Group
-   * @responseMessage 404 Could not find Secret or Group
+   * description Unassigns the Secret specified by the secretID from the Group specified by the groupID
+   * responseMessage 200 Successfully removed Secret from Group
+   * responseMessage 404 Could not find Secret or Group
    */
   @Timed @ExceptionMetered
   @DELETE
