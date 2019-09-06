@@ -27,18 +27,19 @@ import org.jooq.Configuration;
  */
 public interface DAOFactory<T> {
   /**
-   * Returns DAO using a read/write database connection.
+   * @return DAO using a read/write database connection.
    */
   T readwrite();
 
   /**
-   * Returns DAO using a read-only database connection.
+   * @return DAO using a read-only database connection.
    */
   T readonly();
 
   /**
-   * Returns DAO using a supplied jOOQ configuration. Useful for issuing queries on the same
-   * underlying transaction from a different DAO.
+   * Useful for issuing queries on the same underlying transaction from a different DAO.
+   * @param configuration a jOOQ configuration
+   * @return DAO using the supplied jOOQ configuration.
    */
   T using(Configuration configuration);
 }

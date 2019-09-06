@@ -61,8 +61,8 @@ import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName clients-automation
- * @resourceDescription Create and retrieve clients
+ * parentEndpointName clients-automation
+ * resourceDescription Create and retrieve clients
  * @deprecated Will be removed in a future release. Migrate to {@link ClientResource}.
  */
 @Deprecated
@@ -93,11 +93,13 @@ public class AutomationClientResource {
   /**
    * Retrieve Client by ID
    *
+   * @param automationClient the client with automation access performing this operation
    * @param clientId the ID of the Client to retrieve
-   * @excludeParams automationClient
-   * @description Returns a single Client if found
-   * @responseMessage 200 Found and retrieved Client with given ID
-   * @responseMessage 404 Client with given ID not Found
+   * @return the specified client, if found
+   *
+   * description Returns a single Client if found
+   * responseMessage 200 Found and retrieved Client with given ID
+   * responseMessage 404 Client with given ID not Found
    */
   @Timed @ExceptionMetered
   @GET
@@ -119,12 +121,14 @@ public class AutomationClientResource {
   /**
    * Retrieve Client by a specified name, or all Clients if no name given
    *
+   * @param automationClient the client with automation access performing this operation
    * @param name the name of the Client to retrieve, if provided
-   * @excludeParams automationClient
-   * @optionalParams name
-   * @description Returns a single Client or a set of all Clients
-   * @responseMessage 200 Found and retrieved Client(s)
-   * @responseMessage 404 Client with given name not found (if name provided)
+   * @return the specified client if found, or all clients if name omitted
+   *
+   * optionalParams name
+   * description Returns a single Client or a set of all Clients
+   * responseMessage 200 Found and retrieved Client(s)
+   * responseMessage 404 Client with given name not found (if name provided)
    */
   @Timed @ExceptionMetered
   @GET
@@ -151,11 +155,13 @@ public class AutomationClientResource {
   /**
    * Create Client
    *
+   * @param automationClient the client with automation access performing this operation
    * @param clientRequest the JSON client request used to formulate the Client
-   * @excludeParams automationClient
-   * @description Creates a Client with the name from a valid client request
-   * @responseMessage 200 Successfully created Client
-   * @responseMessage 409 Client with given name already exists
+   * @return information about the created client on success
+   *
+   * description Creates a Client with the name from a valid client request
+   * responseMessage 200 Successfully created Client
+   * responseMessage 409 Client with given name already exists
    */
   @Timed @ExceptionMetered
   @POST
@@ -188,11 +194,13 @@ public class AutomationClientResource {
   /**
    * Deletes a client
    *
+   * @param automationClient the client with automation access performing this operation
    * @param clientId the ID of the client to delete
-   * @excludeParams automationClient
-   * @description Deletes a single client by id
-   * @responseMessage 200 Deleted client
-   * @responseMessage 404 Client not found by id
+   * @return 200 if the client was deleted, 404 if no such client was found
+   *
+   * description Deletes a single client by id
+   * responseMessage 200 Deleted client
+   * responseMessage 404 Client not found by id
    */
   @Timed @ExceptionMetered
   @DELETE

@@ -515,6 +515,7 @@ public class AclDAO {
   }
 
   /**
+   * @param configuration database information
    * @param client client to access secrets
    * @param secretName name of SecretSeries
    * @return Optional.absent() when secret unauthorized or not found.

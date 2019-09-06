@@ -29,8 +29,8 @@ import static keywhiz.jooq.Tables.SECRETS_CONTENT;
 import static org.jooq.impl.DSL.min;
 
 /**
- * @parentEndpointName automation/v2-backfill-row-hmac
- * @resourceDescription Automation endpoints to backfill row_hmac columns
+ * parentEndpointName automation/v2-backfill-row-hmac
+ * resourceDescription Automation endpoints to backfill row_hmac columns
  */
 @Path("/automation/v2/backfill-row-hmac")
 public class BackfillRowHmacResource {

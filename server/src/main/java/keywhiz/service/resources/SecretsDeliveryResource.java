@@ -36,9 +36,9 @@ import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName secrets
+ * parentEndpointName secrets
  *
- * @resourceDescription Retrieve a collection of Secrets
+ * resourceDescription Retrieve a collection of Secrets
  */
 @Path("/secrets")
 @Produces(APPLICATION_JSON)
@@ -56,10 +56,8 @@ public class SecretsDeliveryResource {
   }
 
   /**
-   * Retrieve Secret by name
-   *
-   * @excludeParams client
-   * @description Returns all Secrets for the current Client
+   * @param client the client performing the retrieval
+   * @return all secrets available to the input client
    */
   @Timed @ExceptionMetered
   @GET

@@ -72,10 +72,10 @@ import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName secrets-admin
+ * parentEndpointName secrets-admin
  *
- * @resourcePath /admin/secrets
- * @resourceDescription Create, retrieve, and delete secrets
+ * resourcePath /admin/secrets
+ * resourceDescription Create, retrieve, and delete secrets
  */
 @Path("/admin/secrets")
 @Produces(APPLICATION_JSON)
@@ -111,19 +111,18 @@ public class SecretsResource {
   /**
    * Retrieve Secret by a specified name and version, or all Secrets if name is not given
    *
-   * @excludeParams user
-   * @optionalParams name
+   *
+   * @param user the admin user performing this operation
    * @param name the name of the Secret to retrieve, if provided
-   * @optionalParams version
    * @param nameOnly if set, the result only contains the id and name for the secrets.
    * @param idx if set, the desired starting index in a list of secrets to be retrieved
    * @param num if set, the number of secrets to retrieve
    * @param newestFirst whether to order the secrets by creation date with newest first; defaults to true
+   * @return a single Secret or a set of all Secrets for this user.
    *
-   * @description Returns a single Secret or a set of all Secrets for this user.
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Found and retrieved Secret(s)
-   * @responseMessage 404 Secret with given name not found (if name provided)
+   * responseMessage 200 Found and retrieved Secret(s)
+   * responseMessage 404 Secret with given name not found (if name provided)
    */
   @Timed @ExceptionMetered
   @GET
@@ -152,7 +151,7 @@ public class SecretsResource {
   }
 
   private void validateArguments(String name, String nameOnly, Integer idx, Integer num) {
-    if (idx == null && num != null || idx != null && num != null) {
+    if ((idx == null && num != null) || (idx != null && num == null)) {
       throw new IllegalArgumentException("Both idx and num must be specified");
     }
     if (!name.isEmpty() && idx != null && num != null) {
@@ -186,13 +185,14 @@ public class SecretsResource {
   /**
    * Create Secret
    *
-   * @excludeParams user
+   * @param user the admin user performing this operation
    * @param request the JSON client request used to formulate the Secret
+   * @return 201 on success, 400 if a secret with the given name already exists
    *
-   * @description Creates a Secret with the name from a valid secret request.
+   * description Creates a Secret with the name from a valid secret request.
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Successfully created Secret
-   * @responseMessage 400 Secret with given name already exists
+   * responseMessage 201 Successfully created Secret
+   * responseMessage 400 Secret with given name already exists
    */
   @Timed @ExceptionMetered
   @POST
@@ -245,10 +245,11 @@ public class SecretsResource {
   /**
    * Create or update secret
    *
-   * @excludeParams user
+   * @param user the admin user performing this operation
    * @param request the JSON client request used to formulate the Secret
+   * @return 201 when secret created or updated
    *
-   * @responseMessage 200 Successfully created Secret
+   * responseMessage 201 Successfully created or updated Secret
    */
   @Path("{name}")
   @Timed @ExceptionMetered
@@ -286,10 +287,11 @@ public class SecretsResource {
   /**
    * Update a subset of the fields of an existing secret
    *
-   * @excludeParams user
+   * @param user the admin user performing this operation
    * @param request the JSON client request used to formulate the Secret
+   * @return 201 when update successful
    *
-   * @responseMessage 200 Successfully updated Secret
+   * responseMessage 201 Successfully updated Secret
    */
   @Path("{name}/partialupdate")
   @Timed @ExceptionMetered
@@ -329,13 +331,14 @@ public class SecretsResource {
   /**
    * Retrieve Secret by ID
    *
-   * @excludeParams user
+   * @param user the admin user performing this operation
    * @param secretId the ID of the secret to retrieve
+   * @return the specified secret, if found
    *
-   * @description Returns a single Secret if found.
+   * description Returns a single Secret if found.
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Found and retrieved Secret with given ID
-   * @responseMessage 404 Secret with given ID not Found
+   * responseMessage 200 Found and retrieved Secret with given ID
+   * responseMessage 404 Secret with given ID not Found
    */
   @Path("{secretId}")
   @Timed @ExceptionMetered
@@ -355,13 +358,14 @@ public class SecretsResource {
    * For instance, versionIdx = 5 and numVersions = 10 will retrieve entries
    * at indices 5 through 14.
    *
-   * @excludeParams user
+   * @param user the admin user performing this operation
    * @param name Secret series name
    * @param versionIdx The index in the list of versions of the first version to retrieve
    * @param numVersions The number of versions to retrieve
-   * @excludeParams automationClient
-   * @responseMessage 200 Secret series information retrieved
-   * @responseMessage 404 Secret series not found
+   * @return a list of a secret's versions, if found
+   *
+   * responseMessage 200 Secret series information retrieved
+   * responseMessage 404 Secret series not found
    */
   @Timed @ExceptionMetered
   @GET
@@ -373,7 +377,7 @@ public class SecretsResource {
 
     logger.info("User '{}' listing {} versions starting at index {} for secret '{}'.", user,
         numVersions, versionIdx, name);
-    
+
     ImmutableList<SanitizedSecret> versions =
         secretDAOReadOnly.getSecretVersionsByName(name, versionIdx, numVersions)
             .orElseThrow(NotFoundException::new);
@@ -384,12 +388,14 @@ public class SecretsResource {
   /**
    * Rollback to a previous secret version
    *
+   * @param user the admin user performing this operation
    * @param secretName the name of the secret to rollback
    * @param versionId the ID of the version to return to
-   * @excludeParams user
-   * @description Returns the previous versions of the secret if found Used by Keywhiz CLI.
-   * @responseMessage 200 Found and reset the secret to this version
-   * @responseMessage 404 Secret with given name not found or invalid version provided
+   * @return 200 if the rollback was successful, 404 for missing secret or bad input
+   *
+   * description Returns the previous versions of the secret if found Used by Keywhiz CLI.
+   * responseMessage 200 Found and reset the secret to this version
+   * responseMessage 404 Secret with given name not found or invalid version provided
    */
   @Path("rollback/{secretName}/{versionId}")
   @Timed @ExceptionMetered
@@ -418,13 +424,14 @@ public class SecretsResource {
   /**
    * Delete Secret by ID
    *
-   * @excludeParams user
+   * @param user the admin user performing this operation
    * @param secretId the ID of the Secret to be deleted
+   * @return 200 if secret deleted, 404 if not found
    *
-   * @description Deletes a single Secret if found.
+   * description Deletes a single Secret if found.
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Found and deleted Secret with given ID
-   * @responseMessage 404 Secret with given ID not Found
+   * responseMessage 200 Found and deleted Secret with given ID
+   * responseMessage 404 Secret with given ID not Found
    */
   @Path("{secretId}")
   @Timed @ExceptionMetered

@@ -13,7 +13,7 @@
 
   <groupId>com.squareup.keywhiz</groupId>
   <artifactId>keywhiz-parent</artifactId>
-  <version>0.10.1-SNAPSHOT</version>
+  <version>0.10.2-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Keywhiz (Parent)</name>
@@ -351,7 +351,7 @@
         <artifactId>maven-gpg-plugin</artifactId>
         <version>1.6</version>
         <configuration>
-          <skip>true</skip>
+          <skip>false</skip>
         </configuration>
       </plugin>
       <plugin>

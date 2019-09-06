@@ -63,8 +63,8 @@ import org.slf4j.LoggerFactory;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName clients-admin
- * @resourceDescription Create, retrieve, and delete clients
+ * parentEndpointName clients-admin
+ * resourceDescription Create, retrieve, and delete clients
  */
 @Path("/admin/clients")
 @Produces(APPLICATION_JSON)
@@ -90,14 +90,14 @@ public class ClientsResource {
   /**
    * Retrieve Client by a specified name, or all Clients if no name given
    *
-   * @excludeParams user
-   * @optionalParams name
+   * @param user the admin user retrieving this client
    * @param name the name of the Client to retrieve, if provided
+   * @return the named client, or all clients if no name is given
    *
-   * @description Returns a single Client or a set of all Clients for this user.
+   * description Returns a single Client or a set of all Clients for this user.
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Found and retrieved Client(s)
-   * @responseMessage 404 Client with given name not found (if name provided)
+   * responseMessage 200 Found and retrieved Client(s)
+   * responseMessage 404 Client with given name not found (if name provided)
    */
   @Timed @ExceptionMetered
   @GET
@@ -122,13 +122,14 @@ public class ClientsResource {
   /**
    * Create Client
    *
-   * @excludeParams user
+   * @param user the admin user creating this client
    * @param createClientRequest the JSON client request used to formulate the Client
+   * @return 200 if the client is created successfully, 409 if it already exists
    *
-   * @description Creates a Client with the name from a valid client request.
+   * description Creates a Client with the name from a valid client request.
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Successfully created Client
-   * @responseMessage 409 Client with given name already exists
+   * responseMessage 200 Successfully created Client
+   * responseMessage 409 Client with given name already exists
    */
   @Timed @ExceptionMetered
   @POST
@@ -160,13 +161,14 @@ public class ClientsResource {
   /**
    * Retrieve Client by ID
    *
-   * @excludeParams user
+   * @param user the admin user retrieving this client
    * @param clientId the ID of the Client to retrieve
+   * @return the specified client if found
    *
-   * @description Returns a single Client if found.
+   * description Returns a single Client if found.
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Found and retrieved Client with given ID
-   * @responseMessage 404 Client with given ID not Found
+   * responseMessage 200 Found and retrieved Client with given ID
+   * responseMessage 404 Client with given ID not Found
    */
   @Path("{clientId}")
   @Timed @ExceptionMetered
@@ -180,13 +182,14 @@ public class ClientsResource {
   /**
    * Delete Client by ID
    *
-   * @excludeParams user
+   * @param user the admin user deleting this client
    * @param clientId the ID of the Client to be deleted
+   * @return 200 if the deletion was successful, 404 if the client was not found
    *
-   * @description Deletes a single Client if found.
+   * description Deletes a single Client if found.
    * Used by Keywhiz CLI and the web ui.
-   * @responseMessage 200 Found and deleted Client with given ID
-   * @responseMessage 404 Client with given ID not Found
+   * responseMessage 200 Found and deleted Client with given ID
+   * responseMessage 404 Client with given ID not Found
    */
   @Path("{clientId}")
   @Timed @ExceptionMetered

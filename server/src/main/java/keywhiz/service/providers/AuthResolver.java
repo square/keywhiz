@@ -37,7 +37,7 @@ import org.glassfish.jersey.server.spi.internal.ValueFactoryProvider;
 /**
  * Responsible for injecting container method attributes annotated with {@link Auth} and the
  * dependencies necessary for fulfilling those injected objects. This is modeled after
- * {@link io.dropwizard.auth.AuthFactoryProvider}, which may be usable in the future.
+ * io.dropwizard.auth.AuthFactoryProvider, which may be usable in the future.
  * See https://github.com/dropwizard/dropwizard/issues/864.
  */
 @Singleton

@@ -44,7 +44,7 @@ public class CertificatePrincipal implements Principal {
   }
 
   /**
-   * @return string which should be a valid {@link sun.security.x509.X500Name}.
+   * @return string which should be a valid sun.security.x509.X500Name.
    */
   @Override
   public String getName() {

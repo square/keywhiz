@@ -65,8 +65,8 @@ import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName secrets-automation
- * @resourceDescription Create, retrieve, and remove secrets
+ * parentEndpointName secrets-automation
+ * resourceDescription Create, retrieve, and remove secrets
  * @deprecated Will be removed in a future release. Migrate to {@link SecretResource}.
  */
 @Deprecated
@@ -98,12 +98,13 @@ public class AutomationSecretResource {
   /**
    * Create secret
    *
-   * @excludeParams automationClient
+   * @param automationClient the client with automation access performing this operation
    * @param request JSON request to formulate the secret
+   * @return details on the newly created secret, or 409 if the secret name already exists
    *
-   * @description Creates a secret with the name, content, and metadata from a valid secret request
-   * @responseMessage 200 Successfully created secret
-   * @responseMessage 409 Secret with given name already exists
+   * description Creates a secret with the name, content, and metadata from a valid secret request
+   * responseMessage 200 Successfully created secret
+   * responseMessage 409 Secret with given name already exists
    */
   @Timed @ExceptionMetered
   @POST
@@ -148,13 +149,13 @@ public class AutomationSecretResource {
    * Retrieve secret by a specified name, or all secrets if no name given
    * Note that retrieving all secrets could be an expensive query
    *
-   * @excludeParams automationClient
-   * @optionalParams name
+   * @param automationClient the client with automation access performing this operation
    * @param name the name of the secret to retrieve, if provided
+   * @return details on the specified secret, or all secrets if no name given
    *
-   * @description Returns a single secret or a set of all secrets
-   * @responseMessage 200 Found and retrieved secret(s)
-   * @responseMessage 404 Secret with given name not found (if name provided)
+   * description Returns a single secret or a set of all secrets
+   * responseMessage 200 Found and retrieved secret(s)
+   * responseMessage 404 Secret with given name not found (if name provided)
    */
   @Timed @ExceptionMetered
   @GET
@@ -192,12 +193,13 @@ public class AutomationSecretResource {
   /**
    * Retrieve secret by ID
    *
-   * @excludeParams automationClient
+   * @param automationClient the client with automation access performing this operation
    * @param secretId the ID of the secret to retrieve
+   * @return details on the specified secret
    *
-   * @description Returns a single secret if found
-   * @responseMessage 200 Found and retrieved secret with given ID
-   * @responseMessage 404 Secret with given ID not found
+   * description Returns a single secret if found
+   * responseMessage 200 Found and retrieved secret with given ID
+   * responseMessage 404 Secret with given ID not found
    */
   @Path("{secretId}")
   @Timed @ExceptionMetered
@@ -219,12 +221,13 @@ public class AutomationSecretResource {
   /**
    * Deletes all versions of a secret series
    *
-   * @excludeParams automationClient
+   * @param automationClient the client with automation access performing this operation
    * @param secretName the name of the secret series to delete
+   * @return 200 if the deletion is successful, or 404 if the given secret was not found
    *
-   * @description Deletes all versions of a secret series.  This will delete a single secret ID.
-   * @responseMessage 200 Deleted secret series
-   * @responseMessage 404 Secret series not Found
+   * description Deletes all versions of a secret series.  This will delete a single secret ID.
+   * responseMessage 200 Deleted secret series
+   * responseMessage 404 Secret series not Found
    */
   @Path("{secretName}")
   @Timed @ExceptionMetered

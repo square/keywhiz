@@ -36,6 +36,8 @@ public class SecretTransformer {
 
   /**
    * Transform DB content to a Secret model.
+   * @param seriesAndContent a secret series and secret contents as stored in the database
+   * @return the same information restructured as a Secret
    */
   public Secret transform(SecretSeriesAndContent seriesAndContent) {
     checkNotNull(seriesAndContent);

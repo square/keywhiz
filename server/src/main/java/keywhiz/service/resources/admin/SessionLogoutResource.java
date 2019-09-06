@@ -40,9 +40,9 @@ import org.slf4j.LoggerFactory;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName logout
+ * parentEndpointName logout
  *
- * @resourceDescription Logout from the Keywhiz admin interface
+ * resourceDescription Logout from the Keywhiz admin interface
  */
 @Path("/admin/logout")
 public class SessionLogoutResource {
@@ -61,8 +61,9 @@ public class SessionLogoutResource {
   /**
    * Logout and remove any session cookies
    *
-   * @description Log out and remove any session cookies
-   * @responseMessage 200 Logged out successfully
+   * @return 200 on success
+   * description Log out and remove any session cookies
+   * responseMessage 200 Logged out successfully
    */
   @Timed @ExceptionMetered
   @POST

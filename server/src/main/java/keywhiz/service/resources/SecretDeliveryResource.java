@@ -48,9 +48,9 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @parentEndpointName secret
+ * parentEndpointName secret
  *
- * @resourceDescription Retrieve Secret by name
+ * resourceDescription Retrieve Secret by name
  */
 @Path("/secret/{secretName}")
 @Produces(APPLICATION_JSON)
@@ -78,14 +78,14 @@ public class SecretDeliveryResource {
   /**
    * Retrieve Secret by name
    *
-   * @excludeParams client
    * @param secretName the name of the Secret to retrieve
+   * @param client the client performing the retrieval
+   * @return the secret with the specified name, if present and accessible to the client
    *
-   * @description Returns a single Secret if found
-   * @responseMessage 200 Found and retrieved Secret with given name
-   * @responseMessage 403 Secret is not assigned to Client
-   * @responseMessage 404 Secret with given name not found
-   * @responseMessage 500 Secret response could not be generated for given Secret
+   * responseMessage 200 Found and retrieved Secret with given name
+   * responseMessage 403 Secret is not assigned to Client
+   * responseMessage 404 Secret with given name not found
+   * responseMessage 500 Secret response could not be generated for given Secret
    */
   @Timed @ExceptionMetered
   @GET

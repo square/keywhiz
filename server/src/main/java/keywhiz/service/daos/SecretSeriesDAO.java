@@ -301,7 +301,7 @@ public class SecretSeriesDAO {
   }
 
   /**
-   * Count the number of deleted secret series
+   * @return the number of deleted secret series
    */
   public int countDeletedSecretSeries() {
     return dslContext.selectCount()
@@ -314,7 +314,8 @@ public class SecretSeriesDAO {
   /**
    * Identify all secret series which were deleted before the given date.
    *
-   * @param deleteBefore the cutoff date; secrets deleted before this date will be counted
+   * @param deleteBefore the cutoff date; secrets deleted before this date will be returned
+   * @return IDs for secret series deleted before this date
    */
   public List<Long> getIdsForSecretSeriesDeletedBeforeDate(DateTime deleteBefore) {
     long deleteBeforeSeconds = deleteBefore.getMillis() / 1000;
@@ -330,7 +331,7 @@ public class SecretSeriesDAO {
    * affect the `secrets_content` table.
    *
    * @param ids the IDs in the `secrets` table to be PERMANENTLY REMOVED
-   * @returns the number of records which were removed
+   * @return the number of records which were removed
    */
   public long dangerPermanentlyRemoveRecordsForGivenIDs(List<Long> ids) {
     return dslContext.deleteFrom(SECRETS)
