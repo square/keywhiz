@@ -41,10 +41,7 @@
     <!-- 1.2.0-1 is the last version of dropwizard-raven JAR. The development continues under dropwizard-sentry -->
     <dropwizard-raven.version>1.2.0-1</dropwizard-raven.version>
     <guice.version>4.2.2</guice.version>
-    <jackson.version>2.9.9.1</jackson.version>
-    <!-- Some jackson libraries have not received a patch update, so peg them to the latest 2.9.x -->
-    <jackson-annotations.version>2.9.10</jackson-annotations.version>
-    <jackson-jdk8.version>2.9.10</jackson-jdk8.version>
+    <jackson.version>2.9.10</jackson.version>
     <jooq.version>3.12.1</jooq.version>
     <powermock.version>1.7.4</powermock.version>
     <slf4j.version>1.7.28</slf4j.version>
@@ -131,7 +128,7 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>${jackson-annotations.version}</version>
+        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
@@ -141,12 +138,12 @@
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-jdk8</artifactId>
-        <version>${jackson-jdk8.version}</version>
+        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-jsr310</artifactId>
-        <version>${jackson-jdk8.version}</version>
+        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.auto.service</groupId>
