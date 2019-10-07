@@ -88,6 +88,9 @@ public class KeywhizConfig extends Configuration {
 
   @JsonProperty
   private String rowHmacCheck;
+  
+  @JsonProperty
+  private String flywaySchemaTable;
 
   public enum RowHmacCheck {
     DISABLED, DISABLED_BUT_LOG, ENFORCED
@@ -196,6 +199,13 @@ public class KeywhizConfig extends Configuration {
             String.format("%s is an invalid rowHmacCheck parameter", rowHmacCheck)
         );
     }
+  }
+  
+  public String getFlywaySchemaTable() {
+	  if (flywaySchemaTable == null) {
+		  return "schema_version";
+	  }
+	  return flywaySchemaTable;
   }
 
   public static class TemplatedDataSourceFactory extends DataSourceFactory {

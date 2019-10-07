@@ -110,3 +110,5 @@ contentKeyStore:
   alias: basekey
 
 rowHmacCheck: logging
+
+flywaySchemaTable: schema_version
