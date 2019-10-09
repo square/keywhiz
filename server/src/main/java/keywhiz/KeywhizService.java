@@ -165,9 +165,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     logger.debug("Validating database state");
     DataSource dataSource = config.getDataSourceFactory()
         .build(new MetricRegistry(), "flyway-validation-datasource");
-    Flyway flyway = new Flyway();
-    flyway.setDataSource(dataSource);
-    flyway.setLocations(config.getMigrationsDir());
+    Flyway flyway = Flyway.configure().dataSource(dataSource).locations(config.getMigrationsDir()).table(config.getFlywaySchemaTable()).load();
     flyway.validate();
   }
 

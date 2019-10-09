@@ -39,9 +39,7 @@ public class PreviewMigrateCommand extends ConfiguredCommand<KeywhizConfig> {
     DataSource dataSource = config.getDataSourceFactory()
         .build(new MetricRegistry(), "migration-preview-datasource");
 
-    Flyway flyway = new Flyway();
-    flyway.setDataSource(dataSource);
-    flyway.setLocations(config.getMigrationsDir());
+    Flyway flyway = Flyway.configure().dataSource(dataSource).locations(config.getMigrationsDir()).table(config.getFlywaySchemaTable()).load();
     MigrationInfoService info = flyway.info();
 
     MigrationInfo current = info.current();

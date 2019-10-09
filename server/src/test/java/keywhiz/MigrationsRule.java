@@ -46,9 +46,7 @@ public class MigrationsRule implements TestRule {
         DataSource dataSource = config.getDataSourceFactory()
             .build(new MetricRegistry(), "db-migrations");
 
-        Flyway flyway = new Flyway();
-        flyway.setDataSource(dataSource);
-        flyway.setLocations(config.getMigrationsDir());
+        Flyway flyway = Flyway.configure().dataSource(dataSource).locations(config.getMigrationsDir()).table(config.getFlywaySchemaTable()).load();
         flyway.clean();
         flyway.migrate();
 

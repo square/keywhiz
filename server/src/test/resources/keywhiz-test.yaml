@@ -149,3 +149,5 @@ contentKeyStore:
   alias: basekey
 
 rowHmacCheck: enforced
+
+flywaySchemaTable: schema_version
