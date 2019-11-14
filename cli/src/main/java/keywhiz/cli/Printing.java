@@ -25,6 +25,8 @@ import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.GroupDetailResponse;
@@ -56,7 +58,8 @@ public class Printing {
     if (clientDetails.lastSeen == null) {
       System.out.println("\tLast Seen: never");
     } else {
-      String lastSeen = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date (clientDetails.lastSeen.toEpochSecond()*1000));
+      String lastSeen = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(
+          new Date(clientDetails.lastSeen.toEpochSecond() * 1000));
       System.out.printf("\tLast Seen: %s%n", lastSeen);
     }
 
@@ -221,21 +224,22 @@ public class Printing {
         .forEach(s -> System.out.println(SanitizedSecret.displayName(s)));
   }
 
-  public void printSecretVersions(List<SanitizedSecret> versions, Long currentVersion) {
+  public void printSecretVersions(List<SanitizedSecret> versions, Optional<Long> currentVersion) {
     if (versions.isEmpty()) {
       return;
     }
 
     System.out.println(versions.get(0).name() + '\n');
 
-    if (currentVersion < 0) {
+    if (currentVersion.isEmpty()) {
       System.out.println("Current secret version unknown!");
     }
 
     for (SanitizedSecret secret : versions) {
       if (secret.version().isPresent()) {
-        if (secret.version().get().equals(currentVersion)) {
-          System.out.println(String.format("*** Current secret version id: %d ***", secret.version().get()));
+        if (currentVersion.isPresent() && secret.version().get().equals(currentVersion.get())) {
+          System.out.println(
+              String.format("*** Current secret version id: %d ***", secret.version().get()));
         } else {
           System.out.println(String.format("Version id for rollback: %d", secret.version().get()));
         }
@@ -249,15 +253,17 @@ public class Printing {
               DateFormat.getDateTimeInstance()
                   .format(new Date(secret.contentCreatedAt().get().toEpochSecond() * 1000))));
         } else {
-          System.out.println(INDENT + String.format("Created by %s on %s", secret.createdBy(),
-              DateFormat.getDateTimeInstance()
-                  .format(new Date(secret.contentCreatedAt().get().toEpochSecond() * 1000))));
+          System.out.println(
+              INDENT + String.format("Created by %s on %s", secret.contentCreatedBy(),
+                  DateFormat.getDateTimeInstance()
+                      .format(new Date(secret.contentCreatedAt().get().toEpochSecond() * 1000))));
         }
       } else {
         if (secret.contentCreatedBy().isEmpty()) {
           System.out.println(INDENT + "Creator and creation date unknown");
         } else {
-          System.out.println(INDENT + String.format("Created by %s (date unknown)", secret.contentCreatedBy()));
+          System.out.println(
+              INDENT + String.format("Created by %s (date unknown)", secret.contentCreatedBy()));
         }
       }
 
@@ -266,6 +272,10 @@ public class Printing {
       } else {
         System.out.println(INDENT + String.format("Expires on %s", DateFormat.getDateTimeInstance()
             .format(new Date(secret.expiry() * 1000))));
+      }
+
+      if (!secret.metadata().isEmpty()) {
+        System.out.println(INDENT + String.format("Metadata: %s", secret.metadata()));
       }
 
       if (!secret.checksum().isEmpty()) {

@@ -78,6 +78,18 @@ public class RollbackActionTest {
   }
 
   @Test
+  public void rollbackCallsRollbackWithNegativeId() throws Exception {
+    rollbackAction.inputStream = yes;
+    rollbackActionConfig.name = secret.getDisplayName();
+    rollbackActionConfig.id = -1L;
+
+    when(keywhizClient.getSanitizedSecretByName(secret.getName())).thenReturn(sanitizedSecret);
+
+    rollbackAction.run();
+    verify(keywhizClient).rollbackSecret(sanitizedSecret.name(), rollbackActionConfig.id);
+  }
+
+  @Test
   public void rollbackSkipsWithoutConfirmation() throws Exception {
     rollbackAction.inputStream = no;
     rollbackActionConfig.name = secret.getDisplayName();
