@@ -23,7 +23,7 @@ public class RollbackAction implements Runnable {
 
   private final RollbackActionConfig rollbackActionConfig;
   private final KeywhizClient keywhizClient;
-  
+
   @VisibleForTesting
   InputStream inputStream = System.in;
 
@@ -39,9 +39,9 @@ public class RollbackAction implements Runnable {
             format("Invalid name, must match %s", VALID_NAME_PATTERN));
       }
 
-      if (rollbackActionConfig.id == null || rollbackActionConfig.id < 0) {
+      if (rollbackActionConfig.id == null) {
         throw new IllegalArgumentException(
-            "Version ID must be specified and non-negative for rollback.  List the secret's versions to view IDs.");
+            "Version ID must be specified for rollback.  List the secret's versions to view IDs.");
       }
 
       SanitizedSecret sanitizedSecret =

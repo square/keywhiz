@@ -37,8 +37,7 @@ public class ListVersionsAction implements Runnable {
       List<SanitizedSecret> versions =
           keywhizClient.listSecretVersions(sanitizedSecret.name(),
               listVersionsActionConfig.idx, listVersionsActionConfig.number);
-      // The current version can never be negative
-      printing.printSecretVersions(versions, sanitizedSecret.version().orElse(-1L));
+      printing.printSecretVersions(versions, sanitizedSecret.version());
     } catch (NotFoundException e) {
       throw new AssertionError("Secret does not exist: " + listVersionsActionConfig.name);
     } catch (IOException e) {
