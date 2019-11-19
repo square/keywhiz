@@ -43,7 +43,7 @@
 # Note that for a production deployment, you'll probably want to setup
 # your own config to make sure you're not using development secrets.
 #
-FROM maven:3.5-jdk-11
+FROM maven:3.6-jdk-11
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends --no-upgrade \
