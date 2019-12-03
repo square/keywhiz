@@ -194,7 +194,7 @@
       <dependency>
         <groupId>com.unboundid</groupId>
         <artifactId>unboundid-ldapsdk</artifactId>
-        <version>4.0.12</version>
+        <version>4.0.13</version>
       </dependency>
       <dependency>
         <groupId>io.dropwizard</groupId>
