@@ -18,7 +18,6 @@ package keywhiz.model;
 
 import java.sql.Timestamp;
 import java.util.TimeZone;
-
 import org.junit.Before;
 import org.junit.Test;
 

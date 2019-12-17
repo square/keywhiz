@@ -3,10 +3,9 @@ package keywhiz.api.automation.v2;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import java.util.Optional;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
-
-import java.util.Optional;
 
 @AutoValue public abstract class ClientDetailResponseV2 {
   ClientDetailResponseV2() {} // prevent sub-classing

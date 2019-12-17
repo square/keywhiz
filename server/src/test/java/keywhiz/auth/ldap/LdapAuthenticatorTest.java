@@ -29,7 +29,6 @@ import keywhiz.auth.User;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
 import static org.assertj.core.api.Assertions.assertThat;

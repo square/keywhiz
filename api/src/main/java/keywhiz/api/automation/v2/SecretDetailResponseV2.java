@@ -7,7 +7,6 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import javax.annotation.Nullable;
-import keywhiz.api.ApiDate;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SecretSeriesAndContent;
 

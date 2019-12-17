@@ -24,7 +24,6 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
 import keywhiz.service.daos.AclDAO;
-import keywhiz.service.daos.ClientDAO;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

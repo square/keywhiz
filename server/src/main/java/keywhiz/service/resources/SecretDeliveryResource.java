@@ -16,11 +16,10 @@
 
 package keywhiz.service.resources;
 
-import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import io.dropwizard.auth.Auth;
-
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.ws.rs.ForbiddenException;

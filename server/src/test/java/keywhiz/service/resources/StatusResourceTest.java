@@ -3,12 +3,9 @@ package keywhiz.service.resources;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import io.dropwizard.setup.Environment;
-
 import java.time.Duration;
 import java.util.TreeMap;
-import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.core.Response;
-
 import keywhiz.KeywhizConfig;
 import org.junit.Before;
 import org.junit.Test;

@@ -6,10 +6,9 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-
-import javax.annotation.Nullable;
 import java.util.Base64;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A request to update a secret which explicitly indicates which of its fields are

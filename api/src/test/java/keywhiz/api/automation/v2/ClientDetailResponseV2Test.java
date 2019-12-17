@@ -17,12 +17,9 @@
 package keywhiz.api.automation.v2;
 
 import java.time.OffsetDateTime;
-import java.util.Date;
 import java.util.Optional;
-
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
-import org.joda.time.DateTime;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;

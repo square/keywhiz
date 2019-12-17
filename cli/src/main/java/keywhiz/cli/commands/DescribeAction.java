@@ -18,7 +18,6 @@ package keywhiz.cli.commands;
 
 import com.google.common.base.Throwables;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;

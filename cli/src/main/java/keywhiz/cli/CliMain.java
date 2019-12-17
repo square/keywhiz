@@ -21,8 +21,17 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.util.Map;
-
-import keywhiz.cli.configs.*;
+import keywhiz.cli.configs.AddActionConfig;
+import keywhiz.cli.configs.AssignActionConfig;
+import keywhiz.cli.configs.CliConfiguration;
+import keywhiz.cli.configs.DeleteActionConfig;
+import keywhiz.cli.configs.DescribeActionConfig;
+import keywhiz.cli.configs.ListActionConfig;
+import keywhiz.cli.configs.ListVersionsActionConfig;
+import keywhiz.cli.configs.LoginActionConfig;
+import keywhiz.cli.configs.RollbackActionConfig;
+import keywhiz.cli.configs.UnassignActionConfig;
+import keywhiz.cli.configs.UpdateActionConfig;
 
 /** Keywhiz ACL Command Line Management Utility */
 public class CliMain {

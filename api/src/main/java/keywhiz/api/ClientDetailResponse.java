@@ -18,11 +18,10 @@ package keywhiz.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
+import javax.annotation.Nullable;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
-
-import javax.annotation.Nullable;
 
 public class ClientDetailResponse {
   @JsonProperty

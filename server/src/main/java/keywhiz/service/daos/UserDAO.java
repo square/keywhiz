@@ -20,7 +20,6 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import keywhiz.auth.bcrypt.BcryptAuthenticator;
 import org.jooq.DSLContext;
-import org.mindrot.jbcrypt.BCrypt;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Users.USERS;

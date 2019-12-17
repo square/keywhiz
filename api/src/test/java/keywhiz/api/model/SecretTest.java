@@ -16,7 +16,6 @@
 package keywhiz.api.model;
 
 import java.util.Base64;
-
 import keywhiz.api.ApiDate;
 import org.junit.Test;
 
