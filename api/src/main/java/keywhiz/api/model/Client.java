@@ -19,7 +19,6 @@ package keywhiz.api.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import java.time.Instant;
 import javax.annotation.Nullable;
 import keywhiz.api.ApiDate;
 

@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SanitizedSecret;
-import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;

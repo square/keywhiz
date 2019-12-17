@@ -6,12 +6,10 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import keywhiz.api.validation.ValidBase64;
-
-import javax.annotation.Nullable;
 import java.util.Base64;
 import java.util.Map;
+import javax.annotation.Nullable;
+import keywhiz.api.validation.ValidBase64;
 
 @AutoValue public abstract class CreateOrUpdateSecretRequestV2 {
   CreateOrUpdateSecretRequestV2() {} // prevent sub-classing

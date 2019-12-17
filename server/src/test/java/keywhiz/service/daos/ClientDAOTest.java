@@ -18,8 +18,6 @@ package keywhiz.service.daos;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalField;
 import java.util.Set;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
@@ -32,7 +30,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static java.time.temporal.ChronoField.MILLI_OF_SECOND;
 import static java.time.temporal.ChronoField.NANO_OF_SECOND;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static org.assertj.core.api.Assertions.assertThat;

@@ -37,8 +37,6 @@ import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
-import keywhiz.jooq.tables.records.AccessgrantsRecord;
-import keywhiz.jooq.tables.records.MembershipsRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;

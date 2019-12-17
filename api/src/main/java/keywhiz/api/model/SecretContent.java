@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import keywhiz.api.ApiDate;
 

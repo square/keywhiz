@@ -22,8 +22,6 @@ import com.google.auto.value.AutoValue;
 import java.util.List;
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * {@link Secret} object, but without the secret content and with group metadata, and
  * a cursor that can be used to retrieve the next secrets in a list ordered by expiration and name

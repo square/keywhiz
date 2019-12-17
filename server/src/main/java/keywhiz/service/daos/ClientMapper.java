@@ -16,11 +16,11 @@
 
 package keywhiz.service.daos;
 
+import java.util.Optional;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import org.jooq.RecordMapper;
-import java.util.Optional;
 
 /**
  * Jooq has the ability to map records to classes using Reflection. We however need a mapper because
