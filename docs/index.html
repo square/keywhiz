@@ -66,8 +66,8 @@
                 TLS (mTLS) to retrieve secrets they have access to. Authenticated users administer
                 Keywhiz via CLI. To enable workflows, Keywhiz has automation APIs over mTLS.</p>
 
-            <p><em>Keywhiz is reliable and used in production, however some upcoming changes may
-                break API backward compatibility. See our <a href="#roadmap">roadmap</a>.</em></p>
+            <p><em>Keywhiz is reliable and used in production, however occasional changes may
+                break API backward compatibility.</em></p>
 
             <h3 id="components">System components</h3>
             <h4>Keywhiz Server</h4>
@@ -75,23 +75,20 @@
                 managing secrets. It is written in Java and based on
                 <a href="http://dropwizard.io/">Dropwizard</a>.</p>
 
-            <h4>KeywhizFs</h4>
-            <p><a href="https://github.com/square/keywhiz-fs">KeywhizFs</a> is a
-                <a href="http://fuse.sourceforge.net/">FUSE</a>-based file system, providing secrets
-                as if they are files in a directory. Transparently, secrets are retrieved from a
-                Keywhiz Server using mTLS with a client certificate.<p>
+            <h4>Keysync</h4>
+            <p><a href="https://github.com/square/keysync">Keysync</a> is a Keywhiz client that retrieves
+              secrets from a Keywhiz Server using mTLS with a client certificate and stores them in tmpfs.
 
             <p>Presenting secrets as files makes Keywhiz compatible with nearly all software.
                 Outside of Keywhiz administration, consumers of secrets only have to know how to
                 read a file.</p>
 
-            <p>KeywhizFs stores all secrets in memory only and never persisted to disk. If KeywhizFs
-                is unmounted or the server loses power, all secrets will be safely removed from that
-                server.</p>
+            <p>Keysync stores all secrets in memory only (via tmpfs) and never persists them to disk.
+              If the server loses power, all secrets will be safely removed from that server.</p>
 
-            <p>To mitigate a Keywhiz Server outage, KeywhizFs maintains a local cache of previously
-                accessed secrets. Unless the server is rebooted or KeywhizFs unmounted, applications
-                can happily continue accessing secrets previously accessed.</p>
+            <p>Keysync's design mitigates a Keywhiz Server outage, since all necessary secrets are stored
+              locally, and can be accessed even if Keysync process is restarted. The full sync of secrets
+              is only necessary in the event of a server reboot.</p>
 
             <h4>Keywhiz CLI</h4>
             <p>Keywhiz CLI is a Java program for Keywhiz administration. Clients, secrets, and
@@ -129,13 +126,13 @@
 
             <h3 id="setup">Setup</h3>
             <p>Source code for the Server and CLI is available in
-                <a href="https://github.com/square/keywhiz">square/keywhiz</a>. KeywhizFs source is
-                in <a href="https://github.com/square/keywhiz-fs">square/keywhiz-fs</a>. To checkout
+                <a href="https://github.com/square/keywhiz">square/keywhiz</a>. Keysync source is
+                in <a href="https://github.com/square/keysync">square/keysync</a>. To checkout
                 the Keywhiz source code:</p>
             <pre class="prettyprint">$ git clone https://github.com/square/keywhiz.git &amp;&amp; cd keywhiz</pre>
 
             <h4>Starting the Server</h4>
-            <p>Keywhiz stores data in MySQL
+            <p>Keywhiz stores data in MySQL and requires version 5.7 or higher.
 
             <p>From the base of the keywhiz repository, build the server:</p>
             <pre class="prettyprint">$ mvn package -am -pl server</pre>
@@ -163,8 +160,8 @@ $ java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar migrate server/sr
             <p>You may want to alias this command for convenience:</p>
             <pre class="prettyprint">$ alias keywhiz.cli="/path/to/keywhiz-cli-*-SNAPSHOT-shaded.jar"</pre>
 
-            <h4>Mounting KeywhizFs</h4>
-            <p>Refer to the KeywhizFs <a href="https://github.com/square/keywhiz-fs/blob/master/README.md">README</a>.</p>
+            <h4>Setting-up Keysync</h4>
+            <p>Refer to the Keysync <a href="https://github.com/square/keysync/blob/master/README.md">README</a>.</p>
 
             <h3 id="examples">Examples</h3>
             <p>More examples are available in the
@@ -209,14 +206,6 @@ $ curl --cert ./server/src/test/resources/clients/client.p12:ponies -H "Content-
             <p>Source code for Keywhiz and this website is
                 <a href="https://github.com/square/keywhiz">available on GitHub</a>.</p>
 
-            <h3 id="roadmap">Roadmap</h3>
-            <h4>Upcoming features</h4>
-            <ul>
-              <li>Replace KeywhizFS to remove FUSE reliance</li>
-              <li>Redesigned, more coherent APIs</li>
-              <li>Database integrity checks</li>
-            </ul>
-
             <h3 id="contributing">Contributing</h3>
 
             <p>If you would like to contribute code to Keywhiz you can do so through GitHub by
@@ -224,10 +213,11 @@ $ curl --cert ./server/src/test/resources/clients/client.p12:ponies -H "Content-
 
             <p>When submitting code, please make every effort to follow existing conventions
             and style in order to keep the code as readable as possible. Please also make
-            sure your code compiles and passes tests by running <code>mvn clean verify</code>.
+            sure your code compiles and passes tests by running <code>mvn clean verify</code>.</p>
 
             <p>Before your code can be accepted into the project you must also sign the
-            <a href="https://spreadsheets.google.com/spreadsheet/viewform?formkey=dDViT2xzUHAwRkI3X3k5Z0lQM091OGc6MQ&ndplr=1">Individual Contributor License Agreement (CLA)</a>.
+            Individual Contributor License Agreement. We use <a href="https://cla-assistant.io/">cla-assistant.io</a> and you
+            will be prompted to sign once a pull request is opened.</p>
 
             <h3 id="license">License</h3>
             <pre>Copyright 2015 Square, Inc.
@@ -253,7 +243,6 @@ limitations under the License.</pre>
                 <li><a href="#setup">Setup</a></li>
                 <li><a href="#examples">Examples</a></li>
                 <li><a href="#download">Download</a></li>
-                <li><a href="#roadmap">Roadmap</a></li>
                 <li><a href="#contributing">Contributing</a></li>
                 <li><a href="#license">License</a></li>
               </ul>

@@ -12,15 +12,17 @@ reading, as it provides some useful context.
 
 ## Develop
 
+Keywhiz requires Java 11 and MySQL 5.7 or higher.
+
 See [CONTRIBUTING](CONTRIBUTING.md) for details on submitting patches.
 
-Build keywhiz: 
+Build Keywhiz:
 
     mvn install
 
 Run Keywhiz:
 
-    java -jar server/target/keywhiz-server-*-shaded.jar [COMMAND] [OPTIONS] 
+    java -jar server/target/keywhiz-server-*-shaded.jar [COMMAND] [OPTIONS]
 
 Useful commands to get started are `migrate`, `add-user` and `server`. Use with
 `--help` for a list of all available commands. Use with `[COMMAND] --help` to
@@ -62,20 +64,15 @@ If you made changes to the database model and want to regenerate sources:
 
     mvn install -pl model/ -Pgenerate-jooq-sources
 
-We recommend [IntelliJ IDEA](https://www.jetbrains.com/idea/) for development. 
+We recommend [IntelliJ IDEA](https://www.jetbrains.com/idea/) for development.
 
 ## Clients & API
 
-[Swagger API documentation](https://square.github.io/keywhiz/apidocs)
-
-Client implementations maintained by Square:
-
-* [Keywhiz-FS](https://github.com/square/keywhiz-fs): a FUSE driver for exposing Keywhiz secrets as a filesystem. In maintenance mode.
-* [Keysync](https://github.com/square/keysync): next-generation replacement for Keywhiz-FS based on tmpfs instead of FUSE.
+Square also maintains a Keywhiz client implementation called [Keysync](https://github.com/square/keysync).
 
 ## Docker
 
-We ship a [Dockerfile](Dockerfile) for building a Docker container for keywhiz.
+We ship a [Dockerfile](Dockerfile) for building a Docker container for Keywhiz.
 Please see the Dockerfile for extra instructions.
 
 ## License
@@ -83,4 +80,4 @@ Please see the Dockerfile for extra instructions.
 Keywhiz is under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
 
 [1]: https://square.github.io/keywhiz
-[2]: https://corner.squareup.com/2015/04/keywhiz.html
+[2]: https://developer.squareup.com/blog/protecting-infrastructure-secrets-with-keywhiz
