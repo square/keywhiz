@@ -189,7 +189,7 @@
       <dependency>
         <groupId>com.squareup.okhttp3</groupId>
         <artifactId>okhttp-urlconnection</artifactId>
-        <version>3.14.5</version>
+        <version>3.14.6</version>
       </dependency>
       <dependency>
         <groupId>com.unboundid</groupId>
