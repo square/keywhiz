@@ -42,7 +42,7 @@
     <dropwizard-raven.version>1.2.0-1</dropwizard-raven.version>
     <guice.version>4.2.2</guice.version>
     <jackson.version>2.10.2</jackson.version>
-    <jackson.databind.version>2.9.10.1</jackson.databind.version>
+    <jackson.databind.version>2.9.10.3</jackson.databind.version>
     <jooq.version>3.12.3</jooq.version>
     <powermock.version>1.7.4</powermock.version>
     <slf4j.version>1.7.30</slf4j.version>
