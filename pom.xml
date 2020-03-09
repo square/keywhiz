@@ -286,7 +286,7 @@
       <dependency>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-core</artifactId>
-        <version>6.2.4</version>
+        <version>6.3.0</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate</groupId>
