@@ -43,7 +43,7 @@
     <guice.version>4.2.3</guice.version>
     <jackson.version>2.10.3</jackson.version>
     <jackson.databind.version>2.9.10.4</jackson.databind.version>
-    <jooq.version>3.12.3</jooq.version>
+    <jooq.version>3.13.2</jooq.version>
     <powermock.version>1.7.4</powermock.version>
     <slf4j.version>1.7.30</slf4j.version>
     <mysql.version>8.0.16</mysql.version>
