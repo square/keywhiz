@@ -50,7 +50,8 @@ public class AutomationGroupResourceTest {
   @Mock AclDAO aclDAO;
   ApiDate now = ApiDate.now();
   AutomationClient automation = AutomationClient.of(
-      new Client(1, "automation", "Automation client", now, "test", now, "test", null, null, true, true));
+      new Client(1, "automation", "Automation client", null, now, "test", now, "test", null, null, true,
+          true));
   AuditLog auditLog = new SimpleLogger();
 
   AutomationGroupResource resource;
@@ -89,7 +90,8 @@ public class AutomationGroupResourceTest {
     Group group = new Group(50, "testGroup", "testing group", now, "automation client", now,
         "automation client", ImmutableMap.of("app", "keywhiz"));
     Client groupClient =
-        new Client(1, "firstClient", "Group client", now, "test", now, "test", null, null, true, true);
+        new Client(1, "firstClient", "Group client", null, now, "test", now, "test", null, null, true,
+            true);
     SanitizedSecret firstGroupSecret =
         SanitizedSecret.of(1, "name1", "desc", "checksum", now, "test", now, "test", null, "", null, 1136214245, 125L, now, "test");
     SanitizedSecret secondGroupSecret =

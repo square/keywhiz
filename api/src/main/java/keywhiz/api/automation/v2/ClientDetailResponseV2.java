@@ -7,8 +7,11 @@ import java.util.Optional;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 
+import static com.google.common.base.Strings.nullToEmpty;
+
 @AutoValue public abstract class ClientDetailResponseV2 {
-  ClientDetailResponseV2() {} // prevent sub-classing
+  ClientDetailResponseV2() {
+  } // prevent sub-classing
 
   public static ClientDetailResponseV2 fromClient(Client client) {
     Optional<ApiDate> lastSeen = Optional.ofNullable(client.getLastSeen());
@@ -16,6 +19,7 @@ import keywhiz.api.model.Client;
     return new AutoValue_ClientDetailResponseV2(
         client.getName(),
         client.getDescription(),
+        nullToEmpty(client.getSpiffeId()),
         client.getCreatedAt().toEpochSecond(),
         client.getUpdatedAt().toEpochSecond(),
         client.getCreatedBy(),
@@ -31,19 +35,29 @@ import keywhiz.api.model.Client;
   @JsonCreator public static ClientDetailResponseV2 fromParts(
       @JsonProperty("name") String name,
       @JsonProperty("description") String description,
+      @JsonProperty("spiffeId") String spiffeId,
       @JsonProperty("createdAtSeconds") long createdAtSeconds,
       @JsonProperty("updatedAtSeconds") long updatedAtSeconds,
       @JsonProperty("createdBy") String createdBy,
       @JsonProperty("updatedBy") String updatedBy,
       @JsonProperty("lastSeenSeconds") Optional<Long> lastSeenSeconds) {
-    return new AutoValue_ClientDetailResponseV2(name, description, createdAtSeconds, updatedAtSeconds, createdBy, updatedBy, lastSeenSeconds);
+    return new AutoValue_ClientDetailResponseV2(name, description, spiffeId, createdAtSeconds,
+        updatedAtSeconds, createdBy, updatedBy, lastSeenSeconds);
   }
 
   @JsonProperty("name") public abstract String name();
+
   @JsonProperty("description") public abstract String description();
+
+  @JsonProperty("spiffeId") public abstract String spiffeId();
+
   @JsonProperty("createdAtSeconds") public abstract long createdAtSeconds();
+
   @JsonProperty("updatedAtSeconds") public abstract long updatedAtSeconds();
+
   @JsonProperty("createdBy") public abstract String createdBy();
+
   @JsonProperty("updatedBy") public abstract String updatedBy();
+
   @JsonProperty("lastSeenSeconds") public abstract Optional<Long> lastSeenSeconds();
 }

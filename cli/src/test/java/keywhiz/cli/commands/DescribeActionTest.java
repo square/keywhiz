@@ -75,7 +75,8 @@ public class DescribeActionTest {
     describeActionConfig.describeType = Arrays.asList("client");
     describeActionConfig.name = "client-name";
 
-    Client client = new Client(0, describeActionConfig.name, null, null, null, null, null, null, null, false, false);
+    Client client = new Client(0, describeActionConfig.name, null, null, null, null, null, null, null,
+        null, false, false);
     when(keywhizClient.getClientByName(describeActionConfig.name)).thenReturn(client);
 
     describeAction.run();

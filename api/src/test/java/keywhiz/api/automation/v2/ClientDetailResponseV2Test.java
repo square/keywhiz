@@ -31,12 +31,13 @@ public class ClientDetailResponseV2Test {
     ClientDetailResponseV2 clientDetailResponse = new AutoValue_ClientDetailResponseV2(
         "Client Name",
         "Client Description",
+        "spiffe//example.org/client-name",
         OffsetDateTime.parse("2012-08-01T13:15:30Z").toEpochSecond(),
         OffsetDateTime.parse("2012-09-10T03:15:30Z").toEpochSecond(),
         "creator-user",
         "updater-user",
         Optional.of(OffsetDateTime.parse("2012-09-10T03:15:30Z").toEpochSecond())
-        );
+    );
 
     assertThat(asJson(clientDetailResponse))
         .isEqualTo(jsonFixture("fixtures/v2/clientDetailResponse.json"));
@@ -46,8 +47,9 @@ public class ClientDetailResponseV2Test {
     ApiDate createdAt = new ApiDate(1343826930);
     ApiDate updatedAt = new ApiDate(1347246930);
 
-    Client client = new Client(0, "Client Name", "Client Description", createdAt, "creator-user",
-        updatedAt, "updater-user", null, null, true, false);
+    Client client = new Client(0, "Client Name", "Client Description", null, createdAt,
+        "creator-user", updatedAt, "updater-user", null, null, true, false
+    );
     ClientDetailResponseV2 clientDetailResponse = ClientDetailResponseV2.fromClient(client);
 
     assertThat(asJson(clientDetailResponse))

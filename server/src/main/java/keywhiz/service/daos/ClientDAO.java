@@ -53,13 +53,14 @@ public class ClientDAO {
   private final RowHmacGenerator rowHmacGenerator;
 
   private ClientDAO(DSLContext dslContext, ClientMapper clientMapper,
-                    RowHmacGenerator rowHmacGenerator) {
+      RowHmacGenerator rowHmacGenerator) {
     this.dslContext = dslContext;
     this.clientMapper = clientMapper;
     this.rowHmacGenerator = rowHmacGenerator;
   }
 
-  public long createClient(String name, String user, String description) {
+  public long createClient(String name, String user, String description,
+      @Nullable String spiffeId) {
     ClientsRecord r = dslContext.newRecord(CLIENTS);
 
     long now = OffsetDateTime.now().toEpochSecond();
@@ -78,6 +79,7 @@ public class ClientDAO {
     r.setDescription(description);
     r.setEnabled(true);
     r.setAutomationallowed(false);
+    r.setSpiffeId(spiffeId);
     r.setRowHmac(rowHmac);
     r.store();
 

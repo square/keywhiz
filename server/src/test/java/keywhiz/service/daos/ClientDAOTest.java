@@ -62,15 +62,19 @@ public class ClientDAOTest {
 
   @Test public void createClient() {
     int before = tableSize();
-    clientDAO.createClient("newClient", "creator", "");
+    clientDAO.createClient("newClient", "creator", "",
+        "spiffe://test.env.com/newClient");
     Client newClient = clientDAO.getClient("newClient").orElseThrow(RuntimeException::new);
 
     assertThat(tableSize()).isEqualTo(before + 1);
     assertThat(clientDAO.getClients()).containsOnly(client1, client2, newClient);
+
+    assertThat(newClient.getCreatedBy()).isEqualTo("creator");
+    assertThat(newClient.getSpiffeId()).isEqualTo("spiffe://test.env.com/newClient");
   }
 
   @Test public void createClientReturnsId() {
-    long id = clientDAO.createClient("newClientWithSameId", "creator2", "");
+    long id = clientDAO.createClient("newClientWithSameId", "creator2", "", "");
     Client clientById = clientDAO.getClient("newClientWithSameId")
         .orElseThrow(RuntimeException::new);
     assertThat(clientById.getId()).isEqualTo(id);

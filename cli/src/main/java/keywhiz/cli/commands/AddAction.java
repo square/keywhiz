@@ -107,7 +107,7 @@ public class AddAction implements Runnable {
           throw Throwables.propagate(e);
         }
         try {
-          keywhizClient.createClient(name);
+          keywhizClient.createClient(name, config.getDescription(), config.getSpiffeId());
           logger.info("Creating client '{}'.", name);
         } catch (IOException e) {
           throw Throwables.propagate(e);

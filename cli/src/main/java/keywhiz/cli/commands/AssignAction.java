@@ -78,7 +78,7 @@ public class AssignAction implements Runnable {
 
         if (createClient) {
           try {
-            keywhizClient.createClient(assignActionConfig.name);
+            keywhizClient.createClient(assignActionConfig.name, "", "");
             client = keywhizClient.getClientByName(assignActionConfig.name);
           } catch (IOException e) {
             throw Throwables.propagate(e);

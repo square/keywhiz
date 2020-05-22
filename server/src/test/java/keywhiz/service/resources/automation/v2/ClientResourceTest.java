@@ -7,6 +7,7 @@ import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
@@ -44,10 +45,20 @@ public class ClientResourceTest {
   }
 
   @Test public void createClient_success() throws Exception {
-    Response httpResponse = create(CreateClientRequestV2.builder().name("client1").build());
+    Response httpResponse = create(CreateClientRequestV2.builder()
+        .name("client1")
+        .description("description")
+        .spiffeId("spiffe//example.org/client1")
+        .build());
     assertThat(httpResponse.code()).isEqualTo(201);
-    URI location = URI.create(httpResponse.header(LOCATION));
+    URI location = URI.create(Objects.requireNonNull(httpResponse.header(LOCATION)));
     assertThat(location.getPath()).isEqualTo("/automation/v2/clients/client1");
+
+    ClientDetailResponseV2 clientDetail = lookup("client1");
+    assertThat(clientDetail.name()).isEqualTo("client1");
+    assertThat(clientDetail.description()).isEqualTo("description");
+    assertThat(clientDetail.createdBy()).isEqualTo(clientDetail.updatedBy()).isEqualTo("client");
+    assertThat(clientDetail.spiffeId()).isEqualTo("spiffe//example.org/client1");
   }
 
   @Test public void createClient_duplicate() throws Exception {
@@ -59,6 +70,13 @@ public class ClientResourceTest {
     // Duplicate request fails
     Response httpResponse = create(request);
     assertThat(httpResponse.code()).isEqualTo(409);
+
+    // The client was created by the first request
+    ClientDetailResponseV2 clientDetail = lookup("client2");
+    assertThat(clientDetail.name()).isEqualTo("client2");
+    assertThat(clientDetail.description()).isEmpty();
+    assertThat(clientDetail.createdBy()).isEqualTo(clientDetail.updatedBy()).isEqualTo("client");
+    assertThat(clientDetail.spiffeId()).isEmpty();
   }
 
   @Test public void clientInfo_notFound() throws Exception {

@@ -26,16 +26,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ClientTest {
   @Test public void serializesCorrectly() throws Exception {
     Client client = new Client(200,
-                               "someClient",
-                               "clientDesc",
-                               ApiDate.parse("2013-03-28T21:29:27.465Z"),
-                               "keywhizAdmin",
-                               ApiDate.parse("2013-03-28T21:29:27.465Z"),
-                               "keywhizAdmin",
-                                null,
-                                null,
-                                true,
-                                false
+        "someClient",
+        "clientDesc",
+        null,
+        ApiDate.parse("2013-03-28T21:29:27.465Z"),
+        "keywhizAdmin",
+        ApiDate.parse("2013-03-28T21:29:27.465Z"),
+        "keywhizAdmin",
+        null,
+        null,
+        true,
+        false
     );
 
     assertThat(asJson(client)).isEqualTo(jsonFixture("fixtures/client.json"));

@@ -54,14 +54,6 @@ public class Printing {
       throw Throwables.propagate(e);
     }
 
-    if (clientDetails.lastSeen == null) {
-      System.out.println("\tLast Seen: never");
-    } else {
-      String lastSeen = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(
-          new Date(clientDetails.lastSeen.toEpochSecond() * 1000));
-      System.out.printf("\tLast Seen: %s%n", lastSeen);
-    }
-
     System.out.println("\tGroups:");
     clientDetails.groups.stream()
         .sorted(Comparator.comparing(Group::getName))
@@ -71,6 +63,42 @@ public class Printing {
     clientDetails.secrets.stream()
         .sorted(Comparator.comparing(SanitizedSecret::name))
         .forEach(s -> System.out.println(INDENT + SanitizedSecret.displayName(s)));
+
+    if (clientDetails.lastSeen == null) {
+      System.out.println("\tLast Seen: never");
+    } else {
+      String lastSeen = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(
+          new Date(clientDetails.lastSeen.toEpochSecond() * 1000));
+      System.out.printf("\tLast Seen: %s%n", lastSeen);
+    }
+
+    if (!clientDetails.description.isEmpty()) {
+      System.out.println("\tDescription:");
+      System.out.println(INDENT + clientDetails.description);
+    }
+
+    if (clientDetails.spiffeId != null && !clientDetails.spiffeId.isEmpty()) {
+      System.out.println("\tSpiffe URI:");
+      System.out.println(INDENT + clientDetails.spiffeId);
+    }
+
+    if (!clientDetails.createdBy.isEmpty()) {
+      System.out.println("\tCreated by:");
+      System.out.println(INDENT + clientDetails.createdBy);
+    }
+
+    System.out.println("\tCreated at:");
+    Date d = new Date(clientDetails.creationDate.toEpochSecond() * 1000);
+    System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
+
+    if (!clientDetails.updatedBy.isEmpty()) {
+      System.out.println("\tUpdated by:");
+      System.out.println(INDENT + clientDetails.updatedBy);
+    }
+
+    System.out.println("\tUpdated at:");
+    d = new Date(clientDetails.updateDate.toEpochSecond() * 1000);
+    System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
   }
 
   public void printGroupWithDetails(Group group) {

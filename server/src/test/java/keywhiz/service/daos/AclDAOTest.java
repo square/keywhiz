@@ -70,10 +70,10 @@ public class AclDAOTest {
     groupDAO = groupDAOFactory.readwrite();
     aclDAO = aclDAOFactory.readwrite();
 
-    long id = clientDAO.createClient("client1", "creator", "");
+    long id = clientDAO.createClient("client1", "creator", "", "");
     client1 = clientDAO.getClientById(id).get();
 
-    id = clientDAO.createClient("client2", "creator", "");
+    id = clientDAO.createClient("client2", "creator", "", "");
     client2 = clientDAO.getClientById(id).get();
 
     id = groupDAO.createGroup("group1", "creator", "", ImmutableMap.of());
