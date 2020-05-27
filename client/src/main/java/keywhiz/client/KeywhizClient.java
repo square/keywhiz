@@ -24,12 +24,12 @@ import java.util.Base64;
 import java.util.List;
 import javax.ws.rs.core.HttpHeaders;
 import keywhiz.api.ClientDetailResponse;
-import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.GroupDetailResponse;
 import keywhiz.api.LoginRequest;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.automation.v2.CreateClientRequestV2;
 import keywhiz.api.automation.v2.CreateGroupRequestV2;
+import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
@@ -174,8 +174,14 @@ public class KeywhizClient {
     checkArgument(content.length > 0, "Content must not be empty");
 
     String b64Content = Base64.getEncoder().encodeToString(content);
-    CreateSecretRequest request =
-        new CreateSecretRequest(name, description, b64Content, metadata, expiry);
+    CreateSecretRequestV2 request =
+        CreateSecretRequestV2.builder()
+            .name(name)
+            .description(description)
+            .content(b64Content)
+            .metadata(metadata)
+            .expiry(expiry)
+            .build();
     String response = httpPost(baseUrl.resolve("/admin/secrets"), request);
     return mapper.readValue(response, SecretDetailResponse.class);
   }
