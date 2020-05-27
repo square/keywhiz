@@ -24,12 +24,12 @@ import java.util.Base64;
 import java.util.List;
 import javax.ws.rs.core.HttpHeaders;
 import keywhiz.api.ClientDetailResponse;
-import keywhiz.api.CreateGroupRequest;
 import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.GroupDetailResponse;
 import keywhiz.api.LoginRequest;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.automation.v2.CreateClientRequestV2;
+import keywhiz.api.automation.v2.CreateGroupRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
@@ -137,7 +137,11 @@ public class KeywhizClient {
       ImmutableMap<String, String> metadata) throws IOException {
     checkArgument(!name.isEmpty());
     String response = httpPost(baseUrl.resolve("/admin/groups"),
-        new CreateGroupRequest(name, description, metadata));
+        CreateGroupRequestV2.builder()
+            .name(name)
+            .description(description)
+            .metadata(metadata)
+            .build());
     return mapper.readValue(response, GroupDetailResponse.class);
   }
 

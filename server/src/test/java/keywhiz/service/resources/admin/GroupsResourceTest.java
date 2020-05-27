@@ -24,8 +24,8 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import keywhiz.api.ApiDate;
-import keywhiz.api.CreateGroupRequest;
 import keywhiz.api.GroupDetailResponse;
+import keywhiz.api.automation.v2.CreateGroupRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -75,8 +75,12 @@ public class GroupsResourceTest {
   }
 
   @Test public void createsGroup() {
-    CreateGroupRequest request =
-        new CreateGroupRequest("newGroup", "description", ImmutableMap.of("app", "app"));
+    CreateGroupRequestV2 request =
+        CreateGroupRequestV2.builder()
+            .name("newGroup")
+            .description("description")
+            .metadata(ImmutableMap.of("app", "app"))
+            .build();
     when(groupDAO.getGroup("newGroup")).thenReturn(Optional.empty());
     when(groupDAO.createGroup("newGroup", "user", "description",
         ImmutableMap.of("app", "app"))).thenReturn(55L);
@@ -89,8 +93,12 @@ public class GroupsResourceTest {
 
   @Test(expected = BadRequestException.class)
   public void rejectsWhenGroupExists() {
-    CreateGroupRequest request =
-        new CreateGroupRequest("newGroup", "description", ImmutableMap.of("app", "app"));
+    CreateGroupRequestV2 request =
+        CreateGroupRequestV2.builder()
+            .name("newGroup")
+            .description("description")
+            .metadata(ImmutableMap.of("app", "app"))
+            .build();
     Group group = new Group(3, "newGroup", "desc", now, "creator", now, "updater",
         ImmutableMap.of("app", "app"));
     when(groupDAO.getGroup("newGroup")).thenReturn(Optional.of(group));
@@ -101,11 +109,13 @@ public class GroupsResourceTest {
   @Test public void getSpecificIncludesAllTheThings() {
     when(groupDAO.getGroupById(4444)).thenReturn(Optional.of(group));
 
-    SanitizedSecret secret = SanitizedSecret.of(1, "name", null, "checksum", now, "creator", now, "creator", null, null, null,
-        1136214245, 125L, now, "creator");
+    SanitizedSecret secret =
+        SanitizedSecret.of(1, "name", null, "checksum", now, "creator", now, "creator", null, null,
+            null, 1136214245, 125L, now, "creator");
     when(aclDAO.getSanitizedSecretsFor(group)).thenReturn(ImmutableSet.of(secret));
 
-    Client client = new Client(1, "client", "desc", now, "creator", now, "creator", null, null, true, false);
+    Client client =
+        new Client(1, "client", "desc", now, "creator", now, "creator", null, null, true, false);
     when(aclDAO.getClientsFor(group)).thenReturn(ImmutableSet.of(client));
 
     GroupDetailResponse response = resource.getGroup(user, new LongParam("4444"));

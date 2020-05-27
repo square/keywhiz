@@ -44,8 +44,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-import keywhiz.api.CreateGroupRequest;
 import keywhiz.api.GroupDetailResponse;
+import keywhiz.api.automation.v2.CreateGroupRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -137,15 +137,15 @@ public class GroupsResource {
   @Timed @ExceptionMetered
   @POST
   @Consumes(APPLICATION_JSON)
-  public Response createGroup(@Auth User user, @Valid CreateGroupRequest request) {
+  public Response createGroup(@Auth User user, @Valid CreateGroupRequestV2 request) {
 
     logger.info("User '{}' creating group.", user);
-    if (groupDAO.getGroup(request.name).isPresent()) {
+    if (groupDAO.getGroup(request.name()).isPresent()) {
       throw new BadRequestException("Group already exists.");
     }
 
-    long groupId = groupDAO.createGroup(request.name, user.getName(),
-        nullToEmpty(request.description), request.metadata);
+    long groupId = groupDAO.createGroup(request.name(), user.getName(),
+        nullToEmpty(request.description()), request.metadata());
     URI uri = UriBuilder.fromResource(GroupsResource.class).build(groupId);
     Response response = Response
         .created(uri)
@@ -154,13 +154,13 @@ public class GroupsResource {
 
     if (response.getStatus() == HttpStatus.SC_CREATED) {
       Map<String, String> extraInfo = new HashMap<>();
-      if (request.description != null) {
-        extraInfo.put("description", request.description);
+      if (request.description() != null) {
+        extraInfo.put("description", request.description());
       }
-      if (request.metadata != null) {
-        extraInfo.put("metadata", request.metadata.toString());
+      if (request.metadata() != null) {
+        extraInfo.put("metadata", request.metadata().toString());
       }
-      auditLog.recordEvent(new Event(Instant.now(), EventTag.GROUP_CREATE, user.getName(), request.name, extraInfo));
+      auditLog.recordEvent(new Event(Instant.now(), EventTag.GROUP_CREATE, user.getName(), request.name(), extraInfo));
     }
     return response;
   }
