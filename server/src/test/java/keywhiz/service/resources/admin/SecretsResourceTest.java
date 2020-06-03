@@ -29,9 +29,9 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import keywhiz.api.ApiDate;
-import keywhiz.api.CreateSecretRequest;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
+import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
@@ -129,8 +129,12 @@ public class SecretsResourceTest {
         .thenReturn(secretBuilder);
     when(secretBuilder.create()).thenReturn(secret);
 
-    CreateSecretRequest req = new CreateSecretRequest(secret.getName(),
-        secret.getDescription(), secret.getSecret(), emptyMap, 0);
+    CreateSecretRequestV2 req =
+        CreateSecretRequestV2.builder()
+            .name(secret.getName())
+            .description(secret.getDescription())
+            .content(secret.getSecret())
+            .build();
     Response response = resource.createSecret(user, req);
 
     assertThat(response.getStatus()).isEqualTo(201);
@@ -264,7 +268,11 @@ public class SecretsResourceTest {
     DataAccessException exception = new DataAccessException("");
     doThrow(exception).when(secretBuilder).create();
 
-    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", emptyMap, 0);
+    CreateSecretRequestV2 req = CreateSecretRequestV2.builder()
+        .name("name")
+        .description("desc")
+        .content("content")
+        .build();
     resource.createSecret(user, req);
   }
 
