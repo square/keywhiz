@@ -34,7 +34,7 @@ public class AddOrUpdateActionConfig {
   @Parameter(names = "--description", description = "Description of the item to add or update")
   public String description;
 
-  @Parameter(names = "--spiffeId", description = "Spiffe URI associated with a client (clients only)")
+  @Parameter(names = "--spiffeId", description = "Spiffe ID associated with a client (clients only)")
   public String spiffeId;
 
   @Parameter(names = "--json", description = "Metadata JSON blob")

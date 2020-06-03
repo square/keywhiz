@@ -39,7 +39,7 @@ public class Client {
   private final String description;
 
   /**
-   * Optional: SPIFFE URI associated with this client.
+   * Optional: SPIFFE ID associated with this client.
    */
   @JsonProperty
   private final String spiffeId;
