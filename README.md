@@ -52,7 +52,10 @@ An example helper shell script that wraps the keywhiz-cli and sets some default 
     KEYWHIZ_CLI_JAR="/path/to/keywhiz-cli-shaded.jar"
     KEYWHIZ_SERVER_URL="https://$(hostname):4444"
 
-    # Use these flags if you want to specify a non-standard CA trust store
+    # Use these flags if you want to specify a non-standard CA trust store.
+    # Alternatively, in development and testing specify the --devTrustStore 
+    # flag to use the default truststore (DO NOT use this in production, as
+    # the truststore is checked into Keywhiz' code).
     TRUSTSTORE="-Djavax.net.ssl.trustStore=/path/to/ca-bundle.jceks"
     TRUSTTYPE="-Djavax.net.ssl.trustStoreType=JCEKS"
 

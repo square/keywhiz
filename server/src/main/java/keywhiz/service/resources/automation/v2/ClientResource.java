@@ -51,6 +51,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * parentEndpointName automation/v2-client-management
+ * <p>
  * resourceDescription Automation endpoints to manage clients
  */
 @Path("/automation/v2/clients")
@@ -78,8 +79,10 @@ public class ClientResource {
    * Creates a client and assigns to given groups
    *
    * @param request JSON request to create a client
-   *
+   * @return 200 if the client is created successfully, 409 if it already exists
+   * <p>
    * responseMessage 201 Created client and assigned to given groups
+   * <p>
    * responseMessage 409 Client already exists
    */
   @Timed @ExceptionMetered
@@ -96,13 +99,15 @@ public class ClientResource {
     });
 
     // Creates new client record
-    long clientId = clientDAOReadWrite.createClient(client, creator, request.description());
+    long clientId = clientDAOReadWrite.createClient(client, creator, request.description(),
+        request.spiffeId());
     auditLog.recordEvent(new Event(Instant.now(), EventTag.CLIENT_CREATE, creator, client));
 
     // Enrolls client in any requested groups
     groupsToGroupIds(request.groups())
         .forEach((maybeGroupId) -> maybeGroupId.ifPresent(
-            (groupId) -> aclDAOReadWrite.findAndEnrollClient(clientId, groupId, auditLog, creator, new HashMap<>())));
+            (groupId) -> aclDAOReadWrite.findAndEnrollClient(clientId, groupId, auditLog, creator,
+                new HashMap<>())));
 
     URI uri = UriBuilder.fromResource(ClientResource.class).path(client).build();
     return Response.created(uri).build();
@@ -110,7 +115,7 @@ public class ClientResource {
 
   /**
    * Retrieve listing of client names
-   *
+   * <p>
    * responseMessage 200 List of client names
    */
   @Timed @ExceptionMetered
@@ -126,9 +131,11 @@ public class ClientResource {
    * Retrieve information on a client
    *
    * @param name Client name
-   *
+   * @return the retrieved client
+   * <p>
    * responseMessage 200 Client information retrieved
-   * responseMessage 404 Client not found
+   * <p>
+   * responseMessage 404 Client not   found
    */
   @Timed @ExceptionMetered
   @GET
@@ -147,8 +154,9 @@ public class ClientResource {
    *
    * @param name Client name
    * @return Listing of groups the client has membership to
-   *
+   * <p>
    * responseMessage 200 Listing succeeded
+   * <p>
    * responseMessage 404 Client not found
    */
   @Timed @ExceptionMetered
@@ -167,11 +175,12 @@ public class ClientResource {
   /**
    * Modify groups a client has membership in
    *
-   * @param name Client name
+   * @param name    Client name
    * @param request JSON request specifying which groups to add or remove
    * @return Listing of groups client has membership in
-   *
+   * <p>
    * responseMessage 201 Client modified successfully
+   * <p>
    * responseMessage 404 Client not found
    */
   @Timed @ExceptionMetered
@@ -196,11 +205,13 @@ public class ClientResource {
 
     groupsToGroupIds(groupsToAdd)
         .forEach((maybeGroupId) -> maybeGroupId.ifPresent(
-            (groupId) -> aclDAOReadWrite.findAndEnrollClient(clientId, groupId, auditLog, user, new HashMap<>())));
+            (groupId) -> aclDAOReadWrite.findAndEnrollClient(clientId, groupId, auditLog, user,
+                new HashMap<>())));
 
     groupsToGroupIds(groupsToRemove)
         .forEach((maybeGroupId) -> maybeGroupId.ifPresent(
-            (groupId) -> aclDAOReadWrite.findAndEvictClient(clientId, groupId, auditLog, user, new HashMap<>())));
+            (groupId) -> aclDAOReadWrite.findAndEvictClient(clientId, groupId, auditLog, user,
+                new HashMap<>())));
 
     return aclDAOReadWrite.getGroupsFor(client).stream()
         .map(Group::getName)
@@ -212,8 +223,9 @@ public class ClientResource {
    *
    * @param name Client name
    * @return Listing of secrets accessible to client
-   *
+   * <p>
    * responseMessage 200 Client lookup succeeded
+   * <p>
    * responseMessage 404 Client not found
    */
   @Timed @ExceptionMetered
@@ -233,8 +245,10 @@ public class ClientResource {
    * Delete a client
    *
    * @param name Client name
-   *
+   * @return 200 if the deletion was successful, 404 if the client was not found
+   * <p>
    * responseMessage 204 Client deleted
+   * <p>
    * responseMessage 404 Client not found
    */
   @Timed @ExceptionMetered
@@ -247,7 +261,9 @@ public class ClientResource {
 
     // Group memberships are deleted automatically by DB cascading.
     clientDAOReadWrite.deleteClient(client);
-    auditLog.recordEvent(new Event(Instant.now(), EventTag.CLIENT_DELETE, automationClient.getName(), client.getName()));
+    auditLog.recordEvent(
+        new Event(Instant.now(), EventTag.CLIENT_DELETE, automationClient.getName(),
+            client.getName()));
     return Response.noContent().build();
   }
 
@@ -255,9 +271,11 @@ public class ClientResource {
    * Modify a client
    *
    * @param currentName Client name
-   * @param request JSON request to modify the client
-   *
+   * @param request     JSON request to modify the client
+   * @return the updated client
+   * <p>
    * responseMessage 201 Client updated
+   * <p>
    * responseMessage 404 Client not found
    */
   @Timed @ExceptionMetered

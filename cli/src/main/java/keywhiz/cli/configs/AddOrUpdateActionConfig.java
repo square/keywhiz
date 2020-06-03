@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import org.joda.time.DateTime;
 
+import static com.google.common.base.Strings.nullToEmpty;
 import static java.lang.String.format;
 
 public class AddOrUpdateActionConfig {
@@ -32,6 +33,9 @@ public class AddOrUpdateActionConfig {
 
   @Parameter(names = "--description", description = "Description of the item to add or update")
   public String description;
+
+  @Parameter(names = "--spiffeId", description = "Spiffe ID associated with a client (clients only)")
+  public String spiffeId;
 
   @Parameter(names = "--json", description = "Metadata JSON blob")
   public String json;
@@ -43,11 +47,11 @@ public class AddOrUpdateActionConfig {
   public String expiry;
 
   public String getDescription() {
-    String description = this.description;
-    if (description == null) {
-      return "";
-    }
-    return description;
+    return nullToEmpty(description);
+  }
+
+  public String getSpiffeId() {
+    return nullToEmpty(spiffeId);
   }
 
   public ImmutableMap<String, String> getMetadata(ObjectMapper mapper) {

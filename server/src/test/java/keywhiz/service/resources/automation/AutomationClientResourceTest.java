@@ -48,7 +48,8 @@ public class AutomationClientResourceTest {
   @Mock AclDAO aclDAO;
   ApiDate now = ApiDate.now();
   AutomationClient automation = AutomationClient.of(
-      new Client(1, "automation", "Automation client", now, "test", now, "test", null, null, true, true));
+      new Client(1, "automation", "Automation client", null, now, "test", now, "test", null, null, true,
+          true));
   AuditLog auditLog = new SimpleLogger();
 
   AutomationClientResource resource;
@@ -58,7 +59,8 @@ public class AutomationClientResourceTest {
   }
 
   @Test public void findClientByName() {
-    Client client = new Client(2, "client", "2nd client", now, "test", now, "test", null, null, true, false);
+    Client client = new Client(2, "client", "2nd client", null, now, "test", now, "test", null, null,
+        true, false);
     Group firstGroup = new Group(1, "first Group", "testing group", now, "client", now, "client",
         ImmutableMap.of("app", "keywhiz"));
     Group secondGroup = new Group(2, "second Group", "testing group", now, "client", now, "client",
@@ -82,12 +84,13 @@ public class AutomationClientResourceTest {
   }
 
   @Test public void createNewClient() {
-    Client client = new Client(543L, "client", "2nd client", now, "test", now, "test", null, null, true, false);
+    Client client = new Client(543L, "client", "2nd client", null, now, "test", now, "test", null, null,
+        true, false);
 
     CreateClientRequest request = new CreateClientRequest("client");
 
     when(clientDAO.getClient("client")).thenReturn(Optional.empty());
-    when(clientDAO.createClient("client", automation.getName(), "")).thenReturn(543L);
+    when(clientDAO.createClient("client", automation.getName(), "", "")).thenReturn(543L);
     when(clientDAO.getClientById(543L)).thenReturn(Optional.of(client));
     when(aclDAO.getGroupsFor(client)).thenReturn(ImmutableSet.of());
 
@@ -99,12 +102,13 @@ public class AutomationClientResourceTest {
   }
 
   @Test public void createNewClientAlreadyExists() {
-    Client client = new Client(543L, "client", "2nd client", now, "test", now, "test", null, null, true, false);
+    Client client = new Client(543L, "client", "2nd client", null, now, "test", now, "test", null, null,
+        true, false);
 
     CreateClientRequest request = new CreateClientRequest("client");
 
     when(clientDAO.getClient("client")).thenReturn(Optional.empty());
-    when(clientDAO.createClient("client", automation.getName(), "")).thenReturn(543L);
+    when(clientDAO.createClient("client", automation.getName(), "", "")).thenReturn(543L);
     when(clientDAO.getClientById(543L)).thenReturn(Optional.of(client));
 
     ClientDetailResponse response = ClientDetailResponse.fromClient(client, ImmutableList.of(),

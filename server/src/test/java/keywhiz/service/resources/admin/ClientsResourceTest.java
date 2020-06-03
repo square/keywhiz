@@ -56,7 +56,9 @@ public class ClientsResourceTest {
   User user = User.named("user");
   ApiDate now = ApiDate.now();
   Client client =
-      new Client(1, "client", "1st client", now, "test", now, "test", null, null, true, false);
+      new Client(1, "client", "1st client", null, now, "test", now, "test", null, null, true, false
+      );
+
   AuditLog auditLog = new SimpleLogger();
 
   ClientsResource resource;
@@ -67,9 +69,11 @@ public class ClientsResourceTest {
 
   @Test public void listClients() {
     Client client1 =
-        new Client(1, "client", "1st client", now, "test", now, "test", null, null, true, false);
+        new Client(1, "client", "1st client", null, now, "test", now, "test", null, null, true, false
+        );
     Client client2 =
-        new Client(2, "client2", "2nd client", now, "test", now, "test", null, null, true, false);
+        new Client(2, "client2", "2nd client", null, now, "test", now, "test", null, null, true, false
+        );
 
     when(clientDAO.getClients()).thenReturn(ImmutableSet.of(client1, client2));
 
@@ -78,8 +82,13 @@ public class ClientsResourceTest {
   }
 
   @Test public void createsClient() {
-    CreateClientRequestV2 request = CreateClientRequestV2.builder().name("new-client-name").build();
-    when(clientDAO.createClient("new-client-name", "user", "")).thenReturn(42L);
+    CreateClientRequestV2 request = CreateClientRequestV2.builder()
+        .name("new-client-name")
+        .description("description")
+        .spiffeId("spiffe//example.org/new-client-name")
+        .build();
+    when(clientDAO.createClient("new-client-name", "user", "description",
+        "spiffe//example.org/new-client-name")).thenReturn(42L);
     when(clientDAO.getClientById(42L)).thenReturn(Optional.of(client));
     when(aclDAO.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of());
 

@@ -148,7 +148,7 @@ public class ClientsResource {
     long clientId;
     try {
       clientId = clientDAO.createClient(createClientRequest.name(), user.getName(),
-          createClientRequest.description());
+          createClientRequest.description(), createClientRequest.spiffeId());
     } catch (DataAccessException e) {
       logger.warn("Cannot create client {}: {}", createClientRequest.name(), e);
       throw new ConflictException("Conflict creating client.");

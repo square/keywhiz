@@ -62,7 +62,8 @@ public class AutomationSecretResourceTest {
   @Mock SecretDAO secretDAO;
 
   AutomationClient automation = AutomationClient.of(
-      new Client(1, "automation", "Automation client", NOW, "test", NOW, "test", null, null, true, true));
+      new Client(1, "automation", "Automation client", null, NOW, "test", NOW, "test", null, null, true,
+          true));
   AuditLog auditLog = new SimpleLogger();
 
   @Before

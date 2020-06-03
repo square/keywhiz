@@ -25,7 +25,9 @@ import keywhiz.api.ApiDate;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.nullToEmpty;
 
-/** Clients table entry for a client-cert authenticated client. */
+/**
+ * Clients table entry for a client-cert authenticated client.
+ */
 public class Client {
   @JsonProperty
   private final long id;
@@ -35,6 +37,12 @@ public class Client {
 
   @JsonProperty
   private final String description;
+
+  /**
+   * Optional: SPIFFE ID associated with this client.
+   */
+  @JsonProperty
+  private final String spiffeId;
 
   @JsonProperty
   private final ApiDate createdAt;
@@ -54,17 +62,22 @@ public class Client {
   @JsonProperty
   private final ApiDate expiration;
 
-  /** True if client is enabled to retrieve secrets. */
+  /**
+   * True if client is enabled to retrieve secrets.
+   */
   @JsonProperty
   private final boolean enabled;
 
-  /** True if client is enabled to do automationAllowed tasks. */
+  /**
+   * True if client is enabled to do automationAllowed tasks.
+   */
   @JsonProperty
   private final boolean automationAllowed;
 
   public Client(@JsonProperty("id") long id,
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
+      @JsonProperty("spiffeId") @Nullable String spiffeId,
       @JsonProperty("createdAt") ApiDate createdAt,
       @JsonProperty("createdBy") @Nullable String createdBy,
       @JsonProperty("updatedAt") ApiDate updatedAt,
@@ -85,6 +98,8 @@ public class Client {
 
     this.enabled = enabled;
     this.automationAllowed = automationAllowed;
+
+    this.spiffeId = spiffeId;
   }
 
   private static ApiDate cleanTimestamp(ApiDate instant) {
@@ -138,6 +153,10 @@ public class Client {
     return automationAllowed;
   }
 
+  public String getSpiffeId() {
+    return spiffeId;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (o instanceof Client) {
@@ -145,6 +164,7 @@ public class Client {
       if (this.id == that.id &&
           Objects.equal(this.name, that.name) &&
           Objects.equal(this.description, that.description) &&
+          Objects.equal(this.spiffeId, that.spiffeId) &&
           Objects.equal(this.createdAt, that.createdAt) &&
           Objects.equal(this.createdBy, that.createdBy) &&
           Objects.equal(this.updatedAt, that.updatedAt) &&
@@ -162,7 +182,7 @@ public class Client {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, name, description, createdAt, createdBy, updatedAt, updatedBy,
+    return Objects.hashCode(id, name, description, spiffeId, createdAt, createdBy, updatedAt, updatedBy,
         lastSeen, expiration, enabled, automationAllowed);
   }
 
@@ -172,6 +192,7 @@ public class Client {
         .add("id", id)
         .add("name", name)
         .add("description", description)
+        .add("spiffeId", spiffeId)
         .add("createdAt", createdAt)
         .add("createdBy", createdBy)
         .add("updatedAt", updatedAt)

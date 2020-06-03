@@ -55,7 +55,7 @@ public class ClientsResourceIntegrationTest {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
     assertThat(clientsToNames(keywhizClient.allClients()))
-      .contains("CN=User1", "CN=User2", "CN=User3", "CN=User4");
+        .contains("CN=User1", "CN=User2", "CN=User3", "CN=User4");
   }
 
   @Test(expected = KeywhizClient.UnauthorizedException.class)
@@ -85,7 +85,7 @@ public class ClientsResourceIntegrationTest {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
     assertThat(clientsToNames(keywhizClient.allClients())).doesNotContain("kingpin");
-    ClientDetailResponse clientDetails = keywhizClient.createClient("kingpin");
+    ClientDetailResponse clientDetails = keywhizClient.createClient("kingpin", "", "");
     assertThat(clientDetails.name).isEqualTo("kingpin");
     assertThat(clientsToNames(keywhizClient.allClients())).contains("kingpin");
   }
@@ -94,8 +94,8 @@ public class ClientsResourceIntegrationTest {
   public void createDuplicateClients() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
-    keywhizClient.createClient("varys");
-    keywhizClient.createClient("varys");
+    keywhizClient.createClient("varys", "", "");
+    keywhizClient.createClient("varys", "", "");
   }
 
   @Test(expected = KeywhizClient.NotFoundException.class)
@@ -117,7 +117,7 @@ public class ClientsResourceIntegrationTest {
 
   @Test public void deletesClients() throws IOException {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
-    long clientId = keywhizClient.createClient("deletesClientTest").id;
+    long clientId = keywhizClient.createClient("deletesClientTest", "", "").id;
 
     keywhizClient.deleteClientWithId(clientId);
 

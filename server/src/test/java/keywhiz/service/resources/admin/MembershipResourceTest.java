@@ -46,7 +46,8 @@ public class MembershipResourceTest {
   @Mock AclDAO aclDAO;
 
   User user = User.named("user");
-  Client client = new Client(44, "client", "desc", NOW, "creator", NOW, "updater", null, null, true, false);
+  Client client = new Client(44, "client", "desc", null, NOW, "creator", NOW, "updater", null, null,
+      true, false);
   Group group = new Group(55, "group", null, null, null, null, null, null);
   Secret secret = new Secret(66, "secret", null, () -> "shush", "checksum", NOW, null, NOW, null, null, null, null, 0, 1L, NOW, null);
   AuditLog auditLog = new SimpleLogger();

@@ -117,7 +117,7 @@ public class ClientAuthFactory {
        */
       // TODO(justin): Consider making this behavior configurable.
       long clientId = clientDAOReadWrite.createClient(name, "automatic",
-          "Client created automatically from valid certificate authentication");
+          "Client created automatically from valid certificate authentication", "");
       return Optional.of(clientDAOReadWrite.getClientById(clientId).get());
     }
   }

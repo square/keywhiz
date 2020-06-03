@@ -21,7 +21,6 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import java.io.IOException;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -38,7 +37,8 @@ import keywhiz.client.KeywhizClient;
 public class Printing {
   private final KeywhizClient keywhizClient;
 
-  private static final String INDENT = Strings.repeat("\t", 2);
+  private static final String INDENT = "\t";
+  private static final String DOUBLE_INDENT = Strings.repeat(INDENT, 2);
 
   @Inject
   public Printing(final KeywhizClient keywhizClient) {
@@ -54,23 +54,50 @@ public class Printing {
       throw Throwables.propagate(e);
     }
 
-    if (clientDetails.lastSeen == null) {
-      System.out.println("\tLast Seen: never");
-    } else {
-      String lastSeen = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(
-          new Date(clientDetails.lastSeen.toEpochSecond() * 1000));
-      System.out.printf("\tLast Seen: %s%n", lastSeen);
-    }
-
-    System.out.println("\tGroups:");
+    System.out.println(INDENT + "Groups:");
     clientDetails.groups.stream()
         .sorted(Comparator.comparing(Group::getName))
-        .forEach(g -> System.out.println(INDENT + g.getName()));
+        .forEach(g -> System.out.println(DOUBLE_INDENT + g.getName()));
 
-    System.out.println("\tSecrets:");
+    System.out.println(INDENT + "Secrets:");
     clientDetails.secrets.stream()
         .sorted(Comparator.comparing(SanitizedSecret::name))
-        .forEach(s -> System.out.println(INDENT + SanitizedSecret.displayName(s)));
+        .forEach(s -> System.out.println(DOUBLE_INDENT + SanitizedSecret.displayName(s)));
+
+    if (clientDetails.lastSeen == null) {
+      System.out.println(INDENT + "Last Seen: never");
+    } else {
+      Date d = new Date(clientDetails.lastSeen.toEpochSecond() * 1000);
+      System.out.printf(INDENT + "Last Seen: %s%n", DateFormat.getDateTimeInstance().format(d));
+    }
+
+    if (!clientDetails.description.isEmpty()) {
+      System.out.println(INDENT + "Description:");
+      System.out.println(DOUBLE_INDENT + clientDetails.description);
+    }
+
+    if (clientDetails.spiffeId != null && !clientDetails.spiffeId.isEmpty()) {
+      System.out.println(INDENT + "Spiffe ID:");
+      System.out.println(DOUBLE_INDENT + clientDetails.spiffeId);
+    }
+
+    if (!clientDetails.createdBy.isEmpty()) {
+      System.out.println(INDENT + "Created by:");
+      System.out.println(DOUBLE_INDENT + clientDetails.createdBy);
+    }
+
+    System.out.println(INDENT + "Created at:");
+    Date d = new Date(clientDetails.creationDate.toEpochSecond() * 1000);
+    System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
+
+    if (!clientDetails.updatedBy.isEmpty()) {
+      System.out.println(INDENT + "Updated by:");
+      System.out.println(DOUBLE_INDENT + clientDetails.updatedBy);
+    }
+
+    System.out.println(INDENT + "Updated at:");
+    d = new Date(clientDetails.updateDate.toEpochSecond() * 1000);
+    System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
   }
 
   public void printGroupWithDetails(Group group) {
@@ -82,17 +109,17 @@ public class Printing {
       throw Throwables.propagate(e);
     }
 
-    System.out.println("\tClients:");
+    System.out.println(INDENT + "Clients:");
     groupDetails.getClients().stream()
         .sorted(Comparator.comparing(Client::getName))
-        .forEach(c -> System.out.println(INDENT + c.getName()));
+        .forEach(c -> System.out.println(DOUBLE_INDENT + c.getName()));
 
-    System.out.println("\tSecrets:");
+    System.out.println(INDENT + "Secrets:");
     groupDetails.getSecrets().stream()
         .sorted(Comparator.comparing(SanitizedSecret::name))
-        .forEach(s -> System.out.println(INDENT + SanitizedSecret.displayName(s)));
+        .forEach(s -> System.out.println(DOUBLE_INDENT + SanitizedSecret.displayName(s)));
 
-    System.out.println("\tMetadata:");
+    System.out.println(INDENT + "Metadata:");
     if (!groupDetails.getMetadata().isEmpty()) {
       String metadata;
       try {
@@ -100,31 +127,31 @@ public class Printing {
       } catch (JsonProcessingException e) {
         throw Throwables.propagate(e);
       }
-      System.out.println(INDENT + metadata);
+      System.out.println(DOUBLE_INDENT + metadata);
     }
 
     if (!groupDetails.getDescription().isEmpty()) {
-      System.out.println("\tDescription:");
-      System.out.println(INDENT + groupDetails.getDescription());
+      System.out.println(INDENT + "Description:");
+      System.out.println(DOUBLE_INDENT + groupDetails.getDescription());
     }
 
     if (!groupDetails.getCreatedBy().isEmpty()) {
-      System.out.println("\tCreated by:");
-      System.out.println(INDENT + groupDetails.getCreatedBy());
+      System.out.println(INDENT + "Created by:");
+      System.out.println(DOUBLE_INDENT + groupDetails.getCreatedBy());
     }
 
-    System.out.println("\tCreated at:");
+    System.out.println(INDENT + "Created at:");
     Date d = new Date(groupDetails.getCreationDate().toEpochSecond() * 1000);
-    System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
+    System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
 
     if (!groupDetails.getUpdatedBy().isEmpty()) {
-      System.out.println("\tUpdated by:");
-      System.out.println(INDENT + groupDetails.getUpdatedBy());
+      System.out.println(INDENT + "Updated by:");
+      System.out.println(DOUBLE_INDENT + groupDetails.getUpdatedBy());
     }
 
-    System.out.println("\tUpdated at:");
+    System.out.println(INDENT + "Updated at:");
     d = new Date(groupDetails.getUpdateDate().toEpochSecond() * 1000);
-    System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
+    System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
   }
 
   public void printSanitizedSecretWithDetails(SanitizedSecret secret) {
@@ -136,24 +163,24 @@ public class Printing {
       throw Throwables.propagate(e);
     }
 
-    System.out.println("\tGroups:");
+    System.out.println(INDENT + "Groups:");
     secretDetails.groups.stream()
         .sorted(Comparator.comparing(Group::getName))
-        .forEach(g -> System.out.println(INDENT + g.getName()));
+        .forEach(g -> System.out.println(DOUBLE_INDENT + g.getName()));
 
-    System.out.println("\tClients:");
+    System.out.println(INDENT + "Clients:");
     secretDetails.clients.stream()
         .sorted(Comparator.comparing(Client::getName))
-        .forEach(c -> System.out.println(INDENT + c.getName()));
+        .forEach(c -> System.out.println(DOUBLE_INDENT + c.getName()));
 
-    System.out.println("\tContent HMAC:");
+    System.out.println(INDENT + "Content HMAC:");
     if (secret.checksum().isEmpty()) {
-      System.out.println(INDENT + "WARNING: Content HMAC not calculated!");
+      System.out.println(DOUBLE_INDENT + "WARNING: Content HMAC not calculated!");
     } else {
-      System.out.println(INDENT + secret.checksum());
+      System.out.println(DOUBLE_INDENT + secret.checksum());
     }
 
-    System.out.println("\tMetadata:");
+    System.out.println(INDENT + "Metadata:");
     if (!secret.metadata().isEmpty()) {
       String metadata;
       try {
@@ -161,47 +188,47 @@ public class Printing {
       } catch (JsonProcessingException e) {
         throw Throwables.propagate(e);
       }
-      System.out.println(INDENT + metadata);
+      System.out.println(DOUBLE_INDENT + metadata);
     }
 
     if (secret.expiry() > 0) {
-      System.out.println("\tExpiry:");
+      System.out.println(INDENT + "Expiry:");
       Date d = new Date(secret.expiry() * 1000);
-      System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
+      System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
     }
 
     if (!secret.description().isEmpty()) {
-      System.out.println("\tDescription:");
-      System.out.println(INDENT + secret.description());
+      System.out.println(INDENT + "Description:");
+      System.out.println(DOUBLE_INDENT + secret.description());
     }
 
     if (!secret.createdBy().isEmpty()) {
-      System.out.println("\tCreated by:");
-      System.out.println(INDENT + secret.createdBy());
+      System.out.println(INDENT + "Created by:");
+      System.out.println(DOUBLE_INDENT + secret.createdBy());
     }
 
-    System.out.println("\tCreated at:");
+    System.out.println(INDENT + "Created at:");
     Date d = new Date(secret.createdAt().toEpochSecond() * 1000);
-    System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
+    System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
 
     if (!secret.updatedBy().isEmpty()) {
-      System.out.println("\tUpdated by:");
-      System.out.println(INDENT + secret.updatedBy());
+      System.out.println(INDENT + "Updated by:");
+      System.out.println(DOUBLE_INDENT + secret.updatedBy());
     }
 
-    System.out.println("\tUpdated at:");
+    System.out.println(INDENT + "Updated at:");
     d = new Date(secret.updatedAt().toEpochSecond() * 1000);
-    System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
+    System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
 
     if (!secret.contentCreatedBy().isEmpty()) {
-      System.out.println("\tContent created by:");
-      System.out.println(INDENT + secret.contentCreatedBy());
+      System.out.println(INDENT + "Content created by:");
+      System.out.println(DOUBLE_INDENT + secret.contentCreatedBy());
     }
 
     if (secret.contentCreatedAt().isPresent()) {
-      System.out.println("\tContent created at:");
+      System.out.println(INDENT + "Content created at:");
       d = new Date(secret.contentCreatedAt().get().toEpochSecond() * 1000);
-      System.out.println(INDENT + DateFormat.getDateTimeInstance().format(d));
+      System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
     }
   }
 

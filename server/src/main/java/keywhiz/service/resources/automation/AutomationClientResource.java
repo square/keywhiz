@@ -177,7 +177,7 @@ public class AutomationClientResource {
       throw new ConflictException("Client name already exists.");
     }
 
-    long id = clientDAO.createClient(clientRequest.name, automationClient.getName(), "");
+    long id = clientDAO.createClient(clientRequest.name, automationClient.getName(), "", "");
     client = clientDAO.getClientById(id);
 
     if (client.isPresent()) {

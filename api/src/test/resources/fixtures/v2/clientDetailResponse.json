@@ -1,6 +1,7 @@
 {
   "name": "Client Name",
   "description": "Client Description",
+  "spiffeId" : "spiffe//example.org/client-name",
   "createdAtSeconds": 1343826930,
   "updatedAtSeconds": 1347246930,
   "createdBy": "creator-user",
