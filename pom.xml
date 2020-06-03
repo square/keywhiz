@@ -94,7 +94,7 @@
       <dependency>
         <groupId>org.glassfish.jaxb</groupId>
         <artifactId>jaxb-runtime</artifactId>
-        <version>3.0.0-M2</version>
+        <version>3.0.0-M4</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jaxb</groupId>
