@@ -151,3 +151,11 @@ contentKeyStore:
 rowHmacCheck: enforced
 
 flywaySchemaTable: schema_version
+
+clientAuthConfig:
+  xfcc:
+    allowedPorts:
+      - 4445 # in practice, set up a separate connector for XFCC traffic
+  type:
+    useClientName: true
+    useSpiffeId: true
