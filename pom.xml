@@ -613,7 +613,7 @@
         <plugin>
           <groupId>org.flywaydb</groupId>
           <artifactId>flyway-maven-plugin</artifactId>
-          <version>6.4.3</version>
+          <version>6.4.4</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
