@@ -55,6 +55,11 @@ public class ClientAuthFactoryTest {
   private static final Client client =
       new Client(0, "principal", null, null, null, null, null, null, null, null, true, false);
 
+  private static final Principal xfccPrincipal =
+      SimplePrincipal.of("CN=principal-allowed-for-xfcc,OU=organizational-unit");
+  private static final Client xfccClient =
+      new Client(0, "principal-allowed-for-xfcc", null, null, null, null, null, null, null, null, true, false);
+
   // certstrap init --common-name "KeywhizAuth"
   // certstrap request-cert --common-name principal --ou organizational-unit --uri spiffe://example.org/principal
   // certstrap sign principal --CA KeywhizAuth
@@ -88,9 +93,6 @@ public class ClientAuthFactoryTest {
   private static final String xfccHeader =
       format("Cert=\"%s\"", UrlEncoded.encodeString(clientPem, UTF_8));
 
-  private static final int xfccAllowedPort = 4445;
-  private static final int xfccDisallowedPort = 4446;
-
   @Mock XfccSourceConfig xfccSourceConfig;
   @Mock ClientAuthTypeConfig clientAuthTypeConfig;
   @Mock ClientAuthConfig clientAuthConfig;
@@ -101,19 +103,18 @@ public class ClientAuthFactoryTest {
 
   ClientAuthFactory factory;
 
-  @Before public void setUp() throws Exception {
+  @Before public void setUp() {
     factory = new ClientAuthFactory(clientDAO, clientAuthConfig);
 
     when(request.getSecurityContext()).thenReturn(securityContext);
-    when(request.getBaseUri()).thenReturn(new URI(format("https://localhost:%d", xfccAllowedPort)));
     when(clientDAO.getClient("principal")).thenReturn(Optional.of(client));
 
     when(clientAuthConfig.xfccConfig()).thenReturn(xfccSourceConfig);
+    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(xfccClient.getName()));
     when(clientAuthConfig.typeConfig()).thenReturn(clientAuthTypeConfig);
-    when(xfccSourceConfig.allowedPorts()).thenReturn(List.of(xfccAllowedPort));
   }
 
-  @Test public void clientWhenClientPresent() {
+  @Test public void returnsClientWhenClientPresent() {
     when(securityContext.getUserPrincipal()).thenReturn(principal);
 
     assertThat(factory.provide(request)).isEqualTo(client);
@@ -163,37 +164,19 @@ public class ClientAuthFactoryTest {
     verify(clientDAO, times(1)).sawClient(any(), eq(principal));
   }
 
-  @Test public void clientWhenClientPresent_fromXfccHeader_portAllowed() {
+  @Test public void returnsClientWhenClientPresent_fromXfccHeader() {
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
     assertThat(factory.provide(request)).isEqualTo(client);
-  }
-
-  @Test public void clientWhenClientPresent_fromXfccHeader_clientAllowed() {
-    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
-        List.of(xfccHeader));
-    when(securityContext.getUserPrincipal()).thenReturn(principal);
-    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(client.getName()));
-
-    assertThat(factory.provide(request)).isEqualTo(client);
-  }
-
-  @Test(expected = NotAuthorizedException.class)
-  public void rejectsUnauthorizedXfccPort() throws Exception {
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccDisallowedPort)));
-    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
-        List.of(xfccHeader));
-
-    factory.provide(request);
   }
 
   @Test(expected = NotAuthorizedException.class)
   public void rejectsXfccWhenClientSpecified_clientAuthMissing() {
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader));
-    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(client.getName()));
+    when(securityContext.getUserPrincipal()).thenReturn(null);
 
     factory.provide(request);
   }
@@ -203,7 +186,6 @@ public class ClientAuthFactoryTest {
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader));
     when(securityContext.getUserPrincipal()).thenReturn(principal);
-    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of("not-this-client"));
 
     factory.provide(request);
   }
@@ -212,6 +194,7 @@ public class ClientAuthFactoryTest {
   public void rejectsMultipleXfccEntries() {
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader, xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
     factory.provide(request);
   }
@@ -220,6 +203,7 @@ public class ClientAuthFactoryTest {
   public void rejectsMissingXfccClient() {
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of("By=principal"));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
     factory.provide(request);
   }

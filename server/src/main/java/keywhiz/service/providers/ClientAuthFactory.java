@@ -138,31 +138,19 @@ public class ClientAuthFactory {
   private void validateXfccHeaderAllowed(ContainerRequest request) {
     XfccSourceConfig xfccConfig = clientAuthConfig.xfccConfig();
 
-    // The allowed ports should be a restricted list to prevent clients from setting the header
-    // and accessing other clients' secrets.
-    if (!xfccConfig.allowedPorts().contains(request.getBaseUri().getPort())) {
+    // Only certain clients may set the XFCC header
+    Optional<Principal> principal = getPrincipal(request);
+    Optional<String> name = getClientName(principal);
+    if (principal.isEmpty() || name.isEmpty()) {
       throw new NotAuthorizedException(
-          format("requests with %s header set not allowed from port %d; check configuration",
-              XFCC_HEADER_NAME, request.getBaseUri().getPort()));
+          format("requests with %s header set must connect over TLS", XFCC_HEADER_NAME));
     }
 
-    // Only certain clients may set the XFCC header
-    if (!xfccConfig.allowedClientNames().isEmpty()) {
-      Optional<Principal> principal = getPrincipal(request);
-      Optional<String> name = getClientName(principal);
-      if (principal.isEmpty() || name.isEmpty()) {
-        throw new NotAuthorizedException(
-            format(
-                "requests with %s header set must connect over TLS when allowed client IDs are configured; check configuration",
-                XFCC_HEADER_NAME));
-      }
-
-      if (!xfccConfig.allowedClientNames().contains(name.get())) {
-        throw new NotAuthorizedException(
-            format(
-                "requests with %s header set may not be sent from client with name %s; check configuration",
-                XFCC_HEADER_NAME, name.get()));
-      }
+    if (!xfccConfig.allowedClientNames().contains(name.get())) {
+      throw new NotAuthorizedException(
+          format(
+              "requests with %s header set may not be sent from client with name %s; check configuration",
+              XFCC_HEADER_NAME, name.get()));
     }
   }
 
