@@ -90,10 +90,10 @@ public class ClientAuthFactoryTest {
 
   private static final int xfccAllowedPort = 4445;
   private static final int xfccDisallowedPort = 4446;
-  private static final ClientAuthConfig clientAuthConfig = ClientAuthConfig.of(
-      XfccSourceConfig.of(List.of(xfccAllowedPort)),
-      ClientAuthTypeConfig.of(true, false)
-  );
+
+  @Mock XfccSourceConfig xfccSourceConfig;
+  @Mock ClientAuthTypeConfig clientAuthTypeConfig;
+  @Mock ClientAuthConfig clientAuthConfig;
 
   @Mock ContainerRequest request;
   @Mock SecurityContext securityContext;
@@ -107,6 +107,10 @@ public class ClientAuthFactoryTest {
     when(request.getSecurityContext()).thenReturn(securityContext);
     when(request.getBaseUri()).thenReturn(new URI(format("https://localhost:%d", xfccAllowedPort)));
     when(clientDAO.getClient("principal")).thenReturn(Optional.of(client));
+
+    when(clientAuthConfig.xfccConfig()).thenReturn(xfccSourceConfig);
+    when(clientAuthConfig.typeConfig()).thenReturn(clientAuthTypeConfig);
+    when(xfccSourceConfig.allowedPorts()).thenReturn(List.of(xfccAllowedPort));
   }
 
   @Test public void clientWhenClientPresent() {
@@ -159,9 +163,18 @@ public class ClientAuthFactoryTest {
     verify(clientDAO, times(1)).sawClient(any(), eq(principal));
   }
 
-  @Test public void clientWhenClientPresent_fromXfccHeader() {
+  @Test public void clientWhenClientPresent_fromXfccHeader_portAllowed() {
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader));
+
+    assertThat(factory.provide(request)).isEqualTo(client);
+  }
+
+  @Test public void clientWhenClientPresent_fromXfccHeader_clientAllowed() {
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(principal);
+    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(client.getName()));
 
     assertThat(factory.provide(request)).isEqualTo(client);
   }
@@ -172,6 +185,25 @@ public class ClientAuthFactoryTest {
         new URI(format("https://localhost:%d", xfccDisallowedPort)));
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader));
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfccWhenClientSpecified_clientAuthMissing() {
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(client.getName()));
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfccWhenClientSpecified_clientAuthMismatch() {
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(principal);
+    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of("not-this-client"));
 
     factory.provide(request);
   }

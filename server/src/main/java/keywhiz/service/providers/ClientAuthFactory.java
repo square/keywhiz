@@ -31,6 +31,7 @@ import javax.ws.rs.NotAuthorizedException;
 import keywhiz.KeywhizConfig;
 import keywhiz.api.model.Client;
 import keywhiz.service.config.ClientAuthConfig;
+import keywhiz.service.config.XfccSourceConfig;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import org.bouncycastle.asn1.x500.RDN;
@@ -95,14 +96,10 @@ public class ClientAuthFactory {
                 XFCC_HEADER_NAME));
       }
 
-      // Do not allow the XFCC header to be set by all incoming traffic. The allowed ports MUST
-      // be a restricted list to prevent clients from setting the header and accessing other
-      // clients' secrets.
-      if (!clientAuthConfig.xfccConfig().allowedPorts().contains(request.getBaseUri().getPort())) {
-        throw new NotAuthorizedException(
-            format("requests with %s header set not allowed from port %d; check configuration",
-                XFCC_HEADER_NAME, request.getBaseUri().getPort()));
-      }
+      // Do not allow the XFCC header to be set by all incoming traffic. This throws a
+      // NotAuthorizedException when the traffic is not coming from a source allowed to set the
+      // header.
+      validateXfccHeaderAllowed(request);
 
       // Extract client information from the XFCC header
       principal = getClientPrincipalFromXfccHeaderEnvoyFormatted(request);
@@ -136,6 +133,37 @@ public class ClientAuthFactory {
       return Optional.empty();
     }
     return Optional.of(IETFUtils.valueToString(rdns[0].getFirst().getValue()));
+  }
+
+  private void validateXfccHeaderAllowed(ContainerRequest request) {
+    XfccSourceConfig xfccConfig = clientAuthConfig.xfccConfig();
+
+    // The allowed ports should be a restricted list to prevent clients from setting the header
+    // and accessing other clients' secrets.
+    if (!xfccConfig.allowedPorts().contains(request.getBaseUri().getPort())) {
+      throw new NotAuthorizedException(
+          format("requests with %s header set not allowed from port %d; check configuration",
+              XFCC_HEADER_NAME, request.getBaseUri().getPort()));
+    }
+
+    // Only certain clients may set the XFCC header
+    if (!xfccConfig.allowedClientNames().isEmpty()) {
+      Optional<Principal> principal = getPrincipal(request);
+      Optional<String> name = getClientName(principal);
+      if (principal.isEmpty() || name.isEmpty()) {
+        throw new NotAuthorizedException(
+            format(
+                "requests with %s header set must connect over TLS when allowed client IDs are configured; check configuration",
+                XFCC_HEADER_NAME));
+      }
+
+      if (!xfccConfig.allowedClientNames().contains(name.get())) {
+        throw new NotAuthorizedException(
+            format(
+                "requests with %s header set may not be sent from client with name %s; check configuration",
+                XFCC_HEADER_NAME, name.get()));
+      }
+    }
   }
 
   private Optional<Principal> getClientPrincipalFromXfccHeaderEnvoyFormatted(

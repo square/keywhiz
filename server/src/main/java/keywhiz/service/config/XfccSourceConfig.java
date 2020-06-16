@@ -28,8 +28,9 @@ import java.util.List;
 @AutoValue
 public abstract class XfccSourceConfig {
   @JsonCreator public static XfccSourceConfig of(
-      @JsonProperty("allowedPorts") List<Integer> allowedPorts) {
-    return new AutoValue_XfccSourceConfig(allowedPorts);
+      @JsonProperty("allowedPorts") List<Integer> allowedPorts,
+      @JsonProperty("allowedClientNames") List<String> allowedClientNames) {
+    return new AutoValue_XfccSourceConfig(allowedPorts, allowedClientNames);
   }
 
   // Only traffic from these ports will be allowed to include an x-forwarded-client-cert header;
@@ -39,4 +40,10 @@ public abstract class XfccSourceConfig {
   // Access to these ports MUST be highly restricted, since otherwise clients can set the XFCC
   // header to steal other clients' secrets.
   public abstract List<Integer> allowedPorts();
+
+  // Only traffic from these clients will be allowed to include an x-forwarded-client-cert header;
+  // traffic which includes an XFCC header and is _not_ sent from these clients will be rejected,
+  // since most clients should only access their own secrets rather than potentially accessing other
+  // secrets using the XFCC header.
+  public abstract List<String> allowedClientNames();
 }
