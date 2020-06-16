@@ -105,16 +105,25 @@ public class ClientAuthFactory {
       principal = getClientPrincipalFromXfccHeaderEnvoyFormatted(request);
     }
 
-    possibleClientName = getClientName(principal);
+    if (clientAuthConfig.typeConfig().useClientName()) {
+      possibleClientName = getClientName(principal);
 
-    if (principal.isEmpty() || possibleClientName.isEmpty()) {
-      throw new NotAuthorizedException("ClientCert not authorized as a Client");
+      if (principal.isEmpty() || possibleClientName.isEmpty()) {
+        throw new NotAuthorizedException("ClientCert not authorized as a Client");
+      }
+      String clientName = possibleClientName.get();
+
+      Optional<Client> possibleClient =  authenticator.authenticateByName(clientName, principal.orElse(null));
+      if (possibleClient.isPresent()) {
+        return possibleClient.get();
+      }
     }
-    String clientName = possibleClientName.get();
 
-    return authenticator.authenticate(clientName, principal.orElse(null))
-        .orElseThrow(() -> new NotAuthorizedException(
-            format("ClientCert name %s not authorized as a Client", clientName)));
+    if (clientAuthConfig.typeConfig().useSpiffeId()) {
+      throw new NotAuthorizedException("Identifying Clients by SPIFFE ID not yet supported");
+    }
+
+    throw new NotAuthorizedException(format("No authorized Client for connection with principal %s", principal.get().getName()));
   }
 
   static Optional<Principal> getPrincipal(ContainerRequest request) {
@@ -239,7 +248,7 @@ public class ClientAuthFactory {
       this.clientDAOReadOnly = clientDAOReadOnly;
     }
 
-    public Optional<Client> authenticate(String name, @Nullable Principal principal) {
+    public Optional<Client> authenticateByName(String name, @Nullable Principal principal) {
       Optional<Client> optionalClient = clientDAOReadOnly.getClient(name);
       if (optionalClient.isPresent()) {
         Client client = optionalClient.get();

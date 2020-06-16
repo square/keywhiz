@@ -110,8 +110,12 @@ public class ClientAuthFactoryTest {
     when(clientDAO.getClient("principal")).thenReturn(Optional.of(client));
 
     when(clientAuthConfig.xfccConfig()).thenReturn(xfccSourceConfig);
-    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(xfccClient.getName()));
     when(clientAuthConfig.typeConfig()).thenReturn(clientAuthTypeConfig);
+
+    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(xfccClient.getName()));
+
+    when(clientAuthTypeConfig.useClientName()).thenReturn(true);
+    when(clientAuthTypeConfig.useSpiffeId()).thenReturn(false);
   }
 
   @Test public void returnsClientWhenClientPresent() {
