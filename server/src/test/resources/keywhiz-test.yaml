@@ -155,6 +155,7 @@ flywaySchemaTable: schema_version
 clientAuthConfig:
   xfcc:
     allowedClientNames: []
+    allowedSpiffeIds: []
   type:
     useClientName: true
     useSpiffeId: true

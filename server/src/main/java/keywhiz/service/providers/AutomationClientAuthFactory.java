@@ -52,7 +52,7 @@ public class AutomationClientAuthFactory {
   public AutomationClient provide(ContainerRequest request) {
     Optional<Principal> principal = ClientAuthFactory.getPrincipal(request);
     Optional<String> possibleClientName = ClientAuthFactory.getClientName(principal);
-    if (!principal.isPresent() || !possibleClientName.isPresent()) {
+    if (principal.isEmpty() || possibleClientName.isEmpty()) {
       throw new NotAuthorizedException("Not authorized as a AutomationClient");
     }
     String clientName = possibleClientName.get();

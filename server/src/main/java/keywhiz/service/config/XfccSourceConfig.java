@@ -28,8 +28,9 @@ import java.util.List;
 @AutoValue
 public abstract class XfccSourceConfig {
   @JsonCreator public static XfccSourceConfig of(
-      @JsonProperty("allowedClientNames") List<String> allowedClientNames) {
-    return new AutoValue_XfccSourceConfig(allowedClientNames);
+      @JsonProperty("allowedClientNames") List<String> allowedClientNames,
+      @JsonProperty("allowedSpiffeIds") List<String> allowedSpiffeIds) {
+    return new AutoValue_XfccSourceConfig(allowedClientNames, allowedSpiffeIds);
   }
 
   // Only traffic from these clients will be allowed to include an x-forwarded-client-cert header;
@@ -37,4 +38,5 @@ public abstract class XfccSourceConfig {
   // since most clients should only access their own secrets rather than potentially accessing other
   // secrets using the XFCC header.
   public abstract List<String> allowedClientNames();
+  public abstract List<String> allowedSpiffeIds();
 }
