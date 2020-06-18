@@ -89,22 +89,17 @@ public class ClientAuthFactory {
 
     List<String> xfccHeaderValues =
         Optional.ofNullable(request.getRequestHeader(XFCC_HEADER_NAME)).orElse(List.of());
-    if (possibleXfccConfig.isPresent() && xfccHeaderValues.isEmpty()) {
+
+    if (possibleXfccConfig.isEmpty() != xfccHeaderValues.isEmpty()) {
       throw new NotAuthorizedException(format(
-          "Port %d is configured to only receive traffic with the %s header set",
-          requestPort, XFCC_HEADER_NAME));
-    } else if (possibleXfccConfig.isEmpty() && !xfccHeaderValues.isEmpty()) {
-      throw new NotAuthorizedException(format(
-          "Port %d is not configured to receive traffic with the %s header set",
-          requestPort, XFCC_HEADER_NAME));
+          "Port %d is configured to %s receive traffic with the %s header set",
+          requestPort, possibleXfccConfig.isEmpty() ? "never" : "only", XFCC_HEADER_NAME));
     }
 
     // Extract information about the requester. This may be a Keywhiz client, or it may be a proxy
     // forwarding the real Keywhiz client information in the x-forwarded-client-certs header
-    Optional<Principal> requestPrincipal = getPrincipal(request);
-    if (requestPrincipal.isEmpty()) {
-      throw new NotAuthorizedException("Could not parse an identity from request");
-    }
+    Principal requestPrincipal = getPrincipal(request).orElseThrow(
+        () -> new NotAuthorizedException("Not authorized as Keywhiz client"));
 
     Optional<String> requestName = getClientName(requestPrincipal);
     Optional<String> requestSpiffeId = Optional.empty();
@@ -113,7 +108,7 @@ public class ClientAuthFactory {
     // on the security context of this request
     if (possibleXfccConfig.isEmpty()) {
       // The XFCC header is not used; use the security context of this request to identify the client
-      return authorizeClient(requestPrincipal.get(), requestName, requestSpiffeId);
+      return authorizeClient(requestPrincipal, requestName, requestSpiffeId);
     } else {
       return authorizeClientFromXfccHeader(possibleXfccConfig.get(), xfccHeaderValues, requestName,
           requestSpiffeId);
@@ -124,15 +119,11 @@ public class ClientAuthFactory {
     return Optional.ofNullable(request.getSecurityContext().getUserPrincipal());
   }
 
-  static Optional<String> getClientName(Optional<Principal> principal) {
-    if (principal.isEmpty()) {
-      return Optional.empty();
-    }
-
-    X500Name name = new X500Name(principal.get().getName());
+  static Optional<String> getClientName(Principal principal) {
+    X500Name name = new X500Name(principal.getName());
     RDN[] rdns = name.getRDNs(BCStyle.CN);
     if (rdns.length == 0) {
-      logger.warn("Certificate does not contain CN=xxx,...: {}", principal.get().getName());
+      logger.warn("Certificate does not contain CN=xxx,...: {}", principal.getName());
       return Optional.empty();
     }
     return Optional.of(IETFUtils.valueToString(rdns[0].getFirst().getValue()));
@@ -154,7 +145,8 @@ public class ClientAuthFactory {
   }
 
   private Client authorizeClientFromXfccHeader(XfccSourceConfig xfccConfig,
-      List<String> xfccHeaderValues, Optional<String> requestName, Optional<String> requestSpiffeId) {
+      List<String> xfccHeaderValues, Optional<String> requestName,
+      Optional<String> requestSpiffeId) {
     // Do not allow the XFCC header to be set by all incoming traffic. This throws a
     // NotAuthorizedException when the traffic is not coming from a source allowed to set the
     // header.
@@ -169,7 +161,7 @@ public class ClientAuthFactory {
     }
 
     Principal clientPrincipal = clientCert.get().getSubjectX500Principal();
-    Optional<String> clientName = getClientName(Optional.of(clientPrincipal));
+    Optional<String> clientName = getClientName(clientPrincipal);
     Optional<String> clientSpiffeId = Optional.empty();
 
     return authorizeClient(clientPrincipal, clientName, clientSpiffeId);

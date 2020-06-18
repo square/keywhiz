@@ -32,17 +32,18 @@ import org.glassfish.jersey.server.ContainerRequest;
 import static java.lang.String.format;
 
 /**
- * Authenticates {@link AutomationClient}s from requests based on the principal present in a
- * {@link javax.ws.rs.core.SecurityContext} and by querying the database.
- *
- * Modeled similar to io.dropwizard.auth.AuthFactory, however that is not yet usable.
- * See https://github.com/dropwizard/dropwizard/issues/864.
+ * Authenticates {@link AutomationClient}s from requests based on the principal present in a {@link
+ * javax.ws.rs.core.SecurityContext} and by querying the database.
+ * <p>
+ * Modeled similar to io.dropwizard.auth.AuthFactory, however that is not yet usable. See
+ * https://github.com/dropwizard/dropwizard/issues/864.
  */
 public class AutomationClientAuthFactory {
   private final MyAuthenticator authenticator;
 
   @Inject public AutomationClientAuthFactory(ClientDAOFactory clientDAOFactory) {
-    this.authenticator = new MyAuthenticator(clientDAOFactory.readwrite(), clientDAOFactory.readonly());
+    this.authenticator =
+        new MyAuthenticator(clientDAOFactory.readwrite(), clientDAOFactory.readonly());
   }
 
   @VisibleForTesting AutomationClientAuthFactory(ClientDAO clientDAO) {
@@ -50,14 +51,12 @@ public class AutomationClientAuthFactory {
   }
 
   public AutomationClient provide(ContainerRequest request) {
-    Optional<Principal> principal = ClientAuthFactory.getPrincipal(request);
-    Optional<String> possibleClientName = ClientAuthFactory.getClientName(principal);
-    if (principal.isEmpty() || possibleClientName.isEmpty()) {
-      throw new NotAuthorizedException("Not authorized as a AutomationClient");
-    }
-    String clientName = possibleClientName.get();
+    Principal principal = ClientAuthFactory.getPrincipal(request)
+        .orElseThrow(() -> new NotAuthorizedException("Not authorized as a AutomationClient"));
+    String clientName = ClientAuthFactory.getClientName(principal)
+        .orElseThrow(() -> new NotAuthorizedException("Not authorized as a AutomationClient"));
 
-    return authenticator.authenticate(clientName, principal.orElse(null))
+    return authenticator.authenticate(clientName, principal)
         .orElseThrow(() -> new ForbiddenException(
             format("ClientCert name %s not authorized as a AutomationClient", clientName)));
   }
@@ -73,9 +72,7 @@ public class AutomationClientAuthFactory {
 
     public Optional<AutomationClient> authenticate(String name, @Nullable Principal principal) {
       Optional<Client> client = clientDAOReadOnly.getClient(name);
-      if (client.isPresent()) {
-        clientDAOReadWrite.sawClient(client.get(), principal);
-      }
+      client.ifPresent(value -> clientDAOReadWrite.sawClient(value, principal));
       return client.map(AutomationClient::of);
     }
   }
