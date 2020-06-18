@@ -22,8 +22,10 @@ import java.net.URLDecoder;
 import java.security.Principal;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,6 +34,7 @@ import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import keywhiz.KeywhizConfig;
 import keywhiz.api.model.Client;
+import keywhiz.auth.mutualssl.CertificatePrincipal;
 import keywhiz.service.config.ClientAuthConfig;
 import keywhiz.service.config.XfccSourceConfig;
 import keywhiz.service.daos.ClientDAO;
@@ -64,6 +67,12 @@ public class ClientAuthFactory {
   // configurable, with different parsing depending on the key being searched for.
   @VisibleForTesting
   protected static final String CERT_KEY = "Cert";
+
+  // The integer representation of the URIName SAN for a certificate
+  private static final Integer URINAME_SAN = 6;
+
+  // The expected prefix for SPIFFE URIs
+  private static final String SPIFFE_SCHEME = "spiffe://";
 
   private final MyAuthenticator authenticator;
   private final ClientAuthConfig clientAuthConfig;
@@ -103,8 +112,7 @@ public class ClientAuthFactory {
         () -> new NotAuthorizedException("Not authorized as Keywhiz client"));
 
     Optional<String> requestName = getClientName(requestPrincipal);
-    // SPIFFE support is not yet implemented
-    Optional<String> requestSpiffeId = Optional.empty();
+    Optional<String> requestSpiffeId = getSpiffeId(requestPrincipal);
 
     // Extract client information based on the x-forwarded-client-cert header or
     // on the security context of this request
@@ -129,6 +137,47 @@ public class ClientAuthFactory {
       return Optional.empty();
     }
     return Optional.of(IETFUtils.valueToString(rdns[0].getFirst().getValue()));
+  }
+
+  static Optional<String> getSpiffeId(Principal principal) {
+    if (!(principal instanceof CertificatePrincipal)) {
+      // A SPIFFE ID can only be parsed from a principal with a certificate
+      return Optional.empty();
+    }
+
+    // Get the leaf certificate
+    X509Certificate cert = ((CertificatePrincipal) principal).getCertificateChain()
+        .get(0);
+    return getSpiffeIdFromCertificate(cert);
+  }
+
+  static Optional<String> getSpiffeIdFromCertificate(X509Certificate cert) {
+    Collection<List<?>> sans;
+    try {
+      sans = cert.getSubjectAlternativeNames();
+    } catch (CertificateParsingException e) {
+      logger.warn("Unable to parse SANs from principal", e);
+      return Optional.empty();
+    }
+
+    if (sans == null || sans.isEmpty()) {
+      return Optional.empty();
+    }
+
+    // The sub-lists returned by getSubjectAlternativeNames have an integer for the first
+    // entry, representing a field, and the value as a string as the second entry.
+    List<String> spiffeUriNames = sans.stream()
+        .filter(sanPair -> sanPair.get(0).equals(URINAME_SAN))
+        .map(sanPair -> (String) sanPair.get(1))
+        .filter(uri -> uri.startsWith(SPIFFE_SCHEME))
+        .collect(Collectors.toUnmodifiableList());
+
+    if (spiffeUriNames.size() > 1) {
+      logger.warn("Got multiple SPIFFE URIs from certificate: {}", spiffeUriNames);
+      return Optional.empty();
+    }
+
+    return spiffeUriNames.stream().findFirst();
   }
 
   private Optional<XfccSourceConfig> getXfccConfigForPort(int port) {
@@ -156,14 +205,14 @@ public class ClientAuthFactory {
 
     // Extract client information from the XFCC header
     X509Certificate clientCert =
-        getClientCertFromXfccHeaderEnvoyFormatted(xfccHeaderValues).orElseThrow(
-            () -> new NotAuthorizedException(
-                format("unable to parse client certificate from %s header", XFCC_HEADER_NAME)));
+        getClientCertFromXfccHeaderEnvoyFormatted(xfccHeaderValues).orElseThrow(() ->
+            new NotAuthorizedException(
+                format("unable to parse client certificate from %s header", XFCC_HEADER_NAME))
+        );
 
     Principal clientPrincipal = clientCert.getSubjectX500Principal();
     Optional<String> clientName = getClientName(clientPrincipal);
-    // SPIFFE support is not yet implemented
-    Optional<String> clientSpiffeId = Optional.empty();
+    Optional<String> clientSpiffeId = getSpiffeIdFromCertificate(clientCert);
 
     return authorizeClientFromTlsCert(clientPrincipal, clientName, clientSpiffeId);
   }
