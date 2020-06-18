@@ -28,15 +28,25 @@ import java.util.List;
 @AutoValue
 public abstract class XfccSourceConfig {
   @JsonCreator public static XfccSourceConfig of(
+      @JsonProperty("port") Integer port,
       @JsonProperty("allowedClientNames") List<String> allowedClientNames,
       @JsonProperty("allowedSpiffeIds") List<String> allowedSpiffeIds) {
-    return new AutoValue_XfccSourceConfig(allowedClientNames, allowedSpiffeIds);
+    return new AutoValue_XfccSourceConfig(port, allowedClientNames, allowedSpiffeIds);
   }
 
-  // Only traffic from these clients will be allowed to include an x-forwarded-client-cert header;
-  // traffic which includes an XFCC header and is _not_ sent from these clients will be rejected,
-  // since most clients should only access their own secrets rather than potentially accessing other
-  // secrets using the XFCC header.
+  /**
+   * The port that this configuration applies to. All traffic sent through this port
+   * must use an XFCC header to identify the Keywhiz client.
+   */
+  public abstract Integer port();
+
+  /**
+   * Only traffic from these clients will be allowed to include an x-forwarded-client-cert header;
+   * traffic which includes an XFCC header and is not sent from these clients will be rejected,
+   * since most clients should only access their own secrets rather than potentially accessing other
+   * secrets using the XFCC header.
+   */
   public abstract List<String> allowedClientNames();
+
   public abstract List<String> allowedSpiffeIds();
 }

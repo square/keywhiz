@@ -19,18 +19,21 @@ package keywhiz.service.config;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import java.util.List;
 
-/** Configuration for how clients should be authenticated. */
+/**
+ * Configuration for how clients should be authenticated.
+ */
 @AutoValue
 public abstract class ClientAuthConfig {
   @JsonCreator public static ClientAuthConfig of(
-      @JsonProperty("xfcc") XfccSourceConfig sourceConfig,
+      @JsonProperty("xfcc") List<XfccSourceConfig> sourceConfigs,
       @JsonProperty("type") ClientAuthTypeConfig typeConfig) {
-    return new AutoValue_ClientAuthConfig(sourceConfig, typeConfig);
+    return new AutoValue_ClientAuthConfig(sourceConfigs, typeConfig);
   }
 
   // connection sources that can set x-forwarded-client-cert headers
-  public abstract XfccSourceConfig xfccConfig();
+  public abstract List<XfccSourceConfig> xfccConfigs();
 
   // what identifier(s) to use for clients
   public abstract ClientAuthTypeConfig typeConfig();

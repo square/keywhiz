@@ -25,6 +25,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
@@ -79,6 +80,25 @@ public class ClientAuthFactory {
   }
 
   public Client provide(ContainerRequest request) {
+    // Ports must either always send an x-forwarded-client-cert header, or
+    // never send this header. This also throws an error if a single port
+    // has multiple configurations.
+    int requestPort = request.getBaseUri().getPort();
+    Optional<XfccSourceConfig> possibleXfccConfig =
+        getXfccConfigForPort(requestPort);
+
+    List<String> xfccHeaderValues =
+        Optional.ofNullable(request.getRequestHeader(XFCC_HEADER_NAME)).orElse(List.of());
+    if (possibleXfccConfig.isPresent() && xfccHeaderValues.isEmpty()) {
+      throw new NotAuthorizedException(format(
+          "Port %d is configured to only receive traffic with the %s header set",
+          requestPort, XFCC_HEADER_NAME));
+    } else if (possibleXfccConfig.isEmpty() && !xfccHeaderValues.isEmpty()) {
+      throw new NotAuthorizedException(format(
+          "Port %d is not configured to receive traffic with the %s header set",
+          requestPort, XFCC_HEADER_NAME));
+    }
+
     // Extract information about the requester. This may be a Keywhiz client, or it may be a proxy
     // forwarding the real Keywhiz client information in the x-forwarded-client-certs header
     Optional<Principal> requestPrincipal = getPrincipal(request);
@@ -89,14 +109,14 @@ public class ClientAuthFactory {
     Optional<String> requestName = getClientName(requestPrincipal);
     Optional<String> requestSpiffeId = Optional.empty();
 
-    // Extract client information based on the x-forwarded-client-cert header (if set) or
+    // Extract client information based on the x-forwarded-client-cert header or
     // on the security context of this request
-    List<String> xfccHeaderValues = request.getRequestHeader(XFCC_HEADER_NAME);
-    if (xfccHeaderValues == null || xfccHeaderValues.isEmpty()) {
-      // The XFCC header was not set; use the security context of this request to identify the client
+    if (possibleXfccConfig.isEmpty()) {
+      // The XFCC header is not used; use the security context of this request to identify the client
       return authorizeClient(requestPrincipal.get(), requestName, requestSpiffeId);
     } else {
-      return authorizeClientFromXfccHeader(xfccHeaderValues, requestName, requestSpiffeId);
+      return authorizeClientFromXfccHeader(possibleXfccConfig.get(), xfccHeaderValues, requestName,
+          requestSpiffeId);
     }
   }
 
@@ -118,12 +138,27 @@ public class ClientAuthFactory {
     return Optional.of(IETFUtils.valueToString(rdns[0].getFirst().getValue()));
   }
 
-  private Client authorizeClientFromXfccHeader(List<String> xfccHeaderValues,
-      Optional<String> requestName, Optional<String> requestSpiffeId) {
+  private Optional<XfccSourceConfig> getXfccConfigForPort(int port) {
+    List<XfccSourceConfig> matchingConfigs = clientAuthConfig.xfccConfigs()
+        .stream()
+        .filter(xfccSourceConfig -> xfccSourceConfig.port().equals(port))
+        .collect(Collectors.toUnmodifiableList());
+
+    if (matchingConfigs.size() > 1) {
+      throw new NotAuthorizedException(format(
+          "Invalid 'xfcc' configuration for port %d; at most one configuration must be present per port",
+          port));
+    } else {
+      return matchingConfigs.stream().findFirst();
+    }
+  }
+
+  private Client authorizeClientFromXfccHeader(XfccSourceConfig xfccConfig,
+      List<String> xfccHeaderValues, Optional<String> requestName, Optional<String> requestSpiffeId) {
     // Do not allow the XFCC header to be set by all incoming traffic. This throws a
     // NotAuthorizedException when the traffic is not coming from a source allowed to set the
     // header.
-    validateXfccHeaderAllowed(requestName, requestSpiffeId);
+    validateXfccHeaderAllowed(xfccConfig, requestName, requestSpiffeId);
 
     // Extract client information from the XFCC header
     Optional<X509Certificate> clientCert =
@@ -140,16 +175,14 @@ public class ClientAuthFactory {
     return authorizeClient(clientPrincipal, clientName, clientSpiffeId);
   }
 
-  private void validateXfccHeaderAllowed(Optional<String> requestName,
+  private void validateXfccHeaderAllowed(XfccSourceConfig xfccConfig, Optional<String> requestName,
       Optional<String> requestSpiffeId) {
-    if (clientAuthConfig == null || clientAuthConfig.xfccConfig() == null) {
+    if (clientAuthConfig == null || clientAuthConfig.xfccConfigs() == null) {
       throw new NotAuthorizedException(
           format(
               "not configured to handle requests with %s header set; set 'xfcc' field in config",
               XFCC_HEADER_NAME));
     }
-
-    XfccSourceConfig xfccConfig = clientAuthConfig.xfccConfig();
 
     if (requestName.isEmpty() && requestSpiffeId.isEmpty()) {
       throw new NotAuthorizedException(

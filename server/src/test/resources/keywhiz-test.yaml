@@ -154,8 +154,9 @@ flywaySchemaTable: schema_version
 
 clientAuthConfig:
   xfcc:
-    allowedClientNames: []
-    allowedSpiffeIds: []
+    - port: 4446
+      allowedClientNames: []
+      allowedSpiffeIds: []
   type:
     useClientName: true
     useSpiffeId: true
