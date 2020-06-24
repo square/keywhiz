@@ -119,7 +119,7 @@ public class ClientAuthFactoryTest {
     when(xfccSourceConfig.port()).thenReturn(xfccAllowedPort);
     when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(xfccClient.getName()));
 
-    when(clientAuthTypeConfig.useClientName()).thenReturn(true);
+    when(clientAuthTypeConfig.useCommonName()).thenReturn(true);
     when(clientAuthTypeConfig.useSpiffeId()).thenReturn(false);
   }
 
@@ -240,7 +240,7 @@ public class ClientAuthFactoryTest {
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_allowedPortNoheader() throws Exception {
+  public void rejectsXfcc_noHeader() throws Exception {
     when(request.getBaseUri()).thenReturn(
         new URI(format("https://localhost:%d", xfccAllowedPort)));
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
@@ -251,11 +251,23 @@ public class ClientAuthFactoryTest {
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsMultipleXfccEntries() throws Exception {
+  public void rejectsXfcc_emptyHeader() throws Exception {
     when(request.getBaseUri()).thenReturn(
         new URI(format("https://localhost:%d", xfccAllowedPort)));
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(List.of(""));
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_multipleHeaderValues() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    // Simulate multiple XFCC headers
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader, xfccHeader));
 
@@ -263,7 +275,20 @@ public class ClientAuthFactoryTest {
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsMissingXfccClient() throws Exception {
+  public void rejectsXfcc_multipleHeaderEntries() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    // Simulate a single header with multiple certs added to it
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader + "," + xfccHeader));
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_missingClientCert() throws Exception {
     when(request.getBaseUri()).thenReturn(
         new URI(format("https://localhost:%d", xfccAllowedPort)));
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);

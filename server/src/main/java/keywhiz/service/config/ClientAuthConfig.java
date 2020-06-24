@@ -32,9 +32,9 @@ public abstract class ClientAuthConfig {
     return new AutoValue_ClientAuthConfig(sourceConfigs, typeConfig);
   }
 
-  // connection sources that can set x-forwarded-client-cert headers
+  /** connection sources that can set x-forwarded-client-cert headers */
   public abstract List<XfccSourceConfig> xfccConfigs();
 
-  // what identifier(s) to use for clients
+  /** what identifier(s) to use for clients */
   public abstract ClientAuthTypeConfig typeConfig();
 }

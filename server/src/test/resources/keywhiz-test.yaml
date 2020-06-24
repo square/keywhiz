@@ -158,5 +158,5 @@ clientAuthConfig:
       allowedClientNames: []
       allowedSpiffeIds: []
   type:
-    useClientName: true
+    useCommonName: true
     useSpiffeId: true

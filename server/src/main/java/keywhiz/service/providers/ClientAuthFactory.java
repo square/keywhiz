@@ -102,13 +102,14 @@ public class ClientAuthFactory {
         () -> new NotAuthorizedException("Not authorized as Keywhiz client"));
 
     Optional<String> requestName = getClientName(requestPrincipal);
+    // SPIFFE support is not yet implemented
     Optional<String> requestSpiffeId = Optional.empty();
 
     // Extract client information based on the x-forwarded-client-cert header or
     // on the security context of this request
     if (possibleXfccConfig.isEmpty()) {
       // The XFCC header is not used; use the security context of this request to identify the client
-      return authorizeClient(requestPrincipal, requestName, requestSpiffeId);
+      return authorizeClientFromTlsCert(requestPrincipal, requestName, requestSpiffeId);
     } else {
       return authorizeClientFromXfccHeader(possibleXfccConfig.get(), xfccHeaderValues, requestName,
           requestSpiffeId);
@@ -123,7 +124,7 @@ public class ClientAuthFactory {
     X500Name name = new X500Name(principal.getName());
     RDN[] rdns = name.getRDNs(BCStyle.CN);
     if (rdns.length == 0) {
-      logger.warn("Certificate does not contain CN=xxx,...: {}", principal.getName());
+      logger.warn("Certificate's subject does not contain CN=xxx,...: {}", principal.getName());
       return Optional.empty();
     }
     return Optional.of(IETFUtils.valueToString(rdns[0].getFirst().getValue()));
@@ -153,18 +154,17 @@ public class ClientAuthFactory {
     validateXfccHeaderAllowed(xfccConfig, requestName, requestSpiffeId);
 
     // Extract client information from the XFCC header
-    Optional<X509Certificate> clientCert =
-        getClientCertFromXfccHeaderEnvoyFormatted(xfccHeaderValues);
-    if (clientCert.isEmpty()) {
-      throw new NotAuthorizedException(
-          format("unable to parse client certificate from %s header", XFCC_HEADER_NAME));
-    }
+    X509Certificate clientCert =
+        getClientCertFromXfccHeaderEnvoyFormatted(xfccHeaderValues).orElseThrow(
+            () -> new NotAuthorizedException(
+                format("unable to parse client certificate from %s header", XFCC_HEADER_NAME)));
 
-    Principal clientPrincipal = clientCert.get().getSubjectX500Principal();
+    Principal clientPrincipal = clientCert.getSubjectX500Principal();
     Optional<String> clientName = getClientName(clientPrincipal);
+    // SPIFFE support is not yet implemented
     Optional<String> clientSpiffeId = Optional.empty();
 
-    return authorizeClient(clientPrincipal, clientName, clientSpiffeId);
+    return authorizeClientFromTlsCert(clientPrincipal, clientName, clientSpiffeId);
   }
 
   private void validateXfccHeaderAllowed(XfccSourceConfig xfccConfig, Optional<String> requestName,
@@ -176,6 +176,8 @@ public class ClientAuthFactory {
               XFCC_HEADER_NAME));
     }
 
+    // All XFCC traffic must be checked against allowlists; all connections that set the XFCC
+    // header must send identifiers for the requester, as well as the XFCC certificate
     if (requestName.isEmpty() && requestSpiffeId.isEmpty()) {
       throw new NotAuthorizedException(
           format("requests with %s header set must connect over TLS", XFCC_HEADER_NAME));
@@ -189,8 +191,8 @@ public class ClientAuthFactory {
               XFCC_HEADER_NAME, requestName.get()));
     }
 
-    if (requestSpiffeId.isPresent() && !xfccConfig.allowedSpiffeIds()
-        .contains(requestSpiffeId.get())) {
+    if (requestSpiffeId.isPresent() && !containsIgnoreCase(xfccConfig.allowedSpiffeIds(),
+        requestSpiffeId.get())) {
       throw new NotAuthorizedException(
           format(
               "requests with %s header set may not be sent from client with spiffe ID %s; check configuration",
@@ -200,13 +202,14 @@ public class ClientAuthFactory {
 
   private Optional<X509Certificate> getClientCertFromXfccHeaderEnvoyFormatted(
       List<String> xfccHeaderValues) {
-    // Keywhiz currently supports only one certificate set in the XFCC header,
-    // since otherwise it is more difficult to distinguish which certificate should have
-    // access to secrets
+    // Keywhiz currently supports only one configured XFCC header,,since otherwise it is difficult
+    // to distinguish which certificate should have access to secrets
     if (xfccHeaderValues.size() == 0) {
       return Optional.empty();
     } else if (xfccHeaderValues.size() > 1) {
-      logger.warn("Keywhiz only supports one certificate set in the {} header", XFCC_HEADER_NAME);
+      logger.warn(
+          "Keywhiz only supports one {} header, but {} were provided",
+          XFCC_HEADER_NAME, xfccHeaderValues.size());
       return Optional.empty();
     }
 
@@ -220,21 +223,34 @@ public class ClientAuthFactory {
     // grouped together by an equals (“=”) sign. The keys are case-insensitive, the values are
     // case-sensitive. If “,”, “;” or “=” appear in a value, the value should be double-quoted.
     // Double-quotes in the value should be replaced by backslash-double-quote (“).
-    String[] keyValuePairs = xfccHeaderValues.get(0).split(";");
+    String[] xfccElements = xfccHeaderValues.get(0).split(",");
+
+    // Keywhiz currently supports only one certificate set in the XFCC header,
+    // since otherwise it is more difficult to distinguish which certificate should have
+    // access to secrets
+    if (xfccElements.length == 0) {
+      logger.warn("No data provided in {} header", XFCC_HEADER_NAME);
+      return Optional.empty();
+    } else if (xfccElements.length > 1) {
+      logger.warn(
+          "Keywhiz only supports one certificate set in the {} header, but {} were provided",
+          XFCC_HEADER_NAME, xfccElements.length);
+      return Optional.empty();
+    }
+
+    String[] keyValuePairs = xfccElements[0].split(";");
 
     for (String pair : keyValuePairs) {
-      String[] keyValue = pair.split("=");
+      String[] keyValue = pair.split("=", 2);
       if (keyValue.length != 2) {
         logger.warn("Got entry in {} header that wasn't a key/value pair: {}", XFCC_HEADER_NAME,
             pair);
         continue;
       }
 
-      if (!CERT_KEY.equals(keyValue[0])) {
-        continue;
+      if (CERT_KEY.equalsIgnoreCase(keyValue[0])) {
+        return parseCertFromCertField(keyValue[1]);
       }
-
-      return parseCertFromCertField(keyValue[1]);
     }
 
     logger.warn("Unable to find {} in {} header; no client ID parsed from header", CERT_KEY,
@@ -243,11 +259,21 @@ public class ClientAuthFactory {
   }
 
   private Optional<X509Certificate> parseCertFromCertField(String xfccEncodedCert) {
-    // remove outer quotes
-    String encodedPem = xfccEncodedCert.replace("\"", "");
+    // remove outer quotes if present (will be added if the value was double-quoted)
+    String encodedPem = xfccEncodedCert.replaceAll("\\A\"|\"\\Z", "");
+
+    // replace backslash-escaped quotes with a double quote
+    encodedPem = encodedPem.replace("\\\"", "\"");
 
     // decode and parse the certificate
-    String certPem = URLDecoder.decode(encodedPem, UTF_8);
+    String certPem;
+    try {
+      certPem = URLDecoder.decode(encodedPem, UTF_8);
+    } catch (NullPointerException | IllegalArgumentException e) {
+      logger.warn(
+          format("Unable to decode url-encoded certificate from %s header", XFCC_HEADER_NAME), e);
+      return Optional.empty();
+    }
 
     CertificateFactory cf;
     try {
@@ -264,15 +290,16 @@ public class ClientAuthFactory {
           new ByteArrayInputStream(certPem.getBytes(UTF_8)));
     } catch (CertificateException e) {
       // Certificate must have been invalid
-      logger.warn("Failed to parse client certificate", e);
+      logger.warn(format("Failed to parse client certificate from %s header", XFCC_HEADER_NAME), e);
       return Optional.empty();
     }
     return Optional.of(cert);
   }
 
-  private Client authorizeClient(Principal clientPrincipal, Optional<String> possibleClientName,
+  private Client authorizeClientFromTlsCert(Principal clientPrincipal,
+      Optional<String> possibleClientName,
       Optional<String> possibleClientSpiffeId) {
-    if (clientAuthConfig.typeConfig().useClientName() && possibleClientName.isPresent()) {
+    if (clientAuthConfig.typeConfig().useCommonName() && possibleClientName.isPresent()) {
       String clientName = possibleClientName.get();
 
       Optional<Client> possibleClient =
@@ -289,6 +316,15 @@ public class ClientAuthFactory {
     throw new NotAuthorizedException(
         format("No authorized Client for connection using principal %s",
             clientPrincipal.getName()));
+  }
+
+  private static boolean containsIgnoreCase(List<String> strings, String target) {
+    for (String string : strings) {
+      if (string.equalsIgnoreCase(target)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class MyAuthenticator {

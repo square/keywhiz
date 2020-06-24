@@ -27,14 +27,14 @@ import org.slf4j.LoggerFactory;
 @AutoValue
 public abstract class ClientAuthTypeConfig {
   @JsonCreator public static ClientAuthTypeConfig of(
-      @JsonProperty("useClientName") boolean useClientName,
+      @JsonProperty("useCommonName") boolean useCommonName,
       @JsonProperty("useSpiffeId") boolean useSpiffeId) {
-    return new AutoValue_ClientAuthTypeConfig(useClientName, useSpiffeId);
+    return new AutoValue_ClientAuthTypeConfig(useCommonName, useSpiffeId);
   }
 
-  // whether to use the client name to identify clients
-  public abstract boolean useClientName();
+  /** whether to use the client name/common name on the client certificate to identify clients */
+  public abstract boolean useCommonName();
 
-  // whether to use the spiffe ID to identify clients
+  /** whether to use the spiffe ID to identify clients */
   public abstract boolean useSpiffeId();
 }
