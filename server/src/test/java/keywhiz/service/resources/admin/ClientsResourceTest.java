@@ -140,7 +140,7 @@ public class ClientsResourceTest {
   }
 
   @Test public void findClientByName() {
-    when(clientDAO.getClient(client.getName())).thenReturn(Optional.of(client));
+    when(clientDAO.getClientByName(client.getName())).thenReturn(Optional.of(client));
     assertThat(resource.getClientByName(user, "client")).isEqualTo(client);
   }
 
@@ -152,7 +152,7 @@ public class ClientsResourceTest {
 
   @Test(expected = NotFoundException.class)
   public void notFoundWhenRetrievingBadName() {
-    when(clientDAO.getClient("non-existent-client")).thenReturn(Optional.empty());
+    when(clientDAO.getClientByName("non-existent-client")).thenReturn(Optional.empty());
     resource.getClientByName(user, "non-existent-client");
   }
 

@@ -22,14 +22,11 @@ import java.net.URLDecoder;
 import java.security.Principal;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
 import keywhiz.KeywhizConfig;
@@ -39,10 +36,6 @@ import keywhiz.service.config.ClientAuthConfig;
 import keywhiz.service.config.XfccSourceConfig;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
-import org.bouncycastle.asn1.x500.RDN;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x500.style.BCStyle;
-import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,24 +61,19 @@ public class ClientAuthFactory {
   @VisibleForTesting
   protected static final String CERT_KEY = "Cert";
 
-  // The integer representation of the URIName SAN for a certificate
-  private static final Integer URINAME_SAN = 6;
-
-  // The expected prefix for SPIFFE URIs
-  private static final String SPIFFE_SCHEME = "spiffe://";
-
-  private final MyAuthenticator authenticator;
+  private final ClientAuthenticator authenticator;
   private final ClientAuthConfig clientAuthConfig;
 
   @Inject
   public ClientAuthFactory(ClientDAOFactory clientDAOFactory, KeywhizConfig keywhizConfig) {
     this.authenticator =
-        new MyAuthenticator(clientDAOFactory.readwrite(), clientDAOFactory.readonly());
+        new ClientAuthenticator(clientDAOFactory.readwrite(), clientDAOFactory.readonly(),
+            keywhizConfig.getClientAuthConfig());
     this.clientAuthConfig = keywhizConfig.getClientAuthConfig();
   }
 
   @VisibleForTesting ClientAuthFactory(ClientDAO clientDAO, ClientAuthConfig clientAuthConfig) {
-    this.authenticator = new MyAuthenticator(clientDAO, clientDAO);
+    this.authenticator = new ClientAuthenticator(clientDAO, clientDAO, clientAuthConfig);
     this.clientAuthConfig = clientAuthConfig;
   }
 
@@ -111,73 +99,19 @@ public class ClientAuthFactory {
     Principal requestPrincipal = getPrincipal(request).orElseThrow(
         () -> new NotAuthorizedException("Not authorized as Keywhiz client"));
 
-    Optional<String> requestName = getClientName(requestPrincipal);
-    Optional<String> requestSpiffeId = getSpiffeId(requestPrincipal);
-
     // Extract client information based on the x-forwarded-client-cert header or
     // on the security context of this request
     if (possibleXfccConfig.isEmpty()) {
       // The XFCC header is not used; use the security context of this request to identify the client
-      return authorizeClientFromTlsCert(requestPrincipal, requestName, requestSpiffeId);
+      return authorizeClientFromCertificate(requestPrincipal);
     } else {
-      return authorizeClientFromXfccHeader(possibleXfccConfig.get(), xfccHeaderValues, requestName,
-          requestSpiffeId);
+      return authorizeClientFromXfccHeader(possibleXfccConfig.get(), xfccHeaderValues,
+          requestPrincipal);
     }
   }
 
   static Optional<Principal> getPrincipal(ContainerRequest request) {
     return Optional.ofNullable(request.getSecurityContext().getUserPrincipal());
-  }
-
-  static Optional<String> getClientName(Principal principal) {
-    X500Name name = new X500Name(principal.getName());
-    RDN[] rdns = name.getRDNs(BCStyle.CN);
-    if (rdns.length == 0) {
-      logger.warn("Certificate's subject does not contain CN=xxx,...: {}", principal.getName());
-      return Optional.empty();
-    }
-    return Optional.of(IETFUtils.valueToString(rdns[0].getFirst().getValue()));
-  }
-
-  static Optional<String> getSpiffeId(Principal principal) {
-    if (!(principal instanceof CertificatePrincipal)) {
-      // A SPIFFE ID can only be parsed from a principal with a certificate
-      return Optional.empty();
-    }
-
-    // Get the leaf certificate
-    X509Certificate cert = ((CertificatePrincipal) principal).getCertificateChain()
-        .get(0);
-    return getSpiffeIdFromCertificate(cert);
-  }
-
-  static Optional<String> getSpiffeIdFromCertificate(X509Certificate cert) {
-    Collection<List<?>> sans;
-    try {
-      sans = cert.getSubjectAlternativeNames();
-    } catch (CertificateParsingException e) {
-      logger.warn("Unable to parse SANs from principal", e);
-      return Optional.empty();
-    }
-
-    if (sans == null || sans.isEmpty()) {
-      return Optional.empty();
-    }
-
-    // The sub-lists returned by getSubjectAlternativeNames have an integer for the first
-    // entry, representing a field, and the value as a string as the second entry.
-    List<String> spiffeUriNames = sans.stream()
-        .filter(sanPair -> sanPair.get(0).equals(URINAME_SAN))
-        .map(sanPair -> (String) sanPair.get(1))
-        .filter(uri -> uri.startsWith(SPIFFE_SCHEME))
-        .collect(Collectors.toUnmodifiableList());
-
-    if (spiffeUriNames.size() > 1) {
-      logger.warn("Got multiple SPIFFE URIs from certificate: {}", spiffeUriNames);
-      return Optional.empty();
-    }
-
-    return spiffeUriNames.stream().findFirst();
   }
 
   private Optional<XfccSourceConfig> getXfccConfigForPort(int port) {
@@ -196,12 +130,11 @@ public class ClientAuthFactory {
   }
 
   private Client authorizeClientFromXfccHeader(XfccSourceConfig xfccConfig,
-      List<String> xfccHeaderValues, Optional<String> requestName,
-      Optional<String> requestSpiffeId) {
+      List<String> xfccHeaderValues, Principal requestPrincipal) {
     // Do not allow the XFCC header to be set by all incoming traffic. This throws a
     // NotAuthorizedException when the traffic is not coming from a source allowed to set the
     // header.
-    validateXfccHeaderAllowed(xfccConfig, requestName, requestSpiffeId);
+    validateXfccHeaderAllowed(xfccConfig, requestPrincipal);
 
     // Extract client information from the XFCC header
     X509Certificate clientCert =
@@ -210,15 +143,14 @@ public class ClientAuthFactory {
                 format("unable to parse client certificate from %s header", XFCC_HEADER_NAME))
         );
 
-    Principal clientPrincipal = clientCert.getSubjectX500Principal();
-    Optional<String> clientName = getClientName(clientPrincipal);
-    Optional<String> clientSpiffeId = getSpiffeIdFromCertificate(clientCert);
+    CertificatePrincipal certificatePrincipal =
+        new CertificatePrincipal(clientCert.getSubjectDN().toString(),
+            new X509Certificate[] {clientCert});
 
-    return authorizeClientFromTlsCert(clientPrincipal, clientName, clientSpiffeId);
+    return authorizeClientFromCertificate(certificatePrincipal);
   }
 
-  private void validateXfccHeaderAllowed(XfccSourceConfig xfccConfig, Optional<String> requestName,
-      Optional<String> requestSpiffeId) {
+  private void validateXfccHeaderAllowed(XfccSourceConfig xfccConfig, Principal requestPrincipal) {
     if (clientAuthConfig == null || clientAuthConfig.xfccConfigs() == null) {
       throw new NotAuthorizedException(
           format(
@@ -228,6 +160,9 @@ public class ClientAuthFactory {
 
     // All XFCC traffic must be checked against allowlists; all connections that set the XFCC
     // header must send identifiers for the requester, as well as the XFCC certificate
+    Optional<String> requestName = ClientAuthenticator.getClientName(requestPrincipal);
+    Optional<String> requestSpiffeId = ClientAuthenticator.getSpiffeId(requestPrincipal);
+
     if (requestName.isEmpty() && requestSpiffeId.isEmpty()) {
       throw new NotAuthorizedException(
           format("requests with %s header set must connect over TLS", XFCC_HEADER_NAME));
@@ -335,61 +270,11 @@ public class ClientAuthFactory {
     return Optional.of(cert);
   }
 
-  private Client authorizeClientFromTlsCert(Principal clientPrincipal,
-      Optional<String> possibleClientName,
-      Optional<String> possibleClientSpiffeId) {
-    if (clientAuthConfig.typeConfig().useCommonName() && possibleClientName.isPresent()) {
-      String clientName = possibleClientName.get();
-
-      Optional<Client> possibleClient =
-          authenticator.authenticateByName(clientName, clientPrincipal);
-      if (possibleClient.isPresent()) {
-        return possibleClient.get();
-      }
-    }
-
-    if (clientAuthConfig.typeConfig().useSpiffeId() && possibleClientSpiffeId.isPresent()) {
-      throw new NotAuthorizedException("Identifying Clients by SPIFFE ID not yet supported");
-    }
-
-    throw new NotAuthorizedException(
+  private Client authorizeClientFromCertificate(Principal clientPrincipal) {
+    Optional<Client> possibleClient =
+        authenticator.authenticate(clientPrincipal, true);
+    return possibleClient.orElseThrow(() -> new NotAuthorizedException(
         format("No authorized Client for connection using principal %s",
-            clientPrincipal.getName()));
-  }
-
-  private static class MyAuthenticator {
-    private final ClientDAO clientDAOReadWrite;
-    private final ClientDAO clientDAOReadOnly;
-
-    private MyAuthenticator(
-        ClientDAO clientDAOReadWrite,
-        ClientDAO clientDAOReadOnly) {
-      this.clientDAOReadWrite = clientDAOReadWrite;
-      this.clientDAOReadOnly = clientDAOReadOnly;
-    }
-
-    public Optional<Client> authenticateByName(String name, @Nullable Principal principal) {
-      Optional<Client> optionalClient = clientDAOReadOnly.getClient(name);
-      if (optionalClient.isPresent()) {
-        Client client = optionalClient.get();
-        clientDAOReadWrite.sawClient(client, principal);
-        if (client.isEnabled()) {
-          return optionalClient;
-        } else {
-          logger.warn("Client {} authenticated but disabled via DB", client);
-          return Optional.empty();
-        }
-      }
-
-      /*
-       * If a client is seen for the first time, authenticated by certificate, and has no DB entry,
-       * then a DB entry is created here. The client can be disabled in the future by flipping the
-       * 'enabled' field.
-       */
-      // TODO(justin): Consider making this behavior configurable.
-      long clientId = clientDAOReadWrite.createClient(name, "automatic",
-          "Client created automatically from valid certificate authentication", "");
-      return Optional.of(clientDAOReadWrite.getClientById(clientId).get());
-    }
+            clientPrincipal.getName())));
   }
 }

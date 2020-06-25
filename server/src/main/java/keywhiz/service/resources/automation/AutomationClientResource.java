@@ -138,7 +138,7 @@ public class AutomationClientResource {
     logger.info("Automation ({}) - Looking up a name {}", automationClient.getName(), name);
 
     if (name.isPresent()) {
-      Client client = clientDAO.getClient(name.get()).orElseThrow(NotFoundException::new);
+      Client client = clientDAO.getClientByName(name.get()).orElseThrow(NotFoundException::new);
       ImmutableList<Group> groups = ImmutableList.copyOf(aclDAO.getGroupsFor(client));
       return Response.ok()
           .entity(ClientDetailResponse.fromClient(client, groups, ImmutableList.of()))
@@ -170,7 +170,7 @@ public class AutomationClientResource {
       @Auth AutomationClient automationClient,
       @Valid CreateClientRequest clientRequest) {
 
-    Optional<Client> client = clientDAO.getClient(clientRequest.name);
+    Optional<Client> client = clientDAO.getClientByName(clientRequest.name);
     if (client.isPresent()) {
       logger.info("Automation ({}) - Client {} already exists", automationClient.getName(),
           clientRequest.name);

@@ -93,7 +93,7 @@ public class ClientResource {
     String creator = automationClient.getName();
     String client = request.name();
 
-    clientDAOReadWrite.getClient(client).ifPresent((c) -> {
+    clientDAOReadWrite.getClientByName(client).ifPresent((c) -> {
       logger.info("Automation ({}) - Client {} already exists", creator, client);
       throw new ConflictException("Client name already exists.");
     });
@@ -143,7 +143,7 @@ public class ClientResource {
   @Produces(APPLICATION_JSON)
   public ClientDetailResponseV2 clientInfo(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    Client client = clientDAOReadOnly.getClient(name)
+    Client client = clientDAOReadOnly.getClientByName(name)
         .orElseThrow(NotFoundException::new);
 
     return ClientDetailResponseV2.fromClient(client);
@@ -165,7 +165,7 @@ public class ClientResource {
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientGroupsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    Client client = clientDAOReadOnly.getClient(name)
+    Client client = clientDAOReadOnly.getClientByName(name)
         .orElseThrow(NotFoundException::new);
     return aclDAOReadOnly.getGroupsFor(client).stream()
         .map(Group::getName)
@@ -189,7 +189,7 @@ public class ClientResource {
   @Produces(APPLICATION_JSON)
   public Iterable<String> modifyClientGroups(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @Valid ModifyGroupsRequestV2 request) {
-    Client client = clientDAOReadWrite.getClient(name)
+    Client client = clientDAOReadWrite.getClientByName(name)
         .orElseThrow(NotFoundException::new);
     String user = automationClient.getName();
 
@@ -234,7 +234,7 @@ public class ClientResource {
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientSecretsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    Client client = clientDAOReadOnly.getClient(name)
+    Client client = clientDAOReadOnly.getClientByName(name)
         .orElseThrow(NotFoundException::new);
     return aclDAOReadOnly.getSanitizedSecretsFor(client).stream()
         .map(SanitizedSecret::name)
@@ -256,7 +256,7 @@ public class ClientResource {
   @Path("{name}")
   public Response deleteClient(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    Client client = clientDAOReadWrite.getClient(name)
+    Client client = clientDAOReadWrite.getClientByName(name)
         .orElseThrow(NotFoundException::new);
 
     // Group memberships are deleted automatically by DB cascading.
@@ -285,7 +285,7 @@ public class ClientResource {
   @Produces(APPLICATION_JSON)
   public ClientDetailResponseV2 modifyClient(@Auth AutomationClient automationClient,
       @PathParam("name") String currentName, @Valid ModifyClientRequestV2 request) {
-    Client client = clientDAOReadWrite.getClient(currentName)
+    Client client = clientDAOReadWrite.getClientByName(currentName)
         .orElseThrow(NotFoundException::new);
     String newName = request.name();
 

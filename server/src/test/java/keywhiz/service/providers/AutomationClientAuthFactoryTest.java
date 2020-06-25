@@ -54,7 +54,7 @@ public class AutomationClientAuthFactoryTest {
     factory = new AutomationClientAuthFactory(clientDAO);
 
     when(request.getSecurityContext()).thenReturn(securityContext);
-    when(clientDAO.getClient("principal")).thenReturn(Optional.of(client));
+    when(clientDAO.getClientByName("principal")).thenReturn(Optional.of(client));
   }
 
   @Test public void automationClientWhenClientPresent() {
@@ -72,7 +72,7 @@ public class AutomationClientAuthFactoryTest {
 
     when(securityContext.getUserPrincipal()).thenReturn(
         SimplePrincipal.of("CN=clientWithoutAutomation"));
-    when(clientDAO.getClient("clientWithoutAutomation"))
+    when(clientDAO.getClientByName("clientWithoutAutomation"))
         .thenReturn(Optional.of(clientWithoutAutomation));
 
     factory.provide(request);
@@ -82,7 +82,7 @@ public class AutomationClientAuthFactoryTest {
   public void automationClientRejectsClientsWithoutDBEntries() {
     when(securityContext.getUserPrincipal()).thenReturn(
         SimplePrincipal.of("CN=clientWithoutDBEntry"));
-    when(clientDAO.getClient("clientWithoutDBEntry")).thenReturn(Optional.empty());
+    when(clientDAO.getClientByName("clientWithoutDBEntry")).thenReturn(Optional.empty());
 
     factory.provide(request);
   }

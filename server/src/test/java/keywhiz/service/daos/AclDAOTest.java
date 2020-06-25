@@ -398,7 +398,7 @@ public class AclDAOTest {
         .where(CLIENTS.ID.eq(client2.getId()))
         .execute();
 
-    Client maliciousClient = clientDAO.getClient(client2.getName()).orElseThrow();
+    Client maliciousClient = clientDAO.getClientByName(client2.getName()).orElseThrow();
 
     String errorMessage = String.format(
         "Client HMAC verification failed for client: %s", client2.getName());

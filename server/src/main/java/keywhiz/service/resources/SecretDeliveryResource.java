@@ -94,7 +94,7 @@ public class SecretDeliveryResource {
     Optional<Secret> secret = secretController.getSecretByName(secretName);
 
     if (!sanitizedSecret.isPresent()) {
-      boolean clientExists = clientDAO.getClient(client.getName()).isPresent();
+      boolean clientExists = clientDAO.getClientByName(client.getName()).isPresent();
       boolean secretExists = secret.isPresent();
 
       if (clientExists && secretExists) {

@@ -136,8 +136,13 @@ public class ClientDAO {
     }
   }
 
-  public Optional<Client> getClient(String name) {
+  public Optional<Client> getClientByName(String name) {
     ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.NAME.eq(name));
+    return Optional.ofNullable(r).map(clientMapper::map);
+  }
+
+  public Optional<Client> getClientBySpiffeId(String spiffeId) {
+    ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.SPIFFE_ID.eq(spiffeId));
     return Optional.ofNullable(r).map(clientMapper::map);
   }
 
