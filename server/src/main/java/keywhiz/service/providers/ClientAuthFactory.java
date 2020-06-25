@@ -191,7 +191,7 @@ public class ClientAuthFactory {
               XFCC_HEADER_NAME, requestName.get()));
     }
 
-    if (requestSpiffeId.isPresent() && !containsIgnoreCase(xfccConfig.allowedSpiffeIds(),
+    if (requestSpiffeId.isPresent() && !xfccConfig.allowedSpiffeIds().contains(
         requestSpiffeId.get())) {
       throw new NotAuthorizedException(
           format(
@@ -316,15 +316,6 @@ public class ClientAuthFactory {
     throw new NotAuthorizedException(
         format("No authorized Client for connection using principal %s",
             clientPrincipal.getName()));
-  }
-
-  private static boolean containsIgnoreCase(List<String> strings, String target) {
-    for (String string : strings) {
-      if (string.equalsIgnoreCase(target)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static class MyAuthenticator {
