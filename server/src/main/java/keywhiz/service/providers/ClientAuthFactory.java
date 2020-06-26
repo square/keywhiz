@@ -213,43 +213,31 @@ public class ClientAuthFactory {
       return Optional.empty();
     }
 
-    // From https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_conn_man/headers#x-forwarded-client-cert:
-    // The XFCC header value is a comma (“,”) separated string. Each substring is an XFCC element,
-    // which holds information added by a single proxy. A proxy can append the current client
-    // certificate information as an XFCC element, to the end of the request’s XFCC header
-    // after a comma.
-    //
-    // Each XFCC element is a semicolon “;” separated string. Each substring is a key-value pair,
-    // grouped together by an equals (“=”) sign. The keys are case-insensitive, the values are
-    // case-sensitive. If “,”, “;” or “=” appear in a value, the value should be double-quoted.
-    // Double-quotes in the value should be replaced by backslash-double-quote (“).
-    String[] xfccElements = xfccHeaderValues.get(0).split(",");
+    // Parse the XFCC header as formatted by Envoy
+    XfccHeader xfccHeader;
+    try {
+      xfccHeader = XfccHeader.parse(xfccHeaderValues.get(0));
+    } catch (XfccHeader.ParseException e) {
+      logger.warn(format("Unable to parse input %s header", XFCC_HEADER_NAME), e);
+      return Optional.empty();
+    }
 
     // Keywhiz currently supports only one certificate set in the XFCC header,
     // since otherwise it is more difficult to distinguish which certificate should have
     // access to secrets
-    if (xfccElements.length == 0) {
+    if (xfccHeader.elements.length == 0) {
       logger.warn("No data provided in {} header", XFCC_HEADER_NAME);
       return Optional.empty();
-    } else if (xfccElements.length > 1) {
+    } else if (xfccHeader.elements.length > 1) {
       logger.warn(
           "Keywhiz only supports one certificate set in the {} header, but {} were provided",
-          XFCC_HEADER_NAME, xfccElements.length);
+          XFCC_HEADER_NAME, xfccHeader.elements.length);
       return Optional.empty();
     }
 
-    String[] keyValuePairs = xfccElements[0].split(";");
-
-    for (String pair : keyValuePairs) {
-      String[] keyValue = pair.split("=", 2);
-      if (keyValue.length != 2) {
-        logger.warn("Got entry in {} header that wasn't a key/value pair: {}", XFCC_HEADER_NAME,
-            pair);
-        continue;
-      }
-
-      if (CERT_KEY.equalsIgnoreCase(keyValue[0])) {
-        return parseCertFromCertField(keyValue[1]);
+    for (XfccHeader.Element.Pair pair : xfccHeader.elements[0].pairs) {
+      if (CERT_KEY.equalsIgnoreCase(pair.key)) {
+        return parseUrlEncodedPem(pair.value);
       }
     }
 
@@ -258,17 +246,10 @@ public class ClientAuthFactory {
     return Optional.empty();
   }
 
-  private Optional<X509Certificate> parseCertFromCertField(String xfccEncodedCert) {
-    // remove outer quotes if present (will be added if the value was double-quoted)
-    String encodedPem = xfccEncodedCert.replaceAll("\\A\"|\"\\Z", "");
-
-    // replace backslash-escaped quotes with a double quote
-    encodedPem = encodedPem.replace("\\\"", "\"");
-
-    // decode and parse the certificate
+  private Optional<X509Certificate> parseUrlEncodedPem(String urlEncodedPem) {
     String certPem;
     try {
-      certPem = URLDecoder.decode(encodedPem, UTF_8);
+      certPem = URLDecoder.decode(urlEncodedPem, UTF_8);
     } catch (NullPointerException | IllegalArgumentException e) {
       logger.warn(
           format("Unable to decode url-encoded certificate from %s header", XFCC_HEADER_NAME), e);
