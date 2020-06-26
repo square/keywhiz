@@ -16,6 +16,7 @@
 
 package keywhiz.service.providers;
 
+import java.net.URI;
 import java.security.Principal;
 import java.util.Optional;
 import javax.ws.rs.ForbiddenException;
@@ -24,6 +25,8 @@ import javax.ws.rs.core.SecurityContext;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.SimplePrincipal;
+import keywhiz.service.config.ClientAuthConfig;
+import keywhiz.service.config.ClientAuthTypeConfig;
 import keywhiz.service.daos.ClientDAO;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.Before;
@@ -33,6 +36,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -44,21 +48,32 @@ public class AutomationClientAuthFactoryTest {
       new Client(0, "principal", null, null, null, null, null, null, null, null, true, true);
   private static final AutomationClient automationClient = AutomationClient.of(client);
 
+  private static final int xfccDisallowedPort = 4445;
+
+  @Mock ClientAuthTypeConfig clientAuthTypeConfig;
+  @Mock ClientAuthConfig clientAuthConfig;
+
   @Mock ContainerRequest request;
   @Mock SecurityContext securityContext;
   @Mock ClientDAO clientDAO;
 
   AutomationClientAuthFactory factory;
 
-  @Before public void setUp() {
-    factory = new AutomationClientAuthFactory(clientDAO);
+  @Before public void setUp() throws Exception {
+    factory = new AutomationClientAuthFactory(clientDAO, clientAuthConfig);
 
     when(request.getSecurityContext()).thenReturn(securityContext);
-    when(clientDAO.getClientByName("principal")).thenReturn(Optional.of(client));
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccDisallowedPort)));
+
+    when(clientAuthConfig.typeConfig()).thenReturn(clientAuthTypeConfig);
+
+    when(clientAuthTypeConfig.useCommonName()).thenReturn(true);
   }
 
-  @Test public void automationClientWhenClientPresent() {
+  @Test public void automationClientWhenClientPresent()  {
     when(securityContext.getUserPrincipal()).thenReturn(principal);
+    when(clientDAO.getClientByName("principal")).thenReturn(Optional.of(client));
 
     assertThat(factory.provide(request)).isEqualTo(automationClient);
   }
@@ -66,8 +81,8 @@ public class AutomationClientAuthFactoryTest {
   @Test(expected = ForbiddenException.class)
   public void automationClientRejectsClientsWithoutAutomation() {
     Client clientWithoutAutomation =
-        new Client(3423, "clientWithoutAutomation", null, null, null, null, null, null, null, null, true,
-            false
+        new Client(3423, "clientWithoutAutomation", null, null, null, null, null, null, null, null,
+            true, false
         );
 
     when(securityContext.getUserPrincipal()).thenReturn(
@@ -78,18 +93,11 @@ public class AutomationClientAuthFactoryTest {
     factory.provide(request);
   }
 
-  @Test(expected = ForbiddenException.class)
+  @Test(expected = NotAuthorizedException.class)
   public void automationClientRejectsClientsWithoutDBEntries() {
     when(securityContext.getUserPrincipal()).thenReturn(
         SimplePrincipal.of("CN=clientWithoutDBEntry"));
     when(clientDAO.getClientByName("clientWithoutDBEntry")).thenReturn(Optional.empty());
-
-    factory.provide(request);
-  }
-
-  @Test(expected = NotAuthorizedException.class)
-  public void automationClientWhenPrincipalAbsent() {
-    when(securityContext.getUserPrincipal()).thenReturn(null);
 
     factory.provide(request);
   }
