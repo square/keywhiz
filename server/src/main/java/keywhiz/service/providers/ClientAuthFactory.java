@@ -23,6 +23,7 @@ import java.security.Principal;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -235,15 +236,23 @@ public class ClientAuthFactory {
       return Optional.empty();
     }
 
-    for (XfccHeader.Element.Pair pair : xfccHeader.elements[0].pairs) {
-      if (CERT_KEY.equalsIgnoreCase(pair.key)) {
-        return parseUrlEncodedPem(pair.value);
-      }
+    List<String> certValues = Arrays.stream(xfccHeader.elements[0].pairs)
+        .filter((pair) -> CERT_KEY.equalsIgnoreCase(pair.key))
+        .map((pair) -> pair.value)
+        .collect(Collectors.toUnmodifiableList());
+
+    if (certValues.size() == 0) {
+      logger.warn("Unable to find {} in {} header; no client ID parsed from header", CERT_KEY,
+          XFCC_HEADER_NAME);
+      return Optional.empty();
+    } else if (certValues.size() > 1) {
+      logger.warn(
+          "Keywhiz only supports one {} key in the {} header, but {} were provided",
+          CERT_KEY, XFCC_HEADER_NAME, certValues.size());
+      return Optional.empty();
     }
 
-    logger.warn("Unable to find {} in {} header; no client ID parsed from header", CERT_KEY,
-        XFCC_HEADER_NAME);
-    return Optional.empty();
+    return parseUrlEncodedPem(certValues.get(0));
   }
 
   private Optional<X509Certificate> parseUrlEncodedPem(String urlEncodedPem) {

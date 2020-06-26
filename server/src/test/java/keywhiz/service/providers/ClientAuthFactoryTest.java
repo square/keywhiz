@@ -267,7 +267,7 @@ public class ClientAuthFactoryTest {
         new URI(format("https://localhost:%d", xfccAllowedPort)));
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
-    // Simulate multiple XFCC headers
+    // multiple XFCC headers
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader, xfccHeader));
 
@@ -280,9 +280,23 @@ public class ClientAuthFactoryTest {
         new URI(format("https://localhost:%d", xfccAllowedPort)));
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
-    // Simulate a single header with multiple certs added to it
+    // a single header with multiple client elements in to it
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader + "," + xfccHeader));
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_multipleCertKeysInHeader() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    // a single header with multiple cert tags in it for the same client
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(format("Cert=\"%s\";cert=\"%s\"", UrlEncoded.encodeString(clientPem, UTF_8),
+            UrlEncoded.encodeString(clientPem, UTF_8))));
 
     factory.provide(request);
   }
