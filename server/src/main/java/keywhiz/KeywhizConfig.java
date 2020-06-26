@@ -29,6 +29,7 @@ import javax.validation.constraints.NotNull;
 import keywhiz.api.validation.ValidBase64;
 import keywhiz.auth.UserAuthenticatorFactory;
 import keywhiz.auth.cookie.CookieConfig;
+import keywhiz.service.config.ClientAuthConfig;
 import keywhiz.service.config.KeyStoreConfig;
 import keywhiz.service.config.Templates;
 import org.hibernate.validator.constraints.Length;
@@ -88,9 +89,12 @@ public class KeywhizConfig extends Configuration {
 
   @JsonProperty
   private String rowHmacCheck;
-  
+
   @JsonProperty
   private String flywaySchemaTable;
+
+  @JsonProperty
+  private ClientAuthConfig clientAuthConfig;
 
   public enum RowHmacCheck {
     DISABLED, DISABLED_BUT_LOG, ENFORCED
@@ -200,12 +204,16 @@ public class KeywhizConfig extends Configuration {
         );
     }
   }
-  
+
   public String getFlywaySchemaTable() {
 	  if (flywaySchemaTable == null) {
 		  return "schema_version";
 	  }
 	  return flywaySchemaTable;
+  }
+
+  public ClientAuthConfig getClientAuthConfig() {
+    return clientAuthConfig;
   }
 
   public static class TemplatedDataSourceFactory extends DataSourceFactory {

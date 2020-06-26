@@ -17,12 +17,23 @@
 package keywhiz.service.providers;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.io.ByteArrayInputStream;
+import java.net.URLDecoder;
 import java.security.Principal;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.NotAuthorizedException;
+import keywhiz.KeywhizConfig;
 import keywhiz.api.model.Client;
+import keywhiz.service.config.ClientAuthConfig;
+import keywhiz.service.config.XfccSourceConfig;
 import keywhiz.service.daos.ClientDAO;
 import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import org.bouncycastle.asn1.x500.RDN;
@@ -34,56 +45,267 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * Authenticates {@link Client}s from requests based on the principal present in a
- * {@link javax.ws.rs.core.SecurityContext} and by querying the database.
- *
- * Modeled similar to io.dropwizard.auth.AuthFactory, however that is not yet usable.
- * See https://github.com/dropwizard/dropwizard/issues/864.
+ * Authenticates {@link Client}s from requests based on the principal present in a {@link
+ * javax.ws.rs.core.SecurityContext} and by querying the database.
+ * <p>
+ * Modeled similar to io.dropwizard.auth.AuthFactory, however that is not yet usable. See
+ * https://github.com/dropwizard/dropwizard/issues/864.
  */
 public class ClientAuthFactory {
   private static final Logger logger = LoggerFactory.getLogger(ClientAuthFactory.class);
 
-  private final MyAuthenticator authenticator;
+  @VisibleForTesting
+  protected static final String XFCC_HEADER_NAME = "X-Forwarded-Client-Cert";
 
-  @Inject public ClientAuthFactory(ClientDAOFactory clientDAOFactory) {
-    this.authenticator = new MyAuthenticator(clientDAOFactory.readwrite(), clientDAOFactory.readonly());
+  // The key that will be searched for in the XFCC header. Eventually, this should be made
+  // configurable, with different parsing depending on the key being searched for.
+  @VisibleForTesting
+  protected static final String CERT_KEY = "Cert";
+
+  private final MyAuthenticator authenticator;
+  private final ClientAuthConfig clientAuthConfig;
+
+  @Inject
+  public ClientAuthFactory(ClientDAOFactory clientDAOFactory, KeywhizConfig keywhizConfig) {
+    this.authenticator =
+        new MyAuthenticator(clientDAOFactory.readwrite(), clientDAOFactory.readonly());
+    this.clientAuthConfig = keywhizConfig.getClientAuthConfig();
   }
 
-  @VisibleForTesting ClientAuthFactory(ClientDAO clientDAO) {
+  @VisibleForTesting ClientAuthFactory(ClientDAO clientDAO, ClientAuthConfig clientAuthConfig) {
     this.authenticator = new MyAuthenticator(clientDAO, clientDAO);
+    this.clientAuthConfig = clientAuthConfig;
   }
 
   public Client provide(ContainerRequest request) {
-    Optional<Principal> principal = getPrincipal(request);
-    Optional<String> possibleClientName = getClientName(principal);
-    if (!principal.isPresent() || !possibleClientName.isPresent()) {
-      throw new NotAuthorizedException("ClientCert not authorized as a Client");
-    }
-    String clientName = possibleClientName.get();
+    // Ports must either always send an x-forwarded-client-cert header, or
+    // never send this header. This also throws an error if a single port
+    // has multiple configurations.
+    int requestPort = request.getBaseUri().getPort();
+    Optional<XfccSourceConfig> possibleXfccConfig =
+        getXfccConfigForPort(requestPort);
 
-    return authenticator.authenticate(clientName, principal.orElse(null))
-        .orElseThrow(() -> new NotAuthorizedException(
-            format("ClientCert name %s not authorized as a Client", clientName)));
+    List<String> xfccHeaderValues =
+        Optional.ofNullable(request.getRequestHeader(XFCC_HEADER_NAME)).orElse(List.of());
+
+    if (possibleXfccConfig.isEmpty() != xfccHeaderValues.isEmpty()) {
+      throw new NotAuthorizedException(format(
+          "Port %d is configured to %s receive traffic with the %s header set",
+          requestPort, possibleXfccConfig.isEmpty() ? "never" : "only", XFCC_HEADER_NAME));
+    }
+
+    // Extract information about the requester. This may be a Keywhiz client, or it may be a proxy
+    // forwarding the real Keywhiz client information in the x-forwarded-client-certs header
+    Principal requestPrincipal = getPrincipal(request).orElseThrow(
+        () -> new NotAuthorizedException("Not authorized as Keywhiz client"));
+
+    Optional<String> requestName = getClientName(requestPrincipal);
+    // SPIFFE support is not yet implemented
+    Optional<String> requestSpiffeId = Optional.empty();
+
+    // Extract client information based on the x-forwarded-client-cert header or
+    // on the security context of this request
+    if (possibleXfccConfig.isEmpty()) {
+      // The XFCC header is not used; use the security context of this request to identify the client
+      return authorizeClientFromTlsCert(requestPrincipal, requestName, requestSpiffeId);
+    } else {
+      return authorizeClientFromXfccHeader(possibleXfccConfig.get(), xfccHeaderValues, requestName,
+          requestSpiffeId);
+    }
   }
 
   static Optional<Principal> getPrincipal(ContainerRequest request) {
     return Optional.ofNullable(request.getSecurityContext().getUserPrincipal());
   }
 
-  static Optional<String> getClientName(Optional<Principal> principal) {
-    if (!principal.isPresent()) {
-      return Optional.empty();
-    }
-
-    X500Name name = new X500Name(principal.get().getName());
+  static Optional<String> getClientName(Principal principal) {
+    X500Name name = new X500Name(principal.getName());
     RDN[] rdns = name.getRDNs(BCStyle.CN);
     if (rdns.length == 0) {
-      logger.warn("Certificate does not contain CN=xxx,...: {}", principal.get().getName());
+      logger.warn("Certificate's subject does not contain CN=xxx,...: {}", principal.getName());
       return Optional.empty();
     }
     return Optional.of(IETFUtils.valueToString(rdns[0].getFirst().getValue()));
+  }
+
+  private Optional<XfccSourceConfig> getXfccConfigForPort(int port) {
+    List<XfccSourceConfig> matchingConfigs = clientAuthConfig.xfccConfigs()
+        .stream()
+        .filter(xfccSourceConfig -> xfccSourceConfig.port().equals(port))
+        .collect(Collectors.toUnmodifiableList());
+
+    if (matchingConfigs.size() > 1) {
+      throw new NotAuthorizedException(format(
+          "Invalid 'xfcc' configuration for port %d; at most one configuration must be present per port",
+          port));
+    } else {
+      return matchingConfigs.stream().findFirst();
+    }
+  }
+
+  private Client authorizeClientFromXfccHeader(XfccSourceConfig xfccConfig,
+      List<String> xfccHeaderValues, Optional<String> requestName,
+      Optional<String> requestSpiffeId) {
+    // Do not allow the XFCC header to be set by all incoming traffic. This throws a
+    // NotAuthorizedException when the traffic is not coming from a source allowed to set the
+    // header.
+    validateXfccHeaderAllowed(xfccConfig, requestName, requestSpiffeId);
+
+    // Extract client information from the XFCC header
+    X509Certificate clientCert =
+        getClientCertFromXfccHeaderEnvoyFormatted(xfccHeaderValues).orElseThrow(
+            () -> new NotAuthorizedException(
+                format("unable to parse client certificate from %s header", XFCC_HEADER_NAME)));
+
+    Principal clientPrincipal = clientCert.getSubjectX500Principal();
+    Optional<String> clientName = getClientName(clientPrincipal);
+    // SPIFFE support is not yet implemented
+    Optional<String> clientSpiffeId = Optional.empty();
+
+    return authorizeClientFromTlsCert(clientPrincipal, clientName, clientSpiffeId);
+  }
+
+  private void validateXfccHeaderAllowed(XfccSourceConfig xfccConfig, Optional<String> requestName,
+      Optional<String> requestSpiffeId) {
+    if (clientAuthConfig == null || clientAuthConfig.xfccConfigs() == null) {
+      throw new NotAuthorizedException(
+          format(
+              "not configured to handle requests with %s header set; set 'xfcc' field in config",
+              XFCC_HEADER_NAME));
+    }
+
+    // All XFCC traffic must be checked against allowlists; all connections that set the XFCC
+    // header must send identifiers for the requester, as well as the XFCC certificate
+    if (requestName.isEmpty() && requestSpiffeId.isEmpty()) {
+      throw new NotAuthorizedException(
+          format("requests with %s header set must connect over TLS", XFCC_HEADER_NAME));
+    }
+
+    // Only certain clients may set the XFCC header
+    if (requestName.isPresent() && !xfccConfig.allowedClientNames().contains(requestName.get())) {
+      throw new NotAuthorizedException(
+          format(
+              "requests with %s header set may not be sent from client with name %s; check configuration",
+              XFCC_HEADER_NAME, requestName.get()));
+    }
+
+    if (requestSpiffeId.isPresent() && !xfccConfig.allowedSpiffeIds().contains(
+        requestSpiffeId.get())) {
+      throw new NotAuthorizedException(
+          format(
+              "requests with %s header set may not be sent from client with spiffe ID %s; check configuration",
+              XFCC_HEADER_NAME, requestSpiffeId.get()));
+    }
+  }
+
+  private Optional<X509Certificate> getClientCertFromXfccHeaderEnvoyFormatted(
+      List<String> xfccHeaderValues) {
+    // Keywhiz currently supports only one configured XFCC header,,since otherwise it is difficult
+    // to distinguish which certificate should have access to secrets
+    if (xfccHeaderValues.size() == 0) {
+      return Optional.empty();
+    } else if (xfccHeaderValues.size() > 1) {
+      logger.warn(
+          "Keywhiz only supports one {} header, but {} were provided",
+          XFCC_HEADER_NAME, xfccHeaderValues.size());
+      return Optional.empty();
+    }
+
+    // Parse the XFCC header as formatted by Envoy
+    XfccHeader xfccHeader;
+    try {
+      xfccHeader = XfccHeader.parse(xfccHeaderValues.get(0));
+    } catch (XfccHeader.ParseException e) {
+      logger.warn(format("Unable to parse input %s header", XFCC_HEADER_NAME), e);
+      return Optional.empty();
+    }
+
+    // Keywhiz currently supports only one certificate set in the XFCC header,
+    // since otherwise it is more difficult to distinguish which certificate should have
+    // access to secrets
+    if (xfccHeader.elements.length == 0) {
+      logger.warn("No data provided in {} header", XFCC_HEADER_NAME);
+      return Optional.empty();
+    } else if (xfccHeader.elements.length > 1) {
+      logger.warn(
+          "Keywhiz only supports one certificate set in the {} header, but {} were provided",
+          XFCC_HEADER_NAME, xfccHeader.elements.length);
+      return Optional.empty();
+    }
+
+    List<String> certValues = Arrays.stream(xfccHeader.elements[0].pairs)
+        .filter((pair) -> CERT_KEY.equalsIgnoreCase(pair.key))
+        .map((pair) -> pair.value)
+        .collect(Collectors.toUnmodifiableList());
+
+    if (certValues.size() == 0) {
+      logger.warn("Unable to find {} in {} header; no client ID parsed from header", CERT_KEY,
+          XFCC_HEADER_NAME);
+      return Optional.empty();
+    } else if (certValues.size() > 1) {
+      logger.warn(
+          "Keywhiz only supports one {} key in the {} header, but {} were provided",
+          CERT_KEY, XFCC_HEADER_NAME, certValues.size());
+      return Optional.empty();
+    }
+
+    return parseUrlEncodedPem(certValues.get(0));
+  }
+
+  private Optional<X509Certificate> parseUrlEncodedPem(String urlEncodedPem) {
+    String certPem;
+    try {
+      certPem = URLDecoder.decode(urlEncodedPem, UTF_8);
+    } catch (NullPointerException | IllegalArgumentException e) {
+      logger.warn(
+          format("Unable to decode url-encoded certificate from %s header", XFCC_HEADER_NAME), e);
+      return Optional.empty();
+    }
+
+    CertificateFactory cf;
+    try {
+      cf = CertificateFactory.getInstance("X.509");
+    } catch (CertificateException e) {
+      // Should never happen (X.509 supported by default)
+      logger.error("Unexpected error: Unable to get X.509 certificate factory");
+      return Optional.empty();
+    }
+
+    X509Certificate cert;
+    try {
+      cert = (X509Certificate) cf.generateCertificate(
+          new ByteArrayInputStream(certPem.getBytes(UTF_8)));
+    } catch (CertificateException e) {
+      // Certificate must have been invalid
+      logger.warn(format("Failed to parse client certificate from %s header", XFCC_HEADER_NAME), e);
+      return Optional.empty();
+    }
+    return Optional.of(cert);
+  }
+
+  private Client authorizeClientFromTlsCert(Principal clientPrincipal,
+      Optional<String> possibleClientName,
+      Optional<String> possibleClientSpiffeId) {
+    if (clientAuthConfig.typeConfig().useCommonName() && possibleClientName.isPresent()) {
+      String clientName = possibleClientName.get();
+
+      Optional<Client> possibleClient =
+          authenticator.authenticateByName(clientName, clientPrincipal);
+      if (possibleClient.isPresent()) {
+        return possibleClient.get();
+      }
+    }
+
+    if (clientAuthConfig.typeConfig().useSpiffeId() && possibleClientSpiffeId.isPresent()) {
+      throw new NotAuthorizedException("Identifying Clients by SPIFFE ID not yet supported");
+    }
+
+    throw new NotAuthorizedException(
+        format("No authorized Client for connection using principal %s",
+            clientPrincipal.getName()));
   }
 
   private static class MyAuthenticator {
@@ -97,7 +319,7 @@ public class ClientAuthFactory {
       this.clientDAOReadOnly = clientDAOReadOnly;
     }
 
-    public Optional<Client> authenticate(String name, @Nullable Principal principal) {
+    public Optional<Client> authenticateByName(String name, @Nullable Principal principal) {
       Optional<Client> optionalClient = clientDAOReadOnly.getClient(name);
       if (optionalClient.isPresent()) {
         Client client = optionalClient.get();

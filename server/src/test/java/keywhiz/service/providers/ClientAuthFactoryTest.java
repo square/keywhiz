@@ -16,14 +16,20 @@
 
 package keywhiz.service.providers;
 
+import java.net.URI;
 import java.security.Principal;
+import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.core.SecurityContext;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.SimplePrincipal;
+import keywhiz.service.config.ClientAuthConfig;
+import keywhiz.service.config.ClientAuthTypeConfig;
+import keywhiz.service.config.XfccSourceConfig;
 import keywhiz.service.daos.ClientDAO;
+import org.eclipse.jetty.util.UrlEncoded;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.Before;
 import org.junit.Rule;
@@ -32,6 +38,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -47,6 +55,52 @@ public class ClientAuthFactoryTest {
   private static final Client client =
       new Client(0, "principal", null, null, null, null, null, null, null, null, true, false);
 
+  private static final Principal xfccPrincipal =
+      SimplePrincipal.of("CN=principal-allowed-for-xfcc,OU=organizational-unit");
+  private static final Client xfccClient =
+      new Client(0, "principal-allowed-for-xfcc", null, null, null, null, null, null, null, null,
+          true, false);
+
+  // certstrap init --common-name "KeywhizAuth"
+  // certstrap request-cert --common-name principal --ou organizational-unit --uri spiffe://example.org/principal
+  // certstrap sign principal --CA KeywhizAuth
+  private static final String clientPem =
+      "-----BEGIN CERTIFICATE-----\n\n"
+          + "MIIEcTCCAlmgAwIBAgIRALryCWgCxplmVoNtywrAfR0wDQYJKoZIhvcNAQELBQAw\n"
+          + "FjEUMBIGA1UEAxMLS2V5d2hpekF1dGgwHhcNMjAwNjE2MDAzODI0WhcNMjExMjE2\n"
+          + "MDAzNzAwWjAyMRwwGgYDVQQLExNvcmdhbml6YXRpb25hbC11bml0MRIwEAYDVQQD\n"
+          + "EwlwcmluY2lwYWwwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDz9ex2\n"
+          + "HQ7YA9nyOigFjeOqSpkDVReSG2IWSDHnugkO3TVY7NqfgMx1I+KESAj5w/PXIv1I\n"
+          + "Aa4qUnLYQ2IqgYUYvJqTt6DtlFLC6dWdgV0x/zRIbtybPR9Ww0eObShzy4od97w4\n"
+          + "zMN1/xXwpIrTNhn9wwzi4l7vtOYwxtoss/B6MBKyxB8R6iEUupINcFANFzcKdniG\n"
+          + "40HcEW8aUS6aRC8bCc4e6ACJp3VR5wnHpHXUlnkeOyTX5yWD8MKni9eY2t0Ra5OX\n"
+          + "tV1NEwOPJz8fTp8aRnoe8+Rq8Lm7W59PO7cJ45srlQ5kKnagha6KB8TTzvNOtYqj\n"
+          + "SgQNkb/OhS8R7Z/9AgMBAAGjgZ0wgZowDgYDVR0PAQH/BAQDAgO4MB0GA1UdJQQW\n"
+          + "MBQGCCsGAQUFBwMBBggrBgEFBQcDAjAdBgNVHQ4EFgQUj35sbmMzi/R/rrdMJHnj\n"
+          + "n1TLhMwwHwYDVR0jBBgwFoAUUtVdMwHcbWdRZ/VypTBlpCbxgDIwKQYDVR0RBCIw\n"
+          + "IIYec3BpZmZlOi8vZXhhbXBsZS5vcmcvcHJpbmNpcGFsMA0GCSqGSIb3DQEBCwUA\n"
+          + "A4ICAQCXPUPcv9ADJACy5D4Z8bQlGyDj131+vthj95eyO8ftPzTrJANGwpl93oO1\n"
+          + "d7lNh1h2exj/e+gtxdYE/I+DYyvHb2Op+SRNN/ZeZntaoqt22p8CGYIpsPQHttLw\n"
+          + "KJ91ekZhyQhphzgceMrhcnSc/RH7L373ZkFi5FC9EAixKsaDftz+NVTk7vhc+cLV\n"
+          + "Mhkhc3L3dA/Ffqpq6iRVs9eefFlN5Oot3PIihvCrbtl0tur02PjLVWQr5Y/nyVG0\n"
+          + "kN0LU7+w3GNddqB0gsLkwBPZ+UtmbyjHaVQN50jZxA7ysr+EjNhTyZ3lliPX4bGE\n"
+          + "TS/jTexOAObS3tC+e157k2UXbFMNZrE/pQb3juOJHcBgwpZ8FnYlwqe8VIJ6513K\n"
+          + "sOTS2lqAXYCaCOC0X6grRuL+s2JTzhzfgz2xuOSQVtvGYK5FijQVpGBR5BlfgpMM\n"
+          + "/W45PGdkvZGI4281VZUfTSSYK/OstnBAD3BgZXhnQg28dj8BD4jNd5JP7cKHb+ID\n"
+          + "33dh8mAGmSmiSPbxkVwq1AKwa5y6hbfvPIQGaUKveQe0JLTFlU4KmYIRv/nl8N83\n"
+          + "st5hq3sW1qoqXZZ71A/T/BYPODcKgeEBzJ64l7jHtPN91SE8U8vhcrpEWZb/D/PI\n"
+          + "vZTiHaxVIvRRokUPFie1drkj5I7Q7qXqHOCy22rgccR64wkNVg==\n"
+          + "-----END CERTIFICATE-----";
+  private static final String xfccHeader =
+      format("Cert=\"%s\"", UrlEncoded.encodeString(clientPem, UTF_8));
+
+  private static final int xfccAllowedPort = 4446;
+  private static final int xfccDisallowedPort = 4445;
+
+  @Mock XfccSourceConfig xfccSourceConfig;
+  @Mock ClientAuthTypeConfig clientAuthTypeConfig;
+  @Mock ClientAuthConfig clientAuthConfig;
+
   @Mock ContainerRequest request;
   @Mock SecurityContext securityContext;
   @Mock ClientDAO clientDAO;
@@ -54,30 +108,47 @@ public class ClientAuthFactoryTest {
   ClientAuthFactory factory;
 
   @Before public void setUp() {
-    factory = new ClientAuthFactory(clientDAO);
+    factory = new ClientAuthFactory(clientDAO, clientAuthConfig);
 
     when(request.getSecurityContext()).thenReturn(securityContext);
     when(clientDAO.getClient("principal")).thenReturn(Optional.of(client));
+
+    when(clientAuthConfig.xfccConfigs()).thenReturn(List.of(xfccSourceConfig));
+    when(clientAuthConfig.typeConfig()).thenReturn(clientAuthTypeConfig);
+
+    when(xfccSourceConfig.port()).thenReturn(xfccAllowedPort);
+    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(xfccClient.getName()));
+
+    when(clientAuthTypeConfig.useCommonName()).thenReturn(true);
+    when(clientAuthTypeConfig.useSpiffeId()).thenReturn(false);
   }
 
-  @Test public void clientWhenClientPresent() {
+  @Test public void returnsClientWhenClientPresent() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccDisallowedPort)));
     when(securityContext.getUserPrincipal()).thenReturn(principal);
 
     assertThat(factory.provide(request)).isEqualTo(client);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void clientWhenPrincipalAbsentThrows() {
+  public void clientWhenPrincipalAbsentThrows() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccDisallowedPort)));
     when(securityContext.getUserPrincipal()).thenReturn(null);
 
     factory.provide(request);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsDisabledClients() {
-    Client disabledClient = new Client(1, "disabled", null, null, null, null, null, null, null, null,
-        false, false
-        /* disabled */);
+  public void rejectsDisabledClients() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccDisallowedPort)));
+
+    Client disabledClient =
+        new Client(1, "disabled", null, null, null, null, null, null, null, null,
+            false, false
+            /* disabled */);
 
     when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=disabled"));
     when(clientDAO.getClient("disabled")).thenReturn(Optional.of(disabledClient));
@@ -86,10 +157,14 @@ public class ClientAuthFactoryTest {
   }
 
   @Test public void createsDbRecordForNewClient() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccDisallowedPort)));
+
     ApiDate now = ApiDate.now();
-    Client newClient = new Client(2345L, "new-client", "desc", null, now, "automatic", now, "automatic",
-        null, null, true, false
-    );
+    Client newClient =
+        new Client(2345L, "new-client", "desc", null, now, "automatic", now, "automatic",
+            null, null, true, false
+        );
 
     // lookup doesn't find client
     when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=new-client"));
@@ -102,9 +177,139 @@ public class ClientAuthFactoryTest {
     assertThat(factory.provide(request)).isEqualTo(newClient);
   }
 
-  @Test public void updatesClientLastSeen() {
+  @Test public void updatesClientLastSeen() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccDisallowedPort)));
     when(securityContext.getUserPrincipal()).thenReturn(principal);
     factory.provide(request);
     verify(clientDAO, times(1)).sawClient(any(), eq(principal));
+  }
+
+  @Test public void returnsClientWhenClientPresent_fromXfccHeader() throws Exception {
+    when(request.getBaseUri()).thenReturn(new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    assertThat(factory.provide(request)).isEqualTo(client);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_clientAuthMissing() throws Exception {
+    when(request.getBaseUri()).thenReturn(new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(null);
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_clientAuthMismatch() throws Exception {
+    when(request.getBaseUri()).thenReturn(new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(principal);
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_misconfiguredPorts() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(clientAuthConfig.xfccConfigs()).thenReturn(List.of(xfccSourceConfig, xfccSourceConfig));
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_disallowedPortWithHeader() throws Exception {
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccDisallowedPort)));
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_noHeader() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(List.of());
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_emptyHeader() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(List.of(""));
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_multipleHeaderValues() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    // multiple XFCC headers
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader, xfccHeader));
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_multipleHeaderEntries() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    // a single header with multiple client elements in to it
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader + "," + xfccHeader));
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_multipleCertKeysInHeader() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    // a single header with multiple cert tags in it for the same client
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(format("Cert=\"%s\";cert=\"%s\"", UrlEncoded.encodeString(clientPem, UTF_8),
+            UrlEncoded.encodeString(clientPem, UTF_8))));
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_missingClientCert() throws Exception {
+    when(request.getBaseUri()).thenReturn(
+        new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of("By=principal"));
+
+    factory.provide(request);
   }
 }

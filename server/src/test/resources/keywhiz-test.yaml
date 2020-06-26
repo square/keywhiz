@@ -151,3 +151,12 @@ contentKeyStore:
 rowHmacCheck: enforced
 
 flywaySchemaTable: schema_version
+
+clientAuthConfig:
+  xfcc:
+    - port: 4446
+      allowedClientNames: []
+      allowedSpiffeIds: []
+  type:
+    useCommonName: true
+    useSpiffeId: true
