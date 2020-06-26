@@ -34,8 +34,6 @@ import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Param;
 import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.time.Instant.EPOCH;
@@ -45,7 +43,6 @@ import static org.jooq.impl.DSL.greatest;
 import static org.jooq.impl.DSL.when;
 
 public class ClientDAO {
-  private static final Logger logger = LoggerFactory.getLogger(ClientDAO.class);
   private final static Duration LAST_SEEN_THRESHOLD = Duration.ofSeconds(24 * 60 * 60);
 
   private final DSLContext dslContext;
@@ -68,6 +65,11 @@ public class ClientDAO {
     long generatedId = rowHmacGenerator.getNextLongSecure();
     String rowHmac = rowHmacGenerator.computeRowHmac(
         CLIENTS.getName(), List.of(name, generatedId));
+
+    // Do not allow empty SPIFFE ID entries
+    if (spiffeId != null && spiffeId.isEmpty()) {
+      spiffeId = null;
+    }
 
     r.setId(generatedId);
     r.setName(name);
@@ -109,9 +111,8 @@ public class ClientDAO {
 
     final Instant expiration;
     if (principal instanceof CertificatePrincipal) {
-      expiration = Optional.ofNullable((CertificatePrincipal) principal)
-          .map(p -> p.getCertificateExpiration())
-          .orElse(EPOCH);
+      // instanceof returns false for a null principal
+      expiration = ((CertificatePrincipal) principal).getCertificateExpiration();
     } else {
       expiration = EPOCH;
     }

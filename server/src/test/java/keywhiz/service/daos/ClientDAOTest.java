@@ -45,7 +45,7 @@ public class ClientDAOTest {
   Client client1, client2;
   ClientDAO clientDAO;
 
-  @Before public void setUp() throws Exception {
+  @Before public void setUp() {
 
     clientDAO = clientDAOFactory.readwrite();
     long now = OffsetDateTime.now().toEpochSecond();
@@ -74,10 +74,16 @@ public class ClientDAOTest {
   }
 
   @Test public void createClientReturnsId() {
-    long id = clientDAO.createClient("newClientWithSameId", "creator2", "", "");
+    long id = clientDAO.createClient("newClientWithSameId", "creator2", "", null);
     Client clientById = clientDAO.getClient("newClientWithSameId")
         .orElseThrow(RuntimeException::new);
     assertThat(clientById.getId()).isEqualTo(id);
+  }
+
+  @Test public void createClientDropsEmptyStringSpiffeId() {
+    clientDAO.createClient("firstWithoutSpiffe", "creator2", "", "");
+    // This creation should not fail, because an empty SPIFFE ID should be converted to null
+    clientDAO.createClient("secondWithoutSpiffe", "creator2", "", "");
   }
 
   @Test public void deleteClient() {
