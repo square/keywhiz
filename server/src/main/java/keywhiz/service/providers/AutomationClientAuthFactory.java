@@ -53,7 +53,7 @@ public class AutomationClientAuthFactory {
   public AutomationClient provide(ContainerRequest request) {
     Principal principal = ClientAuthFactory.getPrincipal(request)
         .orElseThrow(() -> new NotAuthorizedException("Not authorized as a AutomationClient"));
-    String clientName = ClientAuthFactory.getClientName(principal)
+    String clientName = ClientAuthenticator.getClientName(principal)
         .orElseThrow(() -> new NotAuthorizedException("Not authorized as a AutomationClient"));
 
     return authenticator.authenticate(clientName, principal)
@@ -71,7 +71,7 @@ public class AutomationClientAuthFactory {
     }
 
     public Optional<AutomationClient> authenticate(String name, @Nullable Principal principal) {
-      Optional<Client> client = clientDAOReadOnly.getClient(name);
+      Optional<Client> client = clientDAOReadOnly.getClientByName(name);
       client.ifPresent(value -> clientDAOReadWrite.sawClient(value, principal));
       return client.map(AutomationClient::of);
     }

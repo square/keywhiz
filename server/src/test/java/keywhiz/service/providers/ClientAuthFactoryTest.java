@@ -16,15 +16,17 @@
 
 package keywhiz.service.providers;
 
+import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.security.Principal;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.core.SecurityContext;
-import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
-import keywhiz.auth.mutualssl.SimplePrincipal;
+import keywhiz.auth.mutualssl.CertificatePrincipal;
 import keywhiz.service.config.ClientAuthConfig;
 import keywhiz.service.config.ClientAuthTypeConfig;
 import keywhiz.service.config.XfccSourceConfig;
@@ -41,25 +43,53 @@ import org.mockito.junit.MockitoRule;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ClientAuthFactoryTest {
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
 
-  private static final Principal principal =
-      SimplePrincipal.of("CN=principal,OU=organizational-unit");
+  private static Principal clientPrincipal;
+  private static final String clientName = "principal";
+  private static final String clientSpiffe = "spiffe://example.org/principal";
   private static final Client client =
-      new Client(0, "principal", null, null, null, null, null, null, null, null, true, false);
+      new Client(0, clientName, null, clientSpiffe, null, null, null, null, null, null, true,
+          false);
 
-  private static final Principal xfccPrincipal =
-      SimplePrincipal.of("CN=principal-allowed-for-xfcc,OU=organizational-unit");
-  private static final Client xfccClient =
-      new Client(0, "principal-allowed-for-xfcc", null, null, null, null, null, null, null, null,
-          true, false);
+  private static Principal xfccPrincipal;
+  private static final String xfccName = "principal-allowed-for-xfcc";
+  private static final String xfccSpiffe = "spiffe://example.org/principal-allowed-for-xfcc";
+
+  // certstrap init --common-name "KeywhizAuth"
+  // certstrap request-cert --common-name principal-allowed-for-xfcc --ou organizational-unit
+  //     --uri spiffe://example.org/principal-allowed-for-xfcc
+  // certstrap sign principal-allowed-for-xfcc --CA KeywhizAuth
+  private static final String xfccPem = "-----BEGIN CERTIFICATE-----\n"
+      + "MIIEkzCCAnugAwIBAgIRAOQ9Lh+heQYgQENI/d6pnz4wDQYJKoZIhvcNAQELBQAw\n"
+      + "FjEUMBIGA1UEAxMLS2V5d2hpekF1dGgwHhcNMjAwNjI1MjIyMTE0WhcNMjExMjE2\n"
+      + "MDAzNzAxWjBDMRwwGgYDVQQLExNvcmdhbml6YXRpb25hbC11bml0MSMwIQYDVQQD\n"
+      + "ExpwcmluY2lwYWwtYWxsb3dlZC1mb3IteGZjYzCCASIwDQYJKoZIhvcNAQEBBQAD\n"
+      + "ggEPADCCAQoCggEBANIDghKpOJv4En7ubT8bmgab+2kTidQKK6PaFm118K3z8Qr9\n"
+      + "sqENKPcjsGgJucH/CWrxN3JpybX1NyEe+XvxWqRFqFsNTfOTKN8NIdqVxW0LPGCv\n"
+      + "AIH3Nrxuo26isqMRRF6sHp8g6C98H9EoDW3w0wFHr2J/M/5WVx9biBHUhTdNpLAj\n"
+      + "pQ9VUBn/1mNYMaTsJMxw/YPW8pH6yzLUGw9Kq4Dm6RCUqSc3VyC9uQFIHKeIphme\n"
+      + "P4EeoQcoMDVaSghHeXJ2qKpWPpokq6V1Yx56AmVHTui2qanp0InOAqKozU43C/rt\n"
+      + "0EWk+jsd4IJizpSnEDOdvSqqx3vzNhzxH3mLwAUCAwEAAaOBrjCBqzAOBgNVHQ8B\n"
+      + "Af8EBAMCA7gwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMB0GA1UdDgQW\n"
+      + "BBRmicipX4nvPRhdFOAziDFQ03NVFzAfBgNVHSMEGDAWgBRS1V0zAdxtZ1Fn9XKl\n"
+      + "MGWkJvGAMjA6BgNVHREEMzAxhi9zcGlmZmU6Ly9leGFtcGxlLm9yZy9wcmluY2lw\n"
+      + "YWwtYWxsb3dlZC1mb3IteGZjYzANBgkqhkiG9w0BAQsFAAOCAgEAJIG7+DoDvH32\n"
+      + "3kJV2uhPUg2g+omouj9ZaHCT7j4I+B/sen6xvE3qHSM2j2bzIt20/RjM3ql6Bqc8\n"
+      + "OPR52NUVZUrfjCmkMc2clN9fSjIaKArx63wXpCgNJckEkhzPgoFjLlpkfIjXiSFb\n"
+      + "0ZMVrQHsPd8yAOnLxTm9RxoCh029TGxs0a5a7whWZG6UwmHgt4z1dZCO519CPpER\n"
+      + "EW/sRC7ceJiDgJULWDjYoJrHBS/vWYWZxTboB34bk9ZkGr8eRkswboiQGzjPV7cU\n"
+      + "IlYMa4wqZTDCJrevl3WbUiIVRy5k9pM88LNAqRRsCF3tlB0neyhvUdzMTy1MWoW/\n"
+      + "sJvGbBQWyRbk6mvzcvcKomsGosGvtLPfqSCKxeGpW1wu5nz0ybNpWr0h//E3HP2W\n"
+      + "k/WlOVrLZkQLergW5ggzhwuJYnSi5ei1inCC9DzOfj8HRiJXJ69Ef2tQRLkSVUb+\n"
+      + "2yQJn9Z62suVSTi/Pk9zTbaHlsq12ovP4Btt23hxlg0ScmJNX83a38fEFjOT/ELW\n"
+      + "fUpvPDvECi/B+yGZhIhcvA2fn7+8+JUjZG1WT6RRBj1fCOOTsmcSa1bA57v6/1sM\n"
+      + "K+QLScCfQ/QgWR5kMhvyGH6Yw00Af9Kjs3QRN9EzZ3CmQBKqwWAEzsfiMxBxPcW/\n"
+      + "PimCeTSLAdMAH/Q+cvlp5w5GYpEwsQk=\n"
+      + "-----END CERTIFICATE-----";
 
   // certstrap init --common-name "KeywhizAuth"
   // certstrap request-cert --common-name principal --ou organizational-unit --uri spiffe://example.org/principal
@@ -107,26 +137,38 @@ public class ClientAuthFactoryTest {
 
   ClientAuthFactory factory;
 
-  @Before public void setUp() {
+  @Before public void setUp() throws Exception {
+    CertificateFactory cf = CertificateFactory.getInstance("X.509");
+    X509Certificate clientCert = (X509Certificate) cf.generateCertificate(
+        new ByteArrayInputStream(clientPem.getBytes(UTF_8)));
+    clientPrincipal = new CertificatePrincipal(clientCert.getSubjectDN().toString(),
+        new X509Certificate[] {clientCert});
+
+    X509Certificate xfccCert = (X509Certificate) cf.generateCertificate(
+        new ByteArrayInputStream(xfccPem.getBytes(UTF_8)));
+    xfccPrincipal = new CertificatePrincipal(xfccCert.getSubjectDN().toString(),
+        new X509Certificate[] {xfccCert});
+
     factory = new ClientAuthFactory(clientDAO, clientAuthConfig);
 
     when(request.getSecurityContext()).thenReturn(securityContext);
-    when(clientDAO.getClient("principal")).thenReturn(Optional.of(client));
+    when(clientDAO.getClientByName(clientName)).thenReturn(Optional.of(client));
 
     when(clientAuthConfig.xfccConfigs()).thenReturn(List.of(xfccSourceConfig));
     when(clientAuthConfig.typeConfig()).thenReturn(clientAuthTypeConfig);
 
     when(xfccSourceConfig.port()).thenReturn(xfccAllowedPort);
-    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(xfccClient.getName()));
+    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(xfccName));
+    when(xfccSourceConfig.allowedSpiffeIds()).thenReturn(List.of(xfccSpiffe));
 
     when(clientAuthTypeConfig.useCommonName()).thenReturn(true);
-    when(clientAuthTypeConfig.useSpiffeId()).thenReturn(false);
+    when(clientAuthTypeConfig.useSpiffeId()).thenReturn(true);
   }
 
   @Test public void returnsClientWhenClientPresent() throws Exception {
     when(request.getBaseUri()).thenReturn(
         new URI(format("https://localhost:%d", xfccDisallowedPort)));
-    when(securityContext.getUserPrincipal()).thenReturn(principal);
+    when(securityContext.getUserPrincipal()).thenReturn(clientPrincipal);
 
     assertThat(factory.provide(request)).isEqualTo(client);
   }
@@ -140,51 +182,6 @@ public class ClientAuthFactoryTest {
     factory.provide(request);
   }
 
-  @Test(expected = NotAuthorizedException.class)
-  public void rejectsDisabledClients() throws Exception {
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccDisallowedPort)));
-
-    Client disabledClient =
-        new Client(1, "disabled", null, null, null, null, null, null, null, null,
-            false, false
-            /* disabled */);
-
-    when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=disabled"));
-    when(clientDAO.getClient("disabled")).thenReturn(Optional.of(disabledClient));
-
-    factory.provide(request);
-  }
-
-  @Test public void createsDbRecordForNewClient() throws Exception {
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccDisallowedPort)));
-
-    ApiDate now = ApiDate.now();
-    Client newClient =
-        new Client(2345L, "new-client", "desc", null, now, "automatic", now, "automatic",
-            null, null, true, false
-        );
-
-    // lookup doesn't find client
-    when(securityContext.getUserPrincipal()).thenReturn(SimplePrincipal.of("CN=new-client"));
-    when(clientDAO.getClient("new-client")).thenReturn(Optional.empty());
-
-    // a new DB record is created
-    when(clientDAO.createClient(eq("new-client"), eq("automatic"), any(), any())).thenReturn(2345L);
-    when(clientDAO.getClientById(2345L)).thenReturn(Optional.of(newClient));
-
-    assertThat(factory.provide(request)).isEqualTo(newClient);
-  }
-
-  @Test public void updatesClientLastSeen() throws Exception {
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccDisallowedPort)));
-    when(securityContext.getUserPrincipal()).thenReturn(principal);
-    factory.provide(request);
-    verify(clientDAO, times(1)).sawClient(any(), eq(principal));
-  }
-
   @Test public void returnsClientWhenClientPresent_fromXfccHeader() throws Exception {
     when(request.getBaseUri()).thenReturn(new URI(format("https://localhost:%d", xfccAllowedPort)));
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
@@ -195,7 +192,7 @@ public class ClientAuthFactoryTest {
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_clientAuthMissing() throws Exception {
+  public void rejectsXfcc_requesterAuthMissing() throws Exception {
     when(request.getBaseUri()).thenReturn(new URI(format("https://localhost:%d", xfccAllowedPort)));
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader));
@@ -205,17 +202,33 @@ public class ClientAuthFactoryTest {
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_clientAuthMismatch() throws Exception {
+  public void rejectsXfcc_requesterNameNotAllowed() throws Exception {
     when(request.getBaseUri()).thenReturn(new URI(format("https://localhost:%d", xfccAllowedPort)));
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader));
-    when(securityContext.getUserPrincipal()).thenReturn(principal);
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of());
+    when(xfccSourceConfig.allowedSpiffeIds()).thenReturn(List.of(xfccSpiffe));
 
     factory.provide(request);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_misconfiguredPorts() throws Exception {
+  public void rejectsXfcc_requesterSpiffeNotAllowed() throws Exception {
+    when(request.getBaseUri()).thenReturn(new URI(format("https://localhost:%d", xfccAllowedPort)));
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(xfccName));
+    when(xfccSourceConfig.allowedSpiffeIds()).thenReturn(List.of());
+
+    factory.provide(request);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_portConfigurationInvalid() throws Exception {
     when(request.getBaseUri()).thenReturn(
         new URI(format("https://localhost:%d", xfccAllowedPort)));
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
@@ -240,7 +253,7 @@ public class ClientAuthFactoryTest {
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_noHeader() throws Exception {
+  public void rejectsXfcc_allowedPortNoHeader() throws Exception {
     when(request.getBaseUri()).thenReturn(
         new URI(format("https://localhost:%d", xfccAllowedPort)));
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
@@ -308,7 +321,7 @@ public class ClientAuthFactoryTest {
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
-        List.of("By=principal"));
+        List.of(format("By=%s", xfccName)));
 
     factory.provide(request);
   }

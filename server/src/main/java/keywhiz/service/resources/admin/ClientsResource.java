@@ -235,7 +235,7 @@ public class ClientsResource {
   }
 
   private Client clientFromName(String clientName) {
-    Optional<Client> optionalClient = clientDAO.getClient(clientName);
+    Optional<Client> optionalClient = clientDAO.getClientByName(clientName);
     if (!optionalClient.isPresent()) {
       throw new NotFoundException("Client not found.");
     }

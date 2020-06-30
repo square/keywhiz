@@ -68,7 +68,7 @@ public class AutomationClientResourceTest {
     ClientDetailResponse expectedClient = ClientDetailResponse.fromClient(client,
         ImmutableList.of(firstGroup, secondGroup), ImmutableList.of());
 
-    when(clientDAO.getClient("client")).thenReturn(Optional.of(client));
+    when(clientDAO.getClientByName("client")).thenReturn(Optional.of(client));
     when(aclDAO.getGroupsFor(client)).thenReturn(ImmutableSet.of(firstGroup, secondGroup));
 
     Response response = resource.findClient(automation, Optional.of("client"));
@@ -79,7 +79,7 @@ public class AutomationClientResourceTest {
 
   @Test(expected = NotFoundException.class)
   public void findClientByNameNotFound() {
-    when(clientDAO.getClient("client")).thenReturn(Optional.empty());
+    when(clientDAO.getClientByName("client")).thenReturn(Optional.empty());
     resource.findClient(automation, Optional.of("client"));
   }
 
@@ -89,8 +89,8 @@ public class AutomationClientResourceTest {
 
     CreateClientRequest request = new CreateClientRequest("client");
 
-    when(clientDAO.getClient("client")).thenReturn(Optional.empty());
-    when(clientDAO.createClient("client", automation.getName(), "", "")).thenReturn(543L);
+    when(clientDAO.getClientByName("client")).thenReturn(Optional.empty());
+    when(clientDAO.createClient("client", automation.getName(), "", null)).thenReturn(543L);
     when(clientDAO.getClientById(543L)).thenReturn(Optional.of(client));
     when(aclDAO.getGroupsFor(client)).thenReturn(ImmutableSet.of());
 
@@ -107,8 +107,8 @@ public class AutomationClientResourceTest {
 
     CreateClientRequest request = new CreateClientRequest("client");
 
-    when(clientDAO.getClient("client")).thenReturn(Optional.empty());
-    when(clientDAO.createClient("client", automation.getName(), "", "")).thenReturn(543L);
+    when(clientDAO.getClientByName("client")).thenReturn(Optional.empty());
+    when(clientDAO.createClient("client", automation.getName(), "", null)).thenReturn(543L);
     when(clientDAO.getClientById(543L)).thenReturn(Optional.of(client));
 
     ClientDetailResponse response = ClientDetailResponse.fromClient(client, ImmutableList.of(),
