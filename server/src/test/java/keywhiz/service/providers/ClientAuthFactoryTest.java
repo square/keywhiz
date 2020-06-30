@@ -23,6 +23,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.core.SecurityContext;
 import keywhiz.api.model.Client;
@@ -132,6 +133,7 @@ public class ClientAuthFactoryTest {
   @Mock ClientAuthConfig clientAuthConfig;
 
   @Mock ContainerRequest request;
+  @Mock HttpServletRequest httpServletRequest;
   @Mock SecurityContext securityContext;
   @Mock ClientDAO clientDAO;
 
@@ -153,6 +155,7 @@ public class ClientAuthFactoryTest {
 
     when(request.getSecurityContext()).thenReturn(securityContext);
     when(clientDAO.getClientByName(clientName)).thenReturn(Optional.of(client));
+    when(clientDAO.getClientBySpiffeId(new URI(clientSpiffe))).thenReturn(Optional.of(client));
 
     when(clientAuthConfig.xfccConfigs()).thenReturn(List.of(xfccSourceConfig));
     when(clientAuthConfig.typeConfig()).thenReturn(clientAuthTypeConfig);
@@ -165,45 +168,43 @@ public class ClientAuthFactoryTest {
     when(clientAuthTypeConfig.useSpiffeId()).thenReturn(true);
   }
 
-  @Test public void returnsClientWhenClientPresent() throws Exception {
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccDisallowedPort)));
+  @Test public void returnsClientWhenClientPresent() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccDisallowedPort);
     when(securityContext.getUserPrincipal()).thenReturn(clientPrincipal);
 
-    assertThat(factory.provide(request)).isEqualTo(client);
+    assertThat(factory.provide(request, httpServletRequest)).isEqualTo(client);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void clientWhenPrincipalAbsentThrows() throws Exception {
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccDisallowedPort)));
+  public void clientWhenPrincipalAbsentThrows() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccDisallowedPort);
     when(securityContext.getUserPrincipal()).thenReturn(null);
 
-    factory.provide(request);
+    factory.provide(request, httpServletRequest);
   }
 
-  @Test public void returnsClientWhenClientPresent_fromXfccHeader() throws Exception {
-    when(request.getBaseUri()).thenReturn(new URI(format("https://localhost:%d", xfccAllowedPort)));
+  @Test public void returnsClientWhenClientPresent_fromXfccHeader() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader));
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
-    assertThat(factory.provide(request)).isEqualTo(client);
+    assertThat(factory.provide(request, httpServletRequest)).isEqualTo(client);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_requesterAuthMissing() throws Exception {
-    when(request.getBaseUri()).thenReturn(new URI(format("https://localhost:%d", xfccAllowedPort)));
+  public void rejectsXfcc_requesterAuthMissing() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader));
     when(securityContext.getUserPrincipal()).thenReturn(null);
 
-    factory.provide(request);
+    factory.provide(request, httpServletRequest);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_requesterNameNotAllowed() throws Exception {
-    when(request.getBaseUri()).thenReturn(new URI(format("https://localhost:%d", xfccAllowedPort)));
+  public void rejectsXfcc_requesterNameNotAllowed() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader));
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
@@ -211,12 +212,12 @@ public class ClientAuthFactoryTest {
     when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of());
     when(xfccSourceConfig.allowedSpiffeIds()).thenReturn(List.of(xfccSpiffe));
 
-    factory.provide(request);
+    factory.provide(request, httpServletRequest);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_requesterSpiffeNotAllowed() throws Exception {
-    when(request.getBaseUri()).thenReturn(new URI(format("https://localhost:%d", xfccAllowedPort)));
+  public void rejectsXfcc_requesterSpiffeNotAllowed() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader));
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
@@ -224,86 +225,79 @@ public class ClientAuthFactoryTest {
     when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(xfccName));
     when(xfccSourceConfig.allowedSpiffeIds()).thenReturn(List.of());
 
-    factory.provide(request);
+    factory.provide(request, httpServletRequest);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_portConfigurationInvalid() throws Exception {
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccAllowedPort)));
+  public void rejectsXfcc_portConfigurationInvalid() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader));
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
     when(clientAuthConfig.xfccConfigs()).thenReturn(List.of(xfccSourceConfig, xfccSourceConfig));
 
-    factory.provide(request);
+    factory.provide(request, httpServletRequest);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_disallowedPortWithHeader() throws Exception {
+  public void rejectsXfcc_disallowedPortWithHeader() {
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader));
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccDisallowedPort)));
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccDisallowedPort);
 
-    factory.provide(request);
+    factory.provide(request, httpServletRequest);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_allowedPortNoHeader() throws Exception {
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccAllowedPort)));
+  public void rejectsXfcc_allowedPortNoHeader() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(List.of());
 
-    factory.provide(request);
+    factory.provide(request, httpServletRequest);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_emptyHeader() throws Exception {
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccAllowedPort)));
+  public void rejectsXfcc_emptyHeader() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(List.of(""));
 
-    factory.provide(request);
+    factory.provide(request, httpServletRequest);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_multipleHeaderValues() throws Exception {
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccAllowedPort)));
+  public void rejectsXfcc_multipleHeaderValues() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
     // multiple XFCC headers
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader, xfccHeader));
 
-    factory.provide(request);
+    factory.provide(request, httpServletRequest);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_multipleHeaderEntries() throws Exception {
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccAllowedPort)));
+  public void rejectsXfcc_multipleHeaderEntries() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
     // a single header with multiple client elements in to it
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(xfccHeader + "," + xfccHeader));
 
-    factory.provide(request);
+    factory.provide(request, httpServletRequest);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_multipleCertKeysInHeader() throws Exception {
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccAllowedPort)));
+  public void rejectsXfcc_multipleCertKeysInHeader() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
     // a single header with multiple cert tags in it for the same client
@@ -311,18 +305,17 @@ public class ClientAuthFactoryTest {
         List.of(format("Cert=\"%s\";cert=\"%s\"", UrlEncoded.encodeString(clientPem, UTF_8),
             UrlEncoded.encodeString(clientPem, UTF_8))));
 
-    factory.provide(request);
+    factory.provide(request, httpServletRequest);
   }
 
   @Test(expected = NotAuthorizedException.class)
-  public void rejectsXfcc_missingClientCert() throws Exception {
-    when(request.getBaseUri()).thenReturn(
-        new URI(format("https://localhost:%d", xfccAllowedPort)));
+  public void rejectsXfcc_missingClientCert() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(format("By=%s", xfccName)));
 
-    factory.provide(request);
+    factory.provide(request, httpServletRequest);
   }
 }

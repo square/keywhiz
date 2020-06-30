@@ -19,6 +19,7 @@ package keywhiz.service.providers;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.ForbiddenException;
 import keywhiz.KeywhizConfig;
 import keywhiz.api.model.AutomationClient;
@@ -48,10 +49,11 @@ public class AutomationClientAuthFactory extends ClientAuthFactory {
     super(clientDAO, clientAuthConfig);
   }
 
-  public AutomationClient provide(ContainerRequest request) {
+  public AutomationClient provide(ContainerRequest containerRequest,
+      HttpServletRequest httpServletRequest) {
     // This will throw a NotAuthorizedException if the client does not exist or cannot
     // be extracted from the request.
-    Client client = super.provide(request);
+    Client client = super.provide(containerRequest, httpServletRequest);
 
     // This method returns null if the provided client is not actually an automation client
     return Optional.ofNullable(AutomationClient.of(client))
