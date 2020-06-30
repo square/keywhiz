@@ -18,6 +18,8 @@ package keywhiz.service.providers;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.io.ByteArrayInputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.security.Principal;
 import java.security.cert.CertificateException;
@@ -161,7 +163,7 @@ public class ClientAuthFactory {
     // All XFCC traffic must be checked against allowlists; all connections that set the XFCC
     // header must send identifiers for the requester, as well as the XFCC certificate
     Optional<String> requestName = ClientAuthenticator.getClientName(requestPrincipal);
-    Optional<String> requestSpiffeId = ClientAuthenticator.getSpiffeId(requestPrincipal);
+    Optional<URI> requestSpiffeId = ClientAuthenticator.getSpiffeId(requestPrincipal);
 
     if (requestName.isEmpty() && requestSpiffeId.isEmpty()) {
       throw new NotAuthorizedException(
@@ -176,13 +178,26 @@ public class ClientAuthFactory {
               XFCC_HEADER_NAME, requestName.get()));
     }
 
-    if (requestSpiffeId.isPresent() && !xfccConfig.allowedSpiffeIds().contains(
+    if (requestSpiffeId.isPresent() && !containsUri(xfccConfig.allowedSpiffeIds(),
         requestSpiffeId.get())) {
       throw new NotAuthorizedException(
           format(
               "requests with %s header set may not be sent from client with spiffe ID %s; check configuration",
               XFCC_HEADER_NAME, requestSpiffeId.get()));
     }
+  }
+
+  private boolean containsUri(List<String> uriList, URI targetUri) {
+    for (String uri : uriList) {
+      try {
+        if (new URI(uri).equals(targetUri)) {
+          return true;
+        }
+      } catch (URISyntaxException e) {
+        logger.warn(format("Unable to parse URI from %s", uri), e);
+      }
+    }
+    return false;
   }
 
   private Optional<X509Certificate> getClientCertFromXfccHeaderEnvoyFormatted(

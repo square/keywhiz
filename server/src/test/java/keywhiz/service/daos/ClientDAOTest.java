@@ -16,6 +16,7 @@
 
 package keywhiz.service.daos;
 
+import java.net.URI;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Set;
@@ -60,10 +61,10 @@ public class ClientDAOTest {
     client2 = clientDAO.getClientByName("client2").get();
   }
 
-  @Test public void createClient() {
+  @Test public void createClient() throws Exception {
     int before = tableSize();
     clientDAO.createClient("newClient", "creator", "",
-        "spiffe://test.env.com/newClient");
+        new URI("spiffe://test.env.com/newClient"));
     Client newClient = clientDAO.getClientByName("newClient").orElseThrow(RuntimeException::new);
 
     assertThat(tableSize()).isEqualTo(before + 1);
@@ -80,10 +81,10 @@ public class ClientDAOTest {
     assertThat(clientByName.getId()).isEqualTo(id);
   }
 
-  @Test public void createClientDropsEmptyStringSpiffeId() {
-    clientDAO.createClient("firstWithoutSpiffe", "creator2", "", "");
+  @Test public void createClientDropsEmptyStringSpiffeId() throws Exception {
+    clientDAO.createClient("firstWithoutSpiffe", "creator2", "", new URI(""));
     // This creation should not fail, because an empty SPIFFE ID should be converted to null
-    clientDAO.createClient("secondWithoutSpiffe", "creator2", "", "");
+    clientDAO.createClient("secondWithoutSpiffe", "creator2", "", new URI(""));
   }
 
   @Test public void deleteClient() {

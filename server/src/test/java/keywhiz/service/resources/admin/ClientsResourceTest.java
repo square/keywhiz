@@ -19,6 +19,7 @@ package keywhiz.service.resources.admin;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import io.dropwizard.jersey.params.LongParam;
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -69,10 +70,12 @@ public class ClientsResourceTest {
 
   @Test public void listClients() {
     Client client1 =
-        new Client(1, "client", "1st client", null, now, "test", now, "test", null, null, true, false
+        new Client(1, "client", "1st client", null, now, "test", now, "test", null, null, true,
+            false
         );
     Client client2 =
-        new Client(2, "client2", "2nd client", null, now, "test", now, "test", null, null, true, false
+        new Client(2, "client2", "2nd client", null, now, "test", now, "test", null, null, true,
+            false
         );
 
     when(clientDAO.getClients()).thenReturn(ImmutableSet.of(client1, client2));
@@ -81,14 +84,14 @@ public class ClientsResourceTest {
     assertThat(response).containsOnly(client1, client2);
   }
 
-  @Test public void createsClient() {
+  @Test public void createsClient() throws Exception {
     CreateClientRequestV2 request = CreateClientRequestV2.builder()
         .name("new-client-name")
         .description("description")
         .spiffeId("spiffe//example.org/new-client-name")
         .build();
     when(clientDAO.createClient("new-client-name", "user", "description",
-        "spiffe//example.org/new-client-name")).thenReturn(42L);
+        new URI("spiffe//example.org/new-client-name"))).thenReturn(42L);
     when(clientDAO.getClientById(42L)).thenReturn(Optional.of(client));
     when(aclDAO.getSanitizedSecretsFor(client)).thenReturn(ImmutableSet.of());
 

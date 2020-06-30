@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.params.LongParam;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -148,8 +149,8 @@ public class ClientsResource {
     long clientId;
     try {
       clientId = clientDAO.createClient(createClientRequest.name(), user.getName(),
-          createClientRequest.description(), createClientRequest.spiffeId());
-    } catch (DataAccessException e) {
+          createClientRequest.description(), new URI(createClientRequest.spiffeId()));
+    } catch (DataAccessException | URISyntaxException e) {
       logger.warn("Cannot create client {}: {}", createClientRequest.name(), e);
       throw new ConflictException("Conflict creating client.");
     }
