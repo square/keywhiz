@@ -185,6 +185,10 @@ public class SecretSeriesDAO {
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
+  public List<SecretSeries> getSecretsSeriesByName(List<String> names) {
+    return dslContext.fetch(SECRETS, SECRETS.NAME.in(names).and(SECRETS.CURRENT.isNotNull())).map(secretSeriesMapper::map);
+  }
+
   public ImmutableList<SecretSeries> getSecretSeries(@Nullable Long expireMaxTime,
       @Nullable Group group, @Nullable Long expireMinTime, @Nullable String minName,
       @Nullable Integer limit) {

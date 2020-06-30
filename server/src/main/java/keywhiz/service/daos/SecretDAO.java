@@ -22,10 +22,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -281,6 +279,43 @@ public class SecretDAO {
       return Optional.of(SecretSeriesAndContent.of(series.get(), secretContent.get()));
     }
     return Optional.empty();
+  }
+
+  /**
+   * @param names of secrets series to look up secrets by.
+   * @return Secrets matching input parameters.
+   */
+  public List<SecretSeriesAndContent> getSecretsByName(List<String> names) {
+    checkArgument(!names.isEmpty());
+
+    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+
+    List<SecretSeries> multipleseries = secretSeriesDAO.getSecretsSeriesByName(names);
+
+
+    Iterator siter = multipleseries.iterator();
+
+    List<SecretSeriesAndContent> ret = new ArrayList<SecretSeriesAndContent>();
+
+    while (siter.hasNext()) {
+
+      SecretSeries series = (SecretSeries) siter.next();
+
+      if (series.currentVersion().isPresent()) {
+        long secretContentId = series.currentVersion().get();
+        Optional<SecretContent> secretContent =
+                secretContentDAO.getSecretContentById(secretContentId);
+        if (secretContent.isPresent()) {
+          ret.add(SecretSeriesAndContent.of(series, secretContent.get()));
+        } else {
+          // TODO: how to handle this?
+        }
+
+      }
+    }
+    return ret;
+
   }
 
   /**

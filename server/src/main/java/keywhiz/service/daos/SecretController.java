@@ -76,6 +76,14 @@ public class SecretController {
   }
 
   /**
+   * @param names of secrets series to look up secrets by.
+   * @return all existing secrets matching criteria.
+   */
+  public List<Secret> getSecretsByName(List<String> names) {
+    return secretDAO.getSecretsByName(names).stream().map(transformer::transform).collect(toList());
+  }
+
+  /**
    * @param group limit results to secrets assigned to this group.
    * @return all existing secrets matching criteria.
    * */

@@ -41,6 +41,7 @@ import keywhiz.service.providers.AuthResolver;
 import keywhiz.service.providers.AutomationClientAuthFactory;
 import keywhiz.service.providers.ClientAuthFactory;
 import keywhiz.service.providers.UserAuthFactory;
+import keywhiz.service.resources.BatchSecretDeliveryResource;
 import keywhiz.service.resources.SecretDeliveryResource;
 import keywhiz.service.resources.SecretsDeliveryResource;
 import keywhiz.service.resources.StatusResource;
@@ -151,6 +152,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(injector.getInstance(AutomationSecretAccessResource.class));
     jersey.register(injector.getInstance(StatusResource.class));
     jersey.register(injector.getInstance(BackupResource.class));
+    jersey.register(injector.getInstance(BatchSecretDeliveryResource.class));
 
     ManualStatusHealthCheck mshc = new ManualStatusHealthCheck();
     environment.healthChecks().register("manualStatus", mshc);
