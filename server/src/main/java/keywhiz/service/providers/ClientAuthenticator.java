@@ -1,5 +1,7 @@
 package keywhiz.service.providers;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
@@ -18,6 +20,8 @@ import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.lang.String.format;
 
 public class ClientAuthenticator {
   private static final Logger logger = LoggerFactory.getLogger(ClientAuthenticator.class);
@@ -48,7 +52,7 @@ public class ClientAuthenticator {
   public Optional<Client> authenticate(Principal principal, boolean createMissingClient) {
     // Try to retrieve clients based on the client name and SPIFFE ID
     Optional<String> possibleClientName = getClientName(principal);
-    Optional<String> possibleClientSpiffeId = getSpiffeId(principal);
+    Optional<URI> possibleClientSpiffeId = getSpiffeId(principal);
 
     Optional<Client> possibleClientFromName = possibleClientName.flatMap((name) -> {
       if (clientAuthConfig.typeConfig().useCommonName()) {
@@ -58,9 +62,9 @@ public class ClientAuthenticator {
       }
     });
 
-    Optional<Client> possibleClientFromSpiffeId = possibleClientSpiffeId.flatMap((name) -> {
+    Optional<Client> possibleClientFromSpiffeId = possibleClientSpiffeId.flatMap((spiffeId) -> {
       if (clientAuthConfig.typeConfig().useSpiffeId()) {
-        return clientDAOReadOnly.getClientBySpiffeId(name);
+        return clientDAOReadOnly.getClientBySpiffeId(spiffeId);
       } else {
         return Optional.empty();
       }
@@ -71,14 +75,14 @@ public class ClientAuthenticator {
     // check will not reject a certificate with a mismatched CN and SPIFFE URI.)
     if (possibleClientFromName.isPresent() && possibleClientFromSpiffeId.isPresent()) {
       if (!possibleClientFromName.get().equals(possibleClientFromSpiffeId.get())) {
-        throw new NotAuthorizedException(String.format(
+        throw new NotAuthorizedException(format(
             "Input principal's CN and SPIFFE ID correspond to different clients! (cn = %s, spiffe = %s)",
             possibleClientFromName.get().getName(), possibleClientFromSpiffeId.get().getName()));
       }
     } else if (possibleClientFromName.isEmpty() && possibleClientFromSpiffeId.isEmpty()) {
       // Create missing clients if configured to do so (client name must be present)
       return handleMissingClient(createMissingClient, possibleClientName.orElse(""),
-          possibleClientSpiffeId.orElse(""));
+          possibleClientSpiffeId);
     }
 
     // Retrieve whichever of the clients is set (if both are present, the earlier check guarantees
@@ -99,7 +103,7 @@ public class ClientAuthenticator {
   }
 
   private Optional<Client> handleMissingClient(boolean createMissingClient, String name,
-      String spiffeId) {
+      Optional<URI> spiffeId) {
     if (createMissingClient && !name.isEmpty()) {
       /*
        * If a client is seen for the first time, authenticated by certificate, and has no DB entry,
@@ -107,7 +111,8 @@ public class ClientAuthenticator {
        * 'enabled' field.
        */
       long clientId = clientDAOReadWrite.createClient(name, "automatic",
-          "Client created automatically from valid certificate authentication", spiffeId);
+          "Client created automatically from valid certificate authentication",
+          spiffeId.orElse(null));
       return clientDAOReadWrite.getClientById(clientId);
     } else {
       return Optional.empty();
@@ -124,7 +129,7 @@ public class ClientAuthenticator {
     return Optional.of(IETFUtils.valueToString(rdns[0].getFirst().getValue()));
   }
 
-  static Optional<String> getSpiffeId(Principal principal) {
+  static Optional<URI> getSpiffeId(Principal principal) {
     if (!(principal instanceof CertificatePrincipal)) {
       // A SPIFFE ID can only be parsed from a principal with a certificate
       return Optional.empty();
@@ -141,7 +146,7 @@ public class ClientAuthenticator {
     return getSpiffeIdFromCertificate(cert);
   }
 
-  static Optional<String> getSpiffeIdFromCertificate(X509Certificate cert) {
+  static Optional<URI> getSpiffeIdFromCertificate(X509Certificate cert) {
     Collection<List<?>> sans;
     try {
       sans = cert.getSubjectAlternativeNames();
@@ -167,6 +172,17 @@ public class ClientAuthenticator {
       return Optional.empty();
     }
 
-    return spiffeUriNames.stream().findFirst();
+    Optional<String> possibleName = spiffeUriNames.stream().findFirst();
+
+    if (possibleName.isPresent()) {
+      try {
+        return Optional.of(new URI(possibleName.get()));
+      } catch (URISyntaxException e) {
+        logger.warn(
+            format("Unable to parse SPIFFE URI (%s) from certificate as a URI", possibleName.get()),
+            e);
+      }
+    }
+    return Optional.empty();
   }
 }

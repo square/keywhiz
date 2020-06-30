@@ -5,6 +5,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.Sets;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -99,8 +101,15 @@ public class ClientResource {
     });
 
     // Creates new client record
-    long clientId = clientDAOReadWrite.createClient(client, creator, request.description(),
-        request.spiffeId());
+    long clientId;
+    try {
+      clientId = clientDAOReadWrite.createClient(client, creator, request.description(),
+          new URI(request.spiffeId()));
+    } catch (URISyntaxException e) {
+      logger.info(format("Automation (%s) - Client %s could not be created because of invalid SPIFFE ID %s",
+          creator, client, request.spiffeId()), e);
+      throw new BadRequestException("Invalid SPIFFE ID provided (not a URI)");
+    }
     auditLog.recordEvent(new Event(Instant.now(), EventTag.CLIENT_CREATE, creator, client));
 
     // Enrolls client in any requested groups

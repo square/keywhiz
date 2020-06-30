@@ -17,6 +17,7 @@
 package keywhiz.service.providers;
 
 import java.io.ByteArrayInputStream;
+import java.net.URI;
 import java.security.Principal;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -52,11 +53,13 @@ public class ClientAuthenticatorTest {
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
 
   private static final String clientName = "principal";
-  private static final String clientSpiffe = "spiffe://example.org/principal";
+  private static final String clientSpiffeStr = "spiffe://example.org/principal";
+  private static URI clientSpiffe;
+
   private static final Principal simplePrincipal =
       SimplePrincipal.of(format("CN=%s,OU=organizational-unit", clientName));
   private static final Client client =
-      new Client(0, clientName, null, clientSpiffe, null, null, null, null,
+      new Client(0, clientName, null, clientSpiffeStr, null, null, null, null,
           null, null, true, false);
 
   private static Principal certPrincipal;
@@ -97,7 +100,7 @@ public class ClientAuthenticatorTest {
   // certstrap request-cert --common-name other-principal --ou organizational-unit
   //     --uri spiffe://example.org/principal,spiffe://example.org/other-principal
   // certstrap sign other-principal --CA KeywhizAuth
-  private static String multipleSpiffePem = "-----BEGIN CERTIFICATE-----\n"
+  private static final String multipleSpiffePem = "-----BEGIN CERTIFICATE-----\n"
       + "MIIEnTCCAoWgAwIBAgIRAJ3eemLVkvReTvZJqcBWWBswDQYJKoZIhvcNAQELBQAw\n"
       + "FjEUMBIGA1UEAxMLS2V5d2hpekF1dGgwHhcNMjAwNjI1MjIxMTQ5WhcNMjExMjE2\n"
       + "MDAzNzAwWjA4MRwwGgYDVQQLExNvcmdhbml6YXRpb25hbC11bml0MRgwFgYDVQQD\n"
@@ -133,6 +136,8 @@ public class ClientAuthenticatorTest {
   ClientAuthenticator authenticator;
 
   @Before public void setUp() throws Exception {
+    clientSpiffe = new URI(clientSpiffeStr);
+
     CertificateFactory cf = CertificateFactory.getInstance("X.509");
     X509Certificate clientCert = (X509Certificate) cf.generateCertificate(
         new ByteArrayInputStream(clientPem.getBytes(UTF_8)));

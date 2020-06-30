@@ -17,6 +17,7 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableSet;
+import java.net.URI;
 import java.security.Principal;
 import java.time.Duration;
 import java.time.Instant;
@@ -57,7 +58,7 @@ public class ClientDAO {
   }
 
   public long createClient(String name, String user, String description,
-      @Nullable String spiffeId) {
+      @Nullable URI spiffeId) {
     ClientsRecord r = dslContext.newRecord(CLIENTS);
 
     long now = OffsetDateTime.now().toEpochSecond();
@@ -66,9 +67,10 @@ public class ClientDAO {
     String rowHmac = rowHmacGenerator.computeRowHmac(
         CLIENTS.getName(), List.of(name, generatedId));
 
-    // Do not allow empty SPIFFE ID entries
-    if (spiffeId != null && spiffeId.isEmpty()) {
-      spiffeId = null;
+    // Do not allow empty spiffe URIs
+    String spiffeStr = null;
+    if (spiffeId != null && !spiffeId.toASCIIString().isEmpty()) {
+      spiffeStr = spiffeId.toASCIIString();
     }
 
     r.setId(generatedId);
@@ -81,7 +83,7 @@ public class ClientDAO {
     r.setDescription(description);
     r.setEnabled(true);
     r.setAutomationallowed(false);
-    r.setSpiffeId(spiffeId);
+    r.setSpiffeId(spiffeStr);
     r.setRowHmac(rowHmac);
     r.store();
 
@@ -141,8 +143,8 @@ public class ClientDAO {
     return Optional.ofNullable(r).map(clientMapper::map);
   }
 
-  public Optional<Client> getClientBySpiffeId(String spiffeId) {
-    ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.SPIFFE_ID.eq(spiffeId));
+  public Optional<Client> getClientBySpiffeId(URI spiffeId) {
+    ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.SPIFFE_ID.eq(spiffeId.toASCIIString()));
     return Optional.ofNullable(r).map(clientMapper::map);
   }
 
