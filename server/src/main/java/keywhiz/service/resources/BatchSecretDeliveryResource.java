@@ -96,7 +96,7 @@ public class BatchSecretDeliveryResource {
     List<SanitizedSecret> clientAccessibleSecrets = aclDAO.getBatchSanitizedSecretsFor(client, request.secrets());
     List<Secret> existingSecrets = secretController.getSecretsByName(request.secrets());
 
-    boolean clientExists = clientDAO.getClient(client.getName()).isPresent();
+    boolean clientExists = clientDAO.getClientByName(client.getName()).isPresent();
 
     // The request fails whenever a single secret is requested that is not accessible
     // The client is responsible for only requesting secrets they have permission for
