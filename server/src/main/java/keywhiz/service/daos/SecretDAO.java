@@ -20,14 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.util.*;
-import java.util.AbstractMap.SimpleEntry;
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -46,6 +38,19 @@ import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
+
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -291,17 +296,11 @@ public class SecretDAO {
     SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
     SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
 
-    List<SecretSeries> multipleseries = secretSeriesDAO.getSecretsSeriesByName(names);
-
-
-    Iterator siter = multipleseries.iterator();
+    List<SecretSeries> multipleSeries = secretSeriesDAO.getMultipleSecretSeriesByName(names);
 
     List<SecretSeriesAndContent> ret = new ArrayList<SecretSeriesAndContent>();
 
-    while (siter.hasNext()) {
-
-      SecretSeries series = (SecretSeries) siter.next();
-
+    for (SecretSeries series : multipleSeries) {
       if (series.currentVersion().isPresent()) {
         long secretContentId = series.currentVersion().get();
         Optional<SecretContent> secretContent =
@@ -309,13 +308,11 @@ public class SecretDAO {
         if (secretContent.isPresent()) {
           ret.add(SecretSeriesAndContent.of(series, secretContent.get()));
         } else {
-          // TODO: how to handle this?
+          throw new NotFoundException("Secret not found.");
         }
-
       }
     }
     return ret;
-
   }
 
   /**

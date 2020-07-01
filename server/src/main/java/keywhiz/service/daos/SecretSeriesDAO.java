@@ -21,15 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
@@ -44,14 +35,22 @@ import org.jooq.Record1;
 import org.jooq.SelectQuery;
 import org.jooq.impl.DSL;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
-import static org.jooq.impl.DSL.decode;
-import static org.jooq.impl.DSL.least;
-import static org.jooq.impl.DSL.val;
+import static org.jooq.impl.DSL.*;
 
 /**
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
@@ -185,7 +184,7 @@ public class SecretSeriesDAO {
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
-  public List<SecretSeries> getSecretsSeriesByName(List<String> names) {
+  public List<SecretSeries> getMultipleSecretSeriesByName(List<String> names) {
     return dslContext.fetch(SECRETS, SECRETS.NAME.in(names).and(SECRETS.CURRENT.isNotNull())).map(secretSeriesMapper::map);
   }
 

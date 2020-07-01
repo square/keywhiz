@@ -63,7 +63,7 @@ public class BatchSecretDeliveryResource {
                                      AclDAOFactory aclDAOFactory, ClientDAOFactory clientDAOFactory) {
     this.secretController = secretController;
     this.aclDAO = aclDAOFactory.readonly();
-    this.clientDAO = clientDAOFactory.readwrite();
+    this.clientDAO = clientDAOFactory.readonly();
   }
 
   @VisibleForTesting
@@ -93,42 +93,18 @@ public class BatchSecretDeliveryResource {
   public List<SecretDeliveryResponse> getBatchSecret(@Auth Client client, @Valid BatchSecretRequest request) {
 
 
-    List<SanitizedSecret> sanitizedSecrets = aclDAO.getBatchSanitizedSecretsFor(client, request.secrets);
-    List<Secret> secrets = secretController.getSecretsByName(request.secrets);
+    List<SanitizedSecret> clientAccessibleSecrets = aclDAO.getBatchSanitizedSecretsFor(client, request.secrets());
+    List<Secret> existingSecrets = secretController.getSecretsByName(request.secrets());
 
     boolean clientExists = clientDAO.getClient(client.getName()).isPresent();
 
-
-    Iterator reqsecretsiter = request.secrets.iterator();
-
-
     // The request fails whenever a single secret is requested that is not accessible
     // The client is responsible for only requesting secrets they have permission for
-    while (reqsecretsiter.hasNext()) {
-      String secretname = (String) reqsecretsiter.next();
+    for (String secretname : request.secrets()) {
+      boolean secretExists = existingSecrets.stream().anyMatch(s -> s.getName().equals(secretname));
+      boolean secretAccessible = clientAccessibleSecrets.stream().anyMatch(s -> s.name().equals(secretname));
 
-      // We iterate over both arrays since the order of the two arrays might not match
-      SanitizedSecret sanitizedsecret = null;
-      for (SanitizedSecret s : sanitizedSecrets) {
-        if (s.name().equals(secretname)) {
-          sanitizedsecret = s;
-          break;
-        }
-      }
-
-      Secret secret = null;
-      for (Secret s : secrets) {
-        if (s.getName().equals(secretname)) {
-          secret = s;
-          break;
-        }
-      }
-
-      boolean secretExists = secret != null;
-      boolean sanitzedsecretExists = sanitizedsecret != null;
-
-
-      if (!sanitzedsecretExists) {
+      if (!secretAccessible) {
         if (clientExists && secretExists) {
           throw new ForbiddenException(format("Access denied: %s at '%s' by '%s'", client.getName(),
                   "/batchsecret " + secretname, client));
@@ -137,18 +113,24 @@ public class BatchSecretDeliveryResource {
             logger.info("Client {} requested unknown secret {}", client.getName(), secretname);
           }
           throw new NotFoundException();
-
+        }
+      } else {
+        if (!secretExists) {
+          // If the secret is accessible but does not exist,
+          // this indicates a Keywhiz issue. This is not a client issue.
+          logger.warn("Client {} requested secret which is not retrievable {}", client.getName(), secretname);
+          throw new NotFoundException("Secret not found.");
         }
       }
     }
 
-    logger.info("Client {} granted access to {}.", client.getName(), sanitizedSecrets);
+    logger.info("Client {} granted access to {}.", client.getName(), clientAccessibleSecrets.stream().map(s -> s.name()).collect(toList()));
     try {
-      return secrets.stream()
+      return existingSecrets.stream()
               .map(SecretDeliveryResponse::fromSecret)
               .collect(toList());
     } catch (IllegalArgumentException e) {
-      logger.error(format("Failed creating batch response for secrets %s", secrets), e);
+      logger.error(format("Failed creating batch response for secrets %s", existingSecrets.stream().map(s -> s.getName()).collect(toList())), e);
       throw new InternalServerErrorException();
     }
   }
