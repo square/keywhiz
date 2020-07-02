@@ -285,9 +285,18 @@ public class ClientAuthFactory {
     return Optional.of(cert);
   }
 
+  /**
+   * Defined as a function so that subclasses can override this behavior
+   *
+   * @return whether to create a client that can't be found, if the client doesn't exist
+   */
+  protected boolean createMissingClient() {
+    return true;
+  }
+
   private Client authorizeClientFromCertificate(Principal clientPrincipal) {
     Optional<Client> possibleClient =
-        authenticator.authenticate(clientPrincipal, true);
+        authenticator.authenticate(clientPrincipal, createMissingClient());
     return possibleClient.orElseThrow(() -> new NotAuthorizedException(
         format("No authorized Client for connection using principal %s",
             clientPrincipal.getName())));
