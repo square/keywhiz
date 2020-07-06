@@ -123,7 +123,6 @@ public class ClientAuthenticator {
     X500Name name = new X500Name(principal.getName());
     RDN[] rdns = name.getRDNs(BCStyle.CN);
     if (rdns.length == 0) {
-      logger.warn("Certificate does not contain CN=xxx,...: {}", principal.getName());
       return Optional.empty();
     }
     return Optional.of(IETFUtils.valueToString(rdns[0].getFirst().getValue()));
@@ -151,7 +150,7 @@ public class ClientAuthenticator {
     try {
       sans = cert.getSubjectAlternativeNames();
     } catch (CertificateParsingException e) {
-      logger.warn("Unable to parse SANs from principal", e);
+      logger.warn("Error parsing SANs from principal", e);
       return Optional.empty();
     }
 
@@ -179,7 +178,7 @@ public class ClientAuthenticator {
         return Optional.of(new URI(possibleName.get()));
       } catch (URISyntaxException e) {
         logger.warn(
-            format("Unable to parse SPIFFE URI (%s) from certificate as a URI", possibleName.get()),
+            format("Error parsing SPIFFE URI (%s) from certificate as a URI", possibleName.get()),
             e);
       }
     }
