@@ -160,28 +160,41 @@ public class ClientAuthenticator {
 
     // The sub-lists returned by getSubjectAlternativeNames have an integer for the first
     // entry, representing a field, and the value as a string as the second entry.
-    List<String> spiffeUriNames = sans.stream()
+    List<String> providedUris = sans.stream()
         .filter(sanPair -> sanPair.get(0).equals(URINAME_SAN))
         .map(sanPair -> (String) sanPair.get(1))
+        .collect(Collectors.toUnmodifiableList());
+
+    // https://spiffe.io/spiffe/concepts/#spiffe-verifiable-identity-document-svid
+    // > An SVID contains a single SPIFFE ID, which represents the identity of the service presenting it
+    //
+    // https://github.com/spiffe/spiffe/blob/master/standards/X509-SVID.md#2-spiffe-id
+    // > An X.509 SVID MUST contain exactly one URI SAN.
+    List<String> spiffeUriNames = providedUris.stream()
         .filter(uri -> uri.startsWith(SPIFFE_SCHEME))
         .collect(Collectors.toUnmodifiableList());
 
     if (spiffeUriNames.size() > 1) {
       logger.warn("Got multiple SPIFFE URIs from certificate: {}", spiffeUriNames);
       return Optional.empty();
+    } else if (spiffeUriNames.size() == 1 && providedUris.size() > 1) {
+      logger.warn(
+          "Multiple URIs are not allowed in a certificate that includes a SPIFFE URI (URIs: {})",
+          providedUris);
+      return Optional.empty();
     }
 
-    Optional<String> possibleName = spiffeUriNames.stream().findFirst();
-
-    if (possibleName.isPresent()) {
-      try {
-        return Optional.of(new URI(possibleName.get()));
-      } catch (URISyntaxException e) {
-        logger.warn(
-            format("Error parsing SPIFFE URI (%s) from certificate as a URI", possibleName.get()),
-            e);
-      }
-    }
-    return Optional.empty();
+    return spiffeUriNames.stream()
+        .findFirst()
+        .flatMap(uri -> {
+          try {
+            return Optional.of(new URI(uri));
+          } catch (URISyntaxException e) {
+            logger.warn(
+                format("Error parsing SPIFFE URI (%s) from certificate as a URI", uri),
+                e);
+            return Optional.empty();
+          }
+        });
   }
 }

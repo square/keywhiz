@@ -107,7 +107,7 @@ public class ClientAuthFactory {
     // on the security context of this request
     if (possibleXfccConfig.isEmpty()) {
       // The XFCC header is not used; use the security context of this request to identify the client
-      return authorizeClientFromCertificate(requestPrincipal);
+      return authenticateClientFromCertificate(requestPrincipal);
     } else {
       return authorizeClientFromXfccHeader(possibleXfccConfig.get(), xfccHeaderValues,
           requestPrincipal);
@@ -151,7 +151,7 @@ public class ClientAuthFactory {
         new CertificatePrincipal(clientCert.getSubjectDN().toString(),
             new X509Certificate[] {clientCert});
 
-    return authorizeClientFromCertificate(certificatePrincipal);
+    return authenticateClientFromCertificate(certificatePrincipal);
   }
 
   private void validateXfccHeaderAllowed(XfccSourceConfig xfccConfig, Principal requestPrincipal) {
@@ -296,7 +296,7 @@ public class ClientAuthFactory {
     return true;
   }
 
-  private Client authorizeClientFromCertificate(Principal clientPrincipal) {
+  private Client authenticateClientFromCertificate(Principal clientPrincipal) {
     Optional<Client> possibleClient =
         authenticator.authenticate(clientPrincipal, createMissingClient());
     return possibleClient.orElseThrow(() -> new NotAuthorizedException(
