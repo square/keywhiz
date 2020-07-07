@@ -263,4 +263,54 @@ public class SecretSeriesDAOTest {
   private int tableSize() {
     return jooqContext.fetchCount(SECRETS);
   }
+
+  @Test public void getMultipleSecretSeriesByNameReturnsOne() {
+    int before = tableSize();
+    long now = OffsetDateTime.now().toEpochSecond();
+    ApiDate nowDate = new ApiDate(now);
+
+    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
+            ImmutableMap.of("foo", "bar"), now);
+    long contentId = secretContentDAO.createSecretContent(id, "blah",
+            "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
+
+    List<SecretSeries> expected =
+            List.of(SecretSeries.of(id, "newSecretSeries", "desc", nowDate, "creator", nowDate,
+                    "creator", null, ImmutableMap.of("foo", "bar"), contentId));
+
+    assertThat(tableSize()).isEqualTo(before + 1);
+
+
+    List<SecretSeries> actual = secretSeriesDAO.getMultipleSecretSeriesByName(List.of("newSecretSeries"));
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test public void getMultipleSecretSeriesByNameDuplicatesReturnsOne() {
+    int before = tableSize();
+    long now = OffsetDateTime.now().toEpochSecond();
+    ApiDate nowDate = new ApiDate(now);
+
+    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
+            ImmutableMap.of("foo", "bar"), now);
+    long contentId = secretContentDAO.createSecretContent(id, "blah",
+            "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
+
+    List<SecretSeries> expected =
+            List.of(SecretSeries.of(id, "newSecretSeries", "desc", nowDate, "creator", nowDate,
+                    "creator", null, ImmutableMap.of("foo", "bar"), contentId));
+
+    assertThat(tableSize()).isEqualTo(before + 1);
+
+
+    // Requesting same secret multiple times - should yield one result
+    List<SecretSeries> actual = secretSeriesDAO.getMultipleSecretSeriesByName(List.of("newSecretSeries", "newSecretSeries", "newSecretSeries"));
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test public void getNonExistentMultipleSecretSeriesByName() {
+    assertThat(secretSeriesDAO.getMultipleSecretSeriesByName(List.of("non-existent"))).isEmpty();
+  }
 }
+

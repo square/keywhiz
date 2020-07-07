@@ -50,7 +50,10 @@ import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
-import static org.jooq.impl.DSL.*;
+import static org.jooq.impl.DSL.decode;
+import static org.jooq.impl.DSL.least;
+import static org.jooq.impl.DSL.val;
+
 
 /**
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.

@@ -36,8 +36,14 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
-import javax.ws.rs.*;
-import java.util.Iterator;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.String.format;
@@ -98,6 +104,8 @@ public class BatchSecretDeliveryResource {
 
     boolean clientExists = clientDAO.getClientByName(client.getName()).isPresent();
 
+    List<String> forbiddenSecrets = new ArrayList<>();
+
     // The request fails whenever a single secret is requested that is not accessible
     // The client is responsible for only requesting secrets they have permission for
     for (String secretname : request.secrets()) {
@@ -106,8 +114,7 @@ public class BatchSecretDeliveryResource {
 
       if (!secretAccessible) {
         if (clientExists && secretExists) {
-          throw new ForbiddenException(format("Access denied: %s at '%s' by '%s'", client.getName(),
-                  "/batchsecret " + secretname, client));
+          forbiddenSecrets.add(secretname);
         } else {
           if (clientExists) {
             logger.info("Client {} requested unknown secret {}", client.getName(), secretname);
@@ -122,6 +129,11 @@ public class BatchSecretDeliveryResource {
           throw new NotFoundException("Secret not found.");
         }
       }
+    }
+
+    // If *any* of the secrets is forbidden
+    if ( ! forbiddenSecrets.isEmpty() ) {
+      throw new ForbiddenException(format("Access denied: %s to secret(s) '%s'", client.getName(), forbiddenSecrets));
     }
 
     logger.info("Client {} granted access to {}.", client.getName(), clientAccessibleSecrets.stream().map(s -> s.name()).collect(toList()));

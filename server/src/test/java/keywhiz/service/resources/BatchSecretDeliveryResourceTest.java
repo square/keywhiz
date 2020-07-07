@@ -97,40 +97,105 @@ public class BatchSecretDeliveryResourceTest {
 
         when(aclDAO.getBatchSanitizedSecretsFor(client, secretnames))
                 .thenReturn(List.of(sanitizedSecret, sanitizedSecret2));
+        when(clientDAO.getClientByName(client.getName())).thenReturn(Optional.of(client));
         when(secretController.getSecretsByName(secretnames))
                 .thenReturn(List.of(secret, secret2));
 
         List<SecretDeliveryResponse> response = batchSecretDeliveryResource.getBatchSecret(client, req);
 
-        // The order doesn't matter
-        boolean matches = false;
+        assertThat(response).containsExactlyInAnyOrder(SecretDeliveryResponse.fromSecret(secret), SecretDeliveryResponse.fromSecret(secret2));
+    }
 
-        if (response.equals(ImmutableList.of(SecretDeliveryResponse.fromSecret(secret), SecretDeliveryResponse.fromSecret(secret2)))) {
-            matches = true;
-        } else if (response.equals(ImmutableList.of(SecretDeliveryResponse.fromSecret(secret2), SecretDeliveryResponse.fromSecret(secret)))) {
-            matches = true;
-        }
+    // All of the secrets exist AND client exists, but ANY of the secrets not allowed => Forbidden
 
-        assertThat(matches).isTrue();
+    @Test(expected = ForbiddenException.class)
+    public void returnsForbiddenWhenOneOfSecretsNotAllowed() throws Exception {
+        SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
+        SanitizedSecret forbiddenSecret = SanitizedSecret.fromSecret(secret2);
+
+        ImmutableList<String> secretnames = ImmutableList.of(sanitizedSecret.name(), forbiddenSecret.name());
+        BatchSecretRequest req = BatchSecretRequest.create(secretnames);
+
+        // Client can only access one out of two secrets
+        when(aclDAO.getBatchSanitizedSecretsFor(client, secretnames))
+                .thenReturn(List.of(sanitizedSecret));
+        when(clientDAO.getClientByName(client.getName())).thenReturn(Optional.of(client));
+        when(secretController.getSecretsByName(secretnames))
+                .thenReturn(List.of(secret, secret2));
+
+        batchSecretDeliveryResource.getBatchSecret(client, req);
+    }
+
+
+    // One of the secrets doesn't exist AND one of the secrets not allowed => not found - to preserve compatibility
+
+    @Test(expected = NotFoundException.class)
+    public void returnsNotFoundWhenOneOfSecretsDoesNotExistAndOneForbidden() throws Exception {
+        ImmutableList<String> secretnames = ImmutableList.of("secretthatdoesnotexist", secret.getName());
+        BatchSecretRequest req = BatchSecretRequest.create(secretnames);
+
+        when(aclDAO.getBatchSanitizedSecretsFor(client, secretnames))
+                .thenReturn(List.of());
+        when(clientDAO.getClientByName(client.getName())).thenReturn(Optional.of(client));
+        when(secretController.getSecretsByName(secretnames))
+                .thenReturn(List.of(secret));
+
+        batchSecretDeliveryResource.getBatchSecret(client, req);
+    }
+
+    // One of the secrets doesn't exist AND one of the secrets not allowed => not found - to preserve compatibility
+    // This test builds a request in reverse of the previous one to test determinism
+
+    @Test(expected = NotFoundException.class)
+    public void returnsNotFoundWhenOneOfSecretsDoesNotExistAndOneForbiddenReverse() throws Exception {
+        ImmutableList<String> secretnames = ImmutableList.of(secret.getName(), "secretthatdoesnotexist");
+        BatchSecretRequest req = BatchSecretRequest.create(secretnames);
+
+        when(aclDAO.getBatchSanitizedSecretsFor(client, secretnames))
+                .thenReturn(List.of());
+        when(clientDAO.getClientByName(client.getName())).thenReturn(Optional.of(client));
+        when(secretController.getSecretsByName(secretnames))
+                .thenReturn(List.of(secret));
+
+        batchSecretDeliveryResource.getBatchSecret(client, req);
     }
 
     @Test(expected = NotFoundException.class)
+    public void returnsNotFoundWhenOneOfSecretsDoesNotExist() throws Exception {
+        SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
+
+        ImmutableList<String> secretnames = ImmutableList.of(sanitizedSecret.name(), "secretthatdoesnotexist");
+        BatchSecretRequest req = BatchSecretRequest.create(secretnames);
+
+        when(aclDAO.getBatchSanitizedSecretsFor(client, secretnames))
+                .thenReturn(List.of(sanitizedSecret));
+        when(clientDAO.getClientByName(client.getName())).thenReturn(Optional.of(client));
+        when(secretController.getSecretsByName(secretnames))
+                .thenReturn(List.of(secret));
+
+        batchSecretDeliveryResource.getBatchSecret(client, req);
+    }
+
+    // Client doesn't exist => not found
+
+    @Test(expected = NotFoundException.class)
     public void returnsNotFoundWhenClientDoesNotExist() throws Exception {
-        when(aclDAO.getBatchSanitizedSecretsFor(client, ImmutableList.of(secret.getName()))).thenReturn(ImmutableList.<SanitizedSecret>of());
+        when(aclDAO.getBatchSanitizedSecretsFor(client, ImmutableList.of(secret.getName()))).thenReturn(ImmutableList.of());
         when(clientDAO.getClientByName(client.getName())).thenReturn(Optional.empty());
         when(secretController.getSecretsByName(ImmutableList.of(secret.getName())))
-                .thenReturn(ImmutableList.<Secret>of());
+                .thenReturn(ImmutableList.of(secret));
 
         batchSecretDeliveryResource.getBatchSecret(client, BatchSecretRequest.create(ImmutableList.of(secret.getName())));
     }
 
+    // Any secret doesn't exist => not found
 
     @Test(expected = NotFoundException.class)
     public void returnsNotFoundWhenSecretDoesNotExist() throws Exception {
-        when(aclDAO.getBatchSanitizedSecretsFor(client, ImmutableList.of("secret_name"))).thenReturn(ImmutableList.<SanitizedSecret>of());
+        when(aclDAO.getBatchSanitizedSecretsFor(client, ImmutableList.of("secret_name"))).thenReturn(ImmutableList.of());
         when(clientDAO.getClientByName(client.getName())).thenReturn(Optional.of(client));
         when(secretController.getSecretsByName(ImmutableList.of("secret_name")))
-                .thenReturn(ImmutableList.<Secret>of());
+                .thenReturn(ImmutableList.of());
 
         batchSecretDeliveryResource.getBatchSecret(client, BatchSecretRequest.create(ImmutableList.of("secret_name")));
     }
@@ -156,8 +221,8 @@ public class BatchSecretDeliveryResourceTest {
                 .thenReturn(ImmutableList.of(secretBase64));
 
         List<SecretDeliveryResponse> response = batchSecretDeliveryResource.getBatchSecret(client, BatchSecretRequest.create(ImmutableList.of(secretBase64.getName())));
-        assertThat(response.get(0).getSecret()).isEqualTo(secretBase64.getSecret());
         assertThat(response.size()).isEqualTo(1);
+        assertThat(response.get(0).getSecret()).isEqualTo(secretBase64.getSecret());
     }
 
 }

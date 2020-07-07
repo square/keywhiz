@@ -23,7 +23,7 @@ public abstract class BatchSecretRequest {
 
   @JsonProperty("secrets") public abstract ImmutableList<String> secrets();
 
-  @JsonCreator public static BatchSecretRequest forName(@JsonProperty("secrets") ImmutableList<String> secrets) {
+  @JsonCreator public static BatchSecretRequest forSecrets(@JsonProperty("secrets") ImmutableList<String> secrets) {
     return new AutoValue_BatchSecretRequest(secrets);
   }
 
