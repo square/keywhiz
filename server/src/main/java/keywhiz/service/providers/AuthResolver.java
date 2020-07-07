@@ -19,6 +19,8 @@ package keywhiz.service.providers;
 import io.dropwizard.auth.Auth;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Context;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.auth.User;
@@ -74,16 +76,22 @@ public class AuthResolver {
 
       if (classType.equals(Client.class)) {
         return new AbstractContainerRequestValueFactory<Client>() {
+          @Context
+          private HttpServletRequest httpRequest;
+
           @Override public Client provide() {
-            return clientAuthFactory.provide(getContainerRequest());
+            return clientAuthFactory.provide(getContainerRequest(), httpRequest);
           }
         };
       }
 
       if (classType.equals(AutomationClient.class)) {
         return new AbstractContainerRequestValueFactory<AutomationClient>() {
+          @Context
+          private HttpServletRequest httpRequest;
+
           @Override public AutomationClient provide() {
-            return automationClientAuthFactory.provide(getContainerRequest());
+            return automationClientAuthFactory.provide(getContainerRequest(), httpRequest);
           }
         };
       }

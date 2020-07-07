@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotAuthorizedException;
 import keywhiz.KeywhizConfig;
 import keywhiz.api.model.Client;
@@ -79,16 +80,17 @@ public class ClientAuthFactory {
     this.clientAuthConfig = clientAuthConfig;
   }
 
-  public Client provide(ContainerRequest request) {
+  public Client provide(ContainerRequest containerRequest,
+      HttpServletRequest httpServletRequest) {
     // Ports must either always send an x-forwarded-client-cert header, or
     // never send this header. This also throws an error if a single port
     // has multiple configurations.
-    int requestPort = request.getBaseUri().getPort();
+    int requestPort = httpServletRequest.getLocalPort();
     Optional<XfccSourceConfig> possibleXfccConfig =
         getXfccConfigForPort(requestPort);
 
     List<String> xfccHeaderValues =
-        Optional.ofNullable(request.getRequestHeader(XFCC_HEADER_NAME)).orElse(List.of());
+        Optional.ofNullable(containerRequest.getRequestHeader(XFCC_HEADER_NAME)).orElse(List.of());
 
     if (possibleXfccConfig.isEmpty() != xfccHeaderValues.isEmpty()) {
       throw new NotAuthorizedException(format(
@@ -98,7 +100,7 @@ public class ClientAuthFactory {
 
     // Extract information about the requester. This may be a Keywhiz client, or it may be a proxy
     // forwarding the real Keywhiz client information in the x-forwarded-client-certs header
-    Principal requestPrincipal = getPrincipal(request).orElseThrow(
+    Principal requestPrincipal = getPrincipal(containerRequest).orElseThrow(
         () -> new NotAuthorizedException("Not authorized as Keywhiz client"));
 
     // Extract client information based on the x-forwarded-client-cert header or
