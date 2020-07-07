@@ -12,7 +12,7 @@
   <name>Keywhiz Model</name>
 
   <properties>
-    <db.driver>com.mysql.jdbc.Driver</db.driver>
+    <db.driver>com.mysql.cj.jdbc.Driver</db.driver>
     <db.create-url>jdbc:mysql://localhost/?useUnicode=true&amp;characterEncoding=utf8</db.create-url>
     <db.migrate-url>jdbc:mysql://localhost/keywhizdb_test?useUnicode=true&amp;characterEncoding=utf8</db.migrate-url>
     <db.username>root</db.username>
