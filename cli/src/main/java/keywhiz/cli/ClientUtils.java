@@ -151,7 +151,7 @@ public class ClientUtils {
    * @throws IOException
    */
   public static List<HttpCookie> loadCookies(Path path) throws IOException {
-    TypeReference cookiesType = new TypeReference<List<JsonCookie>>() {};
+    TypeReference<List<JsonCookie>> cookiesType = new TypeReference<>() {};
     try (BufferedReader reader = Files.newBufferedReader(path)) {
       List<JsonCookie> jsonCookies = mapper.readValue(reader, cookiesType);
       return jsonCookies.stream()
