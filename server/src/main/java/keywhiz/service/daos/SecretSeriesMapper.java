@@ -27,8 +27,8 @@ import keywhiz.jooq.tables.records.SecretsRecord;
 import org.jooq.RecordMapper;
 
 public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSeries> {
-  private static final TypeReference MAP_STRING_STRING_TYPE =
-      new TypeReference<Map<String, String>>() {};
+  private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE =
+      new TypeReference<>() {};
   private final ObjectMapper mapper;
 
   @Inject public SecretSeriesMapper(ObjectMapper mapper) {

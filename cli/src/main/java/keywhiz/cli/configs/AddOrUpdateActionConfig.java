@@ -57,7 +57,7 @@ public class AddOrUpdateActionConfig {
   public ImmutableMap<String, String> getMetadata(ObjectMapper mapper) {
     ImmutableMap<String, String> metadata = ImmutableMap.of();
     if (json != null && !json.isEmpty()) {
-      TypeReference typeRef = new TypeReference<ImmutableMap<String, String>>() {};
+      TypeReference<ImmutableMap<String, String>> typeRef = new TypeReference<>() {};
       try {
         metadata = mapper.readValue(json, typeRef);
       } catch (IOException e) {
