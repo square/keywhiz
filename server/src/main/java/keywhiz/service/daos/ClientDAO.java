@@ -113,7 +113,6 @@ public class ClientDAO {
 
     final Instant expiration;
     if (principal instanceof CertificatePrincipal) {
-      // instanceof returns false for a null principal
       expiration = ((CertificatePrincipal) principal).getCertificateExpiration();
     } else {
       expiration = EPOCH;

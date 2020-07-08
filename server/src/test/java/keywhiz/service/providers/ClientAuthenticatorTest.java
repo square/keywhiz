@@ -128,6 +128,38 @@ public class ClientAuthenticatorTest {
       + "Lz9DeXBJLBSOaXNO+/wdJY/Ix8ADwQYc+jLhdyVOKW7k\n"
       + "-----END CERTIFICATE-----";
 
+  // certstrap init --common-name "KeywhizAuth"
+  // certstrap request-cert --common-name other-principal-2 --ou organizational-unit
+  //     --uri spiffe://example.org/principal,http://example.org/other-uri
+  // certstrap sign other-principal-2 --CA KeywhizAuth
+  private static final String multipleUriPem = "-----BEGIN CERTIFICATE-----\n"
+      + "MIIEljCCAn6gAwIBAgIQZj1dbvJBmMVMffrhfkZk8TANBgkqhkiG9w0BAQsFADAW\n"
+      + "MRQwEgYDVQQDEwtLZXl3aGl6QXV0aDAeFw0yMDA3MDcyMjI3NTVaFw0yMTEyMTYw\n"
+      + "MDM3MDFaMDoxHDAaBgNVBAsTE29yZ2FuaXphdGlvbmFsLXVuaXQxGjAYBgNVBAMT\n"
+      + "EW90aGVyLXByaW5jaXBhbC0yMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC\n"
+      + "AQEAsmvKfyYud7tz+Q8hsnasw8K7IHd1NhMYocwYzeHMrBu9oKvhUWm8mwHhcgIa\n"
+      + "MNzRInXIbJW29IA8/icRYHR/c/TL450J1Hp4Yjxu8wwrbFa4AlP4vuPAXW19FTP5\n"
+      + "7zz7hTf8Re74DxHFMRxc47WUvAiUqMaLJ2GIqe4IKoIPM8REI5WQon+zziTRKp2H\n"
+      + "/SSh8kybhpzJ8ZgoOedL/8L/jTEUmMzDodnK8yceDU2cyqRk4MFM5UHsXAuAx4sG\n"
+      + "IxRFTLC1q0504jMD7tFctbrOtoBec3LlHV00PIgiI6NEtUKBYv+ggZFIW3hC4x+P\n"
+      + "eVkuAQpqmjebmHBvdPOaaRvDzwIDAQABo4G7MIG4MA4GA1UdDwEB/wQEAwIDuDAd\n"
+      + "BgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwHQYDVR0OBBYEFHRPxY6n6yOR\n"
+      + "ChCZDKY01wGudNKBMB8GA1UdIwQYMBaAFFLVXTMB3G1nUWf1cqUwZaQm8YAyMEcG\n"
+      + "A1UdEQRAMD6GHnNwaWZmZTovL2V4YW1wbGUub3JnL3ByaW5jaXBhbIYcaHR0cDov\n"
+      + "L2V4YW1wbGUub3JnL290aGVyLXVyaTANBgkqhkiG9w0BAQsFAAOCAgEAE1xYf766\n"
+      + "QZTf8akq13pxVG/ofKYXbY/OhgIxp2Wr2T2+Pkgw0Gxzw/T89eut9K+g2N78pnR+\n"
+      + "VmN2VfuswhqW2kQROfpl3eC8+G+537CiB7zRDeQBd/6HyNkWtO3HWv7DGMeenT/P\n"
+      + "7VEIqOxVtBJt3Wz1l0wtTtaWdEzPwflMEKfDZpmEX6PB0xKfsWQ5KohXEoxCY6yR\n"
+      + "PsGx+dWpVpZzwLlS6kgfzm7lXUCECJrHksHTCxNndvxqe5oaJymA7a5bvOvq0D2N\n"
+      + "YiM6G0ZsCgBwcQg2NM0ft7A7dWg6ZelK5OzvVND4ZASCHtKqVUS8+l5e9jlBJ/0r\n"
+      + "Hbxa7/IuqkZQgs1AdFPb4VBYRt+PaLcfBOwmvBCI2tSxwHFmP9PVa5GP7JtUru9K\n"
+      + "VvCFxAB8zIW+se7rBT8dyxtCIiSuUSNtqJAOJUaOeN/WWEfED96WLPlTYB0FACMg\n"
+      + "HBCkosUnbxCSY7db7zI4XOZ/UqwjbgIG9ZIiXXIoAR53Sb8Kuomhjh0Uqx1NT9L9\n"
+      + "8hPcHl/DkCxNhFcM/nEoT3XHLnqAjgLO1qBJwGFLKzO/pZ1TcKf8AcLvWckmCPa0\n"
+      + "8uaakuNqL4QreRU8uFf55omMp2EzmOJXlEpgWhZmIxNqJPLJaYseg2RJSap7udVn\n"
+      + "Adk5fCN+nRDuNCTprfMLelPcJd6zy2HUOsM=\n"
+      + "-----END CERTIFICATE-----";
+
   @Mock ClientAuthTypeConfig clientAuthTypeConfig;
   @Mock ClientAuthConfig clientAuthConfig;
 
@@ -269,6 +301,22 @@ public class ClientAuthenticatorTest {
     when(clientAuthTypeConfig.useSpiffeId()).thenReturn(true);
 
     assertThat(authenticator.authenticate(multipleSpiffePrincipal, false)).isEmpty();
+    verifyNoInteractions(clientDAO);
+  }
+
+  @Test public void ignoresMultipleUris() throws Exception {
+    CertificateFactory cf = CertificateFactory.getInstance("X.509");
+    X509Certificate multipleUriClientCert = (X509Certificate) cf.generateCertificate(
+        new ByteArrayInputStream(multipleUriPem.getBytes(UTF_8)));
+    Principal multipleUriPrincipal =
+        new CertificatePrincipal(multipleUriClientCert.getSubjectDN().toString(),
+            new X509Certificate[] {multipleUriClientCert});
+
+    // Use only the (malformatted) URIs to retrieve a client (which should fail)
+    when(clientAuthTypeConfig.useCommonName()).thenReturn(false);
+    when(clientAuthTypeConfig.useSpiffeId()).thenReturn(true);
+
+    assertThat(authenticator.authenticate(multipleUriPrincipal, false)).isEmpty();
     verifyNoInteractions(clientDAO);
   }
 }
