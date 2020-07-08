@@ -26,19 +26,18 @@ import javax.crypto.AEADBadTagException;
 import javax.inject.Inject;
 import javax.ws.rs.core.NewCookie;
 import keywhiz.auth.User;
-import org.eclipse.jetty.http.HttpCookie;
-import org.eclipse.jetty.http.HttpHeader;
-import org.eclipse.jetty.server.HttpChannel;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-/** Produces tokens and cookies based on encrypted {@link UserCookieData} records. */
+/**
+ * Produces tokens and cookies based on encrypted {@link UserCookieData} records.
+ */
 public class AuthenticatedEncryptedCookieFactory {
-  private static final Logger logger = LoggerFactory.getLogger(AuthenticatedEncryptedCookieFactory.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(AuthenticatedEncryptedCookieFactory.class);
 
   private final Clock clock;
   private final ObjectMapper mapper;
@@ -46,10 +45,11 @@ public class AuthenticatedEncryptedCookieFactory {
   private final CookieConfig config;
 
   /**
-   * @param clock to use for resolving current time
-   * @param mapper json serializer
-   * @param encryptor performs authenticated-encryption using a non-colliding counter specific to a host.
-   * @param config parameters for cookie generation
+   * @param clock     to use for resolving current time
+   * @param mapper    json serializer
+   * @param encryptor performs authenticated-encryption using a non-colliding counter specific to a
+   *                  host.
+   * @param config    parameters for cookie generation
    */
   @Inject
   public AuthenticatedEncryptedCookieFactory(
@@ -66,7 +66,7 @@ public class AuthenticatedEncryptedCookieFactory {
   /**
    * Produces an authenticating token.
    *
-   * @param user identity the token will authenticate.
+   * @param user       identity the token will authenticate.
    * @param expiration timestamp when token should expire.
    * @return token which can be used to authenticate as user until expiration.
    */
@@ -86,25 +86,25 @@ public class AuthenticatedEncryptedCookieFactory {
   /**
    * Produces a cookie string for a given value and expiration.
    *
-   * @param value value of new cookie.
+   * @param value      value of new cookie.
    * @param expiration expiration time of cookie.
    * @return serialized cookie with given value and expiration.
    */
   public NewCookie cookieFor(String value, ZonedDateTime expiration) {
     long maxAge = Duration.between(ZonedDateTime.now(clock), expiration).getSeconds();
+    if (maxAge > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException(
+          format("Cookies cannot be valid for more than %s seconds", Integer.MAX_VALUE));
+    }
 
-    HttpCookie cookie = new HttpCookie(config.getName(), value, config.getDomain(),
-        config.getPath(), maxAge, config.isHttpOnly(), config.isSecure());
-
-    Response response = newResponse();
-    response.addCookie(cookie);
-    return NewCookie.valueOf(response.getHttpFields().get(HttpHeader.SET_COOKIE));
+    return new NewCookie(config.getName(), value, config.getPath(), config.getDomain(), "",
+        (int) maxAge, config.isSecure(), config.isHttpOnly());
   }
 
   /**
    * Shortcut method to produce an authenticated cookie string.
    *
-   * @param user identity the token will authenticate.
+   * @param user       identity the token will authenticate.
    * @param expiration timestamp when cookie should expire.
    * @return serialized cookie which can be used to authenticate as user until expiration.
    */
@@ -118,15 +118,7 @@ public class AuthenticatedEncryptedCookieFactory {
    * @return serialized expired cookie with matching parameters to authenticating cookie.
    */
   public NewCookie getExpiredSessionCookie() {
-    HttpCookie cookie = new HttpCookie(config.getName(), "expired", config.getDomain(), config.getPath(),
-        0, config.isHttpOnly(), config.isSecure());
-
-    Response response = newResponse();
-    response.addCookie(cookie);
-    return NewCookie.valueOf(response.getHttpFields().get(HttpHeader.SET_COOKIE));
-  }
-
-  private Response newResponse() {
-    return new Response(new HttpChannel(null, new HttpConfiguration(), null, null), null);
+    return new NewCookie(config.getName(), "expired", config.getPath(), config.getDomain(), "",
+        0, config.isSecure(), config.isHttpOnly());
   }
 }

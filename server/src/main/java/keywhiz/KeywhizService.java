@@ -71,6 +71,7 @@ import org.slf4j.LoggerFactory;
 public class KeywhizService extends Application<KeywhizConfig> {
   /**
    * Entry point into application.
+   *
    * @param args passed onto {@link #run(String[])}
    * @throws Exception for any uncaught application exception
    */
@@ -120,15 +121,45 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(injector.getInstance(ClientCertificateFilter.class));
 
     logger.debug("Registering servlet filters");
-    environment.servlets().addFilter("security-headers-filter", injector.getInstance(SecurityHeadersFilter.class))
+    environment.servlets()
+        .addFilter("security-headers-filter", injector.getInstance(SecurityHeadersFilter.class))
         .addMappingForUrlPatterns(null, /* Default is for requests */
             false /* Can be after other filters */, "/*" /* Every request */);
     jersey.register(injector.getInstance(CookieRenewingFilter.class));
 
     logger.debug("Registering providers");
-    jersey.register(new AuthResolver.Binder(injector.getInstance(ClientAuthFactory.class),
-        injector.getInstance(AutomationClientAuthFactory.class),
-        injector.getInstance(UserAuthFactory.class)));
+    // variables injected with @Context are null:
+    //jersey.register(new AuthResolver.Binder(
+    //    injector.getInstance(ClientAuthFactory.class),
+    //    injector.getInstance(AutomationClientAuthFactory.class),
+    //    injector.getInstance(UserAuthFactory.class)));
+
+    // When constructor annotated with @Inject, variables injected with @Context are null
+    //jersey.register(injector.getInstance(AuthResolver.Binder.class));
+
+    // No implementation for org.glassfish.jersey.server.internal.inject.MultivaluedParameterExtractorProvider was bound.
+    //  while locating org.glassfish.jersey.server.internal.inject.MultivaluedParameterExtractorProvider
+    //    for the 1st parameter of keywhiz.service.providers.AuthResolver.<init>(AuthResolver.java:52)
+    //  while locating keywhiz.service.providers.AuthResolver
+    // unknown whether @Context works
+    //jersey.register(injector.getInstance(AuthResolver.class));
+
+    // Caused by: A MultiException has 5 exceptions.  They are:
+    //1. org.glassfish.hk2.api.UnsatisfiedDependencyException: There was no object available for injection at SystemInjecteeImpl(requiredType=ClientAuthFactory,parent=AuthResolver,qualifiers={},position=1,optional=false,self=false,unqualified=null,1471230198)
+    //2. org.glassfish.hk2.api.UnsatisfiedDependencyException: There was no object available for injection at SystemInjecteeImpl(requiredType=AutomationClientAuthFactory,parent=AuthResolver,qualifiers={},position=2,optional=false,self=false,unqualified=null,1927763846)
+    //3. org.glassfish.hk2.api.UnsatisfiedDependencyException: There was no object available for injection at SystemInjecteeImpl(requiredType=UserAuthFactory,parent=AuthResolver,qualifiers={},position=3,optional=false,self=false,unqualified=null,1933551964)
+    //4. java.lang.IllegalArgumentException: While attempting to resolve the dependencies of keywhiz.service.providers.AuthResolver errors were found
+    //5. java.lang.IllegalStateException: Unable to perform operation: resolve on keywhiz.service.providers.AuthResolver
+    // unknown whether @Context works
+    //jersey.register(AuthResolver.class);
+
+    // when annotated with @Inject:
+    // A MultiException has 1 exceptions.  They are:
+    // 1. org.glassfish.hk2.api.UnsatisfiedDependencyException: There was no object available for injection at SystemInjecteeImpl(requiredType=ClientAuthFactory,parent=AuthResolver$Binder,qualifiers={},position=0,optional=false,self=false,unqualified=null,1942768950)
+    //
+    // Caused by: org.glassfish.hk2.api.UnsatisfiedDependencyException: There was no object available for injection at SystemInjecteeImpl(requiredType=ClientAuthFactory,parent=AuthResolver$Binder,qualifiers={},position=0,optional=false,self=false,unqualified=null,1942768950)
+    // unknown whether @Context works
+    jersey.register(AuthResolver.Binder.class);
 
     logger.debug("Registering resources");
     jersey.register(injector.getInstance(BackfillRowHmacResource.class));
@@ -154,7 +185,9 @@ public class KeywhizService extends Application<KeywhizConfig> {
 
     ManualStatusHealthCheck mshc = new ManualStatusHealthCheck();
     environment.healthChecks().register("manualStatus", mshc);
-    environment.admin().addServlet("manualStatus", new ManualStatusServlet(mshc)).addMapping("/status/*");
+    environment.admin()
+        .addServlet("manualStatus", new ManualStatusServlet(mshc))
+        .addMapping("/status/*");
 
     validateDatabase(config);
 
@@ -165,7 +198,11 @@ public class KeywhizService extends Application<KeywhizConfig> {
     logger.debug("Validating database state");
     DataSource dataSource = config.getDataSourceFactory()
         .build(new MetricRegistry(), "flyway-validation-datasource");
-    Flyway flyway = Flyway.configure().dataSource(dataSource).locations(config.getMigrationsDir()).table(config.getFlywaySchemaTable()).load();
+    Flyway flyway = Flyway.configure()
+        .dataSource(dataSource)
+        .locations(config.getMigrationsDir())
+        .table(config.getFlywaySchemaTable())
+        .load();
     flyway.validate();
   }
 

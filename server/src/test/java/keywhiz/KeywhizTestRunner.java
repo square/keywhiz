@@ -28,7 +28,7 @@ import io.dropwizard.setup.Environment;
 import java.io.File;
 import java.io.IOException;
 import javax.validation.Validation;
-import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import keywhiz.jooq.tables.Accessgrants;
 import keywhiz.jooq.tables.Clients;
 import keywhiz.jooq.tables.Groups;
@@ -42,7 +42,9 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.InitializationError;
 import org.mockito.MockitoAnnotations;
 
-/** Injecting test runner. */
+/**
+ * Injecting test runner.
+ */
 public class KeywhizTestRunner extends BlockJUnit4ClassRunner {
   public KeywhizTestRunner(Class<?> klass) throws InitializationError {
     super(klass);
@@ -57,11 +59,12 @@ public class KeywhizTestRunner extends BlockJUnit4ClassRunner {
     service.initialize(bootstrap);
 
     File yamlFile = new File(Resources.getResource("keywhiz-test.yaml").getFile());
-    Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+    ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
     ObjectMapper objectMapper = bootstrap.getObjectMapper().copy();
     KeywhizConfig config;
     try {
-      config = new YamlConfigurationFactory<>(KeywhizConfig.class, validator, objectMapper, "dw")
+      config = new YamlConfigurationFactory<>(KeywhizConfig.class, validatorFactory.getValidator(),
+          objectMapper, "dw")
           .build(yamlFile);
     } catch (IOException | ConfigurationException e) {
       throw Throwables.propagate(e);
@@ -69,9 +72,11 @@ public class KeywhizTestRunner extends BlockJUnit4ClassRunner {
 
     Environment environment = new Environment(service.getName(),
         objectMapper,
-        validator,
+        validatorFactory,
         bootstrap.getMetricRegistry(),
-        bootstrap.getClassLoader());
+        bootstrap.getClassLoader(),
+        bootstrap.getHealthCheckRegistry(),
+        config);
 
     Injector injector = Guice.createInjector(new ServiceModule(config, environment));
 
@@ -84,25 +89,32 @@ public class KeywhizTestRunner extends BlockJUnit4ClassRunner {
     DSLContext jooqContext = injector.getInstance(DSLContext.class);
     try {
       jooqContext.truncate(Users.USERS).execute();
-    } catch(DataAccessException e) {}
+    } catch (DataAccessException e) {
+    }
     try {
       jooqContext.truncate(SecretsContent.SECRETS_CONTENT).execute();
-    } catch(DataAccessException e) {}
+    } catch (DataAccessException e) {
+    }
     try {
       jooqContext.truncate(Memberships.MEMBERSHIPS).execute();
-    } catch(DataAccessException e) {}
+    } catch (DataAccessException e) {
+    }
     try {
       jooqContext.truncate(Accessgrants.ACCESSGRANTS).execute();
-    } catch(DataAccessException e) {}
+    } catch (DataAccessException e) {
+    }
     try {
       jooqContext.truncate(Clients.CLIENTS).execute();
-    } catch(DataAccessException e) {}
+    } catch (DataAccessException e) {
+    }
     try {
       jooqContext.truncate(Groups.GROUPS).execute();
-    } catch(DataAccessException e) {}
+    } catch (DataAccessException e) {
+    }
     try {
       jooqContext.truncate(Secrets.SECRETS).execute();
-    } catch(DataAccessException e) {}
+    } catch (DataAccessException e) {
+    }
 
     Object object = injector.getInstance(getTestClass().getJavaClass());
     MockitoAnnotations.initMocks(object);

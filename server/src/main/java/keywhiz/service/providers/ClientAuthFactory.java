@@ -80,8 +80,7 @@ public class ClientAuthFactory {
     this.clientAuthConfig = clientAuthConfig;
   }
 
-  public Client provide(ContainerRequest containerRequest,
-      HttpServletRequest httpServletRequest) {
+  public Client provide(ContainerRequest containerRequest, HttpServletRequest httpServletRequest) {
     // Ports must either always send an x-forwarded-client-cert header, or
     // never send this header. This also throws an error if a single port
     // has multiple configurations.

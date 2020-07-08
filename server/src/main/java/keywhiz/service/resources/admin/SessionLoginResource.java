@@ -87,7 +87,7 @@ public class SessionLoginResource {
       logger.warn("User authenticator threw something weird.", e);
     }
 
-    if (!optionalUser.isPresent()) {
+    if (optionalUser.isEmpty()) {
       logger.info("User authentication failed at login for {}", username);
       throw new NotAuthorizedException("");
     }

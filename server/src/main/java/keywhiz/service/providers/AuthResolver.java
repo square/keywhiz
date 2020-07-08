@@ -17,6 +17,7 @@
 package keywhiz.service.providers;
 
 import io.dropwizard.auth.Auth;
+import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -24,88 +25,79 @@ import javax.ws.rs.core.Context;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.auth.User;
-import org.glassfish.hk2.api.Factory;
-import org.glassfish.hk2.api.InjectionResolver;
-import org.glassfish.hk2.api.ServiceLocator;
-import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.server.internal.inject.AbstractContainerRequestValueFactory;
-import org.glassfish.jersey.server.internal.inject.AbstractValueFactoryProvider;
+import org.glassfish.jersey.server.ContainerRequest;
+import org.glassfish.jersey.server.internal.inject.AbstractValueParamProvider;
 import org.glassfish.jersey.server.internal.inject.MultivaluedParameterExtractorProvider;
-import org.glassfish.jersey.server.internal.inject.ParamInjectionResolver;
 import org.glassfish.jersey.server.model.Parameter;
-import org.glassfish.jersey.server.spi.internal.ValueFactoryProvider;
+import org.glassfish.jersey.server.spi.internal.ValueParamProvider;
 
 /**
  * Responsible for injecting container method attributes annotated with {@link Auth} and the
  * dependencies necessary for fulfilling those injected objects. This is modeled after
- * io.dropwizard.auth.AuthFactoryProvider, which may be usable in the future.
- * See https://github.com/dropwizard/dropwizard/issues/864.
+ * io.dropwizard.auth.AuthFactoryProvider, which may be usable in the future. See
+ * https://github.com/dropwizard/dropwizard/issues/864.
  */
 @Singleton
-public class AuthResolver {
-  public static class AuthInjectionResolver extends ParamInjectionResolver<Auth> {
-    public AuthInjectionResolver() {
-      super(AuthValueFactoryProvider.class);
-    }
+public class AuthResolver extends AbstractValueParamProvider {
+  private final ClientAuthFactory clientAuthFactory;
+  private final AutomationClientAuthFactory automationClientAuthFactory;
+  private final UserAuthFactory userAuthFactory;
+
+  @Inject
+  public AuthResolver(final MultivaluedParameterExtractorProvider extractorProvider,
+      ClientAuthFactory clientAuthFactory,
+      AutomationClientAuthFactory automationClientAuthFactory,
+      UserAuthFactory userAuthFactory) {
+    super(() -> extractorProvider, Parameter.Source.UNKNOWN);
+    this.clientAuthFactory = clientAuthFactory;
+    this.automationClientAuthFactory = automationClientAuthFactory;
+    this.userAuthFactory = userAuthFactory;
   }
 
-  @Singleton
-  public static class AuthValueFactoryProvider extends AbstractValueFactoryProvider {
-    private final ClientAuthFactory clientAuthFactory;
-    private final AutomationClientAuthFactory automationClientAuthFactory;
-    private final UserAuthFactory userAuthFactory;
+  @Override
+  protected Function<ContainerRequest, ?> createValueProvider(final Parameter parameter) {
+    final Class<?> classType = parameter.getRawType();
+    final Auth auth = parameter.getAnnotation(Auth.class);
 
-    @Inject
-    public AuthValueFactoryProvider(final MultivaluedParameterExtractorProvider extractorProvider,
-        final ServiceLocator injector, ClientAuthFactory clientAuthFactory,
-        AutomationClientAuthFactory automationClientAuthFactory, UserAuthFactory userAuthFactory) {
-      super(extractorProvider, injector, Parameter.Source.UNKNOWN);
-      this.clientAuthFactory = clientAuthFactory;
-      this.automationClientAuthFactory = automationClientAuthFactory;
-      this.userAuthFactory = userAuthFactory;
-    }
-
-    @Override protected Factory<?> createValueFactory(final Parameter parameter) {
-      final Class<?> classType = parameter.getRawType();
-      final Auth auth = parameter.getAnnotation(Auth.class);
-
-      if (auth == null) {
-        return null;
-      }
-
-      if (classType.equals(Client.class)) {
-        return new AbstractContainerRequestValueFactory<Client>() {
-          @Context
-          private HttpServletRequest httpRequest;
-
-          @Override public Client provide() {
-            return clientAuthFactory.provide(getContainerRequest(), httpRequest);
-          }
-        };
-      }
-
-      if (classType.equals(AutomationClient.class)) {
-        return new AbstractContainerRequestValueFactory<AutomationClient>() {
-          @Context
-          private HttpServletRequest httpRequest;
-
-          @Override public AutomationClient provide() {
-            return automationClientAuthFactory.provide(getContainerRequest(), httpRequest);
-          }
-        };
-      }
-
-      if (classType.equals(User.class)) {
-        return new AbstractContainerRequestValueFactory<User>() {
-          @Override public User provide() {
-            return userAuthFactory.provide(getContainerRequest());
-          }
-        };
-      }
-
+    if (auth == null) {
       return null;
     }
+
+    if (classType.equals(Client.class)) {
+      return new Function<ContainerRequest, Client>() {
+        @Context
+        private HttpServletRequest httpRequest;
+
+        @Override public Client apply(ContainerRequest containerRequest) {
+          return clientAuthFactory.provide(containerRequest, httpRequest);
+        }
+      };
+    }
+
+    if (classType.equals(AutomationClient.class)) {
+      return new Function<ContainerRequest, AutomationClient>() {
+        @Context
+        private HttpServletRequest httpRequest;
+
+        @Override public AutomationClient apply(ContainerRequest containerRequest) {
+          return automationClientAuthFactory.provide(containerRequest, httpRequest);
+        }
+      };
+    }
+
+    if (classType.equals(User.class)) {
+      return new Function<ContainerRequest, User>() {
+        @Context
+        private HttpServletRequest httpRequest;
+
+        @Override public User apply(ContainerRequest containerRequest) {
+          return userAuthFactory.provide(containerRequest);
+        }
+      };
+    }
+
+    return null;
   }
 
   public static class Binder extends AbstractBinder {
@@ -113,8 +105,10 @@ public class AuthResolver {
     private final AutomationClientAuthFactory automationClientAuthFactory;
     private final UserAuthFactory userAuthFactory;
 
+    @Inject
     public Binder(ClientAuthFactory clientAuthFactory,
-        AutomationClientAuthFactory automationClientAuthFactory, UserAuthFactory userAuthFactory) {
+        AutomationClientAuthFactory automationClientAuthFactory,
+        UserAuthFactory userAuthFactory) {
       this.clientAuthFactory = clientAuthFactory;
       this.automationClientAuthFactory = automationClientAuthFactory;
       this.userAuthFactory = userAuthFactory;
@@ -124,8 +118,7 @@ public class AuthResolver {
       bind(clientAuthFactory);
       bind(automationClientAuthFactory);
       bind(userAuthFactory);
-      bind(AuthValueFactoryProvider.class).to(ValueFactoryProvider.class).in(Singleton.class);
-      bind(AuthInjectionResolver.class).to(new TypeLiteral<InjectionResolver<Auth>>() {}).in(Singleton.class);
+      bind(AuthResolver.class).to(ValueParamProvider.class).in(Singleton.class);
     }
   }
 }
