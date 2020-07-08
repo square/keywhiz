@@ -28,8 +28,8 @@ import keywhiz.jooq.tables.records.GroupsRecord;
 import org.jooq.RecordMapper;
 
 class GroupMapper implements RecordMapper<GroupsRecord, Group> {
-  private static final TypeReference MAP_STRING_STRING_TYPE =
-      new TypeReference<Map<String, String>>() {};
+  private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE =
+      new TypeReference<>() {};
   private final ObjectMapper mapper;
 
   @Inject public GroupMapper(ObjectMapper mapper) {
