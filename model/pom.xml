@@ -130,6 +130,9 @@
           <!-- Generator parameters -->
           <generator>
             <name>org.jooq.codegen.JavaGenerator</name>
+            <generate>
+              <javaTimeTypes>false</javaTimeTypes>
+            </generate>
             <database>
               <name>${jooq.dialect}</name>
               <includes>.*</includes>
