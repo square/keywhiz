@@ -19,12 +19,6 @@ package keywhiz.service.daos;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.List;
-import java.util.Optional;
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
@@ -43,6 +37,13 @@ import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.List;
+import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
@@ -608,5 +609,34 @@ public class SecretDAOTest {
 
   private int tableSize(Table table) {
     return jooqContext.fetchCount(table);
+  }
+
+  // Testing batch secrets
+
+  @Test public void getSecretsByName() {
+    List<String> secrets = List.of(secret1.series().name(), secret2b.series().name());
+    List<SecretSeriesAndContent> response = secretDAO.getSecretsByName(secrets);
+
+    assertThat(response.size()).isEqualTo(2);
+    assertThat(response).contains(secret1);
+    assertThat(response).contains(secret2b);
+  }
+
+  @Test public void getNonExistantSecretsByName() {
+    List<String> secrets = List.of("notasecret", "alsonotasecret");
+    List<SecretSeriesAndContent> response = secretDAO.getSecretsByName(secrets);
+
+    assertThat(response.size()).isEqualTo(0);
+  }
+
+  // Request duplicate, receive no duplicates
+
+  @Test public void getDuplicateSecretsByName() {
+    List<String> secrets = List.of(secret1.series().name(), secret2b.series().name(), secret1.series().name());
+    List<SecretSeriesAndContent> response = secretDAO.getSecretsByName(secrets);
+
+    assertThat(response.size()).isEqualTo(2);
+    assertThat(response).contains(secret1);
+    assertThat(response).contains(secret2b);
   }
 }
