@@ -346,7 +346,6 @@ public class AclDAO {
             .where(CLIENTS.NAME.eq(client.getName())
                     .and(SECRETS.CURRENT.isNotNull())
                     .and(SECRETS.NAME.in(secretNames)))
-            .limit(1)
             .getQuery();
     query.addSelect(SECRETS_CONTENT.CONTENT_HMAC);
     query.addSelect(SECRETS_CONTENT.CREATEDAT);
