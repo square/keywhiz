@@ -55,6 +55,10 @@ public class BatchSecretDeliveryResourceIntegrationTest {
     @ClassRule
     public static final RuleChain chain = IntegrationTestRule.rule();
 
+    // For declaration of these passwords see file server/src/main/java/keywhiz/commands/DbSeedCommand.java
+    // DbSeedCommand is invoked via MigrationRule
+    // TODO(michael): refactor how we test
+
     @Before
     public void setUp() throws Exception {
         client = TestClients.mutualSslClient();
