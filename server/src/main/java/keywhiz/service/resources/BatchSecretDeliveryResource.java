@@ -129,6 +129,7 @@ public class BatchSecretDeliveryResource {
 
     logger.info("Client {} granted access to {}.", client.getName(), clientAccessibleSecrets.stream().map(s -> s.name()).collect(toList()));
     try {
+      // This is only possible if all secrets are both existing AND accessible to the client
       return existingSecrets.stream()
               .map(SecretDeliveryResponse::fromSecret)
               .collect(toList());

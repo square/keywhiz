@@ -75,12 +75,13 @@ public class BatchSecretDeliveryResourceTest {
     public void returnsSingleSecretWhenAllowed() throws Exception {
         SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
 
-        ImmutableList<String> secretnames = ImmutableList.of(sanitizedSecret.name());
-        BatchSecretRequest req = BatchSecretRequest.create(secretnames);
+        ImmutableList<String> secretNames = ImmutableList.of(sanitizedSecret.name());
+        BatchSecretRequest req = BatchSecretRequest.create(secretNames);
 
-        when(aclDAO.getBatchSanitizedSecretsFor(client, secretnames))
+        when(aclDAO.getBatchSanitizedSecretsFor(client, secretNames))
                 .thenReturn(List.of(sanitizedSecret));
-        when(secretController.getSecretsByName(secretnames))
+        when(clientDAO.getClientByName(client.getName())).thenReturn(Optional.of(client));
+        when(secretController.getSecretsByName(secretNames))
                 .thenReturn(List.of(secret));
 
         List<SecretDeliveryResponse> response = batchSecretDeliveryResource.getBatchSecret(client, req);
@@ -217,6 +218,7 @@ public class BatchSecretDeliveryResourceTest {
 
         when(aclDAO.getBatchSanitizedSecretsFor(client, ImmutableList.of(name)))
                 .thenReturn(ImmutableList.of(SanitizedSecret.fromSecret(secretBase64)));
+        when(clientDAO.getClientByName(client.getName())).thenReturn(Optional.of(client));
         when(secretController.getSecretsByName(ImmutableList.of(name)))
                 .thenReturn(ImmutableList.of(secretBase64));
 
