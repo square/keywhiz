@@ -112,27 +112,18 @@ public class BatchSecretDeliveryResource {
       boolean secretExists = existingSecrets.stream().anyMatch(s -> s.getName().equals(secretname));
       boolean secretAccessible = clientAccessibleSecrets.stream().anyMatch(s -> s.name().equals(secretname));
 
+      if (!(clientExists && secretExists)) {
+        logger.warn("Client {} or secret {} does not exist (client exists={}, secret exists={})", client.getName(), secretname, clientExists, secretExists);
+        throw new NotFoundException();
+      }
       if (!secretAccessible) {
-        if (clientExists && secretExists) {
-          forbiddenSecrets.add(secretname);
-        } else {
-          if (clientExists) {
-            logger.info("Client {} requested unknown secret {}", client.getName(), secretname);
-          }
-          throw new NotFoundException();
-        }
-      } else {
-        if (!secretExists) {
-          // If the secret is accessible but does not exist,
-          // this indicates a Keywhiz issue. This is not a client issue.
-          logger.warn("Client {} requested secret which is not retrievable {}", client.getName(), secretname);
-          throw new NotFoundException("Secret not found.");
-        }
+        // at this point we know the client and secret both exist
+        forbiddenSecrets.add(secretname);
       }
     }
 
     // If *any* of the secrets is forbidden
-    if ( ! forbiddenSecrets.isEmpty() ) {
+    if (!forbiddenSecrets.isEmpty()) {
       throw new ForbiddenException(format("Access denied: %s to secret(s) '%s'", client.getName(), forbiddenSecrets));
     }
 
