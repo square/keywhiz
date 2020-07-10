@@ -445,4 +445,24 @@ public class AclDAOTest {
   private int membershipsTableSize() {
     return jooqContext.fetchCount(MEMBERSHIPS);
   }
+
+  @Test public void getBatchSanitizedSecretsSingle() {
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+
+    List<SanitizedSecret> secrets = aclDAO.getBatchSanitizedSecretsFor(client1, List.of(secret1.getName()));
+    assertThat(secrets).hasSize(1);
+    assertThat(secrets).contains(SanitizedSecret.fromSecret(secret1));
+  }
+
+  @Test public void getBatchSanitizedSecretsMultiple() {
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret2.getId(), group1.getId());
+
+    List<SanitizedSecret> secrets = aclDAO.getBatchSanitizedSecretsFor(client1, List.of(secret1.getName(), secret2.getName()));
+    assertThat(secrets).hasSize(2);
+    assertThat(secrets).contains(SanitizedSecret.fromSecret(secret1));
+    assertThat(secrets).contains(SanitizedSecret.fromSecret(secret2));
+  }
 }
