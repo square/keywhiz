@@ -18,12 +18,6 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.time.OffsetDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretSeries;
@@ -32,6 +26,13 @@ import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import javax.inject.Inject;
+import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -263,4 +264,87 @@ public class SecretSeriesDAOTest {
   private int tableSize() {
     return jooqContext.fetchCount(SECRETS);
   }
+
+  @Test public void getMultipleSecretSeriesByNameReturnsOne() {
+    int before = tableSize();
+    long now = OffsetDateTime.now().toEpochSecond();
+    ApiDate nowDate = new ApiDate(now);
+
+    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
+            ImmutableMap.of("foo", "bar"), now);
+    long contentId = secretContentDAO.createSecretContent(id, "blah",
+            "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
+
+    List<SecretSeries> expected =
+            List.of(SecretSeries.of(id, "newSecretSeries", "desc", nowDate, "creator", nowDate,
+                    "creator", null, ImmutableMap.of("foo", "bar"), contentId));
+
+    assertThat(tableSize()).isEqualTo(before + 1);
+
+
+    List<SecretSeries> actual = secretSeriesDAO.getMultipleSecretSeriesByName(List.of("newSecretSeries"));
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test public void getMultipleSecretSeriesByNameDuplicatesReturnsOne() {
+    int before = tableSize();
+    long now = OffsetDateTime.now().toEpochSecond();
+    ApiDate nowDate = new ApiDate(now);
+
+    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
+            ImmutableMap.of("foo", "bar"), now);
+    long contentId = secretContentDAO.createSecretContent(id, "blah",
+            "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
+
+    List<SecretSeries> expected =
+            List.of(SecretSeries.of(id, "newSecretSeries", "desc", nowDate, "creator", nowDate,
+                    "creator", null, ImmutableMap.of("foo", "bar"), contentId));
+
+    assertThat(tableSize()).isEqualTo(before + 1);
+
+
+    // Requesting same secret multiple times - should yield one result
+    List<SecretSeries> actual = secretSeriesDAO.getMultipleSecretSeriesByName(List.of("newSecretSeries", "newSecretSeries", "newSecretSeries"));
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test
+  public void getNonExistentMultipleSecretSeriesByName() {
+    assertThat(secretSeriesDAO.getMultipleSecretSeriesByName(List.of("non-existent"))).isEmpty();
+  }
+
+  @Test
+  public void getMultipleSecretSeriesByName() {
+    int before = tableSize();
+    long now = OffsetDateTime.now().toEpochSecond();
+    ApiDate nowDate = new ApiDate(now);
+
+    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
+            ImmutableMap.of("foo", "bar"), now);
+    long contentId = secretContentDAO.createSecretContent(id, "blah",
+            "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
+
+    long id2 = secretSeriesDAO.createSecretSeries("newSecretSeries2", "creator", "desc", null,
+            ImmutableMap.of("f00", "b4r"), now);
+    long contentId2 = secretContentDAO.createSecretContent(id2, "blah",
+            "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(id2, contentId2, "creator", now);
+
+    assertThat(tableSize()).isEqualTo(before + 2);
+
+    SecretSeries expected1 = SecretSeries.of(id, "newSecretSeries", "desc", nowDate, "creator", nowDate,
+            "creator", null, ImmutableMap.of("foo", "bar"), contentId);
+    SecretSeries expected2 = SecretSeries.of(id2, "newSecretSeries2", "desc", nowDate, "creator", nowDate,
+            "creator", null, ImmutableMap.of("f00", "b4r"), contentId2);
+
+    List<SecretSeries> actual = secretSeriesDAO.getMultipleSecretSeriesByName(List.of("newSecretSeries", "newSecretSeries2"));
+
+    assertThat(actual).contains(expected1);
+    assertThat(actual).contains(expected2);
+
+  }
 }
+
