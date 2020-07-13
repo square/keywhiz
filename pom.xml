@@ -44,7 +44,7 @@
     <jackson.version>2.11.1</jackson.version>
     <jackson.databind.version>2.10.0.pr1</jackson.databind.version>
     <jooq.version>3.13.2</jooq.version>
-    <powermock.version>1.7.4</powermock.version>
+    <powermock.version>2.0.2</powermock.version>
     <slf4j.version>1.7.30</slf4j.version>
     <mysql.version>8.0.21</mysql.version>
     <logback.version>1.2.3</logback.version>

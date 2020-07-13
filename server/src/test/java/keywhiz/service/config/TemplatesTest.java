@@ -23,11 +23,20 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.easymock.EasyMock.expect;
+import static org.powermock.api.easymock.PowerMock.mockStatic;
+import static org.powermock.api.easymock.PowerMock.replayAll;
+import static org.powermock.api.easymock.PowerMock.verifyAll;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(Templates.class)
 public class TemplatesTest {
   @Rule public TemporaryFolder tempDir = new TemporaryFolder();
 
@@ -58,5 +67,27 @@ public class TemplatesTest {
 
   @Test public void evaluatesHostNameTemplateHandlesNormalStrings() {
     assertThat(Templates.evaluateHostName("boring")).isEqualTo("boring");
+  }
+
+  @Test public void evaluatesCustomPortTemplateHandlesCustomPortsWithVarSet() {
+    mockStatic(System.class);
+    expect(System.getenv(Templates.CUSTOM_MYSQL_PORT_ENV_VARIABLE)).andReturn("5555");
+    replayAll();
+    String output = Templates.evaluateCustomMysqlPort("(host=localhost)(%custom_mysql_port%)");
+    verifyAll();
+    assertThat(output).isEqualTo("(host=localhost)(port=5555)");
+  }
+
+  @Test public void evaluatesCustomPortTemplateHandlesCustomPortsWithoutVarSet() {
+    mockStatic(System.class);
+    expect(System.getenv(Templates.CUSTOM_MYSQL_PORT_ENV_VARIABLE)).andReturn(null);
+    replayAll();
+    String output = Templates.evaluateCustomMysqlPort("(host=localhost)(%custom_mysql_port%)");
+    verifyAll();
+    assertThat(output).isEqualTo("(host=localhost)()");
+  }
+
+  @Test public void evaluatesCustomPortTemplateHandlesNormalStrings() {
+    assertThat(Templates.evaluateCustomMysqlPort("boring")).isEqualTo("boring");
   }
 }
