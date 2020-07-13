@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -11,10 +13,47 @@
   <artifactId>keywhiz-model</artifactId>
   <name>Keywhiz Model</name>
 
+  <profiles>
+    <profile>
+      <id>
+        no-custom-mysql-port
+      </id>
+      <activation>
+        <property>
+          <name>!env.KEYWHIZ_CUSTOM_MYSQL_PORT</name>
+        </property>
+      </activation>
+      <properties>
+        <db.create-url>
+          jdbc:mysql://(host=localhost,useUnicode=true,characterEncoding=utf8)
+        </db.create-url>
+        <db.migrate-url>
+          jdbc:mysql://(host=localhost,useUnicode=true,characterEncoding=utf8)/keywhizdb_test
+        </db.migrate-url>
+      </properties>
+    </profile>
+    <profile>
+      <id>
+        custom-mysql-port
+      </id>
+      <activation>
+        <property>
+          <name>env.KEYWHIZ_CUSTOM_MYSQL_PORT</name>
+        </property>
+      </activation>
+      <properties>
+        <db.create-url>
+          jdbc:mysql://(host=localhost,port=${env.KEYWHIZ_CUSTOM_MYSQL_PORT},useUnicode=true,characterEncoding=utf8)
+        </db.create-url>
+        <db.migrate-url>
+          jdbc:mysql://(host=localhost,port=${env.KEYWHIZ_CUSTOM_MYSQL_PORT},useUnicode=true,characterEncoding=utf8)/keywhizdb_test
+        </db.migrate-url>
+      </properties>
+    </profile>
+  </profiles>
+
   <properties>
     <db.driver>com.mysql.cj.jdbc.Driver</db.driver>
-    <db.create-url>jdbc:mysql://localhost/?useUnicode=true&amp;characterEncoding=utf8</db.create-url>
-    <db.migrate-url>jdbc:mysql://localhost/keywhizdb_test?useUnicode=true&amp;characterEncoding=utf8</db.migrate-url>
     <db.username>root</db.username>
     <db.migrations-path>mysql/migration</db.migrations-path>
     <db.schema-table>schema_version</db.schema-table>

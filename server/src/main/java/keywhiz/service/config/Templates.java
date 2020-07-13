@@ -17,36 +17,43 @@
 package keywhiz.service.config;
 
 import com.google.common.base.Throwables;
-import com.google.common.io.Files;
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class Templates {
   private static final Logger logger = LoggerFactory.getLogger(Templates.class);
   private static final String HOSTNAME_PLACEHOLDER = "%hostname%";
+  private static final String CUSTOM_MYSQL_PORT_PLACEHOLDER = "%custom_mysql_port%";
+  protected static final String CUSTOM_MYSQL_PORT_ENV_VARIABLE = "KEYWHIZ_CUSTOM_MYSQL_PORT";
   private static final String EXTERNAL_PREFIX = "external:";
 
   /**
    * Evaluates an optionally templated string.
-   *
-   * If the template contains <code>%hostname%</code> the value is replaced by the current hostname of
-   * the system.
-   *
-   * If the template begins with <code>external:</code> the rest of the string is treated as a filename
-   * to load and use as the return value.
-   *
+   * <p>
+   * If the template contains <code>%hostname%</code> the value is replaced by the current hostname
+   * of the system.
+   * <p>
+   * If the template contains <code>%custom_mysql_port%</code> the value is replaced by the value of
+   * the KEYWHIZ_CUSTOM_MYSQL_PORT environment variable.
+   * <p>
+   * If the template begins with <code>external:</code> the rest of the string is treated as a
+   * filename to load and use as the return value.
+   * <p>
    * For example, you may have a password you want to load at runtime from the filesystem,
    * <code>/tmp/foo1.example.com.txt</code>, which contains the string <code>bar</code> and the
    * current hostname is foo1.example.com. An input string with the external prefix and hostname
    * template, such as <code>external:/tmp/%hostname%.txt</code> and this will be converted to
    * <code>bar</code>.
-   *
+   * <p>
    * If the input is just a normal string, the original value is returned.
    *
    * @param template the templated string
@@ -54,7 +61,9 @@ public class Templates {
    * @throws IOException on error when using filesystem
    */
   public static String evaluateTemplate(String template) throws IOException {
-    return Templates.evaluateExternal(Templates.evaluateHostName(template));
+    String hostReplaced = Templates.evaluateHostName(template);
+    String hostAndPortReplaced = Templates.evaluateCustomMysqlPort(hostReplaced);
+    return Templates.evaluateExternal(hostAndPortReplaced);
   }
 
   /**
@@ -67,10 +76,10 @@ public class Templates {
    */
   public static String evaluateExternal(String template) throws IOException {
     if (template.startsWith(EXTERNAL_PREFIX)) {
-      File file = new File(template.substring(EXTERNAL_PREFIX.length()));
-      logger.info("Reading configuration value from file {}", file.getPath());
+      Path path = Path.of(template.substring(EXTERNAL_PREFIX.length()));
+      logger.info("Reading configuration value from file {}", path);
       try {
-        return Files.toString(file, UTF_8).trim();
+        return Files.readString(path, UTF_8).trim();
       } catch (IOException exception) {
         logger.error("Error reading configuration value '{}':{}",
             template, exception);
@@ -96,6 +105,27 @@ public class Templates {
         throw Throwables.propagate(e);
       }
       return template.replaceFirst(HOSTNAME_PLACEHOLDER, hostname);
+    }
+    return template;
+  }
+
+  /**
+   * Replaces a single occurrence of <code>%custom_mysql_port%</code> template with "port=" followed
+   * by the current value of the KEYWHIZ_CUSTOM_MYSQL_PORT environment variable. This can be used to
+   * customize the MySQL port in a JDBC URL as described in https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-jdbc-url-format.html#connector-j-url-single-host-without-props.
+   *
+   * @param template string which may optionally contain '%custom_mysql_port%' template.
+   * @return string with '%custom_mysql_port%' replaced with the current value of the
+   * KEYWHIZ_CUSTOM_MYSQL_PORT environment variable, otherwise unchanged input.
+   */
+  public static String evaluateCustomMysqlPort(String template) {
+    if (template.contains(CUSTOM_MYSQL_PORT_PLACEHOLDER)) {
+      String customPort = System.getenv(CUSTOM_MYSQL_PORT_ENV_VARIABLE);
+      if (!isNullOrEmpty(customPort)) {
+        return template.replaceFirst(CUSTOM_MYSQL_PORT_PLACEHOLDER, format("port=%s", customPort));
+      } else {
+        return template.replaceFirst(CUSTOM_MYSQL_PORT_PLACEHOLDER, "");
+      }
     }
     return template;
   }
