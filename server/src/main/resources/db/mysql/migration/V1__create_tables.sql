@@ -8,9 +8,10 @@ CREATE TABLE secrets (
   updatedby varchar(255),
   type varchar(20),
   options varchar(255) NOT NULL DEFAULT '{}',
-  PRIMARY KEY (id),
-  UNIQUE (name)
+  PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE UNIQUE INDEX name_idx ON secrets(name);
 
 CREATE TABLE groups (
   id bigint NOT NULL AUTO_INCREMENT,
@@ -66,9 +67,10 @@ CREATE TABLE secrets_content (
   updatedby varchar(255),
   encrypted_content longtext NOT NULL,
   metadata text NOT NULL,
-  PRIMARY KEY (id),
-  UNIQUE (secretid, version)
+  PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE UNIQUE INDEX name_version_idx ON secrets_content(secretid, version);
 
 CREATE TABLE users (
   username varchar(255) NOT NULL,

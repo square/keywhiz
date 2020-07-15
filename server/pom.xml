@@ -1,5 +1,7 @@
 <!-- Copyright 2011 Square, Inc. -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -201,7 +203,57 @@
       <artifactId>httpcore</artifactId>
       <version>4.4.13</version>
     </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+    </dependency>
   </dependencies>
+
+  <profiles>
+    <profile>
+      <id>
+        no-custom-mysql-port
+      </id>
+      <activation>
+        <property>
+          <name>!env.KEYWHIZ_CUSTOM_MYSQL_PORT</name>
+        </property>
+      </activation>
+      <properties>
+        <db.create-url>
+          jdbc:mysql://(host=localhost,useUnicode=true,characterEncoding=utf8)
+        </db.create-url>
+        <db.migrate-url>
+          jdbc:mysql://(host=localhost,useUnicode=true,characterEncoding=utf8)/keywhizdb_test
+        </db.migrate-url>
+      </properties>
+    </profile>
+    <profile>
+      <id>
+        custom-mysql-port
+      </id>
+      <activation>
+        <property>
+          <name>env.KEYWHIZ_CUSTOM_MYSQL_PORT</name>
+        </property>
+      </activation>
+      <properties>
+        <db.create-url>
+          jdbc:mysql://(host=localhost,port=${env.KEYWHIZ_CUSTOM_MYSQL_PORT},useUnicode=true,characterEncoding=utf8)
+        </db.create-url>
+        <db.migrate-url>
+          jdbc:mysql://(host=localhost,port=${env.KEYWHIZ_CUSTOM_MYSQL_PORT},useUnicode=true,characterEncoding=utf8)/keywhizdb_test
+        </db.migrate-url>
+      </properties>
+    </profile>
+  </profiles>
+
+  <properties>
+    <db.driver>com.mysql.cj.jdbc.Driver</db.driver>
+    <db.username>root</db.username>
+    <db.migrations-path>mysql/migration</db.migrations-path>
+    <db.schema-table>schema_version</db.schema-table>
+  </properties>
 
   <build>
     <plugins>
@@ -216,8 +268,10 @@
             </goals>
             <configuration>
               <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <transformer
+                    implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer
+                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <manifestEntries>
                     <Class-Path>lib-signed/bcprov-jdk15on.jar</Class-Path>
                     <Main-Class>keywhiz.KeywhizService</Main-Class>
@@ -228,6 +282,58 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <!-- Creates (or re-creates) a keywhizdb_test database. -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>sql-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+          </execution>
+        </executions>
+
+        <configuration>
+          <!-- Used only in tests-->
+          <skip>${maven.test.skip}</skip>
+          <driver>${db.driver}</driver>
+          <url>${db.create-url}</url>
+          <username>${db.username}</username>
+          <autocommit>true</autocommit>
+          <sqlCommand>
+            DROP DATABASE IF EXISTS keywhizdb_test;
+            CREATE DATABASE keywhizdb_test;
+          </sqlCommand>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-maven-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>migrate</goal>
+            </goals>
+          </execution>
+        </executions>
+
+        <configuration>
+          <!-- Used only in tests-->
+          <skip>${maven.test.skip}</skip>
+          <driver>${db.driver}</driver>
+          <url>${db.migrate-url}</url>
+          <user>${db.username}</user>
+          <table>${db.schema-table}</table>
+          <locations>
+            <location>filesystem:../server/src/main/resources/db/${db.migrations-path}</location>
+          </locations>
+        </configuration>
       </plugin>
     </plugins>
   </build>

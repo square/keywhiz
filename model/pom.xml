@@ -13,53 +13,10 @@
   <artifactId>keywhiz-model</artifactId>
   <name>Keywhiz Model</name>
 
-  <profiles>
-    <profile>
-      <id>
-        no-custom-mysql-port
-      </id>
-      <activation>
-        <property>
-          <name>!env.KEYWHIZ_CUSTOM_MYSQL_PORT</name>
-        </property>
-      </activation>
-      <properties>
-        <db.create-url>
-          jdbc:mysql://(host=localhost,useUnicode=true,characterEncoding=utf8)
-        </db.create-url>
-        <db.migrate-url>
-          jdbc:mysql://(host=localhost,useUnicode=true,characterEncoding=utf8)/keywhizdb_test
-        </db.migrate-url>
-      </properties>
-    </profile>
-    <profile>
-      <id>
-        custom-mysql-port
-      </id>
-      <activation>
-        <property>
-          <name>env.KEYWHIZ_CUSTOM_MYSQL_PORT</name>
-        </property>
-      </activation>
-      <properties>
-        <db.create-url>
-          jdbc:mysql://(host=localhost,port=${env.KEYWHIZ_CUSTOM_MYSQL_PORT},useUnicode=true,characterEncoding=utf8)
-        </db.create-url>
-        <db.migrate-url>
-          jdbc:mysql://(host=localhost,port=${env.KEYWHIZ_CUSTOM_MYSQL_PORT},useUnicode=true,characterEncoding=utf8)/keywhizdb_test
-        </db.migrate-url>
-      </properties>
-    </profile>
-  </profiles>
-
   <properties>
-    <db.driver>com.mysql.cj.jdbc.Driver</db.driver>
-    <db.username>root</db.username>
     <db.migrations-path>mysql/migration</db.migrations-path>
-    <db.schema-table>schema_version</db.schema-table>
-    <jooq.dialect>org.jooq.meta.mysql.MySQLDatabase</jooq.dialect>
+    <jooq.dialect>org.jooq.meta.extensions.ddl.DDLDatabase</jooq.dialect>
     <jooq.excludes>mysql.*</jooq.excludes>
-    <jooq.input-schema>keywhizdb_test</jooq.input-schema>
   </properties>
 
   <dependencies>
@@ -75,76 +32,14 @@
       <groupId>org.jooq</groupId>
       <artifactId>jooq-codegen</artifactId>
     </dependency>
-
     <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.xml.bind</groupId>
-      <artifactId>jaxb-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.jaxb</groupId>
-      <artifactId>jaxb-runtime</artifactId>
+      <groupId>org.jooq</groupId>
+      <artifactId>jooq-meta-extensions</artifactId>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
-      <!-- Creates (or re-creates) a keywhizdb_test database. -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>sql-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>initialize</phase>
-            <goals>
-              <goal>execute</goal>
-            </goals>
-          </execution>
-        </executions>
-
-        <configuration>
-          <driver>${db.driver}</driver>
-          <url>${db.create-url}</url>
-          <username>${db.username}</username>
-          <autocommit>true</autocommit>
-          <sqlCommand>
-            DROP DATABASE IF EXISTS keywhizdb_test;
-            CREATE DATABASE keywhizdb_test;
-          </sqlCommand>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.flywaydb</groupId>
-        <artifactId>flyway-maven-plugin</artifactId>
-
-        <executions>
-          <execution>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>migrate</goal>
-            </goals>
-          </execution>
-        </executions>
-
-        <configuration>
-          <driver>${db.driver}</driver>
-          <url>${db.migrate-url}</url>
-          <user>${db.username}</user>
-          <table>${db.schema-table}</table>
-          <locations>
-            <location>filesystem:../server/src/main/resources/db/${db.migrations-path}</location>
-          </locations>
-        </configuration>
-      </plugin>
-
       <plugin>
         <groupId>org.jooq</groupId>
         <artifactId>jooq-codegen-maven</artifactId>
@@ -160,12 +55,6 @@
         </executions>
 
         <configuration>
-          <jdbc>
-            <driver>${db.driver}</driver>
-            <url>${db.migrate-url}</url>
-            <user>${db.username}</user>
-          </jdbc>
-
           <!-- Generator parameters -->
           <generator>
             <name>org.jooq.codegen.JavaGenerator</name>
@@ -176,42 +65,21 @@
               <name>${jooq.dialect}</name>
               <includes>.*</includes>
               <excludes>${jooq.excludes}</excludes>
-              <inputSchema>${jooq.input-schema}</inputSchema>
-
-              <!-- Registers custom types -->
-              <customTypes>
-                <customType>
-                  <name>keywhiz.model.TimestampConverter</name>
-                  <type>Long</type>
-                  <converter>keywhiz.model.TimestampConverter</converter>
-                </customType>
-                <customType>
-                  <name>java.lang.Boolean</name>
-                  <converter>keywhiz.model.TinyIntConverter</converter>
-                </customType>
-                <customType>
-                  <name>java.lang.Long</name>
-                  <converter>keywhiz.model.LongConverter</converter>
-                </customType>
-              </customTypes>
-
-              <!-- Forces JOOQ to use custom types in generated code -->
-              <forcedTypes>
-                <forcedType>
-                  <name>keywhiz.model.TimestampConverter</name>
-                  <types>(?i:timestamp.*)</types>
-                </forcedType>
-                <forcedType>
-                  <name>java.lang.Boolean</name>
-                  <!-- mysql doesn't support booleans and uses tinyint instead. -->
-                  <types>(?i:tinyint.*)</types>
-                </forcedType>
-                <forcedType>
-                  <name>java.lang.Long</name>
-                  <!-- We ran into some postgres + bigint + autoincrement issues -->
-                  <types>(?i:int.*)</types>
-                </forcedType>
-              </forcedTypes>
+              <properties>
+                <property>
+                  <key>scripts</key>
+                  <value>../server/src/main/resources/db/${db.migrations-path}</value>
+                </property>
+                <property>
+                  <key>sort</key>
+                  <value>flyway</value>
+                </property>
+                <property>
+                  <!-- the migrations use lower-case for all tables and column names-->
+                  <key>defaultNameCase</key>
+                  <value>lower</value>
+                </property>
+              </properties>
             </database>
             <target>
               <packageName>keywhiz.jooq</packageName>

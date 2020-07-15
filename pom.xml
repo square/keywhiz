@@ -314,6 +314,11 @@
         <version>${jooq.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.jooq</groupId>
+        <artifactId>jooq-meta-extensions</artifactId>
+        <version>${jooq.version}</version>
+      </dependency>
+      <dependency>
         <groupId>de.svenkubiak</groupId>
         <artifactId>jBCrypt</artifactId>
         <version>0.4.1</version>
