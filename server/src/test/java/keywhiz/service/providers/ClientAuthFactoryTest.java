@@ -159,6 +159,7 @@ public class ClientAuthFactoryTest {
 
     when(clientAuthConfig.xfccConfigs()).thenReturn(List.of(xfccSourceConfig));
     when(clientAuthConfig.typeConfig()).thenReturn(clientAuthTypeConfig);
+    when(clientAuthConfig.createMissingClients()).thenReturn(false);
 
     when(xfccSourceConfig.port()).thenReturn(xfccAllowedPort);
     when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(xfccName));
