@@ -293,7 +293,7 @@ public class ClientAuthFactory {
    * @return whether to create a client that can't be found, if the client doesn't exist
    */
   protected boolean createMissingClient() {
-    return true;
+    return clientAuthConfig.createMissingClients();
   }
 
   private Client authenticateClientFromCertificate(Principal clientPrincipal) {

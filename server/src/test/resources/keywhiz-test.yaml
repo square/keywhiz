@@ -160,3 +160,4 @@ clientAuthConfig:
   type:
     useCommonName: true
     useSpiffeId: true
+  createMissingClients: true

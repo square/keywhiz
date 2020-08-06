@@ -28,13 +28,23 @@ import java.util.List;
 public abstract class ClientAuthConfig {
   @JsonCreator public static ClientAuthConfig of(
       @JsonProperty("xfcc") List<XfccSourceConfig> sourceConfigs,
-      @JsonProperty("type") ClientAuthTypeConfig typeConfig) {
-    return new AutoValue_ClientAuthConfig(sourceConfigs, typeConfig);
+      @JsonProperty("type") ClientAuthTypeConfig typeConfig,
+      @JsonProperty("createMissingClients") boolean createMissingClients) {
+    return new AutoValue_ClientAuthConfig(sourceConfigs, typeConfig, createMissingClients);
   }
 
-  /** connection sources that can set x-forwarded-client-cert headers */
+  /**
+   * connection sources that can set x-forwarded-client-cert headers
+   */
   public abstract List<XfccSourceConfig> xfccConfigs();
 
-  /** what identifier(s) to use for clients */
+  /**
+   * what identifier(s) to use for clients
+   */
   public abstract ClientAuthTypeConfig typeConfig();
+
+  /**
+   * whether to create missing (non-automation) clients when a new certificate is presented
+   */
+  public abstract boolean createMissingClients();
 }
