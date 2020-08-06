@@ -43,45 +43,61 @@
 # Note that for a production deployment, you'll probably want to setup
 # your own config to make sure you're not using development secrets.
 #
-FROM maven:3.6-jdk-11
+FROM alpine:3.12 AS permissions-giver
+WORKDIR /out
+COPY docker/*.sh .
 
+# Make sure these files are executable, regardless of the build host
+RUN chmod +x *.sh
+
+FROM alpine:3.12 AS organizer
+WORKDIR /out/before-dep
+COPY *.xml .
+COPY api/pom.xml api/
+COPY cli/pom.xml cli/
+COPY client/pom.xml client/
+COPY hkdf/pom.xml hkdf/
+COPY model/pom.xml model/
+COPY server/pom.xml server/
+COPY testing/pom.xml testing/
+COPY log/pom.xml log/
+
+WORKDIR /out/after-dep-before-install
+COPY api api/
+COPY cli cli/
+COPY client client/
+COPY hkdf hkdf/
+COPY model model/
+COPY server server/
+COPY testing testing/
+COPY log log/
+
+WORKDIR /out/after-install
+COPY --from=permissions-giver /out .
+COPY docker/keywhiz-config.tpl .
+
+FROM maven:3.6-jdk-11 AS runner
+
+# Drop privs inside container
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends --no-upgrade \
-      gettext vim-common && \
-    mkdir -p /usr/src/app
+  apt-get install -y --no-install-recommends --no-upgrade \
+  gettext vim-common && \
+  useradd -ms /bin/false keywhiz && \
+  mkdir /data && \
+  chown keywhiz:keywhiz /data && \
+  mkdir /secrets && \
+  chown keywhiz:keywhiz /secrets
 WORKDIR /usr/src/app
 
 # caching trick to speed up build; see:
 # https://keyholesoftware.com/2015/01/05/caching-for-maven-docker-builds
 # this should allow non-dynamic dependencies to be cached
-COPY *.xml /usr/src/app/
-COPY api/pom.xml /usr/src/app/api/
-COPY cli/pom.xml /usr/src/app/cli/
-COPY client/pom.xml /usr/src/app/client/
-COPY hkdf/pom.xml /usr/src/app/hkdf/
-COPY model/pom.xml /usr/src/app/model/
-COPY server/pom.xml /usr/src/app/server/
-COPY testing/pom.xml /usr/src/app/testing/
-COPY log/pom.xml /usr/src/app/log/
+COPY --from=organizer /out/before-dep .
 RUN mvn dependency:copy-dependencies --fail-never
 
 # copy source required for build and install
-COPY api /usr/src/app/api/
-COPY cli /usr/src/app/cli/
-COPY client /usr/src/app/client/
-COPY hkdf /usr/src/app/hkdf/
-COPY model /usr/src/app/model/
-COPY server /usr/src/app/server/
-COPY testing /usr/src/app/testing/
-COPY log /usr/src/app/log/
-RUN mvn install
-
-# Drop privs inside container
-RUN useradd -ms /bin/false keywhiz && \
-    mkdir /data && \
-    chown keywhiz:keywhiz /data && \
-    mkdir /secrets && \
-    chown keywhiz:keywhiz /secrets
+COPY --from=organizer /out/after-dep-before-install .
+RUN mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V -q
 
 USER keywhiz
 
@@ -91,8 +107,6 @@ EXPOSE 4444
 
 VOLUME ["/data", "/secrets"]
 
-COPY docker/entry.sh /usr/src/app
-COPY docker/wizard.sh /usr/src/app
-COPY docker/keywhiz-config.tpl /usr/src/app
+COPY --from=organizer /out/after-install .
 
 ENTRYPOINT ["/usr/src/app/entry.sh"]
