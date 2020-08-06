@@ -45,14 +45,14 @@
 #
 FROM alpine:3.12 AS permissions-giver
 WORKDIR /out
-COPY docker/*.sh .
+COPY docker/*.sh ./
 
 # Make sure these files are executable, regardless of the build host
 RUN chmod +x *.sh
 
 FROM alpine:3.12 AS organizer
 WORKDIR /out/before-dep
-COPY *.xml .
+COPY *.xml ./
 COPY api/pom.xml api/
 COPY cli/pom.xml cli/
 COPY client/pom.xml client/
