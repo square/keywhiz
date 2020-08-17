@@ -79,7 +79,7 @@ import keywhiz.api.validation.ValidBase64;
         .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
         .expiry(expiry)
         .type(Strings.nullToEmpty(type))
-        .groups(groups == null ? ImmutableSet.of() : groups)
+        .groups(groups == null ? ImmutableSet.of() : ImmutableSet.copyOf(groups))
         .build();
   }
 

@@ -43,7 +43,7 @@ import static com.google.common.base.Strings.nullToEmpty;
     return builder()
         .name(name)
         .description(nullToEmpty(description))
-        .metadata(ImmutableMap.copyOf(metadata == null ? ImmutableMap.of() : metadata))
+        .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
         .build();
   }
 

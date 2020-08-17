@@ -51,12 +51,12 @@ import static com.google.common.base.Strings.nullToEmpty;
   @SuppressWarnings("unused")
   @JsonCreator public static CreateClientRequestV2 fromParts(
       @JsonProperty("name") String name,
-      @JsonProperty("groups") Iterable<String> groups,
+      @JsonProperty("groups") @Nullable Iterable<String> groups,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("spiffeId") @Nullable String spiffeId) {
     return builder()
         .name(name)
-        .groups(ImmutableSet.copyOf(groups))
+        .groups(groups == null ? ImmutableSet.of() : ImmutableSet.copyOf(groups))
         .description(nullToEmpty(description))
         .spiffeId(nullToEmpty(spiffeId))
         .build();

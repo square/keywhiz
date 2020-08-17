@@ -73,7 +73,7 @@ import keywhiz.api.model.Group;
         .updatedBy(updatedBy)
         .secrets(secrets)
         .clients(clients)
-        .metadata(ImmutableMap.copyOf(metadata == null ? ImmutableMap.of() : metadata))
+        .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
         .build();
   }
 
