@@ -58,6 +58,9 @@ public class UpdateAction implements Runnable {
     byte[] content = {};
     if (config.contentProvided) {
       content = readSecretContent();
+      if (content.length == 0) {
+        throw new IllegalArgumentException("Secret content must be provided if --content flag is present; check inputs");
+      }
     }
     partialUpdateSecret(secretName, content, config);
 
