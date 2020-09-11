@@ -138,6 +138,7 @@ public class SecretDAO {
   public long createOrUpdateSecret(String name, String encryptedSecret, String hmac, String creator,
       Map<String, String> metadata, long expiry, String description, @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
+    // SecretController should have already checked that the contents are not empty
     return dslContext.transactionResult(configuration -> {
       long now = OffsetDateTime.now().toEpochSecond();
 
@@ -193,6 +194,8 @@ public class SecretDAO {
       String hmac = secretContent.hmac();
       // Mirrors hmac-creation in SecretController
       if (request.contentPresent()) {
+        checkArgument(!request.content().isEmpty());
+
         hmac = cryptographer.computeHmac(
             request.content().getBytes(UTF_8), "hmackey"); // Compute HMAC on base64 encoded data
         if (hmac == null) {

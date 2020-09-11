@@ -136,11 +136,19 @@ public class UpdateActionTest {
     updateAction.run();
   }
 
-
   @Test(expected = IllegalArgumentException.class)
-  public void updateValidatesSecretName() throws Exception {
+  public void updateValidatesSecretName() {
     updateActionConfig.name = "Invalid Name";
 
+    updateAction.run();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void updateThrowsIfNoContentInput() {
+    updateActionConfig.name = secret.getDisplayName();
+    updateActionConfig.contentProvided = true;
+
+    updateAction.stream = new ByteArrayInputStream(new byte[]{});
     updateAction.run();
   }
 }
