@@ -1,0 +1,1 @@
+CREATE INDEX createdat_idx ON secrets_content (createdat);
