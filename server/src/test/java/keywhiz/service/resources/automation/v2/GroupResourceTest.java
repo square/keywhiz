@@ -7,6 +7,7 @@ import io.dropwizard.jackson.Jackson;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Set;
+import java.util.stream.Collectors;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
@@ -14,8 +15,11 @@ import keywhiz.api.automation.v2.CreateClientRequestV2;
 import keywhiz.api.automation.v2.CreateGroupRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.GroupDetailResponseV2;
+import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.model.Client;
+import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
+import keywhiz.api.model.SanitizedSecretWithGroups;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -25,6 +29,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static keywhiz.TestClients.clientRequest;
 import static keywhiz.client.KeywhizClient.JSON;
@@ -86,17 +91,40 @@ public class GroupResourceTest {
     assertThat(groupDetail.description()).isEqualTo("desc");
   }
 
-  @Test public void secretDetailForGroup() throws Exception {
+  @Test public void secretsForGroup() throws Exception {
     // Sample group
     create(CreateGroupRequestV2.builder().name("groupWithSecrets").description("desc").build());
 
-    // Sample client
+    // Sample secret
     createSecret("groupWithSecrets", "test-secret");
 
     Set<SanitizedSecret> secrets = secretsInfo("groupWithSecrets");
 
     assertThat(secrets).hasSize(1);
     assertThat(secrets.iterator().next().name()).isEqualTo("test-secret");
+  }
+
+  @Test public void secretsWithGroupsForGroup() throws Exception {
+    // Sample group
+    create(CreateGroupRequestV2.builder().name("groupWithSharedSecrets").description("desc").build());
+    create(CreateGroupRequestV2.builder().name("secondGroup").description("desc").build());
+
+    // Sample secret
+    createSecret("groupWithSharedSecrets", "shared-secret");
+    assignSecret("secondGroup", "shared-secret");
+
+    Set<SanitizedSecretWithGroups> secrets = secretsInfoWithGroups("groupWithSharedSecrets");
+
+    assertThat(secrets).hasSize(1);
+    SanitizedSecretWithGroups secretWithGroups = secrets.iterator().next();
+    assertThat(secretWithGroups.secret().name()).isEqualTo("shared-secret");
+    Set<String> groupNames = secretWithGroups.groups()
+        .stream()
+        .map(Group::getName)
+        .collect(Collectors.toUnmodifiableSet());
+    assertThat(groupNames).hasSize(2);
+    assertThat(groupNames.contains("groupWithSharedSecrets"));
+    assertThat(groupNames.contains("secondGroup"));
   }
 
   @Test public void clientDetailForGroup() throws Exception {
@@ -153,6 +181,13 @@ public class GroupResourceTest {
     return response;
   }
 
+  private void assignSecret(String group, String secret) throws IOException {
+    SecretResourceTest secretResourceTest = new SecretResourceTest();
+    secretResourceTest.mutualSslClient = mutualSslClient;
+    secretResourceTest.modifyGroups(secret,
+        ModifyGroupsRequestV2.builder().addGroups(group).build());
+  }
+
   Response create(CreateGroupRequestV2 request) throws IOException {
     RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
     Request post = clientRequest("/automation/v2/groups").post(body).build();
@@ -171,6 +206,13 @@ public class GroupResourceTest {
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
     return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<Set<SanitizedSecret>>(){});
+  }
+
+  Set<SanitizedSecretWithGroups> secretsInfoWithGroups(String group) throws IOException {
+    Request get = clientRequest("/automation/v2/groups/" + group + "/secretsandgroups").get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<Set<SanitizedSecretWithGroups>>(){});
   }
 
   Set<Client> clientsInfo(String group) throws IOException {
