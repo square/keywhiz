@@ -63,6 +63,7 @@ public class SessionLogoutResourceIntegrationTest {
     assertThat(cookie.getPath()).isEqualTo("/admin");
     assertThat(cookie.isSecure()).isTrue();
     assertThat(cookie.isHttpOnly()).isTrue();
+    assertThat(cookie.getMaxAge()).isEqualTo(0);
     assertThat(cookie.getExpiry()).isEqualTo(new Date(0));
   }
 }
