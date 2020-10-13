@@ -37,7 +37,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <autovalue.version>1.7.4</autovalue.version>
-    <dropwizard.version>1.3.24</dropwizard.version>
+    <dropwizard.version>1.3.25</dropwizard.version>
     <!-- 1.2.0-1 is the last version of dropwizard-raven JAR. The development continues under dropwizard-sentry -->
     <dropwizard-raven.version>1.2.0-1</dropwizard-raven.version>
     <guice.version>4.2.3</guice.version>

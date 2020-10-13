@@ -22,15 +22,11 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Base64;
+import java.util.Date;
 import javax.crypto.AEADBadTagException;
 import javax.inject.Inject;
 import javax.ws.rs.core.NewCookie;
 import keywhiz.auth.User;
-import org.eclipse.jetty.http.HttpCookie;
-import org.eclipse.jetty.http.HttpHeader;
-import org.eclipse.jetty.server.HttpChannel;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,13 +88,18 @@ public class AuthenticatedEncryptedCookieFactory {
    */
   public NewCookie cookieFor(String value, ZonedDateTime expiration) {
     long maxAge = Duration.between(ZonedDateTime.now(clock), expiration).getSeconds();
+    Date expirationDate = Date.from(expiration.toInstant());
 
-    HttpCookie cookie = new HttpCookie(config.getName(), value, config.getDomain(),
-        config.getPath(), maxAge, config.isHttpOnly(), config.isSecure());
+    // If the cookie is already expired, set it to have no lifespan (maxAge = 0) and
+    // an expiration in the distant past. This is particularly important because a maxAge
+    // value of -1 would mark that the cookie expired at the end of the current session.
+    if (maxAge <= 0) {
+      maxAge = 0;
+      expirationDate = new Date(0);
+    }
 
-    Response response = newResponse();
-    response.addCookie(cookie);
-    return NewCookie.valueOf(response.getHttpFields().get(HttpHeader.SET_COOKIE));
+    return new NewCookie(config.getName(), value, config.getPath(), config.getDomain(), 1, "",
+        (int) maxAge, expirationDate, config.isSecure(), config.isHttpOnly());
   }
 
   /**
@@ -118,15 +119,7 @@ public class AuthenticatedEncryptedCookieFactory {
    * @return serialized expired cookie with matching parameters to authenticating cookie.
    */
   public NewCookie getExpiredSessionCookie() {
-    HttpCookie cookie = new HttpCookie(config.getName(), "expired", config.getDomain(), config.getPath(),
-        0, config.isHttpOnly(), config.isSecure());
-
-    Response response = newResponse();
-    response.addCookie(cookie);
-    return NewCookie.valueOf(response.getHttpFields().get(HttpHeader.SET_COOKIE));
-  }
-
-  private Response newResponse() {
-    return new Response(new HttpChannel(null, new HttpConfiguration(), null, null), null);
+    return new NewCookie(config.getName(), "expired", config.getPath(), config.getDomain(), 1, "",
+        0, new Date(0), config.isSecure(), config.isHttpOnly());
   }
 }
