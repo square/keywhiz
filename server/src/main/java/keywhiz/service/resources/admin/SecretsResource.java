@@ -36,6 +36,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -52,6 +53,8 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretSeries;
+import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.auth.User;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
@@ -483,6 +486,135 @@ public class SecretsResource {
     extraInfo.put("current version", secret.get().getVersion().toString());
     auditLog.recordEvent(
         new Event(Instant.now(), EventTag.SECRET_DELETE, user.getName(), secret.get().getName(),
+            extraInfo));
+    return Response.noContent().build();
+  }
+
+  /**
+   * Finds all deleted secrets that have the queried name, which will be queried as "." + name + ".%"
+   *
+   * @param user        the admin user performing this operation
+   * @param name        Secret series deleted name
+   * @return a list of deleted secrets that have the name
+   * <p>
+   * responseMessage 200 Secret series information retrieved
+   * <p>
+   * responseMessage 404 Secret series not found
+   */
+  @Timed @ExceptionMetered
+  @GET
+  @Path("deleted/{name}")
+  @Produces(APPLICATION_JSON)
+  public List<SecretSeries> findDeletedSecretsByName(@Auth User user,
+      @PathParam("name") String name) {
+
+    logger.info("User '{}' finding deleted secrets with name '{}'.", user, name);
+
+    return secretDAOReadOnly.getSecretsWithDeletedName(name);
+  }
+
+  /**
+   * Rename Secret by ID to the given name
+   *
+   * @param user     the admin user performing this operation
+   * @param secretId the ID of the Secret to be deleted
+   * @return 200 if secret deleted, 404 if not found
+   * <p>
+   * description Deletes a single Secret if found. Used by Keywhiz CLI and the web ui.
+   * <p>
+   * responseMessage 200 Found and deleted Secret with given ID
+   * <p>
+   * responseMessage 404 Secret with given ID not Found
+   */
+  @Path("rename/{secretId}/{secretName}")
+  @Timed @ExceptionMetered
+  @POST
+  public Response renameSecret(@Auth User user, @PathParam("secretId") LongParam secretId,
+      @PathParam("secretName") String secretName) {
+    Optional<Secret> secret = secretController.getSecretByName(secretName);
+    if (secret.isPresent()) {
+      logger.info("User '{}' tried renaming a secret, but another secret with that name "
+              + "already exists (name={})", user, secretId.get());
+      throw new NotAllowedException("That name is already taken by another secret"); //use different error
+    }
+
+    logger.info("User '{}' renamed secret id={} to name='{}'", user, secretId,
+        secretName);
+
+    secretDAOReadWrite.renameSecretById(secretId.get(), secretName);
+
+    // Record the rename
+    Map<String, String> extraInfo = new HashMap<>();
+    auditLog.recordEvent(
+        new Event(Instant.now(), EventTag.SECRET_RENAME, user.getName(), secretName,
+            extraInfo));
+    return Response.noContent().build();
+  }
+
+  /**
+   * Retrieve all Secrets Contents associated with the given Secret ID
+   *
+   * @param user     the admin user performing this operation
+   * @param secretId the ID of the Secret that will be associated with the secrets contents returned
+   * @return 200 if secret deleted, 404 if not found
+   * <p>
+   * description Returns a list of secrets contents for a given Secret ID.
+   * <p>
+   * responseMessage 200 Found and deleted Secret with given ID
+   * <p>
+   * responseMessage 404 Secret with given ID not Found
+   */
+  @Path("secretcontents/list/{secretId}")
+  @Timed @ExceptionMetered
+  @POST
+  public List<SecretSeriesAndContent> getSecretsContentsBySecretId(@Auth User user,
+      @PathParam("secretId") LongParam secretId, @QueryParam("idx") Integer idx,
+      @QueryParam("num") Integer num) {
+
+    ImmutableList<SecretSeriesAndContent> secretsContents =
+        secretDAOReadOnly.getDeletedSecretVersionsBySecretId(secretId.get(), idx, num)
+            .orElseThrow(NotFoundException::new);
+
+    logger.info("User '{}' retrieving secrets contents for secretId={} from idx={} for {} secrets contents.",
+        user, secretId, idx, num);
+
+    return secretsContents;
+  }
+
+  /**
+   * Update Secret content for the given secret (identified by secretId) to secretsContentId
+   *
+   * @param user     the admin user performing this operation
+   * @param secretId the ID of the Secret to be updated
+   * @param secretsContentId, the Secret content to be updated
+   * @return 200 if secret deleted, 404 if not found
+   * <p>
+   * description Updates a secret current for a given secret. Used by Keywhiz CLI and the web ui.
+   * <p>
+   * responseMessage 200 Found and deleted Secret with given ID
+   * <p>
+   * responseMessage 404 Secret with given ID not Found
+   */
+  @Path("secretcontents/update/{secretsContentId}/{secretId}")
+  @Timed @ExceptionMetered
+  @POST
+  public Response updateSecretsCurrent(@Auth User user, @PathParam("secretId") LongParam secretId,
+      @PathParam("secretsContentId") LongParam secretsContentId) {
+    Optional<Secret> secret = secretController.getSecretById(secretId.get());
+    if (!secret.isPresent()) {
+      logger.info("User '{}' tried updating current for a secret which was not found (id={})", user,
+          secretId.get());
+      throw new NotFoundException("Secret not found.");
+    }
+
+    logger.info("User '{}' updated current id={} for secret id={}", user, secretId);
+
+    secretDAOReadWrite.updateSecretsCurrent(secretId.get(), secretsContentId.get());
+
+    // Record the rename
+    Map<String, String> extraInfo = new HashMap<>();
+    auditLog.recordEvent(
+        new Event(Instant.now(), EventTag.SECRET_UPDATECURRENT, user.getName(), secret.get().getName(),
             extraInfo));
     return Response.noContent().build();
   }

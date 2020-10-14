@@ -52,7 +52,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * parentEndpointName secret
- * <p>
+ * <p>unless
  * resourceDescription Retrieve Batched Named Secrets
  */
 @Path("/batchsecret")

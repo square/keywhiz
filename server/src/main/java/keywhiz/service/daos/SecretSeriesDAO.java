@@ -181,10 +181,21 @@ public class SecretSeriesDAO {
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
+  public Optional<SecretSeries> getDeletedSecretSeriesById(long id) {
+    SecretsRecord r =
+        dslContext.fetchOne(SECRETS, SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNull()));
+    return Optional.ofNullable(r).map(secretSeriesMapper::map);
+  }
+
   public Optional<SecretSeries> getSecretSeriesByName(String name) {
     SecretsRecord r =
         dslContext.fetchOne(SECRETS, SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()));
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
+  }
+
+  public List<SecretSeries> getSecretSeriesByDeletedName(String name) {
+    String lookup = "." + name + ".%";
+    return dslContext.fetch(SECRETS, SECRETS.NAME.like(lookup).and(SECRETS.CURRENT.isNull())).map(secretSeriesMapper::map);
   }
 
   public List<SecretSeries> getMultipleSecretSeriesByName(List<String> names) {
@@ -304,6 +315,20 @@ public class SecretSeriesDAO {
             .execute();
       }
     });
+  }
+
+  public void renameSecretSeriesById(long secretId, String name) {
+    dslContext.update(SECRETS)
+        .set(SECRETS.NAME, name)
+        .where(SECRETS.ID.eq(secretId))
+        .execute();
+  }
+
+  public void updateSecretSeriesContentById(long secretId, long secretContentId) {
+    dslContext.update(SECRETS)
+        .set(SECRETS.CURRENT, secretContentId)
+        .where(SECRETS.ID.eq(secretId))
+        .execute();
   }
 
   /**

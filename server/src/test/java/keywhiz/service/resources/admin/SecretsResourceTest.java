@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -37,6 +38,9 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretContent;
+import keywhiz.api.model.SecretSeries;
+import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.auth.User;
 import keywhiz.log.AuditLog;
 import keywhiz.log.SimpleLogger;
@@ -78,6 +82,22 @@ public class SecretsResourceTest {
 
   Secret secret = new Secret(22, "name", "desc", () -> "secret", "checksum", NOW, "creator", NOW,
       "updater", emptyMap, null, null, 1136214245, 1L, NOW, "user");
+
+  SecretSeriesAndContent secretSeriesAndContent1 =
+      SecretSeriesAndContent.of(
+          SecretSeries.of(1, "name1", "desc", NOW,
+              "user", NOW, "user", null, emptyMap, null),
+          SecretContent.of(101, 1, "blah", "checksum",
+              NOW, "creator", NOW, "updater",
+              emptyMap, 0));
+
+  SecretSeriesAndContent secretSeriesAndContent2 =
+      SecretSeriesAndContent.of(
+          SecretSeries.of(1, "name2", "desc", NOW,
+              "user", NOW, "user", null, emptyMap, null),
+          SecretContent.of(110, 1, "blah", "checksum",
+              NOW, "creator", NOW, "updater",
+              emptyMap, 0));
 
   AuditLog auditLog = new SimpleLogger();
 
@@ -338,5 +358,59 @@ public class SecretsResourceTest {
   public void badNameNotFound() {
     when(secretController.getSecretByName("non-existent")).thenReturn(Optional.empty());
     resource.retrieveSecret(user, "non-existent");
+  }
+
+  @Test public void getSecretContentsBySecretId() {
+    when(secretDAO.getDeletedSecretVersionsBySecretId(1, 0, 10)).thenReturn(
+        Optional.of(ImmutableList.of(secretSeriesAndContent1, secretSeriesAndContent2)));
+
+    assertThat(resource.getSecretsContentsBySecretId(user, new LongParam(Long.toString(1)), 0, 10))
+        .containsExactlyInAnyOrder(secretSeriesAndContent1, secretSeriesAndContent2);
+  }
+
+  @Test public void updateSecretsCurrent() {
+    when(secretController.getSecretById(1)).thenReturn(Optional.of(secret));
+
+    Response response = resource.updateSecretsCurrent(user,
+        new LongParam(Long.toString(1)), new LongParam(Long.toString(10)));
+    verify(secretDAO).updateSecretsCurrent(1, 10);
+    assertThat(response.getStatus()).isEqualTo(204);
+  }
+
+  @Test (expected = NotFoundException.class)
+  public void updateSecretsCurrentSecretNotFound() {
+    when(secretController.getSecretById(1)).thenReturn(Optional.empty());
+
+    resource.updateSecretsCurrent(user, new LongParam(Long.toString(1)), new LongParam(Long.toString(10)));
+  }
+
+  @Test public void renameSecret() {
+    when(secretDAO.getSecretByName("name1")).thenReturn(Optional.empty());
+
+    Response response = resource.renameSecret(user,
+        new LongParam(Long.toString(1)), "name1");
+    verify(secretDAO).renameSecretById(1, "name1");
+    assertThat(response.getStatus()).isEqualTo(204);
+  }
+
+  @Test (expected = NotAllowedException.class)
+  public void renameSecretNotFound() {
+    when(secretController.getSecretByName("name")).thenReturn(Optional.of(secret));
+
+    resource.renameSecret(user, new LongParam(Long.toString(1)), "name");
+  }
+
+  @Test public void findDeletedSecretsByName() {
+    SecretSeries secretSeries1 = SecretSeries.of(1, "blah.name1.blah", "desc", NOW,
+                "user", NOW, "user", null, emptyMap, null);
+
+    SecretSeries secretSeries2 = SecretSeries.of(2, "blahblah.name1.blahh", "desc", NOW,
+        "user", NOW, "user", null, emptyMap, null);
+
+    when(secretDAO.getSecretsWithDeletedName("name1"))
+        .thenReturn(ImmutableList.of(secretSeries1, secretSeries2));
+
+    assertThat(resource.findDeletedSecretsByName(user, "name1"))
+        .containsExactlyInAnyOrder(secretSeries1, secretSeries2);
   }
 }
