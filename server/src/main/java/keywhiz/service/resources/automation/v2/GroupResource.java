@@ -2,12 +2,15 @@ package keywhiz.service.resources.automation.v2;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.collect.ImmutableList;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -26,6 +29,7 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
+import keywhiz.api.model.SanitizedSecretWithGroups;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
@@ -38,8 +42,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static keywhiz.api.model.SanitizedSecretWithGroups.fromSecretSeriesAndContentAndGroups;
 
 /**
  * parentEndpointName automation/v2-group-management
@@ -153,12 +159,44 @@ public class GroupResource {
   @GET
   @Path("{name}/secrets")
   @Produces(APPLICATION_JSON)
-  public Set<SanitizedSecret> secretDetailForGroup(@Auth AutomationClient automationClient,
+  public Set<SanitizedSecret> secretsForGroup(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
 
     return aclDAOReadOnly.getSanitizedSecretsFor(group);
+  }
+
+  /**
+   * Retrieve metadata for secrets in a particular group, including all
+   * groups linked to each secret.
+   *
+   * @param name Group name
+   *
+   * responseMessage 200 Group information retrieved
+   * responseMessage 404 Group not found
+   */
+  @Timed @ExceptionMetered
+  @GET
+  @Path("{name}/secretsandgroups")
+  @Produces(APPLICATION_JSON)
+  public Set<SanitizedSecretWithGroups> secretsWithGroupsForGroup(@Auth AutomationClient automationClient,
+      @PathParam("name") String name) {
+    Group group = groupDAOReadOnly.getGroup(name)
+        .orElseThrow(NotFoundException::new);
+
+    Set<SanitizedSecret> secrets =  aclDAOReadOnly.getSanitizedSecretsFor(group);
+
+    Map<Long, List<Group>> groupsForSecrets = aclDAOReadOnly.getGroupsForSecrets(secrets.stream().map(SanitizedSecret::id).collect(
+        Collectors.toUnmodifiableSet()));
+
+    return secrets.stream().map(s -> {
+      List<Group> groups = groupsForSecrets.get(s.id());
+      if (groups == null) {
+        groups = ImmutableList.of();
+      }
+      return SanitizedSecretWithGroups.of(s, groups);
+    }).collect(Collectors.toUnmodifiableSet());
   }
 
   /**
