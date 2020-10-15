@@ -23,6 +23,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.jooq.tables.SecretsContent;
+import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.RowHmacGenerator;
@@ -33,6 +35,7 @@ import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.SelectQuery;
+import org.jooq.Table;
 import org.jooq.impl.DSL;
 
 import javax.annotation.Nullable;
@@ -194,10 +197,19 @@ public class SecretSeriesDAO {
   public ImmutableList<SecretSeries> getSecretSeries(@Nullable Long expireMaxTime,
       @Nullable Group group, @Nullable Long expireMinTime, @Nullable String minName,
       @Nullable Integer limit) {
+    Table<SecretsContentRecord> secretsContentTable = SECRETS_CONTENT;
+    if (expireMaxTime != null && expireMaxTime > 0) {
+      // Force this join to use the index on the secrets_content.expiry
+      // field. The optimizer may fail to use this index when the SELECT
+      // examines a large number of rows, causing significant performance
+      // degradation.
+      secretsContentTable = secretsContentTable.useIndexForJoin("secrets_content_expiry");
+    }
+
     SelectQuery<Record> select = dslContext
           .select()
           .from(SECRETS)
-          .join(SECRETS_CONTENT)
+          .join(secretsContentTable)
           .on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID))
           .where(SECRETS.CURRENT.isNotNull())
           .getQuery();
