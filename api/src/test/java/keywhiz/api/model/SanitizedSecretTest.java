@@ -21,6 +21,7 @@ import keywhiz.api.ApiDate;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
+import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -98,6 +99,22 @@ public class SanitizedSecretTest {
                 1136214245L
             )));
 
+    assertThat(asJson(sanitizedSecret))
+        .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
+  }
+
+  @Test public void buildsCorrectlyFromJson() throws Exception {
+    String json = jsonFixture("fixtures/sanitizedSecret.json");
+    SanitizedSecret sanitizedSecret = fromJson(json, SanitizedSecret.class);
+    assertThat(asJson(sanitizedSecret))
+        .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
+  }
+
+  // Make sure that a SanitizedSecret can be correctly created from a JSON
+  // representation which does not include the newer ___Seconds fields
+  @Test public void buildsCorrectlyFromLegacyJson() throws Exception {
+    String legacyJson = jsonFixture("fixtures/sanitizedSecretWithoutSeconds.json");
+    SanitizedSecret sanitizedSecret = fromJson(legacyJson, SanitizedSecret.class);
     assertThat(asJson(sanitizedSecret))
         .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
   }
