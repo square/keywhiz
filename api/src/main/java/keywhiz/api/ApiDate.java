@@ -64,7 +64,7 @@ public class ApiDate {
   static class ApiDateDeserializer extends JsonDeserializer<ApiDate> {
     @Override
     public ApiDate deserialize(JsonParser parser, DeserializationContext ctxt) throws IOException {
-      OffsetDateTime odt = parser.readValueAs(OffsetDateTime.class);
+      OffsetDateTime odt = OffsetDateTime.parse(parser.getText());
       return new ApiDate(odt.toEpochSecond());
     }
   }

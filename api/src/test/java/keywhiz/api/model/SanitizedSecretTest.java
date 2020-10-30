@@ -21,34 +21,39 @@ import keywhiz.api.ApiDate;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
+import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SanitizedSecretTest {
-  @Test public void serializesCorrectly() throws Exception {
-    SanitizedSecret sanitizedSecret = SanitizedSecret.of(
-        767,
-        "trapdoor",
-        "v1",
-        "checksum",
-        ApiDate.parse("2013-03-28T21:42:42.573Z"),
-        "keywhizAdmin",
-        ApiDate.parse("2013-03-28T21:42:42.573Z"),
-        "keywhizAdmin",
-        ImmutableMap.of("owner", "the king"),
-        "password",
-        ImmutableMap.of("favoriteFood", "PB&J sandwich"),
-        1136214245,
-        1L,
-        ApiDate.parse("2013-03-28T21:42:42.573Z"),
-        "keywhizAdmin");
+  private SanitizedSecret sanitizedSecret = SanitizedSecret.of(
+      767,
+      "trapdoor",
+      "v1",
+      "checksum",
+      ApiDate.parse("2013-03-28T21:42:42.573Z"),
+      "keywhizAdmin",
+      ApiDate.parse("2013-03-28T21:42:42.573Z"),
+      "keywhizAdmin",
+      ImmutableMap.of("owner", "the king"),
+      "password",
+      ImmutableMap.of("favoriteFood", "PB&J sandwich"),
+      1136214245,
+      1L,
+      ApiDate.parse("2013-03-28T21:42:42.573Z"),
+      "keywhizAdmin");
 
-    assertThat(asJson(sanitizedSecret))
-        .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(sanitizedSecret), SanitizedSecret.class)).isEqualTo(sanitizedSecret);
   }
 
-  @Test public void buildsCorrectlyFromSecret() throws Exception {
-    SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(
+  @Test public void deserializesCorrectly() throws Exception {
+    assertThat(fromJson(jsonFixture("fixtures/sanitizedSecret.json"), SanitizedSecret.class))
+        .isEqualTo(sanitizedSecret);
+  }
+
+  @Test public void buildsCorrectlyFromSecret() {
+    SanitizedSecret fromSecret = SanitizedSecret.fromSecret(
         new Secret(
             767,
             "trapdoor",
@@ -67,12 +72,11 @@ public class SanitizedSecretTest {
             ApiDate.parse("2013-03-28T21:42:42.573Z"),
             "keywhizAdmin"));
 
-    assertThat(asJson(sanitizedSecret))
-        .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
+    assertThat(fromSecret).isEqualTo(sanitizedSecret);
   }
 
-  @Test public void buildsCorrectlyFromSecretSeriesAndContent() throws Exception {
-    SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecretSeriesAndContent(
+  @Test public void buildsCorrectlyFromSecretSeriesAndContent() {
+    SanitizedSecret fromSecretSeriesAndContent = SanitizedSecret.fromSecretSeriesAndContent(
         SecretSeriesAndContent.of(
             SecretSeries.of(
                 767,
@@ -98,7 +102,18 @@ public class SanitizedSecretTest {
                 1136214245L
             )));
 
-    assertThat(asJson(sanitizedSecret))
-        .isEqualTo(jsonFixture("fixtures/sanitizedSecret.json"));
+    assertThat(fromSecretSeriesAndContent).isEqualTo(sanitizedSecret);
+  }
+
+  // Make sure that a SanitizedSecret can be correctly created from a JSON
+  // representation which does not include the newer ___Seconds fields
+  @Test public void buildsCorrectlyFromLegacyJson() throws Exception {
+    String legacyJson = jsonFixture("fixtures/sanitizedSecretWithoutSeconds.json");
+    SanitizedSecret legacySecret = fromJson(legacyJson, SanitizedSecret.class);
+
+    String newJson = jsonFixture("fixtures/sanitizedSecret.json");
+    SanitizedSecret newSecret = fromJson(newJson, SanitizedSecret.class);
+
+    assertThat(legacySecret).isEqualTo(newSecret);
   }
 }

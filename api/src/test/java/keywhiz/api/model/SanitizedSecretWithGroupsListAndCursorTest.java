@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
+import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,9 +51,16 @@ public class SanitizedSecretWithGroupsListAndCursorTest {
         SecretRetrievalCursor.toString(SecretRetrievalCursor.of("test-secret-2", 1234567)));
   }
 
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(sanitizedSecretWithGroupsListAndCursor),
+        SanitizedSecretWithGroupsListAndCursor.class)).isEqualTo(
+        sanitizedSecretWithGroupsListAndCursor);
+  }
+
   @Test
-  public void serializesCorrectly() throws Exception {
-    assertThat(asJson(sanitizedSecretWithGroupsListAndCursor))
-        .isEqualTo(jsonFixture("fixtures/sanitizedSecretWithGroupsListAndCursor.json"));
+  public void deserializesCorrectly() throws Exception {
+    assertThat(fromJson(jsonFixture("fixtures/sanitizedSecretWithGroupsListAndCursor.json"),
+        SanitizedSecretWithGroupsListAndCursor.class)).isEqualTo(
+        sanitizedSecretWithGroupsListAndCursor);
   }
 }
