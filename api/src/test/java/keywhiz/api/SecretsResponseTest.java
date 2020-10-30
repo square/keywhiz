@@ -22,47 +22,53 @@ import keywhiz.api.model.SanitizedSecret;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
+import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SecretsResponseTest {
-  @Test public void serializesCorrectly() throws Exception {
-    SecretsResponse secretsResponse = new SecretsResponse(ImmutableList.of(
-        SanitizedSecret.of(
-            767,
-            "trapdoor",
-            "v1",
-            "checksum",
-            ApiDate.parse("2013-03-28T21:42:42.573Z"),
-            "keywhizAdmin",
-            ApiDate.parse("2013-03-28T21:42:42.573Z"),
-            "keywhizAdmin",
-            ImmutableMap.of("owner", "the king"),
-            "password",
-            ImmutableMap.of("param1", "value1"),
-            1136214245,
-            1L,
-            ApiDate.parse("2013-03-28T21:42:42.573Z"),
-            "keywhizAdmin"),
-        SanitizedSecret.of(
-            768,
-            "anotherSecret",
-            "",
-            "checksum",
-            ApiDate.parse("2013-04-28T21:42:42.573Z"),
-            "keywhizAdmin",
-            ApiDate.parse("2013-04-28T21:42:42.573Z"),
-            "keywhizAdmin",
-            null,
-            "upload",
-            null,
-            1136214245,
-            10L,
-            ApiDate.parse("2013-04-28T21:42:42.573Z"),
-            "keywhizAdmin")
-    ));
+  SecretsResponse secretsResponse = new SecretsResponse(ImmutableList.of(
+      SanitizedSecret.of(
+          767,
+          "trapdoor",
+          "v1",
+          "checksum",
+          ApiDate.parse("2013-03-28T21:42:42.573Z"),
+          "keywhizAdmin",
+          ApiDate.parse("2013-03-28T21:42:42.573Z"),
+          "keywhizAdmin",
+          ImmutableMap.of("owner", "the king"),
+          "password",
+          ImmutableMap.of("param1", "value1"),
+          1136214245,
+          1L,
+          ApiDate.parse("2013-03-28T21:42:42.573Z"),
+          "keywhizAdmin"),
+      SanitizedSecret.of(
+          768,
+          "anotherSecret",
+          "",
+          "checksum",
+          ApiDate.parse("2013-04-28T21:42:42.573Z"),
+          "keywhizAdmin",
+          ApiDate.parse("2013-04-28T21:42:42.573Z"),
+          "keywhizAdmin",
+          null,
+          "upload",
+          null,
+          1136214245,
+          10L,
+          ApiDate.parse("2013-04-28T21:42:42.573Z"),
+          "keywhizAdmin")
+  ));
 
-    assertThat(asJson(secretsResponse))
-        .isEqualTo(jsonFixture("fixtures/secretsResponse.json"));
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(secretsResponse), SecretsResponse.class)).isEqualTo(secretsResponse);
+  }
+
+  @Test public void deserializesCorrectly() throws Exception {
+    assertThat(
+        fromJson(jsonFixture("fixtures/secretsResponse.json"), SecretsResponse.class)).isEqualTo(
+        secretsResponse);
   }
 }

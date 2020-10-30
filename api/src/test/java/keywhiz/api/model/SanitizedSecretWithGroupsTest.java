@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
+import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -60,10 +61,19 @@ public class SanitizedSecretWithGroupsTest {
         ApiDate.parse("2013-03-28T21:42:42.000Z"), null, null));
   }
 
-  @Test public void serializesCorrectly() throws Exception {
-    SanitizedSecretWithGroups sanitizedSecretWithGroups = SanitizedSecretWithGroups.of(sanitizedSecret, groups);
-    assertThat(asJson(sanitizedSecretWithGroups))
-        .isEqualTo(jsonFixture("fixtures/sanitizedSecretWithGroups.json"));
+  @Test public void roundTripSerialization() throws Exception {
+    SanitizedSecretWithGroups sanitizedSecretWithGroups =
+        SanitizedSecretWithGroups.of(sanitizedSecret, groups);
+    assertThat(
+        fromJson(asJson(sanitizedSecretWithGroups), SanitizedSecretWithGroups.class)).isEqualTo(
+        sanitizedSecretWithGroups);
+  }
+
+  @Test public void deserializesCorrectly() throws Exception {
+    SanitizedSecretWithGroups sanitizedSecretWithGroups =
+        SanitizedSecretWithGroups.of(sanitizedSecret, groups);
+    assertThat(fromJson(jsonFixture("fixtures/sanitizedSecretWithGroups.json"),
+        SanitizedSecretWithGroups.class)).isEqualTo(sanitizedSecretWithGroups);
   }
 
   @Test public void buildsCorrectlyFromSecretAndGroups() throws Exception {
@@ -86,38 +96,41 @@ public class SanitizedSecretWithGroupsTest {
             ApiDate.parse("2013-03-28T21:42:42.000Z"),
             "keywhizAdmin"), groups);
 
-    assertThat(asJson(sanitizedSecretWithGroups))
-        .isEqualTo(jsonFixture("fixtures/sanitizedSecretWithGroups.json"));
+    assertThat(sanitizedSecretWithGroups)
+        .isEqualTo(fromJson(jsonFixture("fixtures/sanitizedSecretWithGroups.json"),
+            SanitizedSecretWithGroups.class));
   }
 
   @Test public void buildsCorrectlyFromSecretSeriesAndContent() throws Exception {
-    SanitizedSecretWithGroups sanitizedSecretWithGroups = SanitizedSecretWithGroups.fromSecretSeriesAndContentAndGroups(
-        SecretSeriesAndContent.of(
-            SecretSeries.of(
-                767,
-                "trapdoor",
-                "v1",
-                ApiDate.parse("2013-03-28T21:42:42.000Z"),
-                "keywhizAdmin",
-                ApiDate.parse("2013-03-28T21:42:42.000Z"),
-                "keywhizAdmin",
-                "password",
-                ImmutableMap.of("favoriteFood", "PB&J sandwich"),
-                1L
-            ), SecretContent.of(
-                1L,
-                767,
-                "foo",
-                "checksum",
-                ApiDate.parse("2013-03-28T21:42:42.000Z"),
-                "keywhizAdmin",
-                ApiDate.parse("2013-03-28T21:42:42.000Z"),
-                "keywhizAdmin",
-                ImmutableMap.of("owner", "the king"),
-                1136214245L
-            )), groups);
+    SanitizedSecretWithGroups sanitizedSecretWithGroups =
+        SanitizedSecretWithGroups.fromSecretSeriesAndContentAndGroups(
+            SecretSeriesAndContent.of(
+                SecretSeries.of(
+                    767,
+                    "trapdoor",
+                    "v1",
+                    ApiDate.parse("2013-03-28T21:42:42.000Z"),
+                    "keywhizAdmin",
+                    ApiDate.parse("2013-03-28T21:42:42.000Z"),
+                    "keywhizAdmin",
+                    "password",
+                    ImmutableMap.of("favoriteFood", "PB&J sandwich"),
+                    1L
+                ), SecretContent.of(
+                    1L,
+                    767,
+                    "foo",
+                    "checksum",
+                    ApiDate.parse("2013-03-28T21:42:42.000Z"),
+                    "keywhizAdmin",
+                    ApiDate.parse("2013-03-28T21:42:42.000Z"),
+                    "keywhizAdmin",
+                    ImmutableMap.of("owner", "the king"),
+                    1136214245L
+                )), groups);
 
-    assertThat(asJson(sanitizedSecretWithGroups))
-        .isEqualTo(jsonFixture("fixtures/sanitizedSecretWithGroups.json"));
+    assertThat(sanitizedSecretWithGroups)
+        .isEqualTo(fromJson(jsonFixture("fixtures/sanitizedSecretWithGroups.json"),
+            SanitizedSecretWithGroups.class));
   }
 }
