@@ -21,20 +21,25 @@ import keywhiz.api.ApiDate;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
+import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GroupTest {
-  @Test public void serializesCorrectly() throws Exception {
-    Group group = new Group(330,
-                            "someGroup",
-                            "groupDesc",
-                            ApiDate.parse("2013-03-28T21:29:27.465Z"),
-                            "keywhizAdmin",
-                            ApiDate.parse("2013-03-28T21:29:27.465Z"),
-                            "keywhizAdmin",
-                            ImmutableMap.of("app", "keywhiz"));
+  private Group group = new Group(330,
+      "someGroup",
+      "groupDesc",
+      ApiDate.parse("2013-03-28T21:29:27.465Z"),
+      "keywhizAdmin",
+      ApiDate.parse("2013-03-28T21:29:27.465Z"),
+      "keywhizAdmin",
+      ImmutableMap.of("app", "keywhiz"));
 
-    assertThat(asJson(group)).isEqualTo(jsonFixture("fixtures/group.json"));
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(group), Group.class)).isEqualTo(group);
+  }
+
+  @Test public void deserializesCorrectly() throws Exception {
+    assertThat(fromJson(jsonFixture("fixtures/group.json"), Group.class)).isEqualTo(group);
   }
 }

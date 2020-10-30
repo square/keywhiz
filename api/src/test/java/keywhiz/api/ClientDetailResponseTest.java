@@ -20,29 +20,35 @@ import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
+import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ClientDetailResponseTest {
-  @Test public void serializesCorrectly() throws Exception {
-    ClientDetailResponse clientDetailResponse = new ClientDetailResponse(
-        9875,
-        "Client Name",
-        "Client Description",
-        "spiffe//example.org/client-name",
-        ApiDate.parse("2012-08-01T13:15:30.001Z"),
-        ApiDate.parse("2012-09-10T03:15:30.001Z"),
-        "creator-user",
-        "updater-user",
-        ApiDate.parse("2012-09-10T03:15:30.001Z"),
-        ImmutableList.of(),
-        ImmutableList.of());
+  private ClientDetailResponse clientDetailResponse = new ClientDetailResponse(
+      9875,
+      "Client Name",
+      "Client Description",
+      "spiffe//example.org/client-name",
+      ApiDate.parse("2012-08-01T13:15:30.001Z"),
+      ApiDate.parse("2012-09-10T03:15:30.001Z"),
+      "creator-user",
+      "updater-user",
+      ApiDate.parse("2012-09-10T03:15:30.001Z"),
+      ImmutableList.of(),
+      ImmutableList.of());
 
-    assertThat(asJson(clientDetailResponse))
-        .isEqualTo(jsonFixture("fixtures/clientDetailResponse.json"));
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(clientDetailResponse), ClientDetailResponse.class)).isEqualTo(
+        clientDetailResponse);
   }
 
-  @Test public void serializesNullLastSeenCorrectly() throws Exception {
+  @Test public void deserializesCorrectly() throws Exception {
+    assertThat(fromJson(jsonFixture("fixtures/clientDetailResponse.json"),
+        ClientDetailResponse.class)).isEqualTo(clientDetailResponse);
+  }
+
+  @Test public void handlesNullLastSeenCorrectly() throws Exception {
     ClientDetailResponse clientDetailResponse = new ClientDetailResponse(
         9875,
         "Client Name",
@@ -56,7 +62,10 @@ public class ClientDetailResponseTest {
         ImmutableList.of(),
         ImmutableList.of());
 
-    assertThat(asJson(clientDetailResponse))
-        .isEqualTo(jsonFixture("fixtures/clientDetailResponse_NullLastSeen.json"));
+    assertThat(fromJson(jsonFixture("fixtures/clientDetailResponse_NullLastSeen.json"),
+        ClientDetailResponse.class)).isEqualTo(clientDetailResponse);
+
+    assertThat(fromJson(asJson(clientDetailResponse), ClientDetailResponse.class)).isEqualTo(
+        clientDetailResponse);
   }
 }

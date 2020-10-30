@@ -17,11 +17,13 @@
 package keywhiz.api;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.Secret;
 
@@ -30,17 +32,24 @@ import static keywhiz.api.model.Secret.decodedLength;
 
 /**
  * JSON Serialization class for a REST response {@link Secret}.
- *
+ * <p>
  * Automation View, does not include secret contents.
  */
 @AutoValue
 public abstract class AutomationSecretResponse {
 
-  public static AutomationSecretResponse create(long id, String name, String secret,
-      ApiDate creationDate,
-      ImmutableMap<String, String> metadata, ImmutableList<Group> groups, long expiry) {
+  @JsonCreator
+  public static AutomationSecretResponse create(
+      @JsonProperty("id") long id,
+      @JsonProperty("name") String name,
+      @JsonProperty("secret") String secret,
+      @JsonProperty("creationDate") ApiDate creationDate,
+      @JsonProperty("metadata") @Nullable ImmutableMap<String, String> metadata,
+      @JsonProperty("groups") ImmutableList<Group> groups,
+      @JsonProperty("expiry") long expiry) {
     return new AutoValue_AutomationSecretResponse(id, name, secret, decodedLength(secret),
-        creationDate, groups, metadata, expiry);
+        creationDate, groups, metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata),
+        expiry);
   }
 
   public static AutomationSecretResponse fromSecret(Secret secret, ImmutableList<Group> groups) {
@@ -56,11 +65,18 @@ public abstract class AutomationSecretResponse {
   }
 
   @JsonProperty("id") public abstract long id();
+
   @JsonProperty("name") public abstract String name();
+
   @JsonProperty("secret") public abstract String secret();
+
   @JsonProperty("secretLength") public abstract long secretLength();
+
   @JsonProperty("creationDate") public abstract ApiDate creationDate();
+
   @JsonProperty("groups") public abstract ImmutableList<Group> groups();
+
   @JsonAnyGetter @JsonProperty("metadata") public abstract Map<String, String> metadata();
+
   @JsonProperty("expiry") public abstract long expiry();
 }

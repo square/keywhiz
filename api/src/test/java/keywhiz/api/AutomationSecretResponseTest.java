@@ -16,6 +16,7 @@
 
 package keywhiz.api;
 
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import keywhiz.api.model.Group;
@@ -24,8 +25,10 @@ import org.junit.Test;
 
 import static keywhiz.api.model.Secret.decodedLength;
 import static keywhiz.testing.JsonHelpers.asJson;
+import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 
 public class AutomationSecretResponseTest {
@@ -33,8 +36,9 @@ public class AutomationSecretResponseTest {
   private static final ImmutableMap<String, String> metadata =
       ImmutableMap.of("key1", "value1", "key2", "value2");
   private static final ApiDate NOW = ApiDate.now();
-  private static final Secret secret = new Secret(0, "name", null, () -> "YWJj", "checksum", NOW, null, NOW, null, metadata,
-      "upload", null, 1136214245, null, null, null);
+  private static final Secret secret =
+      new Secret(0, "name", null, () -> "YWJj", "checksum", NOW, null, NOW, null, metadata,
+          "upload", null, 1136214245, null, null, null);
 
   @Test
   public void setsLength() {
@@ -50,31 +54,45 @@ public class AutomationSecretResponseTest {
     assertThat(response.metadata()).contains(entry("key2", "value2"), entry("key1", "value1"));
   }
 
-
   @Test
   public void serializesCorrectly() throws Exception {
-    String secret = "YXNkZGFz";
-
     AutomationSecretResponse automationSecretResponse = AutomationSecretResponse.create(
         0,
         "Database_Password",
-        secret,
+        "YXNkZGFz",
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
         ImmutableMap.of(),
         ImmutableList.of(),
         1136214245);
-    assertThat(asJson(automationSecretResponse))
-        .isEqualTo(jsonFixture("fixtures/automationSecretResponse.json"));
+    assertThat(
+        fromJson(asJson(automationSecretResponse), AutomationSecretResponse.class)).isEqualTo(
+        automationSecretResponse);
+    assertThat(fromJson(jsonFixture("fixtures/automationSecretResponse.json"),
+        AutomationSecretResponse.class)).isEqualTo(automationSecretResponse);
+  }
 
+  // The keys in the metadata field are removed from that field and serialized along
+  // with the rest of the fields, so a SecretDeliveryResponse that includes metadata
+  // cannot be serialized and deserialized successfully.
+  @Test public void unpacksMetadata() {
     AutomationSecretResponse automationSecretResponseWithMetadata = AutomationSecretResponse.create(
         66,
         "Nobody_PgPass",
-        secret,
+        "YXNkZGFz",
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
         ImmutableMap.of("mode", "0400", "owner", "nobody"),
         ImmutableList.of(),
         1136214245);
-    assertThat(asJson(automationSecretResponseWithMetadata))
-        .isEqualTo(jsonFixture("fixtures/automationSecretResponseWithMetadata.json"));
+
+    assertThatThrownBy(() ->
+        fromJson(jsonFixture("fixtures/automationSecretResponseWithMetadata.json"),
+            AutomationSecretResponse.class))
+        .isInstanceOf(UnrecognizedPropertyException.class)
+        .hasMessageContaining("Unrecognized field \"mode\"");
+
+    assertThatThrownBy(() -> fromJson(asJson(automationSecretResponseWithMetadata),
+        AutomationSecretResponse.class))
+        .isInstanceOf(UnrecognizedPropertyException.class)
+        .hasMessageContaining("Unrecognized field \"mode\"");
   }
 }

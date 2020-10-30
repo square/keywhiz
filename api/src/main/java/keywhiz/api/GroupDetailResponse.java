@@ -120,9 +120,13 @@ public class GroupDetailResponse {
     return updatedBy;
   }
 
-  public ImmutableMap<String, String> getMetadata() { return metadata; }
+  public ImmutableMap<String, String> getMetadata() {
+    return metadata;
+  }
 
-  /** @return List of secrets the group has access to. The secrets do not contain content. */
+  /**
+   * @return List of secrets the group has access to. The secrets do not contain content.
+   */
   public ImmutableList<SanitizedSecret> getSecrets() {
     return secrets;
   }
@@ -133,14 +137,15 @@ public class GroupDetailResponse {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, name, description, creationDate, updateDate, createdBy, updatedBy, metadata, secrets, clients);
+    return Objects.hashCode(id, name, description, creationDate, updateDate, createdBy, updatedBy,
+        metadata, secrets, clients);
   }
 
   @Override
   public boolean equals(Object o) {
     if (o instanceof GroupDetailResponse) {
       GroupDetailResponse that = (GroupDetailResponse) o;
-      if (Objects.equal(this.id, that.id) &&
+      return Objects.equal(this.id, that.id) &&
           Objects.equal(this.name, that.name) &&
           Objects.equal(this.description, that.description) &&
           Objects.equal(this.creationDate, that.creationDate) &&
@@ -149,9 +154,7 @@ public class GroupDetailResponse {
           Objects.equal(this.updatedBy, that.updatedBy) &&
           Objects.equal(this.metadata, that.metadata) &&
           Objects.equal(this.secrets, that.secrets) &&
-          Objects.equal(this.clients, that.clients)) {
-        return true;
-      }
+          Objects.equal(this.clients, that.clients);
     }
     return false;
   }

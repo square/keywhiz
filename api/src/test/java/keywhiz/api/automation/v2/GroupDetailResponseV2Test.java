@@ -22,24 +22,30 @@ import java.time.OffsetDateTime;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
+import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GroupDetailResponseV2Test {
-  @Test public void serializesCorrectly() throws Exception {
-    GroupDetailResponseV2 groupDetailResponse = GroupDetailResponseV2.builder()
-        .name("group-name")
-        .description("group-description")
-        .createdAtSeconds(OffsetDateTime.parse("2012-08-01T13:15:30Z").toEpochSecond())
-        .updatedAtSeconds(OffsetDateTime.parse("2012-09-10T03:15:30Z").toEpochSecond())
-        .createdBy("creator-user")
-        .updatedBy("updater-user")
-        .secrets(ImmutableSet.of("secret1", "secret2"))
-        .clients(ImmutableSet.of("client1", "client2"))
-        .metadata(ImmutableMap.of("app", "keywhiz"))
-        .build();
+  private GroupDetailResponseV2 groupDetailResponse = GroupDetailResponseV2.builder()
+      .name("group-name")
+      .description("group-description")
+      .createdAtSeconds(OffsetDateTime.parse("2012-08-01T13:15:30Z").toEpochSecond())
+      .updatedAtSeconds(OffsetDateTime.parse("2012-09-10T03:15:30Z").toEpochSecond())
+      .createdBy("creator-user")
+      .updatedBy("updater-user")
+      .secrets(ImmutableSet.of("secret1", "secret2"))
+      .clients(ImmutableSet.of("client1", "client2"))
+      .metadata(ImmutableMap.of("app", "keywhiz"))
+      .build();
 
-    assertThat(asJson(groupDetailResponse))
-        .isEqualTo(jsonFixture("fixtures/v2/groupDetailResponse.json"));
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(groupDetailResponse), GroupDetailResponseV2.class)).isEqualTo(
+        groupDetailResponse);
+  }
+
+  @Test public void deserializesCorrectly() throws Exception {
+    assertThat(fromJson(jsonFixture("fixtures/v2/groupDetailResponse.json"),
+        GroupDetailResponseV2.class)).isEqualTo(groupDetailResponse);
   }
 }

@@ -20,25 +20,30 @@ import keywhiz.api.ApiDate;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
+import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ClientTest {
-  @Test public void serializesCorrectly() throws Exception {
-    Client client = new Client(200,
-        "someClient",
-        "clientDesc",
-        null,
-        ApiDate.parse("2013-03-28T21:29:27.465Z"),
-        "keywhizAdmin",
-        ApiDate.parse("2013-03-28T21:29:27.465Z"),
-        "keywhizAdmin",
-        null,
-        null,
-        true,
-        false
-    );
+  private Client client = new Client(200,
+      "someClient",
+      "clientDesc",
+      null,
+      ApiDate.parse("2013-03-28T21:29:27.465Z"),
+      "keywhizAdmin",
+      ApiDate.parse("2013-03-28T21:29:27.465Z"),
+      "keywhizAdmin",
+      null,
+      null,
+      true,
+      false
+  );
 
-    assertThat(asJson(client)).isEqualTo(jsonFixture("fixtures/client.json"));
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(client), Client.class)).isEqualTo(client);
+  }
+
+  @Test public void deserializesCorrectly() throws Exception {
+    assertThat(fromJson(jsonFixture("fixtures/client.json"), Client.class)).isEqualTo(client);
   }
 }
