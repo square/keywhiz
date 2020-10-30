@@ -28,6 +28,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import static javax.ws.rs.client.Entity.entity;
+import static keywhiz.testing.JsonHelpers.asJson;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,6 +38,12 @@ public class CreateClientRequestTest {
   @ClassRule public static final ResourceTestRule resources = ResourceTestRule.builder()
       .addResource(new Resource())
       .build();
+
+  @Test public void roundTripSerialization() throws Exception {
+    CreateClientRequest createClientRequest = new CreateClientRequest("client-name");
+    assertThat(fromJson(asJson(createClientRequest), CreateClientRequest.class))
+        .isEqualTo(createClientRequest);
+  }
 
   @Test public void deserializesCorrectly() throws Exception {
     CreateClientRequest createClientRequest = new CreateClientRequest("client-name");

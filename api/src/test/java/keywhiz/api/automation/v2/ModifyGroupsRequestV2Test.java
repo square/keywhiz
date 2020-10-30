@@ -18,17 +18,23 @@ package keywhiz.api.automation.v2;
 
 import org.junit.Test;
 
+import static keywhiz.testing.JsonHelpers.asJson;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ModifyGroupsRequestV2Test {
-  @Test public void deserializesCorrectly() throws Exception {
-    ModifyGroupsRequestV2 modifyGroupsRequest = ModifyGroupsRequestV2.builder()
-        .addGroups("group1", "group2")
-        .removeGroups("group3", "group4")
-        .build();
+  private ModifyGroupsRequestV2 modifyGroupsRequest = ModifyGroupsRequestV2.builder()
+      .addGroups("group1", "group2")
+      .removeGroups("group3", "group4")
+      .build();
 
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(modifyGroupsRequest), ModifyGroupsRequestV2.class)).isEqualTo(
+        modifyGroupsRequest);
+  }
+
+  @Test public void deserializesCorrectly() throws Exception {
     assertThat(
         fromJson(jsonFixture("fixtures/v2/modifyGroupsRequest.json"), ModifyGroupsRequestV2.class))
         .isEqualTo(modifyGroupsRequest);

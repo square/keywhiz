@@ -19,29 +19,35 @@ package keywhiz.api.automation.v2;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
+import static keywhiz.testing.JsonHelpers.asJson;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CreateSecretRequestV2Test {
-  @Test public void deserializesCorrectly() throws Exception {
-    CreateSecretRequestV2 createSecretRequest = CreateSecretRequestV2.builder()
-        .name("secret-name")
-        .content("YXNkZGFz")
-        .description("secret-description")
-        .metadata(ImmutableMap.of("owner", "root"))
-        .expiry(0)
-        .type("text/plain")
-        .groups("secret-group1", "secret-group2")
-        .build();
+  private CreateSecretRequestV2 createSecretRequest = CreateSecretRequestV2.builder()
+      .name("secret-name")
+      .content("YXNkZGFz")
+      .description("secret-description")
+      .metadata(ImmutableMap.of("owner", "root"))
+      .expiry(0)
+      .type("text/plain")
+      .groups("secret-group1", "secret-group2")
+      .build();
 
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(createSecretRequest), CreateSecretRequestV2.class)).isEqualTo(
+        createSecretRequest);
+  }
+
+  @Test public void deserializesCorrectly() throws Exception {
     assertThat(fromJson(
         jsonFixture("fixtures/v2/createSecretRequest.json"), CreateSecretRequestV2.class))
         .isEqualTo(createSecretRequest);
   }
 
   @Test(expected = IllegalStateException.class)
-  public void emptyNameFailsValidation() throws Exception {
+  public void emptyNameFailsValidation() {
     CreateSecretRequestV2.builder()
         .name("")
         .content("")

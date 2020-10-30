@@ -20,17 +20,24 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
+import static keywhiz.testing.JsonHelpers.asJson;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SecretContentsResponseV2Test {
-  @Test public void deserializesCorrectly() throws Exception {
-    SecretContentsResponseV2 secretContentsResponse = SecretContentsResponseV2.builder()
-        .successSecrets(ImmutableMap.of("secret1", "supersecretcontent1", "secret2", "supersecretcontent2"))
-        .missingSecrets(ImmutableList.of("secret3"))
-        .build();
+  private SecretContentsResponseV2 secretContentsResponse = SecretContentsResponseV2.builder()
+      .successSecrets(
+          ImmutableMap.of("secret1", "supersecretcontent1", "secret2", "supersecretcontent2"))
+      .missingSecrets(ImmutableList.of("secret3"))
+      .build();
 
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(secretContentsResponse), SecretContentsResponseV2.class)).isEqualTo(
+        secretContentsResponse);
+  }
+
+  @Test public void deserializesCorrectly() throws Exception {
     assertThat(fromJson(
         jsonFixture("fixtures/v2/secretContentsResponse.json"), SecretContentsResponseV2.class))
         .isEqualTo(secretContentsResponse);

@@ -18,16 +18,22 @@ package keywhiz.api.automation.v2;
 
 import org.junit.Test;
 
+import static keywhiz.testing.JsonHelpers.asJson;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SecretContentsRequestV2Test {
-  @Test public void deserializesCorrectly() throws Exception {
-    SecretContentsRequestV2 secretContentsRequest = SecretContentsRequestV2.builder()
-        .secrets("secret1", "secret2", "secret3")
-        .build();
+  private SecretContentsRequestV2 secretContentsRequest = SecretContentsRequestV2.builder()
+      .secrets("secret1", "secret2", "secret3")
+      .build();
 
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(secretContentsRequest), SecretContentsRequestV2.class)).isEqualTo(
+        secretContentsRequest);
+  }
+
+  @Test public void deserializesCorrectly() throws Exception {
     assertThat(fromJson(
         jsonFixture("fixtures/v2/secretContentsRequest.json"), SecretContentsRequestV2.class))
         .isEqualTo(secretContentsRequest);
