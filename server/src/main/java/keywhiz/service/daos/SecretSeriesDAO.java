@@ -317,16 +317,11 @@ public class SecretSeriesDAO {
     });
   }
 
-  public void renameSecretSeriesById(long secretId, String name) {
+  public void renameSecretSeriesById(long secretId, String name, String creator, long now) {
     dslContext.update(SECRETS)
         .set(SECRETS.NAME, name)
-        .where(SECRETS.ID.eq(secretId))
-        .execute();
-  }
-
-  public void updateSecretSeriesContentById(long secretId, long secretContentId) {
-    dslContext.update(SECRETS)
-        .set(SECRETS.CURRENT, secretContentId)
+        .set(SECRETS.UPDATEDBY, creator)
+        .set(SECRETS.UPDATEDAT, now)
         .where(SECRETS.ID.eq(secretId))
         .execute();
   }

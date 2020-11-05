@@ -36,7 +36,6 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -520,9 +519,10 @@ public class SecretsResource {
    * @param secretId the ID of the Secret to be deleted
    * @return 200 if secret deleted, 404 if not found
    * <p>
-   * description Deletes a single Secret if found. Used by Keywhiz CLI and the web ui.
+   * description Renames a single Secret to secertName if the given secretId is found.
+   * Used by Keywhiz CLI and the web ui.
    * <p>
-   * responseMessage 200 Found and deleted Secret with given ID
+   * responseMessage 200 Found and renamed Secret with given ID
    * <p>
    * responseMessage 404 Secret with given ID not Found
    */
@@ -535,13 +535,13 @@ public class SecretsResource {
     if (secret.isPresent()) {
       logger.info("User '{}' tried renaming a secret, but another secret with that name "
               + "already exists (name={})", user, secretId.get());
-      throw new NotAllowedException("That name is already taken by another secret"); //use different error
+      throw new ConflictException("That name is already taken by another secret");
     }
 
     logger.info("User '{}' renamed secret id={} to name='{}'", user, secretId,
         secretName);
 
-    secretDAOReadWrite.renameSecretById(secretId.get(), secretName);
+    secretDAOReadWrite.renameSecretById(secretId.get(), secretName, user.getName());
 
     // Record the rename
     Map<String, String> extraInfo = new HashMap<>();
@@ -598,23 +598,16 @@ public class SecretsResource {
   @Path("secretcontents/update/{secretsContentId}/{secretId}")
   @Timed @ExceptionMetered
   @POST
-  public Response updateSecretsCurrent(@Auth User user, @PathParam("secretId") LongParam secretId,
+  public Response updateCurrentSecretVersion(@Auth User user, @PathParam("secretId") LongParam secretId,
       @PathParam("secretsContentId") LongParam secretsContentId) {
-    Optional<Secret> secret = secretController.getSecretById(secretId.get());
-    if (!secret.isPresent()) {
-      logger.info("User '{}' tried updating current for a secret which was not found (id={})", user,
-          secretId.get());
-      throw new NotFoundException("Secret not found.");
-    }
-
     logger.info("User '{}' updated current id={} for secret id={}", user, secretId);
 
-    secretDAOReadWrite.updateSecretsCurrent(secretId.get(), secretsContentId.get());
+    secretDAOReadWrite.setCurrentSecretVersionBySecretId(secretId.get(), secretsContentId.get(), user.getName());
 
-    // Record the rename
+    // Record the update
     Map<String, String> extraInfo = new HashMap<>();
     auditLog.recordEvent(
-        new Event(Instant.now(), EventTag.SECRET_UPDATECURRENT, user.getName(), secret.get().getName(),
+        new Event(Instant.now(), EventTag.SECRET_UPDATECURRENT, user.getName(), secretId.toString(),
             extraInfo));
     return Response.noContent().build();
   }

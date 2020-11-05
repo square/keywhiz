@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -58,6 +57,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -368,20 +368,23 @@ public class SecretsResourceTest {
         .containsExactlyInAnyOrder(secretSeriesAndContent1, secretSeriesAndContent2);
   }
 
-  @Test public void updateSecretsCurrent() {
+  @Test public void setCurrentSecretVersionBySecretId() {
     when(secretController.getSecretById(1)).thenReturn(Optional.of(secret));
 
-    Response response = resource.updateSecretsCurrent(user,
+    Response response = resource.updateCurrentSecretVersion(user,
         new LongParam(Long.toString(1)), new LongParam(Long.toString(10)));
-    verify(secretDAO).updateSecretsCurrent(1, 10);
+    verify(secretDAO).setCurrentSecretVersionBySecretId(1, 10, "user");
     assertThat(response.getStatus()).isEqualTo(204);
   }
 
-  @Test (expected = NotFoundException.class)
-  public void updateSecretsCurrentSecretNotFound() {
+  @Test
+  public void setCurrentSecretVersionBySecretIdSecretNotFound() {
     when(secretController.getSecretById(1)).thenReturn(Optional.empty());
 
-    resource.updateSecretsCurrent(user, new LongParam(Long.toString(1)), new LongParam(Long.toString(10)));
+    Response response = resource.updateCurrentSecretVersion(user,
+        new LongParam(Long.toString(1)), new LongParam(Long.toString(10)));
+    verify(secretDAO).setCurrentSecretVersionBySecretId(1, 10, "user");
+    assertThat(response.getStatus()).isEqualTo(204);
   }
 
   @Test public void renameSecret() {
@@ -389,15 +392,18 @@ public class SecretsResourceTest {
 
     Response response = resource.renameSecret(user,
         new LongParam(Long.toString(1)), "name1");
-    verify(secretDAO).renameSecretById(1, "name1");
+    verify(secretDAO).renameSecretById(1, "name1", "user");
     assertThat(response.getStatus()).isEqualTo(204);
   }
 
-  @Test (expected = NotAllowedException.class)
+  @Test
   public void renameSecretNotFound() {
     when(secretController.getSecretByName("name")).thenReturn(Optional.of(secret));
 
-    resource.renameSecret(user, new LongParam(Long.toString(1)), "name");
+    assertThatThrownBy(() -> resource.renameSecret(user, new LongParam(Long.toString(1)), "name"))
+        .hasMessage("That name is already taken by another secret")
+        .isInstanceOf(ConflictException.class);
+
   }
 
   @Test public void findDeletedSecretsByName() {

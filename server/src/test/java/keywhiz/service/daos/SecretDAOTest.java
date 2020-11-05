@@ -50,6 +50,7 @@ import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @RunWith(KeywhizTestRunner.class)
 public class SecretDAOTest {
@@ -576,8 +577,8 @@ public class SecretDAOTest {
     long contentId = secretContents.get().get(0).content().id();
 
     assertThat(secretDAO.getSecretByName("toBeDeletedAndUndeleted")).isEmpty();
-    secretDAO.updateSecretsCurrent(secretId, contentId);
-    secretDAO.renameSecretById(secretId, "toBeDeletedAndUndeleted");
+    secretDAO.setCurrentSecretVersionBySecretId(secretId, contentId, "updater");
+    secretDAO.renameSecretById(secretId, "toBeDeletedAndUndeleted", "creator");
     Optional<SecretSeriesAndContent> undeletedSecretAndContent =
         secretDAO.getSecretByName("toBeDeletedAndUndeleted");
     assertThat(undeletedSecretAndContent).isPresent();
@@ -639,10 +640,17 @@ public class SecretDAOTest {
     long contentId = secretContents.get().get(0).content().id();
 
     assertThat(secretDAO.getSecretByName("toBeDeletedAndUndeleted")).isPresent();
-    secretDAO.updateSecretsCurrent(secretId, contentId);
+    secretDAO.setCurrentSecretVersionBySecretId(secretId, contentId, "creator");
+
+    long secretIdFinal= secretId;
+    assertThatThrownBy(() -> secretDAO.renameSecretById(secretIdFinal, "toBeDeletedAndUndeleted", "creator"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("name toBeDeletedAndUndeleted already used by an existing secret in keywhiz");
+
     //Because there is already an undeleted secret with the name "toBeDeletedAndUndeleted", we must
     //rename the deleted secret with a different name
-    secretDAO.renameSecretById(secretId, "toBeDeletedAndUndeleted-2");
+    assertThat(secretDAO.getSecretByName("toBeDeletedAndUndeleted-2")).isEmpty();
+    secretDAO.renameSecretById(secretId, "toBeDeletedAndUndeleted-2", "creator");
     Optional<SecretSeriesAndContent> undeletedSecretAndContent =
         secretDAO.getSecretByName("toBeDeletedAndUndeleted-2");
     assertThat(undeletedSecretAndContent).isPresent();
@@ -661,14 +669,23 @@ public class SecretDAOTest {
     Optional<SecretSeriesAndContent> secret = secretDAO.getSecretById(secretId);
     assertThat(secret.get().series().name()).isEqualTo("toBeRenamed_renameSecretByIdName");
 
-    secretDAO.renameSecretById(secretId, "newName");
+    secretDAO.renameSecretById(secretId, "newName", "creator");
 
     secret = secretDAO.getSecretById(secretId);
     assertThat(secret).isPresent();
     assertThat(secret.get().series().name()).isEqualTo("newName");
-  }
 
-  //---------------------------------------------------------------------------------------
+    long secret2Id =
+        secretDAO.createSecret("toBeRenamed_renameSecretByIdName2", "encryptedShhh",
+            cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
+            ImmutableMap.of(), 0, "", null, null);
+
+    assertThatThrownBy(() -> secretDAO.renameSecretById(secret2Id,
+        "newName", "creator"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("name newName already used by an existing secret in keywhiz");
+  }
+    //---------------------------------------------------------------------------------------
   // permanentlyRemoveSecret
   //---------------------------------------------------------------------------------------
   @Test

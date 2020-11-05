@@ -179,7 +179,7 @@ public class SecretSeriesDAOTest {
     assertThat(secretSeriesDAO.getSecretSeriesByName(oldName).get().currentVersion()).isPresent();
 
     String newName = "newName";
-    secretSeriesDAO.renameSecretSeriesById(id, newName);
+    secretSeriesDAO.renameSecretSeriesById(id, newName, "creator", now);
     assertThat(secretSeriesDAO.getSecretSeriesByName(newName).get().currentVersion()).isPresent();
   }
 
@@ -196,7 +196,7 @@ public class SecretSeriesDAOTest {
     long newContentId = secretContentDAO.createSecretContent(id, "newblah",
         "checksum", "creator", null, 0, now);
 
-    secretSeriesDAO.updateSecretSeriesContentById(id, newContentId);
+    secretSeriesDAO.setCurrentVersion(id, newContentId, "creator", now);
     assertThat(secretSeriesDAO.getSecretSeriesById(id).get().currentVersion().get())
         .isEqualTo(newContentId);
   }
@@ -220,7 +220,7 @@ public class SecretSeriesDAOTest {
 
   @Test public void getDeletedSecretSeriesById() {
     long now = OffsetDateTime.now().toEpochSecond();
-    long id = secretSeriesDAO.createSecretSeries("toBeFound_getSecretSeriesByDeletedName",
+    long id = secretSeriesDAO.createSecretSeries("toBeFound_getSecretSeriesByDeletedId",
         "creator", "", null, null, now);
     long oldContentId = secretContentDAO.createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
@@ -230,8 +230,8 @@ public class SecretSeriesDAOTest {
 
     Optional<SecretSeries> deletedSecretSeries = secretSeriesDAO.getDeletedSecretSeriesById(id);
     assertThat(deletedSecretSeries).isPresent();
-    assertThat(deletedSecretSeries.get().name()).contains("toBeFound_getSecretSeriesByDeletedName");
-    assertThat(deletedSecretSeries.get().name()).isNotEqualTo("toBeFound_getSecretSeriesByDeletedName");
+    assertThat(deletedSecretSeries.get().name()).contains("toBeFound_getSecretSeriesByDeletedId");
+    assertThat(deletedSecretSeries.get().name()).isNotEqualTo("toBeFound_getSecretSeriesByDeletedId");
     assertThat(deletedSecretSeries.get().id()).isEqualTo(id);
   }
 

@@ -491,25 +491,32 @@ public class SecretDAO {
 
   /**
    * Renames the secret, specified by the secret id, to the name provided
-   * Assumes that there are no secrets with the name provided - i.e. that getSecretsByName
-   * has been called and no secrets were found
+   * We check to make sure there are no other secrets that have the same name - if so,
+   * we throw an exception to prevent multiple secrets from having the same name
    * @param secretId
    * @param name
    */
-  public void renameSecretById(long secretId, String name) {
+  public void renameSecretById(long secretId, String name, String creator) {
     checkArgument(!name.isEmpty());
+    Optional<SecretSeries> secretSeriesWithName =
+        secretSeriesDAOFactory.using(dslContext.configuration()).getSecretSeriesByName(name);
+    if(secretSeriesWithName.isPresent()) {
+      throw new IllegalArgumentException(
+          String.format("name %s already used by an existing secret in keywhiz", name));
+    }
 
     secretSeriesDAOFactory.using(dslContext.configuration())
-        .renameSecretSeriesById(secretId, name);
+        .renameSecretSeriesById(secretId, name, creator, OffsetDateTime.now().toEpochSecond());
   }
 
   /**
-   * Deletes the series and all associated version of the given secret series name.
+   * Updates the Secret Content ID for the given Secret
    *
    */
-  public void updateSecretsCurrent(long secretId, long secretContentId) {
+  public void setCurrentSecretVersionBySecretId(long secretId, long secretContentId, String updater) {
     secretSeriesDAOFactory.using(dslContext.configuration())
-        .updateSecretSeriesContentById(secretId, secretContentId);
+        .setCurrentVersion(secretId, secretContentId, updater,
+        OffsetDateTime.now().toEpochSecond());
   }
 
   /**
