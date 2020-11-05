@@ -168,6 +168,73 @@ public class SecretSeriesDAOTest {
     assertThat(secretSeriesDAO.getSecretSeriesById(id)).isEmpty();
   }
 
+  @Test public void renameSecretSeriesById() {
+    long now = OffsetDateTime.now().toEpochSecond();
+    String oldName = "toBeRenamed_renameSecretSeriesById";
+    long id = secretSeriesDAO.createSecretSeries(oldName,
+        "creator", "", null, null, now);
+    long contentId = secretContentDAO.createSecretContent(id, "blah",
+        "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
+    assertThat(secretSeriesDAO.getSecretSeriesByName(oldName).get().currentVersion()).isPresent();
+
+    String newName = "newName";
+    secretSeriesDAO.renameSecretSeriesById(id, newName, "creator", now);
+    assertThat(secretSeriesDAO.getSecretSeriesByName(newName).get().currentVersion()).isPresent();
+  }
+
+  @Test public void updateSecretSeriesContentById() {
+    long now = OffsetDateTime.now().toEpochSecond();
+    long id = secretSeriesDAO.createSecretSeries("toBeUpdated_updateSecretSeriesContentById",
+        "creator", "", null, null, now);
+    long oldContentId = secretContentDAO.createSecretContent(id, "blah",
+        "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(id, oldContentId, "creator", now);
+    assertThat(secretSeriesDAO.getSecretSeriesById(id).get().currentVersion().get())
+        .isEqualTo(oldContentId);
+
+    long newContentId = secretContentDAO.createSecretContent(id, "newblah",
+        "checksum", "creator", null, 0, now);
+
+    secretSeriesDAO.setCurrentVersion(id, newContentId, "creator", now);
+    assertThat(secretSeriesDAO.getSecretSeriesById(id).get().currentVersion().get())
+        .isEqualTo(newContentId);
+  }
+
+  @Test public void getSecretSeriesByDeletedName() {
+    long now = OffsetDateTime.now().toEpochSecond();
+    long id = secretSeriesDAO.createSecretSeries("toBeFound_getSecretSeriesByDeletedName",
+        "creator", "", null, null, now);
+    long oldContentId = secretContentDAO.createSecretContent(id, "blah",
+        "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(id, oldContentId, "creator", now);
+    secretSeriesDAO.deleteSecretSeriesById(id);
+
+    List<SecretSeries> deletedSecretSeries =
+        secretSeriesDAO.getSecretSeriesByDeletedName("toBeFound_getSecretSeriesByDeletedName");
+    assertThat(deletedSecretSeries.size()).isEqualTo(1);
+    assertThat(deletedSecretSeries.get(0).name()).contains("toBeFound_getSecretSeriesByDeletedName");
+    assertThat(deletedSecretSeries.get(0).name()).isNotEqualTo("toBeFound_getSecretSeriesByDeletedName");
+    assertThat(deletedSecretSeries.get(0).id()).isEqualTo(id);
+  }
+
+  @Test public void getDeletedSecretSeriesById() {
+    long now = OffsetDateTime.now().toEpochSecond();
+    long id = secretSeriesDAO.createSecretSeries("toBeFound_getSecretSeriesByDeletedId",
+        "creator", "", null, null, now);
+    long oldContentId = secretContentDAO.createSecretContent(id, "blah",
+        "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(id, oldContentId, "creator", now);
+    secretSeriesDAO.deleteSecretSeriesById(id);
+    assertThat(secretSeriesDAO.getSecretSeriesById(id)).isEmpty();
+
+    Optional<SecretSeries> deletedSecretSeries = secretSeriesDAO.getDeletedSecretSeriesById(id);
+    assertThat(deletedSecretSeries).isPresent();
+    assertThat(deletedSecretSeries.get().name()).contains("toBeFound_getSecretSeriesByDeletedId");
+    assertThat(deletedSecretSeries.get().name()).isNotEqualTo("toBeFound_getSecretSeriesByDeletedId");
+    assertThat(deletedSecretSeries.get().id()).isEqualTo(id);
+  }
+
   @Test public void getNonExistentSecretSeries() {
     assertThat(secretSeriesDAO.getSecretSeriesByName("non-existent")).isEmpty();
     assertThat(secretSeriesDAO.getSecretSeriesById(-2328)).isEmpty();

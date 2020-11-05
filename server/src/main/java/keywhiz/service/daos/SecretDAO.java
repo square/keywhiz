@@ -47,7 +47,6 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -422,6 +421,47 @@ public class SecretDAO {
   }
 
   /**
+   *
+   * @param secretId, the secret's id
+   * @param versionIdx the first index to select in a list of versions sorted by creation time
+   * @param numVersions the number of versions after versionIdx to select in the list of versions
+   * @return all versions of a deleted secret, including the secret's content for each version,
+   * matching input parameters or Optional.absent().
+   */
+  public Optional<ImmutableList<SecretSeriesAndContent>> getDeletedSecretVersionsBySecretId(long secretId,
+      int versionIdx, int numVersions) {
+    checkArgument(versionIdx >= 0);
+    checkArgument(numVersions >= 0);
+
+    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+
+    Optional<SecretSeries> series = secretSeriesDAO.getDeletedSecretSeriesById(secretId);
+    if (series.isPresent()) {
+      SecretSeries s = series.get();
+      Optional<ImmutableList<SecretContent>> contents =
+          secretContentDAO.getSecretVersionsBySecretId(secretId, versionIdx, numVersions);
+      if (contents.isPresent()) {
+        ImmutableList.Builder<SecretSeriesAndContent> b = new ImmutableList.Builder<>();
+        b.addAll(contents.get()
+            .stream()
+            .map(c ->SecretSeriesAndContent.of(s, c))
+            .collect(toList()));
+
+        return Optional.of(b.build());
+      }
+    }
+
+    return Optional.empty();
+  }
+
+  public List<SecretSeries> getSecretsWithDeletedName(String name) {
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+
+    return secretSeriesDAO.getSecretSeriesByDeletedName(name);
+  }
+
+  /**
    * @param name of secret series for which to reset secret version
    * @param versionId The identifier for the desired current version
    * @param updater the user to be linked to this update
@@ -447,6 +487,36 @@ public class SecretDAO {
 
     secretSeriesDAOFactory.using(dslContext.configuration())
         .deleteSecretSeriesByName(name);
+  }
+
+  /**
+   * Renames the secret, specified by the secret id, to the name provided
+   * We check to make sure there are no other secrets that have the same name - if so,
+   * we throw an exception to prevent multiple secrets from having the same name
+   * @param secretId
+   * @param name
+   */
+  public void renameSecretById(long secretId, String name, String creator) {
+    checkArgument(!name.isEmpty());
+    Optional<SecretSeries> secretSeriesWithName =
+        secretSeriesDAOFactory.using(dslContext.configuration()).getSecretSeriesByName(name);
+    if(secretSeriesWithName.isPresent()) {
+      throw new IllegalArgumentException(
+          String.format("name %s already used by an existing secret in keywhiz", name));
+    }
+
+    secretSeriesDAOFactory.using(dslContext.configuration())
+        .renameSecretSeriesById(secretId, name, creator, OffsetDateTime.now().toEpochSecond());
+  }
+
+  /**
+   * Updates the Secret Content ID for the given Secret
+   *
+   */
+  public void setCurrentSecretVersionBySecretId(long secretId, long secretContentId, String updater) {
+    secretSeriesDAOFactory.using(dslContext.configuration())
+        .setCurrentVersion(secretId, secretContentId, updater,
+        OffsetDateTime.now().toEpochSecond());
   }
 
   /**

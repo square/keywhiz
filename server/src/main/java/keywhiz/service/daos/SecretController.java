@@ -191,7 +191,6 @@ public class SecretController {
         .map(s -> SanitizedSecret.of(s.getKey(), s.getValue()))
         .collect(toList());
   }
-
   /**
    * @param idx the first index to select in a list of secrets sorted by creation time
    * @param num the number of secrets after idx to select in the list of secrets
