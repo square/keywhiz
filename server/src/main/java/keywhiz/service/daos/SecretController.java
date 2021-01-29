@@ -127,12 +127,14 @@ public class SecretController {
   }
 
   /**
+   * @param expireMinTime timestamp for closest expiry to include (may be overridden by cursor)
    * @param expireMaxTime timestamp for farthest expiry to include
    * @param limit         limit on number of results to return
    * @param cursor        cursor to be used to enforce pagination
    * @return all existing sanitized secrets and their groups matching criteria.
    */
   public SanitizedSecretWithGroupsListAndCursor getSanitizedSecretsWithGroupsAndCursor(
+      @Nullable Long expireMinTime,
       @Nullable Long expireMaxTime,
       @Nullable Integer limit,
       @Nullable SecretRetrievalCursor cursor) {
@@ -146,7 +148,7 @@ public class SecretController {
     }
 
     if (cursor == null) {
-      secrets = secretDAO.getSecrets(expireMaxTime, null, null, null, updatedLimit);
+      secrets = secretDAO.getSecrets(expireMaxTime, null, expireMinTime, null, updatedLimit);
     } else {
       secrets = secretDAO.getSecrets(expireMaxTime, null, cursor.expiry(), cursor.name(),
           updatedLimit);

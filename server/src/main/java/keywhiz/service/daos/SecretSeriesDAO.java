@@ -224,7 +224,7 @@ public class SecretSeriesDAO {
           .on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID))
           .where(SECRETS.CURRENT.isNotNull())
           .getQuery();
-    select.addOrderBy(SECRETS_CONTENT.EXPIRY.asc().nullsLast(), SECRETS.NAME.asc().nullsLast());
+    select.addOrderBy(SECRETS_CONTENT.EXPIRY.asc(), SECRETS.NAME.asc());
 
     // Set an upper bound on expiration dates
     if (expireMaxTime != null && expireMaxTime > 0) {
