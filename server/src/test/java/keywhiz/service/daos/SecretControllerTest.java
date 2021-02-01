@@ -132,7 +132,7 @@ public class SecretControllerTest {
     SecretRetrievalCursor cursor = null;
     do {
       SanitizedSecretWithGroupsListAndCursor retrievedSecretsAndCursor =
-          secretController.getSanitizedSecretsWithGroupsAndCursor(expireMaxTime, limit, cursor);
+          secretController.getSanitizedSecretsWithGroupsAndCursor(null, expireMaxTime, limit, cursor);
       cursor = retrievedSecretsAndCursor.decodedCursor();
 
       List<SanitizedSecretWithGroups> secrets = retrievedSecretsAndCursor.secrets();

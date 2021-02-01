@@ -625,38 +625,44 @@ public class SecretResourceTest {
         .build());
 
     // check limiting by expiry
-    List<SanitizedSecretWithGroups> s1 = listExpiringV4HandlingCursor(now + 86400 * 3, null);
+    List<SanitizedSecretWithGroups> s1 = listExpiringV4HandlingCursor(null,now + 86400 * 3, null);
     List<String> s1Names = s1.stream().map(s -> s.secret().name()).collect(toList());
     assertListContainsSecretsWithNames(s1Names, ImmutableList.of("secret27", "secret28"));
     assertListDoesNotContainSecretsWithNames(s1Names, ImmutableList.of("secret26"));
 
     // check varying batch size limits
-    List<SanitizedSecretWithGroups> s2 = listExpiringV4HandlingCursor(now + 86400 * 5, 5);
+    List<SanitizedSecretWithGroups> s2 = listExpiringV4HandlingCursor(null, now + 86400 * 5, 5);
     List<String> s2Names = s2.stream().map(s -> s.secret().name()).collect(toList());
     assertListContainsSecretsWithNames(s2Names, ImmutableList.of("secret27", "secret28", "secret26"));
 
-    List<SanitizedSecretWithGroups> s3 = listExpiringV4HandlingCursor(now + 86400 * 5, 2);
+    List<SanitizedSecretWithGroups> s3 = listExpiringV4HandlingCursor(null,now + 86400 * 5, 2);
     List<String> s3Names = s3.stream().map(s -> s.secret().name()).collect(toList());
     assertListContainsSecretsWithNames(s3Names, ImmutableList.of("secret27", "secret28", "secret26"));
 
-    List<SanitizedSecretWithGroups> s4 = listExpiringV4HandlingCursor(now + 86400 * 5, 1);
+    List<SanitizedSecretWithGroups> s4 = listExpiringV4HandlingCursor(null,now + 86400 * 5, 1);
     List<String> s4Names = s4.stream().map(s -> s.secret().name()).collect(toList());
     assertListContainsSecretsWithNames(s4Names, ImmutableList.of("secret27", "secret28", "secret26"));
 
     // check max expiration limit with small batch size
-    List<SanitizedSecretWithGroups> s5 = listExpiringV4HandlingCursor(now + 86400 * 3, 1);
+    List<SanitizedSecretWithGroups> s5 = listExpiringV4HandlingCursor(null,now + 86400 * 3, 1);
     List<String> s5Names = s5.stream().map(s -> s.secret().name()).collect(toList());
     assertListContainsSecretsWithNames(s5Names, ImmutableList.of("secret27", "secret28"));
     assertListDoesNotContainSecretsWithNames(s5Names, ImmutableList.of("secret26"));
+
+    // check limiting by min expiry
+    List<SanitizedSecretWithGroups> s6 = listExpiringV4HandlingCursor(now + 90000,now + 86400 * 4, null);
+    List<String> s6Names = s6.stream().map(s -> s.secret().name()).collect(toList());
+    assertListContainsSecretsWithNames(s6Names, ImmutableList.of("secret28", "secret26"));
+    assertListDoesNotContainSecretsWithNames(s6Names, ImmutableList.of("secret27"));
   }
 
-  private List<SanitizedSecretWithGroups> listExpiringV4HandlingCursor(Long maxTime, Integer limit)
+  private List<SanitizedSecretWithGroups> listExpiringV4HandlingCursor(Long minTime, Long maxTime, Integer limit)
       throws Exception {
     List<SanitizedSecretWithGroups> allRetrievedSecrets = new ArrayList<>();
     SecretRetrievalCursor cursor = null;
     do {
       SanitizedSecretWithGroupsListAndCursor retrievedSecretsAndCursor =
-          listExpiringV4(maxTime, limit, cursor);
+          listExpiringV4(minTime, maxTime, limit, cursor);
       cursor = retrievedSecretsAndCursor.decodedCursor();
 
       List<SanitizedSecretWithGroups> secrets = retrievedSecretsAndCursor.secrets();
@@ -1036,16 +1042,29 @@ public class SecretResourceTest {
     });
   }
 
-  SanitizedSecretWithGroupsListAndCursor listExpiringV4(Long time, Integer limit, SecretRetrievalCursor cursor) throws IOException {
+  SanitizedSecretWithGroupsListAndCursor listExpiringV4(Long minTime, Long maxTime, Integer limit, SecretRetrievalCursor cursor) throws IOException {
     String requestURL = "/automation/v2/secrets/expiring/v4";
     // This should probably be replaced with a proper query library
-    if (time != null || limit != null || cursor != null) {
+    if (minTime != null || maxTime != null || limit != null || cursor != null) {
       requestURL += "?";
 
       boolean firstQueryParam = true;
-      if (time != null) {
+      if (minTime != null) {
+        // Redundant, but avoids copy-paste errors if another query param is added.
+        if(!firstQueryParam) {
+          requestURL += "&";
+        }
+        requestURL += "minTime=";
+        requestURL += minTime.toString();
+        firstQueryParam = false;
+      }
+
+      if (maxTime != null) {
+        if(!firstQueryParam) {
+          requestURL += "&";
+        }
         requestURL += "maxTime=";
-        requestURL += time.toString();
+        requestURL += maxTime.toString();
         firstQueryParam = false;
       }
 

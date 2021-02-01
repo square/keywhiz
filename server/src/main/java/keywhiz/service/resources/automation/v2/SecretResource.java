@@ -354,6 +354,7 @@ public class SecretResource {
    * If this method returns a cursor, that cursor should be passed back into this method until the
    * returned cursor is null.  This allows pagination.
    *
+   * @param minTime timestamp for nearest expiry to include; if null, defaults to current time
    * @param maxTime timestamp for farthest expiry to include (exclusive)
    * @param limit   maximum number of secrets and groups to return
    * @param cursor  input allowing the server to return paginated output (as returned from this
@@ -369,6 +370,7 @@ public class SecretResource {
   @Produces(APPLICATION_JSON)
   public SanitizedSecretWithGroupsListAndCursor secretListingExpiringV4(
       @Auth AutomationClient automationClient,
+      @QueryParam("minTime")  Long minTime,
       @QueryParam("maxTime") Long maxTime,
       @QueryParam("limit") Integer limit,
       @QueryParam("cursor") String cursor) {
@@ -376,7 +378,7 @@ public class SecretResource {
     if (cursor != null) {
       cursorDecoded = SecretRetrievalCursor.fromUrlEncodedString(cursor);
     }
-    return secretControllerReadOnly.getSanitizedSecretsWithGroupsAndCursor(maxTime, limit,
+    return secretControllerReadOnly.getSanitizedSecretsWithGroupsAndCursor(minTime, maxTime, limit,
         cursorDecoded);
   }
 
