@@ -18,6 +18,7 @@ package keywhiz.service.providers;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -27,6 +28,7 @@ import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.CertificatePrincipal;
 import keywhiz.auth.mutualssl.SimplePrincipal;
+import keywhiz.auth.mutualssl.SpiffePrincipal;
 import keywhiz.service.config.ClientAuthConfig;
 import keywhiz.service.config.ClientAuthTypeConfig;
 import keywhiz.service.daos.ClientDAO;
@@ -63,6 +65,7 @@ public class ClientAuthenticatorTest {
           null, null, true, false);
 
   private static Principal certPrincipal;
+  private static Principal spiffePrincipal;
 
   // certstrap init --common-name "KeywhizAuth"
   // certstrap request-cert --common-name principal --ou organizational-unit
@@ -174,7 +177,9 @@ public class ClientAuthenticatorTest {
     X509Certificate clientCert = (X509Certificate) cf.generateCertificate(
         new ByteArrayInputStream(clientPem.getBytes(UTF_8)));
     certPrincipal = new CertificatePrincipal(clientCert.getSubjectDN().toString(),
-        new X509Certificate[] {clientCert});
+        new X509Certificate[] { clientCert });
+
+    spiffePrincipal = new SpiffePrincipal(new URI(clientSpiffeStr));
 
     authenticator = new ClientAuthenticator(clientDAO, clientDAO, clientAuthConfig);
 
@@ -193,6 +198,10 @@ public class ClientAuthenticatorTest {
 
   @Test public void retrievesClientIfPresent_certPrincipal() {
     assertThat(authenticator.authenticate(certPrincipal, false)).isEqualTo(Optional.of(client));
+  }
+
+  @Test public void retrievesClientIfPresent_spiffePrincipal() {
+    assertThat(authenticator.authenticate(spiffePrincipal, false)).isEqualTo(Optional.of(client));
   }
 
   @Test public void rejectsDisabledClients() {
@@ -223,6 +232,26 @@ public class ClientAuthenticatorTest {
         Optional.of(newClient));
   }
 
+  @Test public void createsDbRecordForNewClient_whenConfigured_spiffePrincipal()
+      throws URISyntaxException {
+    ApiDate now = ApiDate.now();
+    Client newClient =
+        new Client(2345L, "new-client", "desc", null, now, "automatic", now, "automatic",
+            null, null, true, false
+        );
+
+    // lookup doesn't find client
+    when(clientDAO.getClientByName("new-client")).thenReturn(Optional.empty());
+
+    // a new DB record is created
+    when(clientDAO.createClient(eq("new-client"), eq("automatic"), any(), any())).thenReturn(2345L);
+    when(clientDAO.getClientById(2345L)).thenReturn(Optional.of(newClient));
+
+    assertThat(
+        authenticator.authenticate(new SpiffePrincipal(new URI("spiffe://example.org/new-client")),
+            true)).isEqualTo(Optional.of(newClient));
+  }
+
   @Test public void doesNotCreateDbRecordForNewClient_whenNotConfigured() {
     ApiDate now = ApiDate.now();
     Client newClient =
@@ -243,9 +272,37 @@ public class ClientAuthenticatorTest {
     verify(clientDAO, never()).createClient(anyString(), anyString(), anyString(), any());
   }
 
+  @Test public void doesNotCreateDbRecordForNewClient_whenNotConfigured_spiffePrincipal()
+      throws URISyntaxException {
+    ApiDate now = ApiDate.now();
+    Client newClient =
+        new Client(2345L, "new-client", "desc", null, now, "automatic", now, "automatic",
+            null, null, true, false
+        );
+
+    // lookup doesn't find client
+    when(clientDAO.getClientByName("new-client")).thenReturn(Optional.empty());
+
+    // a new DB record should not be created, but mock the DAO to create a client if called
+    when(clientDAO.createClient(eq("new-client"), eq("automatic"), any(), any())).thenReturn(2345L);
+    when(clientDAO.getClientById(2345L)).thenReturn(Optional.of(newClient));
+
+    assertThat(
+        authenticator.authenticate(new SpiffePrincipal(new URI("spiffe://example.org/new-client")),
+            false)).isEmpty();
+
+    // the authenticator should not have tried to create the new client
+    verify(clientDAO, never()).createClient(anyString(), anyString(), anyString(), any());
+  }
+
   @Test public void updatesClientLastSeen() {
     assertThat(authenticator.authenticate(simplePrincipal, true)).isPresent();
     verify(clientDAO, times(1)).sawClient(any(), eq(simplePrincipal));
+  }
+
+  @Test public void updatesClientLastSeen_spiffePrincipal() {
+    assertThat(authenticator.authenticate(spiffePrincipal, true)).isPresent();
+    verify(clientDAO, times(1)).sawClient(any(), eq(spiffePrincipal));
   }
 
   @Test(expected = NotAuthorizedException.class)
@@ -294,7 +351,7 @@ public class ClientAuthenticatorTest {
         new ByteArrayInputStream(multipleSpiffePem.getBytes(UTF_8)));
     Principal multipleSpiffePrincipal =
         new CertificatePrincipal(multipleSpiffeClientCert.getSubjectDN().toString(),
-            new X509Certificate[] {multipleSpiffeClientCert});
+            new X509Certificate[] { multipleSpiffeClientCert });
 
     // Use only the (malformatted) SPIFFE IDs to retrieve a client (which should fail)
     when(clientAuthTypeConfig.useCommonName()).thenReturn(false);
@@ -310,7 +367,7 @@ public class ClientAuthenticatorTest {
         new ByteArrayInputStream(multipleUriPem.getBytes(UTF_8)));
     Principal multipleUriPrincipal =
         new CertificatePrincipal(multipleUriClientCert.getSubjectDN().toString(),
-            new X509Certificate[] {multipleUriClientCert});
+            new X509Certificate[] { multipleUriClientCert });
 
     // Use only the (malformatted) URIs to retrieve a client (which should fail)
     when(clientAuthTypeConfig.useCommonName()).thenReturn(false);

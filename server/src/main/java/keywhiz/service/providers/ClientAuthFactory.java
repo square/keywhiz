@@ -35,6 +35,7 @@ import javax.ws.rs.NotAuthorizedException;
 import keywhiz.KeywhizConfig;
 import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.CertificatePrincipal;
+import keywhiz.auth.mutualssl.SpiffePrincipal;
 import keywhiz.service.config.ClientAuthConfig;
 import keywhiz.service.config.XfccSourceConfig;
 import keywhiz.service.daos.ClientDAO;
@@ -107,10 +108,10 @@ public class ClientAuthFactory {
     // on the security context of this request
     if (possibleXfccConfig.isEmpty()) {
       // The XFCC header is not used; use the security context of this request to identify the client
-      return authenticateClientFromCertificate(requestPrincipal);
+      return authenticateClientFromPrincipal(requestPrincipal);
     } else {
       return authorizeClientFromXfccHeader(possibleXfccConfig.get(), xfccHeaderValues,
-          requestPrincipal);
+          requestPrincipal, containerRequest);
     }
   }
 
@@ -134,11 +135,33 @@ public class ClientAuthFactory {
   }
 
   private Client authorizeClientFromXfccHeader(XfccSourceConfig xfccConfig,
-      List<String> xfccHeaderValues, Principal requestPrincipal) {
+      List<String> xfccHeaderValues, Principal requestPrincipal,
+      ContainerRequest containerRequest) {
     // Do not allow the XFCC header to be set by all incoming traffic. This throws a
     // NotAuthorizedException when the traffic is not coming from a source allowed to set the
     // header.
     validateXfccHeaderAllowed(xfccConfig, requestPrincipal);
+
+    Optional<String> callerSpiffeIdHeader = Optional.ofNullable(xfccConfig.callerSpiffeIdHeader());
+    List<String> callerSpiffeIdList = callerSpiffeIdHeader.map(
+        header -> Optional.ofNullable(containerRequest.getRequestHeader(header))
+            .orElse(List.of()))
+        .orElse(List.of());
+    int size = callerSpiffeIdList.size();
+
+    Optional<URI> callerSpiffeId = callerSpiffeIdHeader.flatMap(
+        header -> ClientAuthenticator.getSpiffeIdFromHeader(containerRequest, header));
+
+    if (size > 1 || size == 1 && callerSpiffeId.isEmpty()) {
+      throw new NotAuthorizedException(format(
+          "Invalid caller Spiffe Id header. It should contain only one URI and follow Spiffe Id format. size: %d, header: %s",
+          size, callerSpiffeIdList));
+    }
+
+    if (callerSpiffeId.isPresent()) {
+      SpiffePrincipal spiffePrincipal = new SpiffePrincipal(callerSpiffeId.get());
+      return authenticateClientFromPrincipal(spiffePrincipal);
+    }
 
     // Extract client information from the XFCC header
     X509Certificate clientCert =
@@ -149,9 +172,9 @@ public class ClientAuthFactory {
 
     CertificatePrincipal certificatePrincipal =
         new CertificatePrincipal(clientCert.getSubjectDN().toString(),
-            new X509Certificate[] {clientCert});
+            new X509Certificate[] { clientCert });
 
-    return authenticateClientFromCertificate(certificatePrincipal);
+    return authenticateClientFromPrincipal(certificatePrincipal);
   }
 
   private void validateXfccHeaderAllowed(XfccSourceConfig xfccConfig, Principal requestPrincipal) {
@@ -296,7 +319,7 @@ public class ClientAuthFactory {
     return clientAuthConfig.createMissingClients();
   }
 
-  private Client authenticateClientFromCertificate(Principal clientPrincipal) {
+  private Client authenticateClientFromPrincipal(Principal clientPrincipal) {
     Optional<Client> possibleClient =
         authenticator.authenticate(clientPrincipal, createMissingClient());
     return possibleClient.orElseThrow(() -> new NotAuthorizedException(
