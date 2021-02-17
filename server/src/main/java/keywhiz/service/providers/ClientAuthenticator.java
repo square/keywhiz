@@ -12,12 +12,14 @@ import java.util.stream.Collectors;
 import javax.ws.rs.NotAuthorizedException;
 import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.CertificatePrincipal;
+import keywhiz.auth.mutualssl.SpiffePrincipal;
 import keywhiz.service.config.ClientAuthConfig;
 import keywhiz.service.daos.ClientDAO;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
+import org.glassfish.jersey.server.ContainerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,6 +122,10 @@ public class ClientAuthenticator {
   }
 
   static Optional<String> getClientName(Principal principal) {
+    if (principal instanceof SpiffePrincipal) {
+      return Optional.of(((SpiffePrincipal) principal).getClientName());
+    }
+
     X500Name name = new X500Name(principal.getName());
     RDN[] rdns = name.getRDNs(BCStyle.CN);
     if (rdns.length == 0) {
@@ -129,20 +135,23 @@ public class ClientAuthenticator {
   }
 
   static Optional<URI> getSpiffeId(Principal principal) {
-    if (!(principal instanceof CertificatePrincipal)) {
-      // A SPIFFE ID can only be parsed from a principal with a certificate
-      return Optional.empty();
+    if (principal instanceof CertificatePrincipal) {
+      // This chain is either from the XFCC header's "Cert" field, which includes only the
+      // client certificate rather than the chain, or from the CertificateSecurityContext
+      // configured by Keywhiz' ClientCertificateFilter, which sets it based on
+      // X509Certificate[] chain =
+      //        (X509Certificate[]) context.getProperty("javax.servlet.request.X509Certificate");
+      // which appears to place the leaf as the zero-index entry in the chain.
+      X509Certificate cert = ((CertificatePrincipal) principal).getCertificateChain()
+          .get(0);
+      return getSpiffeIdFromCertificate(cert);
     }
 
-    // This chain is either from the XFCC header's "Cert" field, which includes only the
-    // client certificate rather than the chain, or from the CertificateSecurityContext
-    // configured by Keywhiz' ClientCertificateFilter, which sets it based on
-    // X509Certificate[] chain =
-    //        (X509Certificate[]) context.getProperty("javax.servlet.request.X509Certificate");
-    // which appears to place the leaf as the zero-index entry in the chain.
-    X509Certificate cert = ((CertificatePrincipal) principal).getCertificateChain()
-        .get(0);
-    return getSpiffeIdFromCertificate(cert);
+    if (principal instanceof SpiffePrincipal) {
+      return Optional.of(((SpiffePrincipal) principal).getSpiffeId());
+    }
+
+    return Optional.empty();
   }
 
   static Optional<URI> getSpiffeIdFromCertificate(X509Certificate cert) {
@@ -165,14 +174,7 @@ public class ClientAuthenticator {
         .map(sanPair -> (String) sanPair.get(1))
         .collect(Collectors.toUnmodifiableList());
 
-    // https://spiffe.io/spiffe/concepts/#spiffe-verifiable-identity-document-svid
-    // > An SVID contains a single SPIFFE ID, which represents the identity of the service presenting it
-    //
-    // https://github.com/spiffe/spiffe/blob/master/standards/X509-SVID.md#2-spiffe-id
-    // > An X.509 SVID MUST contain exactly one URI SAN.
-    List<String> spiffeUriNames = providedUris.stream()
-        .filter(uri -> uri.startsWith(SPIFFE_SCHEME))
-        .collect(Collectors.toUnmodifiableList());
+    List<String> spiffeUriNames = spiffeUriNames(providedUris);
 
     if (spiffeUriNames.size() > 1) {
       logger.warn("Got multiple SPIFFE URIs from certificate: {}", spiffeUriNames);
@@ -196,5 +198,47 @@ public class ClientAuthenticator {
             return Optional.empty();
           }
         });
+  }
+
+  static Optional<URI> getSpiffeIdFromHeader(ContainerRequest containerRequest,
+      String spiffeIdHeader) {
+    List<String> spiffeIdHeaderValues =
+        Optional.ofNullable(containerRequest.getRequestHeader(spiffeIdHeader)).orElse(List.of());
+    List<String> spiffeUriNames = spiffeUriNames(spiffeIdHeaderValues);
+
+    if (spiffeUriNames.isEmpty()) {
+      logger.warn("No SPIFFE URI found from header {}", spiffeIdHeader);
+      return Optional.empty();
+    } else if (spiffeUriNames.size() > 1) {
+      logger.warn("Got multiple SPIFFE URIs from header {}: {}", spiffeIdHeader, spiffeUriNames);
+      return Optional.empty();
+    } else if (spiffeIdHeaderValues.size() > 1) {
+      logger.warn(
+          "Multiple URIs are not allowed in the header {} that includes a SPIFFE URI (URIs: {})",
+          spiffeIdHeader, spiffeIdHeaderValues);
+      return Optional.empty();
+    }
+
+    String uri = spiffeUriNames.get(0);
+    try {
+      return Optional.of(new URI(uri));
+    } catch (URISyntaxException e) {
+      logger.warn(
+          format("Error parsing SPIFFE URI (%s) from the header %s as a URI", uri,
+              spiffeIdHeader),
+          e);
+      return Optional.empty();
+    }
+  }
+
+  private static List<String> spiffeUriNames(List<String> uris) {
+    // https://spiffe.io/spiffe/concepts/#spiffe-verifiable-identity-document-svid
+    // > An SVID contains a single SPIFFE ID, which represents the identity of the service presenting it
+    //
+    // https://github.com/spiffe/spiffe/blob/master/standards/X509-SVID.md#2-spiffe-id
+    // > An X.509 SVID MUST contain exactly one URI SAN.
+    return uris.stream()
+        .filter(uri -> uri.startsWith(SPIFFE_SCHEME))
+        .collect(Collectors.toUnmodifiableList());
   }
 }

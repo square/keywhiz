@@ -18,6 +18,7 @@ package keywhiz.service.providers;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -44,6 +45,8 @@ import org.mockito.junit.MockitoRule;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 public class ClientAuthFactoryTest {
@@ -55,6 +58,17 @@ public class ClientAuthFactoryTest {
   private static final Client client =
       new Client(0, clientName, null, clientSpiffe, null, null, null, null, null, null, true,
           false);
+
+  private static final String newClientName = "new-principal";
+  private static final String newClientSpiffe = "spiffe://example.org/new-principal";
+  private static final Client newClient =
+      new Client(123L, newClientName, null, newClientSpiffe, null, null, null, null, null, null,
+          true,
+          false);
+
+  private static final String callerSpiffeHeaderName = "x-caller-spiffe-id";
+  private static final String nonExistentClientSpiffe =
+      "spiffe://example.org/non-existent-principal";
 
   private static Principal xfccPrincipal;
   private static final String xfccName = "principal-allowed-for-xfcc";
@@ -144,12 +158,12 @@ public class ClientAuthFactoryTest {
     X509Certificate clientCert = (X509Certificate) cf.generateCertificate(
         new ByteArrayInputStream(clientPem.getBytes(UTF_8)));
     clientPrincipal = new CertificatePrincipal(clientCert.getSubjectDN().toString(),
-        new X509Certificate[] {clientCert});
+        new X509Certificate[] { clientCert });
 
     X509Certificate xfccCert = (X509Certificate) cf.generateCertificate(
         new ByteArrayInputStream(xfccPem.getBytes(UTF_8)));
     xfccPrincipal = new CertificatePrincipal(xfccCert.getSubjectDN().toString(),
-        new X509Certificate[] {xfccCert});
+        new X509Certificate[] { xfccCert });
 
     factory = new ClientAuthFactory(clientDAO, clientAuthConfig);
 
@@ -193,6 +207,52 @@ public class ClientAuthFactoryTest {
     assertThat(factory.provide(request, httpServletRequest)).isEqualTo(client);
   }
 
+  @Test public void returnsClientWhenClientPresent_fromXfccHeader_customSpiffeIdHeader() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(xfccSourceConfig.callerSpiffeIdHeader()).thenReturn(callerSpiffeHeaderName);
+    when(request.getRequestHeader(callerSpiffeHeaderName)).thenReturn(List.of(clientSpiffe));
+
+    assertThat(factory.provide(request, httpServletRequest)).isEqualTo(client);
+  }
+
+  @Test
+  public void returnsClientWhenClientPresent_fromXfccHeader_customSpiffeIdHeader_fallbackToXfccWhenNoValue() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(xfccSourceConfig.callerSpiffeIdHeader()).thenReturn(callerSpiffeHeaderName);
+
+    assertThat(factory.provide(request, httpServletRequest)).isEqualTo(client);
+  }
+
+  @Test public void returnsNewClientWhenClientNotPresent_fromXfccHeader_customSpiffeIdHeader()
+      throws URISyntaxException {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(xfccSourceConfig.callerSpiffeIdHeader()).thenReturn(callerSpiffeHeaderName);
+    when(request.getRequestHeader(callerSpiffeHeaderName)).thenReturn(List.of(newClientSpiffe));
+
+    // Create missing clients
+    when(clientAuthConfig.createMissingClients()).thenReturn(true);
+    // lookup doesn't find client
+    when(clientDAO.getClientByName(newClientName)).thenReturn(Optional.empty());
+    // a new DB record is created
+    when(clientDAO.createClient(eq(newClientName), eq("automatic"), any(),
+        eq(new URI(newClientSpiffe)))).thenReturn(123L);
+    when(clientDAO.getClientById(123L)).thenReturn(Optional.of(newClient));
+
+    assertThat(factory.provide(request, httpServletRequest)).isEqualTo(newClient);
+  }
+
   @Test(expected = NotAuthorizedException.class)
   public void rejectsXfcc_requesterAuthMissing() {
     when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
@@ -224,6 +284,19 @@ public class ClientAuthFactoryTest {
     when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
 
     when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of(xfccName));
+    when(xfccSourceConfig.allowedSpiffeIds()).thenReturn(List.of());
+
+    factory.provide(request, httpServletRequest);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_requesterNameNotAllowed_requesterSpiffeNotAllowed() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(xfccSourceConfig.allowedClientNames()).thenReturn(List.of());
     when(xfccSourceConfig.allowedSpiffeIds()).thenReturn(List.of());
 
     factory.provide(request, httpServletRequest);
@@ -316,6 +389,47 @@ public class ClientAuthFactoryTest {
 
     when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
         List.of(format("By=%s", xfccName)));
+
+    factory.provide(request, httpServletRequest);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_customSpiffeIdHeader_invalidSpiffe() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(xfccSourceConfig.callerSpiffeIdHeader()).thenReturn(callerSpiffeHeaderName);
+    when(request.getRequestHeader(callerSpiffeHeaderName)).thenReturn(List.of("not-spiffe-id"));
+
+    factory.provide(request, httpServletRequest);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_customSpiffeIdHeader_multipleSpiffe() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(xfccSourceConfig.callerSpiffeIdHeader()).thenReturn(callerSpiffeHeaderName);
+    when(request.getRequestHeader(callerSpiffeHeaderName)).thenReturn(
+        List.of(clientSpiffe, newClientSpiffe));
+
+    factory.provide(request, httpServletRequest);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void rejectsXfcc_customSpiffeIdHeader_clientNotPresent() {
+    when(httpServletRequest.getLocalPort()).thenReturn(xfccAllowedPort);
+    when(request.getRequestHeader(ClientAuthFactory.XFCC_HEADER_NAME)).thenReturn(
+        List.of(xfccHeader));
+    when(securityContext.getUserPrincipal()).thenReturn(xfccPrincipal);
+
+    when(xfccSourceConfig.callerSpiffeIdHeader()).thenReturn(callerSpiffeHeaderName);
+    when(request.getRequestHeader(callerSpiffeHeaderName)).thenReturn(
+        List.of(nonExistentClientSpiffe));
 
     factory.provide(request, httpServletRequest);
   }
