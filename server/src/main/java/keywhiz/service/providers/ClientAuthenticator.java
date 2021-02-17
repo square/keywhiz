@@ -51,6 +51,16 @@ public class ClientAuthenticator {
     this.clientAuthConfig = clientAuthConfig;
   }
 
+  /**
+   * Retrieve a client based on the name and/or SPIFFE ID included in the given
+   * principal.
+   *
+   * @param principal an identification for a client in Keywhiz
+   * @param createMissingClient whether to create the client (with no secrets or
+   *                            groups assigned) if it does not exist
+   * @return the requested client, or Optional.empty() if it does not
+   * exist and createMissingClient was not set
+   */
   public Optional<Client> authenticate(Principal principal, boolean createMissingClient) {
     // Try to retrieve clients based on the client name and SPIFFE ID
     Optional<String> possibleClientName = getClientName(principal);
@@ -200,22 +210,34 @@ public class ClientAuthenticator {
         });
   }
 
+  /**
+   * Get a spiffe ID from a header, which must contain at most one entry and have
+   * that entry match the expected format for a SPIFFE URI. (If the header contains
+   * more than one entry, or the entry does not match SPIFFE URI format, Optional.empty()
+   * will be returned instead.)
+   *
+   * @param containerRequest the information included in a request to Keywhiz
+   * @param spiffeIdHeader the name of the header which should contain at most one SPIFFE URI
+   * @return the SPIFFE URI extracted from the header, or Optional.empty() if the header
+   * was missing or malformatted
+   */
   static Optional<URI> getSpiffeIdFromHeader(ContainerRequest containerRequest,
       String spiffeIdHeader) {
     List<String> spiffeIdHeaderValues =
         Optional.ofNullable(containerRequest.getRequestHeader(spiffeIdHeader)).orElse(List.of());
-    List<String> spiffeUriNames = spiffeUriNames(spiffeIdHeaderValues);
+    if (spiffeIdHeaderValues.size() > 1) {
+      logger.warn(
+          "Multiple header values are not allowed in the header {} that includes a SPIFFE URI (URIs: {})",
+          spiffeIdHeader, spiffeIdHeaderValues);
+      return Optional.empty();
+    }
 
+    List<String> spiffeUriNames = spiffeUriNames(spiffeIdHeaderValues);
     if (spiffeUriNames.isEmpty()) {
       logger.warn("No SPIFFE URI found from header {}", spiffeIdHeader);
       return Optional.empty();
     } else if (spiffeUriNames.size() > 1) {
       logger.warn("Got multiple SPIFFE URIs from header {}: {}", spiffeIdHeader, spiffeUriNames);
-      return Optional.empty();
-    } else if (spiffeIdHeaderValues.size() > 1) {
-      logger.warn(
-          "Multiple URIs are not allowed in the header {} that includes a SPIFFE URI (URIs: {})",
-          spiffeIdHeader, spiffeIdHeaderValues);
       return Optional.empty();
     }
 
@@ -225,8 +247,7 @@ public class ClientAuthenticator {
     } catch (URISyntaxException e) {
       logger.warn(
           format("Error parsing SPIFFE URI (%s) from the header %s as a URI", uri,
-              spiffeIdHeader),
-          e);
+              spiffeIdHeader), e);
       return Optional.empty();
     }
   }

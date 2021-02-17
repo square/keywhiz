@@ -81,15 +81,52 @@ public class ClientAuthFactory {
     this.clientAuthConfig = clientAuthConfig;
   }
 
+  /**
+   * Extracts a client (which may be an AutomationClient--see AutomationClientAuthFactory)
+   * from the input data. This client may be identified in multiple ways.
+   *
+   * The input request comes from a TLS connection to a port on the Keywhiz server.
+   *
+   * The input request data either identifies a Keywhiz client directly, or identifies
+   * a trusted proxy of some sort which is forwarding information about a Keywhiz
+   * client. The forwarded information may be a certificate or a client name.
+   *
+   * WARNING: This code assumes that a proxy will _always_ set the x-forwarded-client-cert
+   * header, even if it _also_ sets other headers (such as the caller ID header exposed
+   * in Keywhiz' configuration). This is fragile and should probably be removed, so that
+   * the two headers (and any other headers set by a proxy) are handled independently.
+   *
+   * Each port that the Keywhiz server exposes must support either direct client
+   * connections, or proxy connections with forwarded client data, but never both. Every
+   * proxy must be added to an allowlist in Keywhiz' configuration, and only allowlisted
+   * proxies can be trusted to forward client information.
+   *
+   * This method identifies the client or proxy from the TLS connection to Keywhiz,
+   * confirms that the connection's port and proxy (if present) are allowed by Keywhiz'
+   * configuration, and then extracts the real client data from the forwarded information
+   * if a proxy was used. The ClientAuthenticator handles the actual lookup of client data.
+   *
+   * @param containerRequest information about the entity that connected to Keywhiz (a
+   *                         client or a proxy forwarding client data)
+   * @param httpServletRequest information about the connection to Keywhiz (specifically,
+   *                           the port on which the connection was made)
+   * @return the client identified by this request, if present
+   */
   public Client provide(ContainerRequest containerRequest,
       HttpServletRequest httpServletRequest) {
-    // Ports must either always send an x-forwarded-client-cert header, or
-    // never send this header. This also throws an error if a single port
-    // has multiple configurations.
+    // Ports must either always be used by a proxy (sending an
+    // x-forwarded-client-cert header or caller ID header), or never
+    // be used by a proxy.
+    // This throws an error if a single port has multiple configurations.
     int requestPort = httpServletRequest.getLocalPort();
     Optional<XfccSourceConfig> possibleXfccConfig =
         getXfccConfigForPort(requestPort);
 
+    // Check whether the XFCC header was set to determine whether client information is
+    // being forwarded.
+    // WARNING: This code assumes that the XFCC header will always be set by the proxy
+    // EVEN IF the callerSpiffeId header is also set! (If both headers are set, only
+    // the callerSpiffeIdHeader identifies the client.)
     List<String> xfccHeaderValues =
         Optional.ofNullable(containerRequest.getRequestHeader(XFCC_HEADER_NAME)).orElse(List.of());
 
@@ -99,19 +136,27 @@ public class ClientAuthFactory {
           requestPort, possibleXfccConfig.isEmpty() ? "never" : "only", XFCC_HEADER_NAME));
     }
 
-    // Extract information about the requester. This may be a Keywhiz client, or it may be a proxy
-    // forwarding the real Keywhiz client information in the x-forwarded-client-certs header
-    Principal requestPrincipal = getPrincipal(containerRequest).orElseThrow(
+    // Extract information about the entity that connected directly to Keywhiz.
+    // This must be identified from the request's security context, rather than
+    // easily modified information like a header.
+    //
+    // This entity may be a Keywhiz client, or it may be a proxy
+    // forwarding the real Keywhiz client information.
+    Principal connectedPrincipal = getPrincipal(containerRequest).orElseThrow(
         () -> new NotAuthorizedException("Not authorized as Keywhiz client"));
 
     // Extract client information based on the x-forwarded-client-cert header or
     // on the security context of this request
     if (possibleXfccConfig.isEmpty()) {
-      // The XFCC header is not used; use the security context of this request to identify the client
-      return authenticateClientFromPrincipal(requestPrincipal);
+      // The XFCC header is not used; use the security context of this request to
+      // identify the client
+      return authenticateClientFromPrincipal(connectedPrincipal);
     } else {
-      return authorizeClientFromXfccHeader(possibleXfccConfig.get(), xfccHeaderValues,
-          requestPrincipal, containerRequest);
+      // Verify that the entity that connected directly to Keywhiz is allowed to
+      // forward client data, then use either the XFCC header or a caller-ID header to
+      // identify the client.
+      return authenticateClientFromForwardedData(possibleXfccConfig.get(), xfccHeaderValues,
+          connectedPrincipal, containerRequest);
     }
   }
 
@@ -134,36 +179,56 @@ public class ClientAuthFactory {
     }
   }
 
-  private Client authorizeClientFromXfccHeader(XfccSourceConfig xfccConfig,
-      List<String> xfccHeaderValues, Principal requestPrincipal,
+  private Client authenticateClientFromForwardedData(XfccSourceConfig xfccConfig,
+      List<String> xfccHeaderValues, Principal connectedPrincipal,
       ContainerRequest containerRequest) {
-    // Do not allow the XFCC header to be set by all incoming traffic. This throws a
-    // NotAuthorizedException when the traffic is not coming from a source allowed to set the
-    // header.
-    validateXfccHeaderAllowed(xfccConfig, requestPrincipal);
+    // Do not allow client identification data (the callerSpiffeIdHeader or the
+    // XFCC header) to be set by entities which are not explicitly allowlisted
+    // in Keywhiz' configuration. This throws a NotAuthorizedException when the
+    // traffic is not coming from a source allowed to forward client identification
+    // data in these headers.
+    validateForwardedClientDataAllowed(xfccConfig, connectedPrincipal);
 
-    Optional<String> callerSpiffeIdHeader = Optional.ofNullable(xfccConfig.callerSpiffeIdHeader());
-    List<String> callerSpiffeIdList = callerSpiffeIdHeader.map(
-        header -> Optional.ofNullable(containerRequest.getRequestHeader(header))
-            .orElse(List.of()))
-        .orElse(List.of());
-    int size = callerSpiffeIdList.size();
+    // Extract information from the header which, if present, will contain the client's
+    // SPIFFE ID. If this header is set the XFCC header MUST NOT be used to identify
+    // a client.
+    Optional<String> callerSpiffeIdHeaderName =
+        Optional.ofNullable(xfccConfig.callerSpiffeIdHeader());
 
-    Optional<URI> callerSpiffeId = callerSpiffeIdHeader.flatMap(
-        header -> ClientAuthenticator.getSpiffeIdFromHeader(containerRequest, header));
-
-    if (size > 1 || size == 1 && callerSpiffeId.isEmpty()) {
-      throw new NotAuthorizedException(format(
-          "Invalid caller Spiffe Id header. It should contain only one URI and follow Spiffe Id format. size: %d, header: %s",
-          size, callerSpiffeIdList));
+    // If the callerSpiffeIdHeader is set, use it to authenticate the client.
+    // Throw an exception if it was malformed, but do not fall back to other
+    // headers since they likely do not contain the client information.
+    if (callerSpiffeIdHeaderName.isPresent() &&
+        containerRequest.getRequestHeader(callerSpiffeIdHeaderName.get()).size() > 0) {
+      return authenticateClientFromCallerSpiffeIdHeader(containerRequest,
+          callerSpiffeIdHeaderName.get());
+    } else {
+      // Fall back to the XFCC header only if the callerSpiffeId header was not present
+      return authenticateClientFromXfccHeader(xfccHeaderValues);
     }
+  }
 
-    if (callerSpiffeId.isPresent()) {
-      SpiffePrincipal spiffePrincipal = new SpiffePrincipal(callerSpiffeId.get());
-      return authenticateClientFromPrincipal(spiffePrincipal);
-    }
+  /**
+   * Extracts client information from the callerSpiffeIdHeader and retrieves the client if present,
+   * throwing exceptions if the header is malformatted or the client is absent.
+   */
+  private Client authenticateClientFromCallerSpiffeIdHeader(ContainerRequest containerRequest,
+      String header) {
+    // Retrieve the client's SPIFFE ID from the input header
+    URI callerSpiffeId =
+        ClientAuthenticator.getSpiffeIdFromHeader(containerRequest, header)
+            .orElseThrow(() -> new NotAuthorizedException(
+                format("unable to parse client SPIFFE ID from %s header", header)));
 
-    // Extract client information from the XFCC header
+    SpiffePrincipal spiffePrincipal = new SpiffePrincipal(callerSpiffeId);
+    return authenticateClientFromPrincipal(spiffePrincipal);
+  }
+
+  /**
+   * Extracts client information from the XFCC header and retrieves the client if present, throwing
+   * exceptions if the header is malformatted or the client is absent.
+   */
+  private Client authenticateClientFromXfccHeader(List<String> xfccHeaderValues) {
     X509Certificate clientCert =
         getClientCertFromXfccHeaderEnvoyFormatted(xfccHeaderValues).orElseThrow(() ->
             new NotAuthorizedException(
@@ -172,12 +237,21 @@ public class ClientAuthFactory {
 
     CertificatePrincipal certificatePrincipal =
         new CertificatePrincipal(clientCert.getSubjectDN().toString(),
-            new X509Certificate[] { clientCert });
+            new X509Certificate[] {clientCert});
 
     return authenticateClientFromPrincipal(certificatePrincipal);
   }
 
-  private void validateXfccHeaderAllowed(XfccSourceConfig xfccConfig, Principal requestPrincipal) {
+  /**
+   * Checks that the specified principal identifies a proxy which is trusted
+   * to forward client information to Keywhiz, based on the input information
+   * and allowlists in Keywhiz' configuration.
+   *
+   * @param xfccConfig Keywhiz' configuration for proxies
+   * @param requestPrincipal the entity which connected to Keywhiz using a port
+   *                         that only proxies are allowed to use
+   */
+  private void validateForwardedClientDataAllowed(XfccSourceConfig xfccConfig, Principal requestPrincipal) {
     if (clientAuthConfig == null || clientAuthConfig.xfccConfigs() == null) {
       throw new NotAuthorizedException(
           format(
