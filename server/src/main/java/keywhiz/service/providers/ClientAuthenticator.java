@@ -217,27 +217,27 @@ public class ClientAuthenticator {
    * will be returned instead.)
    *
    * @param containerRequest the information included in a request to Keywhiz
-   * @param spiffeIdHeader the name of the header which should contain at most one SPIFFE URI
+   * @param spiffeIdHeaderName the name of the header which should contain at most one SPIFFE URI
    * @return the SPIFFE URI extracted from the header, or Optional.empty() if the header
    * was missing or malformatted
    */
   static Optional<URI> getSpiffeIdFromHeader(ContainerRequest containerRequest,
-      String spiffeIdHeader) {
+      String spiffeIdHeaderName) {
     List<String> spiffeIdHeaderValues =
-        Optional.ofNullable(containerRequest.getRequestHeader(spiffeIdHeader)).orElse(List.of());
+        Optional.ofNullable(containerRequest.getRequestHeader(spiffeIdHeaderName)).orElse(List.of());
     if (spiffeIdHeaderValues.size() > 1) {
       logger.warn(
           "Multiple header values are not allowed in the header {} that includes a SPIFFE URI (URIs: {})",
-          spiffeIdHeader, spiffeIdHeaderValues);
+          spiffeIdHeaderName, spiffeIdHeaderValues);
       return Optional.empty();
     }
 
     List<String> spiffeUriNames = spiffeUriNames(spiffeIdHeaderValues);
     if (spiffeUriNames.isEmpty()) {
-      logger.warn("No SPIFFE URI found from header {}", spiffeIdHeader);
+      logger.warn("No SPIFFE URI found from header {}", spiffeIdHeaderName);
       return Optional.empty();
     } else if (spiffeUriNames.size() > 1) {
-      logger.warn("Got multiple SPIFFE URIs from header {}: {}", spiffeIdHeader, spiffeUriNames);
+      logger.warn("Got multiple SPIFFE URIs from header {}: {}", spiffeIdHeaderName, spiffeUriNames);
       return Optional.empty();
     }
 
@@ -247,7 +247,7 @@ public class ClientAuthenticator {
     } catch (URISyntaxException e) {
       logger.warn(
           format("Error parsing SPIFFE URI (%s) from the header %s as a URI", uri,
-              spiffeIdHeader), e);
+              spiffeIdHeaderName), e);
       return Optional.empty();
     }
   }

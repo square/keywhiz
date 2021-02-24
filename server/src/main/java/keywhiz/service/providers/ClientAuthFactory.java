@@ -114,22 +114,22 @@ public class ClientAuthFactory {
    */
   public Client provide(ContainerRequest containerRequest,
       HttpServletRequest httpServletRequest) {
-    // Ports must either always be used by a proxy (sending an
-    // x-forwarded-client-cert header or caller ID header), or never
-    // be used by a proxy.
-    // This throws an error if a single port has multiple configurations.
+    // Check whether this port is configured to be used by a proxy.
+    // If this configuration is present, traffic on this port _must_
+    // identify its clients using the x-forwarded-client-cert header or
+    // caller ID header.
+    // If the configuration is not present, traffic _must_ identify its
+    // clients using the request's security context.
     int requestPort = httpServletRequest.getLocalPort();
     Optional<XfccSourceConfig> possibleXfccConfig =
         getXfccConfigForPort(requestPort);
 
-    // Check whether the XFCC header was set to determine whether client information is
-    // being forwarded.
-    // WARNING: This code assumes that the XFCC header will always be set by the proxy
-    // EVEN IF the callerSpiffeId header is also set! (If both headers are set, only
-    // the callerSpiffeIdHeader identifies the client.)
     List<String> xfccHeaderValues =
         Optional.ofNullable(containerRequest.getRequestHeader(XFCC_HEADER_NAME)).orElse(List.of());
 
+    // WARNING: This code assumes that the XFCC header will always be set by the proxy
+    // EVEN IF the callerSpiffeId header is also set! (If both headers are set, only
+    // the callerSpiffeIdHeader identifies the client.)
     if (possibleXfccConfig.isEmpty() != xfccHeaderValues.isEmpty()) {
       throw new NotAuthorizedException(format(
           "Port %d is configured to %s receive traffic with the %s header set",
@@ -152,9 +152,7 @@ public class ClientAuthFactory {
       // identify the client
       return authenticateClientFromPrincipal(connectedPrincipal);
     } else {
-      // Verify that the entity that connected directly to Keywhiz is allowed to
-      // forward client data, then use either the XFCC header or a caller-ID header to
-      // identify the client.
+      // Use either the XFCC header or a caller-ID header to identify the client.
       return authenticateClientFromForwardedData(possibleXfccConfig.get(), xfccHeaderValues,
           connectedPrincipal, containerRequest);
     }
