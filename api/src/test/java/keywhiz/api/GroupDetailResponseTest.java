@@ -21,24 +21,30 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
+import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GroupDetailResponseTest {
-  @Test public void serializesCorrectly() throws Exception {
-    GroupDetailResponse groupDetailResponse = new GroupDetailResponse(
-        234,
-        "group-name",
-        "",
-        ApiDate.parse("2012-08-01T13:15:30.000Z"),
-        ApiDate.parse("2012-09-10T03:15:30.000Z"),
-        "creator-user",
-        "updater-user",
-        ImmutableMap.of("app", "keywhiz"),
-        ImmutableList.of(),
-        ImmutableList.of());
+  private GroupDetailResponse groupDetailResponse = new GroupDetailResponse(
+      234,
+      "group-name",
+      "",
+      ApiDate.parse("2012-08-01T13:15:30.000Z"),
+      ApiDate.parse("2012-09-10T03:15:30.000Z"),
+      "creator-user",
+      "updater-user",
+      ImmutableMap.of("app", "keywhiz"),
+      ImmutableList.of(),
+      ImmutableList.of());
 
-    assertThat(asJson(groupDetailResponse))
-        .isEqualTo(jsonFixture("fixtures/groupDetailResponse.json"));
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(groupDetailResponse), GroupDetailResponse.class)).isEqualTo(
+        groupDetailResponse);
+  }
+
+  @Test public void deserializesCorrectly() throws Exception {
+    assertThat(fromJson(jsonFixture("fixtures/groupDetailResponse.json"),
+        GroupDetailResponse.class)).isEqualTo(groupDetailResponse);
   }
 }

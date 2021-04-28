@@ -18,14 +18,20 @@ package keywhiz.api.automation.v2;
 
 import org.junit.Test;
 
+import static keywhiz.testing.JsonHelpers.asJson;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ModifyClientRequestV2Test {
-  @Test public void deserializesCorrectly() throws Exception {
-    ModifyClientRequestV2 modifyClientRequest = ModifyClientRequestV2.forName("client-name");
+  private ModifyClientRequestV2 modifyClientRequest = ModifyClientRequestV2.forName("client-name");
 
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(modifyClientRequest), ModifyClientRequestV2.class)).isEqualTo(
+        modifyClientRequest);
+  }
+
+  @Test public void deserializesCorrectly() throws Exception {
     assertThat(
         fromJson(jsonFixture("fixtures/v2/modifyClientRequest.json"), ModifyClientRequestV2.class))
         .isEqualTo(modifyClientRequest);

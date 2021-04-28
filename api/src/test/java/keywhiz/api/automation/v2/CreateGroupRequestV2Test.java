@@ -19,25 +19,31 @@ package keywhiz.api.automation.v2;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
+import static keywhiz.testing.JsonHelpers.asJson;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CreateGroupRequestV2Test {
-  @Test public void deserializesCorrectly() throws Exception {
-    CreateGroupRequestV2 createGroupRequest = CreateGroupRequestV2.builder()
-        .name("group-name")
-        .description("group-description")
-        .metadata(ImmutableMap.of("app", "group-app"))
-        .build();
+  private CreateGroupRequestV2 createGroupRequest = CreateGroupRequestV2.builder()
+      .name("group-name")
+      .description("group-description")
+      .metadata(ImmutableMap.of("app", "group-app"))
+      .build();
 
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(createGroupRequest), CreateGroupRequestV2.class)).isEqualTo(
+        createGroupRequest);
+  }
+
+  @Test public void deserializesCorrectly() throws Exception {
     assertThat(fromJson(
         jsonFixture("fixtures/v2/createGroupRequest.json"), CreateGroupRequestV2.class))
         .isEqualTo(createGroupRequest);
   }
 
   @Test(expected = IllegalStateException.class)
-  public void emptyNameFailsValidation() throws Exception {
+  public void emptyNameFailsValidation() {
     CreateGroupRequestV2.builder()
         .name("")
         .build();

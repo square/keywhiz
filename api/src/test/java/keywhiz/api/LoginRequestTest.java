@@ -18,13 +18,20 @@ package keywhiz.api;
 
 import org.junit.Test;
 
+import static keywhiz.testing.JsonHelpers.asJson;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class LoginRequestTest {
+  private LoginRequest loginRequest = LoginRequest.from("keywhizAdmin", "adminPass".toCharArray());
+
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(loginRequest), LoginRequest.class))
+        .isEqualTo(loginRequest);
+  }
+
   @Test public void deserializesCorrectly() throws Exception {
-    LoginRequest loginRequest = LoginRequest.from("keywhizAdmin", "adminPass".toCharArray());
     assertThat(fromJson(jsonFixture("fixtures/loginRequest.json"), LoginRequest.class))
         .isEqualTo(loginRequest);
   }

@@ -17,6 +17,7 @@
 package keywhiz.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import javax.annotation.Nullable;
 import keywhiz.api.model.Client;
@@ -97,5 +98,29 @@ public class ClientDetailResponse {
         client.getLastSeen(),
         groups,
         secrets);
+  }
+
+  public int hashCode() {
+    return Objects.hashCode(id, name, description, spiffeId, creationDate, updateDate, createdBy,
+        updatedBy, lastSeen, groups, secrets);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof ClientDetailResponse) {
+      ClientDetailResponse that = (ClientDetailResponse) o;
+      return Objects.equal(this.id, that.id) &&
+          Objects.equal(this.name, that.name) &&
+          Objects.equal(this.description, that.description) &&
+          Objects.equal(this.spiffeId, that.spiffeId) &&
+          Objects.equal(this.creationDate, that.creationDate) &&
+          Objects.equal(this.updateDate, that.updateDate) &&
+          Objects.equal(this.createdBy, that.createdBy) &&
+          Objects.equal(this.updatedBy, that.updatedBy) &&
+          Objects.equal(this.lastSeen, that.lastSeen) &&
+          Objects.equal(this.groups, that.groups) &&
+          Objects.equal(this.secrets, that.secrets);
+    }
+    return false;
   }
 }

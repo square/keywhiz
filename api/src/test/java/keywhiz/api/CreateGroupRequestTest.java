@@ -19,14 +19,21 @@ package keywhiz.api;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
+import static keywhiz.testing.JsonHelpers.asJson;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CreateGroupRequestTest {
+  private CreateGroupRequest createGroupRequest =
+      new CreateGroupRequest("groupName", "groupDesc", ImmutableMap.of("app", "groupApp"));
+
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(createGroupRequest), CreateGroupRequest.class))
+        .isEqualTo(createGroupRequest);
+  }
+
   @Test public void deserializesCorrectly() throws Exception {
-    CreateGroupRequest createGroupRequest =
-        new CreateGroupRequest("groupName", "groupDesc", ImmutableMap.of("app", "groupApp"));
     assertThat(fromJson(
         jsonFixture("fixtures/createGroupRequest.json"), CreateGroupRequest.class))
         .isEqualTo(createGroupRequest);

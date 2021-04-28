@@ -23,27 +23,33 @@ import keywhiz.api.model.Client;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
+import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ClientDetailResponseV2Test {
-  @Test public void serializesCorrectly() throws Exception {
-    ClientDetailResponseV2 clientDetailResponse = new AutoValue_ClientDetailResponseV2(
-        "Client Name",
-        "Client Description",
-        "spiffe//example.org/client-name",
-        OffsetDateTime.parse("2012-08-01T13:15:30Z").toEpochSecond(),
-        OffsetDateTime.parse("2012-09-10T03:15:30Z").toEpochSecond(),
-        "creator-user",
-        "updater-user",
-        Optional.of(OffsetDateTime.parse("2012-09-10T03:15:30Z").toEpochSecond())
-    );
+  private ClientDetailResponseV2 clientDetailResponse = new AutoValue_ClientDetailResponseV2(
+      "Client Name",
+      "Client Description",
+      "spiffe//example.org/client-name",
+      OffsetDateTime.parse("2012-08-01T13:15:30Z").toEpochSecond(),
+      OffsetDateTime.parse("2012-09-10T03:15:30Z").toEpochSecond(),
+      "creator-user",
+      "updater-user",
+      Optional.of(OffsetDateTime.parse("2012-09-10T03:15:30Z").toEpochSecond())
+  );
 
-    assertThat(asJson(clientDetailResponse))
-        .isEqualTo(jsonFixture("fixtures/v2/clientDetailResponse.json"));
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(clientDetailResponse), ClientDetailResponseV2.class)).isEqualTo(
+        clientDetailResponse);
   }
 
-  @Test public void serializesNullLastSeenCorrectly() throws Exception {
+  @Test public void deserializesCorrectly() throws Exception {
+    assertThat(fromJson(jsonFixture("fixtures/v2/clientDetailResponse.json"),
+        ClientDetailResponseV2.class)).isEqualTo(clientDetailResponse);
+  }
+
+  @Test public void deserializesNullLastSeenCorrectly() throws Exception {
     ApiDate createdAt = new ApiDate(1343826930);
     ApiDate updatedAt = new ApiDate(1347246930);
 
@@ -52,7 +58,9 @@ public class ClientDetailResponseV2Test {
     );
     ClientDetailResponseV2 clientDetailResponse = ClientDetailResponseV2.fromClient(client);
 
-    assertThat(asJson(clientDetailResponse))
-        .isEqualTo(jsonFixture("fixtures/v2/clientDetailResponse_LastSeenNull.json"));
+    assertThat(fromJson(jsonFixture("fixtures/v2/clientDetailResponse_LastSeenNull.json"),
+        ClientDetailResponseV2.class)).isEqualTo(clientDetailResponse);
+    assertThat(fromJson(asJson(clientDetailResponse), ClientDetailResponseV2.class)).isEqualTo(
+        clientDetailResponse);
   }
 }

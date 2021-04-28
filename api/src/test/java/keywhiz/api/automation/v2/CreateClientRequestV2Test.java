@@ -18,26 +18,32 @@ package keywhiz.api.automation.v2;
 
 import org.junit.Test;
 
+import static keywhiz.testing.JsonHelpers.asJson;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CreateClientRequestV2Test {
-  @Test public void deserializesCorrectly() throws Exception {
-    CreateClientRequestV2 createClientRequest = CreateClientRequestV2.builder()
-        .name("client-name")
-        .description("client-description")
-        .groups("client-group1", "client-group2")
-        .build();
+  private CreateClientRequestV2 createClientRequest = CreateClientRequestV2.builder()
+      .name("client-name")
+      .description("client-description")
+      .groups("client-group1", "client-group2")
+      .build();
 
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(createClientRequest), CreateClientRequestV2.class)).isEqualTo(
+        createClientRequest);
+  }
+
+  @Test public void deserializesCorrectly() throws Exception {
     assertThat(fromJson(
         jsonFixture("fixtures/v2/createClientRequest.json"), CreateClientRequestV2.class))
         .isEqualTo(createClientRequest);
   }
 
   @Test(expected = IllegalStateException.class)
-  public void emptyNameFailsValidation() throws Exception {
-     CreateClientRequestV2.builder()
+  public void emptyNameFailsValidation() {
+    CreateClientRequestV2.builder()
         .name("")
         .build();
   }

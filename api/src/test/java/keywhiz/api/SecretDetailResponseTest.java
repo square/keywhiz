@@ -22,34 +22,39 @@ import keywhiz.api.model.Group;
 import org.junit.Test;
 
 import static keywhiz.testing.JsonHelpers.asJson;
+import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SecretDetailResponseTest {
-  @Test public void serializesCorrectly() throws Exception {
-    SecretDetailResponse secretDetailResponse = new SecretDetailResponse(
-        1000,
-        "secretName",
-        "desc",
-        ApiDate.parse("2013-03-28T21:23:00.000Z"),
-        "keywhizAdmin",
-        ApiDate.parse("2013-03-28T21:23:04.159Z"),
-        "keywhizAdmin",
-        ImmutableMap.of("mode", "0660"),
-        ImmutableList.of(
-            new Group(2000,
-                      "someGroup",
-                      "groupDesc",
-                      ApiDate.parse("2013-03-28T21:29:27.465Z"),
-                      "keywhizAdmin",
-                      ApiDate.parse("2013-03-28T21:29:27.465Z"),
-                      "keywhizAdmin",
-                      ImmutableMap.of("app", "keywhiz"))
-        ),
-        ImmutableList.of());
+  private SecretDetailResponse secretDetailResponse = new SecretDetailResponse(
+      1000,
+      "secretName",
+      "desc",
+      ApiDate.parse("2013-03-28T21:23:00.000Z"),
+      "keywhizAdmin",
+      ApiDate.parse("2013-03-28T21:23:04.159Z"),
+      "keywhizAdmin",
+      ImmutableMap.of("mode", "0660"),
+      ImmutableList.of(
+          new Group(2000,
+              "someGroup",
+              "groupDesc",
+              ApiDate.parse("2013-03-28T21:29:27.465Z"),
+              "keywhizAdmin",
+              ApiDate.parse("2013-03-28T21:29:27.465Z"),
+              "keywhizAdmin",
+              ImmutableMap.of("app", "keywhiz"))
+      ),
+      ImmutableList.of());
 
+  @Test public void roundTripSerialization() throws Exception {
+    assertThat(fromJson(asJson(secretDetailResponse), SecretDetailResponse.class)).isEqualTo(
+        secretDetailResponse);
+  }
 
-    assertThat(asJson(secretDetailResponse))
-        .isEqualTo(jsonFixture("fixtures/secretDetailResponse.json"));
+  @Test public void deserializesCorrectly() throws Exception {
+    assertThat(fromJson(jsonFixture("fixtures/secretDetailResponse.json"),
+        SecretDetailResponse.class)).isEqualTo(secretDetailResponse);
   }
 }
