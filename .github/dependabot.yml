@@ -1,0 +1,90 @@
+version: 2
+updates:
+- package-ecosystem: maven
+  directory: "/"
+  schedule:
+    interval: weekly
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: com.fasterxml.jackson.core:jackson-annotations
+    versions:
+    - ">= 2.10.0.a, < 2.10.1"
+  - dependency-name: com.fasterxml.jackson.datatype:jackson-datatype-jdk8
+    versions:
+    - ">= 2.10.0.a, < 2.10.1"
+  - dependency-name: com.fasterxml.jackson.datatype:jackson-datatype-jsr310
+    versions:
+    - ">= 2.10.0.a, < 2.10.1"
+  - dependency-name: com.squareup.okhttp3:okhttp
+    versions:
+    - ">= 4.a, < 5"
+  - dependency-name: com.squareup.okhttp3:okhttp-urlconnection
+    versions:
+    - ">= 4.a, < 5"
+  - dependency-name: io.dropwizard:dropwizard-auth
+    versions:
+    - ">= 2.a, < 3"
+  - dependency-name: io.dropwizard:dropwizard-client
+    versions:
+    - ">= 2.a, < 3"
+  - dependency-name: io.dropwizard:dropwizard-db
+    versions:
+    - ">= 2.a, < 3"
+  - dependency-name: io.dropwizard:dropwizard-jackson
+    versions:
+    - ">= 2.a, < 3"
+  - dependency-name: io.dropwizard:dropwizard-testing
+    versions:
+    - ">= 2.a, < 3"
+  - dependency-name: io.dropwizard:dropwizard-views
+    versions:
+    - ">= 2.a, < 3"
+  - dependency-name: io.dropwizard:dropwizard-views-mustache
+    versions:
+    - ">= 2.a, < 3"
+  - dependency-name: mysql:mysql-connector-java
+    versions:
+    - ">= 6.a, < 7"
+  - dependency-name: org.hibernate:hibernate-validator
+    versions:
+    - ">= 6.a, < 7"
+  - dependency-name: org.flywaydb:flyway-core
+    versions:
+    - 7.5.3
+    - 7.5.4
+    - 7.6.0
+    - 7.7.0
+    - 7.7.1
+    - 7.7.2
+    - 7.7.3
+  - dependency-name: org.flywaydb:flyway-maven-plugin
+    versions:
+    - 7.5.3
+    - 7.5.4
+    - 7.6.0
+    - 7.7.0
+    - 7.7.1
+    - 7.7.2
+    - 7.7.3
+  - dependency-name: org.mockito:mockito-core
+    versions:
+    - 3.7.7
+    - 3.8.0
+  - dependency-name: mysql:mysql-connector-java
+    versions:
+    - 8.0.23
+  - dependency-name: org.jooq:jooq-codegen-maven
+    versions:
+    - 3.14.6
+  - dependency-name: org.jooq:jooq-codegen
+    versions:
+    - 3.14.6
+  - dependency-name: org.jooq:jooq-meta
+    versions:
+    - 3.14.6
+  - dependency-name: org.jooq:jooq
+    versions:
+    - 3.14.6
+  - dependency-name: org.bouncycastle:bcprov-jdk15on
+    versions:
+    - "1.68"
