@@ -35,6 +35,7 @@ import keywhiz.cli.commands.DeleteAction;
 import keywhiz.cli.commands.DescribeAction;
 import keywhiz.cli.commands.ListAction;
 import keywhiz.cli.commands.ListVersionsAction;
+import keywhiz.cli.commands.RenameAction;
 import keywhiz.cli.commands.RollbackAction;
 import keywhiz.cli.commands.UnassignAction;
 import keywhiz.cli.commands.UpdateAction;
@@ -45,6 +46,7 @@ import keywhiz.cli.configs.DeleteActionConfig;
 import keywhiz.cli.configs.DescribeActionConfig;
 import keywhiz.cli.configs.ListActionConfig;
 import keywhiz.cli.configs.ListVersionsActionConfig;
+import keywhiz.cli.configs.RenameActionConfig;
 import keywhiz.cli.configs.RollbackActionConfig;
 import keywhiz.cli.configs.UnassignActionConfig;
 import keywhiz.cli.configs.UpdateActionConfig;
@@ -60,7 +62,19 @@ import static java.lang.String.format;
 public class CommandExecutor {
   public static final String APP_VERSION = "2.1";
 
-  public enum Command { LOGIN, LIST, DESCRIBE, ADD, UPDATE, DELETE, ASSIGN, UNASSIGN, VERSIONS, ROLLBACK }
+  public enum Command {
+    ADD,
+    ASSIGN,
+    DELETE,
+    DESCRIBE,
+    LIST,
+    LOGIN,
+    RENAME,
+    ROLLBACK,
+    UNASSIGN,
+    UPDATE,
+    VERSIONS,
+  }
 
   private final Path cookieDir = Paths.get(USER_HOME.value());
 
@@ -72,9 +86,13 @@ public class CommandExecutor {
   private final ObjectMapper mapper;
 
   @Inject
-  public CommandExecutor(CliConfiguration config, @Named("Command") @Nullable String command,
-      @Named("CommandMap") Map commands, @Named("ParentCommander") JCommander parentCommander,
-      @Named("Commander") @Nullable JCommander commander, ObjectMapper mapper) {
+  public CommandExecutor(
+      CliConfiguration config,
+      @Named("Command") @Nullable String command,
+      @Named("CommandMap") Map commands,
+      @Named("ParentCommander") JCommander parentCommander,
+      @Named("Commander") @Nullable JCommander commander,
+      ObjectMapper mapper) {
     this.command = command;
     this.commands = commands;
     this.parentCommander = parentCommander;
@@ -173,6 +191,9 @@ public class CommandExecutor {
       case ROLLBACK:
         new RollbackAction((RollbackActionConfig) commands.get(command), client).run();
         break;
+
+      case RENAME:
+        new RenameAction((RenameActionConfig) commands.get(command), client).run();
 
       case LOGIN:
         // User is already logged in at this point

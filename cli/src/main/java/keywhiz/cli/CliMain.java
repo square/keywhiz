@@ -29,6 +29,7 @@ import keywhiz.cli.configs.DescribeActionConfig;
 import keywhiz.cli.configs.ListActionConfig;
 import keywhiz.cli.configs.ListVersionsActionConfig;
 import keywhiz.cli.configs.LoginActionConfig;
+import keywhiz.cli.configs.RenameActionConfig;
 import keywhiz.cli.configs.RollbackActionConfig;
 import keywhiz.cli.configs.UnassignActionConfig;
 import keywhiz.cli.configs.UpdateActionConfig;
@@ -36,27 +37,9 @@ import keywhiz.cli.configs.UpdateActionConfig;
 /** Keywhiz ACL Command Line Management Utility */
 public class CliMain {
   public static void main(String[] args) throws Exception {
-    CliConfiguration config = new CliConfiguration();
+    ParseContext parseContext = new ParseContext();
 
-    JCommander commander = new JCommander();
-    Map<String, Object> commands = ImmutableMap.<String, Object>builder()
-        .put("login", new LoginActionConfig())
-        .put("list", new ListActionConfig())
-        .put("describe", new DescribeActionConfig())
-        .put("add", new AddActionConfig())
-        .put("update", new UpdateActionConfig())
-        .put("delete", new DeleteActionConfig())
-        .put("assign", new AssignActionConfig())
-        .put("unassign", new UnassignActionConfig())
-        .put("versions", new ListVersionsActionConfig())
-        .put("rollback", new RollbackActionConfig())
-        .build();
-    commander.setProgramName("KeyWhiz Configuration Utility");
-    commander.addObject(config);
-
-    for (Map.Entry<String, Object> entry : commands.entrySet()) {
-      commander.addCommand(entry.getKey(), entry.getValue());
-    }
+    JCommander commander = parseContext.getCommander();
 
     try {
       commander.parse(args);
@@ -68,9 +51,57 @@ public class CliMain {
 
     String command = commander.getParsedCommand();
     JCommander specificCommander = commander.getCommands().get(command);
-    Injector injector = Guice.createInjector(new CliModule(config, commander, specificCommander,
-        command, commands));
+    Injector injector = Guice.createInjector(
+        new CliModule(
+            parseContext.getConfiguration(),
+            commander,
+            specificCommander,
+            command,
+            parseContext.getCommands()));
     CommandExecutor executor = injector.getInstance(CommandExecutor.class);
     executor.executeCommand();
+  }
+
+  static class ParseContext {
+    private final CliConfiguration config;
+    private final JCommander commander;
+    private final Map<String, Object> commands;
+
+    ParseContext() {
+      config = new CliConfiguration();
+
+      commander = new JCommander();
+      commander.setProgramName("KeyWhiz Configuration Utility");
+      commander.addObject(config);
+
+      commands = newCommandMap();
+      for (Map.Entry<String, Object> entry : commands.entrySet()) {
+        commander.addCommand(entry.getKey(), entry.getValue());
+      }
+    }
+
+    public CliConfiguration getConfiguration() { return config; }
+
+    public JCommander getCommander() { return commander; }
+
+    public Map<String, Object> getCommands() { return commands; }
+
+    static Map<String, Object> newCommandMap() {
+      Map<String, Object> commands = ImmutableMap.<String, Object>builder()
+          .put("add", new AddActionConfig())
+          .put("assign", new AssignActionConfig())
+          .put("delete", new DeleteActionConfig())
+          .put("describe", new DescribeActionConfig())
+          .put("list", new ListActionConfig())
+          .put("login", new LoginActionConfig())
+          .put("rename", new RenameActionConfig())
+          .put("rollback", new RollbackActionConfig())
+          .put("unassign", new UnassignActionConfig())
+          .put("update", new UpdateActionConfig())
+          .put("versions", new ListVersionsActionConfig())
+          .build();
+
+      return commands;
+    }
   }
 }
