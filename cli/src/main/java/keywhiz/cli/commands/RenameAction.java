@@ -26,7 +26,7 @@ public class RenameAction implements Runnable {
         keywhiz.renameSecret(config.secretId, config.newName);
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
