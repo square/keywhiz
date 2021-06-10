@@ -227,6 +227,10 @@ public class KeywhizClient {
     return mapper.readValue(response, SecretDetailResponse.class);
   }
 
+  public void renameSecret(long secretId, String newName) throws IOException {
+    httpPost(baseUrl.resolve(format("/admin/secrets/rename/%d/%s", secretId, newName)), null);
+  }
+
   public void deleteSecretWithId(long secretId) throws IOException {
     httpDelete(baseUrl.resolve(format("/admin/secrets/%d", secretId)));
   }
