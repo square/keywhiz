@@ -9,6 +9,7 @@ import keywhiz.cli.configs.RenameActionConfig;
 import keywhiz.client.KeywhizClient;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -16,25 +17,29 @@ import org.mockito.junit.MockitoRule;
 public class RenameActionTest {
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
 
+  @Rule public ExpectedException thrown = ExpectedException.none();
+
   @Mock KeywhizClient keywhiz;
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void rejectsSecretIdAndSecretNameBothMissing() {
     RenameActionConfig config = new RenameActionConfig();
     config.secretId = null;
     config.secretName = null;
 
     RenameAction action = new RenameAction(config, keywhiz);
+    thrown.expect(IllegalArgumentException.class);
     action.run();
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void rejectsSecretIdAndSecretNameBothPresent() {
     RenameActionConfig config = new RenameActionConfig();
     config.secretId = 1L;
     config.secretName = "foo";
 
     RenameAction action = new RenameAction(config, keywhiz);
+    thrown.expect(IllegalArgumentException.class);
     action.run();
   }
 
