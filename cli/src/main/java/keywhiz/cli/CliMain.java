@@ -37,9 +37,9 @@ import keywhiz.cli.configs.UpdateActionConfig;
 /** Keywhiz ACL Command Line Management Utility */
 public class CliMain {
   public static void main(String[] args) throws Exception {
-    ParseContext parseContext = new ParseContext();
+    CommandLineParsingContext parsingContext = new CommandLineParsingContext();
 
-    JCommander commander = parseContext.getCommander();
+    JCommander commander = parsingContext.getCommander();
 
     try {
       commander.parse(args);
@@ -53,21 +53,21 @@ public class CliMain {
     JCommander specificCommander = commander.getCommands().get(command);
     Injector injector = Guice.createInjector(
         new CliModule(
-            parseContext.getConfiguration(),
+            parsingContext.getConfiguration(),
             commander,
             specificCommander,
             command,
-            parseContext.getCommands()));
+            parsingContext.getCommands()));
     CommandExecutor executor = injector.getInstance(CommandExecutor.class);
     executor.executeCommand();
   }
 
-  static class ParseContext {
+  static class CommandLineParsingContext {
     private final CliConfiguration config;
     private final JCommander commander;
     private final Map<String, Object> commands;
 
-    ParseContext() {
+    CommandLineParsingContext() {
       config = new CliConfiguration();
 
       commander = new JCommander();

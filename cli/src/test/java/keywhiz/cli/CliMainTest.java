@@ -11,17 +11,17 @@ import static org.junit.Assert.assertTrue;
 public class CliMainTest {
   @Test
   public void commandsMapIncludesRename() {
-    assertTrue(CliMain.ParseContext.newCommandMap().containsKey("rename"));
+    assertTrue(CliMain.CommandLineParsingContext.newCommandMap().containsKey("rename"));
   }
 
   @Test
   public void renameCommandMapsToRenameActionConfig() {
-    assertTrue(CliMain.ParseContext.newCommandMap().get("rename") instanceof RenameActionConfig);
+    assertTrue(CliMain.CommandLineParsingContext.newCommandMap().get("rename") instanceof RenameActionConfig);
   }
 
   @Test
   public void parsesRenameCommandWithId() {
-    CliMain.ParseContext context = new CliMain.ParseContext();
+    CliMain.CommandLineParsingContext context = new CliMain.CommandLineParsingContext();
     JCommander commander = context.getCommander();
     commander.parse("rename", "--id", "1", "newName");
 
@@ -35,7 +35,7 @@ public class CliMainTest {
 
   @Test
   public void parsesRenameCommandWithName() {
-    CliMain.ParseContext context = new CliMain.ParseContext();
+    CliMain.CommandLineParsingContext context = new CliMain.CommandLineParsingContext();
     JCommander commander = context.getCommander();
     commander.parse("rename", "--name", "foo", "newName");
 
