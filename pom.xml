@@ -276,7 +276,7 @@
       <dependency>
         <groupId>org.bouncycastle</groupId>
         <artifactId>bcprov-jdk15on</artifactId>
-        <version>1.68</version>
+        <version>1.69</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
@@ -286,7 +286,7 @@
       <dependency>
         <groupId>org.easymock</groupId>
         <artifactId>easymock</artifactId>
-        <version>4.2</version>
+        <version>4.3</version>
       </dependency>
       <dependency>
         <groupId>org.flywaydb</groupId>
