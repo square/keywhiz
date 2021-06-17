@@ -6,12 +6,12 @@ import com.beust.jcommander.Parameters;
 @Parameters(commandDescription = "Rename a secret")
 public class RenameActionConfig {
 
-  @Parameter(description = "<new name>", required = true)
+  @Parameter(description = "Resource type: <secret>", required = true)
+  public String resourceType;
+
+  @Parameter(names = "--oldName", description = "Resource to rename", required = true)
+  public String oldName;
+
+  @Parameter(names = "--newName", description = "New name", required = true)
   public String newName;
-
-  @Parameter(names = "--name", description = "Name of the secret to rename")
-  public String secretName;
-
-  @Parameter(names = "--id", description = "ID of the secret to rename")
-  public Long secretId;
 }
