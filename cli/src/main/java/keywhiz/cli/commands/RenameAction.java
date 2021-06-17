@@ -16,26 +16,24 @@ public class RenameAction implements Runnable {
   }
 
   @Override public void run() {
-    validate();
-
-    try {
-      if (config.secretName != null) {
-          SanitizedSecret secret = keywhiz.getSanitizedSecretByName(config.secretName);
-          keywhiz.renameSecret(secret.id(), config.newName);
-      } else if (config.secretId != null) {
-        keywhiz.renameSecret(config.secretId, config.newName);
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    switch (config.resourceType) {
+      case "secret":
+        renameSecret();
+        break;
+      default:
+        throw new IllegalArgumentException(
+            String.format(
+                "Unsupported resource type %s. Only the secret resource type can be renamed.",
+                config.resourceType));
     }
   }
 
-  void validate() {
-    boolean namePresent = config.secretName != null;
-    boolean idPresent = config.secretId != null;
-    boolean onlyOneOfNameOrIdPresent = namePresent ^ idPresent;
-    if (!onlyOneOfNameOrIdPresent) {
-      throw new IllegalArgumentException("Must specify either the name or ID of the secret to rename (but not both)");
+  private void renameSecret() {
+    try {
+      SanitizedSecret secret = keywhiz.getSanitizedSecretByName(config.oldName);
+      keywhiz.renameSecret(secret.id(), config.newName);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 }

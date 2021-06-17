@@ -22,10 +22,9 @@ public class RenameActionTest {
   @Mock KeywhizClient keywhiz;
 
   @Test
-  public void rejectsSecretIdAndSecretNameBothMissing() {
+  public void rejectsNonSecretResourceType() {
     RenameActionConfig config = new RenameActionConfig();
-    config.secretId = null;
-    config.secretName = null;
+    config.resourceType = "client";
 
     RenameAction action = new RenameAction(config, keywhiz);
     thrown.expect(IllegalArgumentException.class);
@@ -33,33 +32,7 @@ public class RenameActionTest {
   }
 
   @Test
-  public void rejectsSecretIdAndSecretNameBothPresent() {
-    RenameActionConfig config = new RenameActionConfig();
-    config.secretId = 1L;
-    config.secretName = "foo";
-
-    RenameAction action = new RenameAction(config, keywhiz);
-    thrown.expect(IllegalArgumentException.class);
-    action.run();
-  }
-
-  @Test
-  public void renamesSecretUsingSecretId() throws IOException {
-    Long secretId = 1L;
-    String newName = "bar";
-
-    RenameActionConfig config = new RenameActionConfig();
-    config.secretId = secretId;
-    config.newName = newName;
-
-    RenameAction action = new RenameAction(config, keywhiz);
-    action.run();
-
-    verify(keywhiz).renameSecret(secretId, newName);
-  }
-
-  @Test
-  public void renamesSecretUsingSecretName() throws IOException {
+  public void renamesSecret() throws IOException {
     Long secretId = 1L;
     String secretName = "foo";
     String newName = "bar";
@@ -69,7 +42,8 @@ public class RenameActionTest {
     when(keywhiz.getSanitizedSecretByName(secretName)).thenReturn(secret);
 
     RenameActionConfig config = new RenameActionConfig();
-    config.secretName = secretName;
+    config.resourceType = "secret";
+    config.oldName = secretName;
     config.newName = newName;
 
     RenameAction action = new RenameAction(config, keywhiz);
