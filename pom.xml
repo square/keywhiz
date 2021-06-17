@@ -43,7 +43,7 @@
     <guice.version>4.2.3</guice.version>
     <jackson.version>2.12.3</jackson.version>
     <jackson.databind.version>2.10.0.pr1</jackson.databind.version>
-    <jooq.version>3.14.9</jooq.version>
+    <jooq.version>3.14.11</jooq.version>
     <powermock.version>2.0.9</powermock.version>
     <slf4j.version>1.7.30</slf4j.version>
     <mysql.version>8.0.24</mysql.version>
@@ -99,7 +99,7 @@
       <dependency>
         <groupId>org.glassfish.jaxb</groupId>
         <artifactId>jaxb-xjc</artifactId>
-        <version>3.0.0</version>
+        <version>3.0.1</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jaxb</groupId>
@@ -321,7 +321,7 @@
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>3.9.0</version>
+        <version>3.11.1</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
