@@ -12,7 +12,7 @@ CREATE TABLE secrets (
   UNIQUE (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE groups (
+CREATE TABLE `groups` (
   id bigint NOT NULL AUTO_INCREMENT,
   name varchar(255) NOT NULL,
   updatedat bigint NOT NULL,
