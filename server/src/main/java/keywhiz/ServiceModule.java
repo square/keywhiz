@@ -131,17 +131,17 @@ public class ServiceModule extends AbstractModule {
 
   @Provides @Singleton SecretController secretController(SecretTransformer transformer,
       ContentCryptographer cryptographer, SecretDAOFactory secretDAOFactory,
-      AclDAOFactory aclDAOFactory) {
+      AclDAOFactory aclDAOFactory, KeywhizConfig config) {
     return new SecretController(transformer, cryptographer, secretDAOFactory.readwrite(),
-        aclDAOFactory.readwrite());
+        aclDAOFactory.readwrite(), config);
   }
 
   @Provides @Singleton
   @Readonly SecretController readonlySecretController(SecretTransformer transformer,
       ContentCryptographer cryptographer, SecretDAOFactory secretDAOFactory,
-      AclDAOFactory aclDAOFactory) {
+      AclDAOFactory aclDAOFactory, KeywhizConfig config) {
     return new SecretController(transformer, cryptographer, secretDAOFactory.readonly(),
-        aclDAOFactory.readonly());
+        aclDAOFactory.readonly(), config);
   }
 
   @Provides @Singleton
