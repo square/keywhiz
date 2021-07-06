@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static keywhiz.Tracing.setTag;
 
 /**
  * parentEndpointName login
@@ -79,6 +80,8 @@ public class SessionLoginResource {
 
     String username = request.username();
     String password = String.copyValueOf(request.password());
+
+    setTag("username", username);
 
     Optional<User> optionalUser = Optional.empty();
     try {

@@ -46,6 +46,8 @@ import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static keywhiz.Tracing.setTag;
+import static keywhiz.Tracing.trace;
 
 /**
  * Authenticates {@link Client}s from requests based on the principal present in a {@link
@@ -114,6 +116,15 @@ public class ClientAuthFactory {
    */
   public Client provide(ContainerRequest containerRequest,
       HttpServletRequest httpServletRequest) {
+    return trace("ClientAuthFactory.provide", () -> {
+      Client client = doProvide(containerRequest, httpServletRequest);
+      setTag("authenticatedClient", client.getName());
+      return client;
+    });
+  }
+
+  private Client doProvide(ContainerRequest containerRequest,
+      HttpServletRequest httpServletRequest) {
     // Check whether this port is configured to be used by a proxy.
     // If this configuration is present, traffic on this port _must_
     // identify its clients using the x-forwarded-client-cert header or
@@ -144,6 +155,7 @@ public class ClientAuthFactory {
     // forwarding the real Keywhiz client information.
     Principal connectedPrincipal = getPrincipal(containerRequest).orElseThrow(
         () -> new NotAuthorizedException("Not authorized as Keywhiz client"));
+    setTag("principal", connectedPrincipal.getName());
 
     // Extract client information based on the x-forwarded-client-cert header or
     // on the security context of this request

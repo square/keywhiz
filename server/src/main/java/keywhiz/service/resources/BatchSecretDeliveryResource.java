@@ -49,6 +49,7 @@ import java.util.List;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static keywhiz.Tracing.setTag;
 
 /**
  * parentEndpointName secret
@@ -130,9 +131,11 @@ public class BatchSecretDeliveryResource {
     logger.info("Client {} granted access to {}.", client.getName(), clientAccessibleSecrets.stream().map(s -> s.name()).collect(toList()));
     try {
       // This is only possible if all secrets are both existing AND accessible to the client
-      return existingSecrets.stream()
+      List<SecretDeliveryResponse> secrets = existingSecrets.stream()
               .map(SecretDeliveryResponse::fromSecret)
               .collect(toList());
+      setTag("nSecrets", secrets.size());
+      return secrets;
     } catch (IllegalArgumentException e) {
       logger.error(format("Failed creating batch response for secrets %s", existingSecrets.stream().map(s -> s.getName()).collect(toList())), e);
       throw new InternalServerErrorException();
