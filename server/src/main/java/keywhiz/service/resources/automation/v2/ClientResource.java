@@ -50,6 +50,8 @@ import org.slf4j.LoggerFactory;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static keywhiz.Tracing.setTag;
+import static keywhiz.Tracing.tagErrors;
 
 /**
  * parentEndpointName automation/v2-client-management
@@ -92,8 +94,15 @@ public class ClientResource {
   @Consumes(APPLICATION_JSON)
   public Response createClient(@Auth AutomationClient automationClient,
       @Valid CreateClientRequestV2 request) {
+    return tagErrors(() -> doCreateClient(automationClient, request));
+  }
+
+  private Response doCreateClient(AutomationClient automationClient,
+      CreateClientRequestV2 request) {
     String creator = automationClient.getName();
     String client = request.name();
+
+    setTag("client", client);
 
     clientDAOReadWrite.getClientByName(client).ifPresent((c) -> {
       logger.info("Automation ({}) - Client {} already exists", creator, client);

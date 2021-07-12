@@ -40,6 +40,8 @@ import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static keywhiz.Tracing.trace;
+
 public class LdapAuthenticator implements Authenticator<BasicCredentials, User> {
   private static final Logger logger = LoggerFactory.getLogger(LdapAuthenticator.class);
 
@@ -53,6 +55,10 @@ public class LdapAuthenticator implements Authenticator<BasicCredentials, User> 
 
   @Override
   public Optional<User> authenticate(BasicCredentials credentials) {
+    return trace("LdapAuthenticator.authenticate", () -> doAuthenticate(credentials));
+  }
+
+  private Optional<User> doAuthenticate(BasicCredentials credentials) {
     User user = null;
 
     try {

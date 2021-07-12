@@ -27,6 +27,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import keywhiz.api.SecretDeliveryResponse;
 import keywhiz.api.model.Client;
+import keywhiz.api.model.SanitizedSecret;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import org.slf4j.Logger;
@@ -34,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static keywhiz.Tracing.setTag;
 
 /**
  * parentEndpointName secrets
@@ -63,8 +65,10 @@ public class SecretsDeliveryResource {
   @GET
   public List<SecretDeliveryResponse> getSecrets(@Auth Client client) {
     logger.info("Client {} listed available secrets.", client.getName());
-    return aclDAO.getSanitizedSecretsFor(client).stream()
+    List<SecretDeliveryResponse> secrets = aclDAO.getSanitizedSecretsFor(client).stream()
         .map(SecretDeliveryResponse::fromSanitizedSecret)
         .collect(toList());
+    setTag("nSecrets", secrets.size());
+    return secrets;
   }
 }

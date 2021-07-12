@@ -45,6 +45,8 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static keywhiz.Tracing.setTag;
+import static keywhiz.Tracing.tagErrors;
 import static keywhiz.api.model.SanitizedSecretWithGroups.fromSecretSeriesAndContentAndGroups;
 
 /**
@@ -80,8 +82,15 @@ public class GroupResource {
   @Consumes(APPLICATION_JSON)
   public Response createGroup(@Auth AutomationClient automationClient,
       @Valid CreateGroupRequestV2 request) {
+    return tagErrors(() -> doCreateGroup(automationClient, request));
+  }
+
+  private Response doCreateGroup(AutomationClient automationClient,
+      CreateGroupRequestV2 request) {
     String creator = automationClient.getName();
     String group = request.name();
+
+    setTag("group", group);
 
     groupDAOReadWrite.getGroup(group).ifPresent((g) -> {
       logger.info("Automation ({}) - Group {} already exists", creator, group);
