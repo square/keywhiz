@@ -18,11 +18,13 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
+import keywhiz.KeywhizConfig;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SanitizedSecretWithGroups;
@@ -50,13 +52,15 @@ public class SecretController {
   private final ContentCryptographer cryptographer;
   private final SecretDAO secretDAO;
   private final AclDAO aclDAO;
+  private final KeywhizConfig config;
 
   public SecretController(SecretTransformer transformer, ContentCryptographer cryptographer,
-      SecretDAO secretDAO, AclDAO aclDAO) {
+      SecretDAO secretDAO, AclDAO aclDAO, KeywhizConfig config) {
     this.transformer = transformer;
     this.cryptographer = cryptographer;
     this.secretDAO = secretDAO;
     this.aclDAO = aclDAO;
+    this.config = config;
   }
 
   /**
@@ -210,6 +214,7 @@ public class SecretController {
   public SecretBuilder builder(String name, String secret, String creator, long expiry) {
     checkArgument(!name.isEmpty());
     checkArgument(!secret.isEmpty());
+    validateSecretSize(secret);
     checkArgument(!creator.isEmpty());
     String hmac = cryptographer.computeHmac(secret.getBytes(UTF_8), "hmackey"); // Compute HMAC on base64 encoded data
     if (hmac == null) {
@@ -218,6 +223,23 @@ public class SecretController {
     String encryptedSecret = cryptographer.encryptionKeyDerivedFrom(name).encrypt(secret);
     return new SecretBuilder(transformer, secretDAO, name, encryptedSecret, hmac, creator, expiry);
   }
+
+  private void validateSecretSize(String base64EncodedSecret) {
+    if (config.getMaximumSecretSizeInBytesInclusive() == null) {
+      return;
+    }
+
+    int rawSecretLength = Base64.getDecoder().decode(base64EncodedSecret).length;
+
+    if (rawSecretLength > config.getMaximumSecretSizeInBytesInclusive()) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Secret is too large. Secret size %,d bytes exceeds maximum size of %,d bytes.",
+              rawSecretLength,
+              config.getMaximumSecretSizeInBytesInclusive()));
+    }
+  }
+
 
   /** Builder to generate new secret series or versions with. */
   public static class SecretBuilder {

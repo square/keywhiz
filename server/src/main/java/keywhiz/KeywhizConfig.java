@@ -17,6 +17,7 @@ package keywhiz;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.db.ManagedDataSource;
@@ -95,6 +96,9 @@ public class KeywhizConfig extends Configuration {
 
   @JsonProperty
   private ClientAuthConfig clientAuthConfig;
+
+  @JsonProperty
+  private Long maximumSecretSizeInBytesInclusive;
 
   public enum RowHmacCheck {
     DISABLED, DISABLED_BUT_LOG, ENFORCED
@@ -220,6 +224,13 @@ public class KeywhizConfig extends Configuration {
 
   public ClientAuthConfig getClientAuthConfig() {
     return clientAuthConfig;
+  }
+
+  public Long getMaximumSecretSizeInBytesInclusive() { return maximumSecretSizeInBytesInclusive; }
+
+  @VisibleForTesting
+  public void setMaximumSecretSizeInBytesInclusive(Long maximumSecretSizeInBytesInclusive) {
+    this.maximumSecretSizeInBytesInclusive = maximumSecretSizeInBytesInclusive;
   }
 
   public static class TemplatedDataSourceFactory extends DataSourceFactory {
