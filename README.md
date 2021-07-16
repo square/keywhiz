@@ -61,6 +61,8 @@ An example helper shell script that wraps the keywhiz-cli and sets some default 
 
     java "$TRUSTSTORE" "$TRUSTTYPE" -jar "$KEYWHIZ_CLI_JAR" -U "$KEYWHIZ_SERVER_URL" "$@"
 
+When using the CLI to add a secret, you will need to input the secret content if it is not already piped. Enter the secret content and then Ctrl+D to signal the end.
+
 Keywhiz uses [jOOQ](http://www.jooq.org/) to talk to its database.
 
 If you made changes to the database model and want to regenerate sources:
