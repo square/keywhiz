@@ -139,6 +139,7 @@ public class AddAction implements Runnable {
 
   private byte[] readSecretContent() {
     try {
+      System.out.print("Enter secret content, Ctrl+D when done: ");
       byte[] content = ByteStreams.toByteArray(stream);
       if (content.length == 0) {
         throw new RuntimeException("Secret content empty!");
