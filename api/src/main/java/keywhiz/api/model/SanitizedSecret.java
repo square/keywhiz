@@ -39,6 +39,7 @@ public abstract class SanitizedSecret {
   @JsonCreator public static SanitizedSecret of(
       @JsonProperty("id") long id,
       @JsonProperty("name") String name,
+      @JsonProperty("owner") @Nullable String owner,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("checksum") String checksum,
       @JsonProperty("createdAt") ApiDate createdAt,
@@ -56,15 +57,43 @@ public abstract class SanitizedSecret {
         (metadata == null) ? ImmutableMap.of() : ImmutableMap.copyOf(metadata);
     ImmutableMap<String, String> genOptions =
         (generationOptions == null) ? ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
-    return new AutoValue_SanitizedSecret(id, name, nullToEmpty(description), checksum, createdAt,
-        nullToEmpty(createdBy), updatedAt, nullToEmpty(updatedBy), meta, Optional.ofNullable(type),
-        genOptions, expiry, Optional.ofNullable(version), Optional.ofNullable(contentCreatedAt),
+    return new AutoValue_SanitizedSecret(
+        id,
+        name,
+        owner,
+        nullToEmpty(description),
+        checksum,
+        createdAt,
+        nullToEmpty(createdBy),
+        updatedAt,
+        nullToEmpty(updatedBy),
+        meta,
+        Optional.ofNullable(type),
+        genOptions,
+        expiry,
+        Optional.ofNullable(version),
+        Optional.ofNullable(contentCreatedAt),
         nullToEmpty(contentCreatedBy));
   }
 
   public static SanitizedSecret of(long id, String name) {
-    return of(id, name, null, "", new ApiDate(0), null, new ApiDate(0), null,
-        null, null, null, 0, null, null, null);
+    return of(
+        id,
+        name,
+        null,
+        null,
+        "",
+        new ApiDate(0),
+        null,
+        new ApiDate(0),
+        null,
+        null,
+        null,
+        null,
+        0,
+        null,
+        null,
+        null);
   }
 
   public static SanitizedSecret fromSecretSeriesAndContent(
@@ -75,6 +104,7 @@ public abstract class SanitizedSecret {
     return SanitizedSecret.of(
         series.id(),
         series.name(),
+        series.owner(),
         series.description(),
         content.hmac(),
         series.createdAt(),
@@ -101,6 +131,7 @@ public abstract class SanitizedSecret {
     return SanitizedSecret.of(
         secret.getId(),
         secret.getName(),
+        secret.getOwner(),
         secret.getDescription(),
         secret.getChecksum(),
         secret.getCreatedAt(),
@@ -119,6 +150,8 @@ public abstract class SanitizedSecret {
   @JsonProperty public abstract long id();
 
   @JsonProperty public abstract String name();
+
+  @JsonProperty @Nullable public abstract String owner();
 
   @JsonProperty public abstract String description();
 

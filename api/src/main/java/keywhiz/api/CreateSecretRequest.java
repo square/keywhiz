@@ -33,6 +33,10 @@ public class CreateSecretRequest {
 
   @Nullable
   @JsonProperty
+  public final String owner;
+
+  @Nullable
+  @JsonProperty
   public final String description;
 
   /** Base64 representation of the secret to be added. */
@@ -48,12 +52,15 @@ public class CreateSecretRequest {
   @JsonProperty
   public final long expiry;
 
-  public CreateSecretRequest(@JsonProperty("name") String name,
+  public CreateSecretRequest(
+      @JsonProperty("name") String name,
+      @JsonProperty("owner") String owner,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("content") String content,
       @JsonProperty("metadata") @Nullable ImmutableMap<String, String> metadata,
       @JsonProperty("expiry") long expiry) {
     this.name = name;
+    this.owner = owner;
     this.description = description;
     this.content = content;
     this.metadata = metadata;
@@ -61,7 +68,13 @@ public class CreateSecretRequest {
   }
 
   @Override public int hashCode() {
-    return Objects.hashCode(name, description, content, metadata, expiry);
+    return Objects.hashCode(
+        name,
+        owner,
+        description,
+        content,
+        metadata,
+        expiry);
   }
 
   @Override public boolean equals(Object o) {
@@ -69,6 +82,7 @@ public class CreateSecretRequest {
     if (o instanceof CreateSecretRequest) {
       CreateSecretRequest that = (CreateSecretRequest) o;
       if (Objects.equal(this.name, that.name) &&
+          Objects.equal(this.owner, that.owner) &&
           Objects.equal(this.description, that.description) &&
           Objects.equal(this.content, that.content) &&
           Objects.equal(this.metadata, that.metadata) &&

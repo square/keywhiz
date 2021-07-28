@@ -25,21 +25,43 @@ import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CreateSecretRequestTest {
-  private CreateSecretRequest createSecretRequest = new CreateSecretRequest(
-      "secretName",
-      "secretDesc",
-      "YXNkZGFz",
-      ImmutableMap.of("owner", "root"),
-      0);
-
   @Test public void roundTripSerialization() throws Exception {
+    CreateSecretRequest createSecretRequest = new CreateSecretRequest(
+        "secretName",
+        "secretOwner",
+        "secretDesc",
+        "YXNkZGFz",
+        ImmutableMap.of("owner", "root"),
+        0);
+
     assertThat(fromJson(asJson(createSecretRequest), CreateSecretRequest.class))
         .isEqualTo(createSecretRequest);
   }
 
-  @Test public void deserializesCorrectly() throws Exception {
+  @Test public void requestWithoutOwnerSerializesCorrectly() throws Exception {
+    CreateSecretRequest createSecretRequest = new CreateSecretRequest(
+        "secretName",
+        null,
+        "secretDesc",
+        "YXNkZGFz",
+        ImmutableMap.of("owner", "root"),
+        0);
+
     assertThat(fromJson(
         jsonFixture("fixtures/createSecretRequest.json"), CreateSecretRequest.class))
+        .isEqualTo(createSecretRequest);
+  }
+  @Test public void requestWithOwnerSerializesCorrectly() throws Exception {
+    CreateSecretRequest createSecretRequest = new CreateSecretRequest(
+        "secretName",
+        "secretOwner",
+        "secretDesc",
+        "YXNkZGFz",
+        ImmutableMap.of("owner", "root"),
+        0);
+
+    assertThat(fromJson(
+        jsonFixture("fixtures/createSecretRequestWithOwner.json"), CreateSecretRequest.class))
         .isEqualTo(createSecretRequest);
   }
 }

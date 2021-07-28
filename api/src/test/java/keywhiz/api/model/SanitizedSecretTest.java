@@ -29,6 +29,7 @@ public class SanitizedSecretTest {
   private SanitizedSecret sanitizedSecret = SanitizedSecret.of(
       767,
       "trapdoor",
+      "owner",
       "v1",
       "checksum",
       ApiDate.parse("2013-03-28T21:42:42.573Z"),
@@ -47,8 +48,31 @@ public class SanitizedSecretTest {
     assertThat(fromJson(asJson(sanitizedSecret), SanitizedSecret.class)).isEqualTo(sanitizedSecret);
   }
 
-  @Test public void deserializesCorrectly() throws Exception {
+  @Test public void secretWithoutOwnerDeserializesCorrectly() throws Exception {
+    SanitizedSecret secret = SanitizedSecret.of(
+        767,
+        "trapdoor",
+        null,
+        "v1",
+        "checksum",
+        ApiDate.parse("2013-03-28T21:42:42.573Z"),
+        "keywhizAdmin",
+        ApiDate.parse("2013-03-28T21:42:42.573Z"),
+        "keywhizAdmin",
+        ImmutableMap.of("owner", "the king"),
+        "password",
+        ImmutableMap.of("favoriteFood", "PB&J sandwich"),
+        1136214245,
+        1L,
+        ApiDate.parse("2013-03-28T21:42:42.573Z"),
+        "keywhizAdmin");
+
     assertThat(fromJson(jsonFixture("fixtures/sanitizedSecret.json"), SanitizedSecret.class))
+        .isEqualTo(secret);
+  }
+
+  @Test public void secretWithOwnerDeserializesCorrectly() throws Exception {
+    assertThat(fromJson(jsonFixture("fixtures/sanitizedSecretWithOwner.json"), SanitizedSecret.class))
         .isEqualTo(sanitizedSecret);
   }
 
@@ -57,6 +81,7 @@ public class SanitizedSecretTest {
         new Secret(
             767,
             "trapdoor",
+            "owner",
             "v1",
             () -> "foo",
             "checksum",
@@ -81,6 +106,7 @@ public class SanitizedSecretTest {
             SecretSeries.of(
                 767,
                 "trapdoor",
+                "owner",
                 "v1",
                 ApiDate.parse("2013-03-28T21:42:42.573Z"),
                 "keywhizAdmin",

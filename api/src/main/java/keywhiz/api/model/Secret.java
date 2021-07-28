@@ -42,13 +42,15 @@ public class Secret {
   /** Name of secret or the secret series. */
   private final String name;
 
+  private final String owner;
+
   private final String description;
 
   /** Base64-encoded content of this version of the secret. */
   private String secret;
   private final LazyString encryptedSecret;
   private final String checksum;
-  
+
   /** Data on the creation and update of the secret _series_ */
   private final ApiDate createdAt;
   private final String createdBy;
@@ -72,6 +74,7 @@ public class Secret {
 
   public Secret(long id,
                 String name,
+                @Nullable String owner,
                 @Nullable String description,
                 LazyString encryptedSecret,
                 String checksum,
@@ -90,6 +93,7 @@ public class Secret {
     checkArgument(!name.isEmpty());
     this.id = id;
     this.name = name;
+    this.owner = owner;
     this.description = nullToEmpty(description);
     this.encryptedSecret = checkNotNull(encryptedSecret);
     this.checksum = checksum;
@@ -115,6 +119,8 @@ public class Secret {
   public String getName() {
     return name;
   }
+
+  public String getOwner() { return owner; }
 
   /** @return Name to serialize for clients. */
   public String getDisplayName() {
@@ -192,6 +198,7 @@ public class Secret {
       Secret that = (Secret) o;
       if (Objects.equal(this.id, that.id) &&
           Objects.equal(this.name, that.name) &&
+          Objects.equal(this.owner, that.owner) &&
           Objects.equal(this.description, that.description) &&
           Objects.equal(this.getSecret(), that.getSecret()) &&
           Objects.equal(this.getChecksum(), that.getChecksum()) &&
@@ -213,8 +220,24 @@ public class Secret {
   }
 
   @Override public int hashCode() {
-    return Objects.hashCode(id, name, description, getSecret(), checksum, createdAt, createdBy, updatedAt,
-        updatedBy, metadata, type, generationOptions, expiry, version, contentCreatedAt, contentCreatedBy);
+    return Objects.hashCode(
+        id,
+        name,
+        owner,
+        description,
+        getSecret(),
+        checksum,
+        createdAt,
+        createdBy,
+        updatedAt,
+        updatedBy,
+        metadata,
+        type,
+        generationOptions,
+        expiry,
+        version,
+        contentCreatedAt,
+        contentCreatedBy);
   }
 
   @Override
@@ -222,6 +245,7 @@ public class Secret {
     return MoreObjects.toStringHelper(this)
         .add("id", id)
         .add("name", name)
+        .add("owner", owner)
         .add("description", description)
         .add("secret", "[REDACTED]")
         .add("checksum", checksum)

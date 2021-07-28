@@ -42,13 +42,21 @@ public abstract class AutomationSecretResponse {
   public static AutomationSecretResponse create(
       @JsonProperty("id") long id,
       @JsonProperty("name") String name,
+      @JsonProperty("owner") String owner,
       @JsonProperty("secret") String secret,
       @JsonProperty("creationDate") ApiDate creationDate,
       @JsonProperty("metadata") @Nullable ImmutableMap<String, String> metadata,
       @JsonProperty("groups") ImmutableList<Group> groups,
       @JsonProperty("expiry") long expiry) {
-    return new AutoValue_AutomationSecretResponse(id, name, secret, decodedLength(secret),
-        creationDate, groups, metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata),
+    return new AutoValue_AutomationSecretResponse(
+        id,
+        name,
+        owner,
+        secret,
+        decodedLength(secret),
+        creationDate,
+        groups,
+        metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata),
         expiry);
   }
 
@@ -57,6 +65,7 @@ public abstract class AutomationSecretResponse {
     return AutomationSecretResponse.create(
         secret.getId(),
         secret.getDisplayName(),
+        secret.getOwner(),
         secret.getSecret(),
         secret.getCreatedAt(),
         secret.getMetadata(),
@@ -67,6 +76,8 @@ public abstract class AutomationSecretResponse {
   @JsonProperty("id") public abstract long id();
 
   @JsonProperty("name") public abstract String name();
+
+  @JsonProperty("owner") @Nullable public abstract String owner();
 
   @JsonProperty("secret") public abstract String secret();
 

@@ -31,6 +31,7 @@ import keywhiz.api.validation.ValidBase64;
     abstract CreateSecretRequestV2 autoBuild();
 
     public abstract Builder name(String name);
+    public abstract Builder owner(String owner);
     public abstract Builder content(String content);
     public abstract Builder description(String description);
     public abstract Builder metadata(ImmutableMap<String, String> metadata);
@@ -66,6 +67,7 @@ import keywhiz.api.validation.ValidBase64;
   @SuppressWarnings("unused")
   @JsonCreator public static CreateSecretRequestV2 fromParts(
       @JsonProperty("name") String name,
+      @JsonProperty("owner") @Nullable String owner,
       @JsonProperty("content") String content,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("metadata") @Nullable Map<String, String> metadata,
@@ -74,6 +76,7 @@ import keywhiz.api.validation.ValidBase64;
       @JsonProperty("groups") @Nullable Iterable<String> groups) {
     return builder()
         .name(name)
+        .owner(owner)
         .content(content)
         .description(Strings.nullToEmpty(description))
         .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
@@ -84,6 +87,7 @@ import keywhiz.api.validation.ValidBase64;
   }
 
   @JsonProperty("name") public abstract String name();
+  @JsonProperty("owner") @Nullable public abstract String owner();
   @JsonProperty("content") @ValidBase64 public abstract String content();
   @JsonProperty("description") public abstract String description();
   @JsonProperty("metadata") public abstract ImmutableMap<String, String> metadata();
@@ -94,6 +98,7 @@ import keywhiz.api.validation.ValidBase64;
   @Override public final String toString() {
     return MoreObjects.toStringHelper(this)
         .add("name", name())
+        .add("owner", owner())
         .add("content", "[REDACTED]")
         .add("description", description())
         .add("metadata", metadata())
