@@ -80,12 +80,12 @@ public class SecretsResourceTest {
   User user = User.named("user");
   ImmutableMap<String, String> emptyMap = ImmutableMap.of();
 
-  Secret secret = new Secret(22, "name", "desc", () -> "secret", "checksum", NOW, "creator", NOW,
+  Secret secret = new Secret(22, "name", null, "desc", () -> "secret", "checksum", NOW, "creator", NOW,
       "updater", emptyMap, null, null, 1136214245, 1L, NOW, "user");
 
   SecretSeriesAndContent secretSeriesAndContent1 =
       SecretSeriesAndContent.of(
-          SecretSeries.of(1, "name1", "desc", NOW,
+          SecretSeries.of(1, "name1", null, "desc", NOW,
               "user", NOW, "user", null, emptyMap, null),
           SecretContent.of(101, 1, "blah", "checksum",
               NOW, "creator", NOW, "updater",
@@ -93,7 +93,7 @@ public class SecretsResourceTest {
 
   SecretSeriesAndContent secretSeriesAndContent2 =
       SecretSeriesAndContent.of(
-          SecretSeries.of(1, "name2", "desc", NOW,
+          SecretSeries.of(1, "name2", null, "desc", NOW,
               "user", NOW, "user", null, emptyMap, null),
           SecretContent.of(110, 1, "blah", "checksum",
               NOW, "creator", NOW, "updater",
@@ -110,9 +110,9 @@ public class SecretsResourceTest {
 
   @Test
   public void listSecrets() {
-    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc","checksum", NOW, "user", NOW, "user",
+    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", null, "desc","checksum", NOW, "user", NOW, "user",
         emptyMap, null, null, 1136214245, 125L, NOW, "user");
-    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "desc","checksum", NOW, "user", NOW, "user",
+    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", null, "desc","checksum", NOW, "user", NOW, "user",
         emptyMap, null, null, 1136214245, 250L, NOW, "user");
     when(secretController.getSanitizedSecrets(null, null)).thenReturn(ImmutableList.of(secret1, secret2));
 
@@ -122,9 +122,9 @@ public class SecretsResourceTest {
 
   @Test
   public void listSecretsBatched() {
-    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc", "checksum", NOW, "user", NOW, "user",
+    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", null, "desc", "checksum", NOW, "user", NOW, "user",
         emptyMap, null, null, 1136214245, 125L, NOW, "user");
-    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", "desc", "checksum", NOWPLUS, "user", NOWPLUS, "user",
+    SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", null, "desc", "checksum", NOWPLUS, "user", NOWPLUS, "user",
         emptyMap, null, null, 1136214245, 250L, NOW, "user");
     when(secretController.getSecretsBatched(0, 1, false)).thenReturn(ImmutableList.of(secret1));
     when(secretController.getSecretsBatched(0, 1, true)).thenReturn(ImmutableList.of(secret2));
@@ -215,9 +215,9 @@ public class SecretsResourceTest {
 
   @Test
   public void listSecretVersions() {
-    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", "desc", "checksum", NOW, "user",
+    SanitizedSecret secret1 = SanitizedSecret.of(1, "name1", null, "desc", "checksum", NOW, "user",
         NOW, "user", emptyMap, null, null, 1136214245, 125L, NOW, "user");
-    SanitizedSecret secret2 = SanitizedSecret.of(1, "name1", "desc", "checksum2", NOWPLUS, "user",
+    SanitizedSecret secret2 = SanitizedSecret.of(1, "name1", null, "desc", "checksum2", NOWPLUS, "user",
         NOWPLUS, "user", emptyMap, null, null, 1136214245, 250L, NOW, "user");
 
     when(secretDAO.getSecretVersionsByName("name1", 0, 10)).thenReturn(
@@ -246,7 +246,7 @@ public class SecretsResourceTest {
 
   @Test
   public void rollbackSuccess() {
-    Secret secret1 = new Secret(1, "name1", "desc", () -> "secret",
+    Secret secret1 = new Secret(1, "name1", null, "desc", () -> "secret",
         "checksum", NOW, "user", NOW, "user", emptyMap, null,
         null, 1136214245, 125L, NOW, "user");
 
@@ -407,10 +407,10 @@ public class SecretsResourceTest {
   }
 
   @Test public void findDeletedSecretsByName() {
-    SecretSeries secretSeries1 = SecretSeries.of(1, "blah.name1.blah", "desc", NOW,
+    SecretSeries secretSeries1 = SecretSeries.of(1, "blah.name1.blah", null, "desc", NOW,
                 "user", NOW, "user", null, emptyMap, null);
 
-    SecretSeries secretSeries2 = SecretSeries.of(2, "blahblah.name1.blahh", "desc", NOW,
+    SecretSeries secretSeries2 = SecretSeries.of(2, "blahblah.name1.blahh", null, "desc", NOW,
         "user", NOW, "user", null, emptyMap, null);
 
     when(secretDAO.getSecretsWithDeletedName("name1"))

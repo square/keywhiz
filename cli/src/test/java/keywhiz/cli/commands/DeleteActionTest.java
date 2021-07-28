@@ -50,7 +50,7 @@ public class DeleteActionTest {
   DeleteActionConfig deleteActionConfig;
   DeleteAction deleteAction;
 
-  Secret secret = new Secret(0, "secret", null, () -> "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null, null, null,
+  Secret secret = new Secret(0, "secret", null, null, () -> "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null, null, null,
       ImmutableMap.of(), 0, 1L, NOW, null);
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
 

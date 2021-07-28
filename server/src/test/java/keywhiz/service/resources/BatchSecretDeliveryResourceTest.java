@@ -57,12 +57,12 @@ public class BatchSecretDeliveryResourceTest {
     final Client client = new Client(0, "principal", null, null, null, null, null, null, null, null, false,
             false);
 
-    final Secret secret = new Secret(0, "secret_name", null, () -> "secret_value", "checksum", NOW, null, NOW, null,
+    final Secret secret = new Secret(0, "secret_name", null, null, () -> "secret_value", "checksum", NOW, null, NOW, null,
             null, null, null, 0, 1L, NOW, null);
-    final Secret secretBase64 = new Secret(1, "Base64With=", null, () -> "SGVsbG8=", "checksum", NOW, null, NOW,
+    final Secret secretBase64 = new Secret(1, "Base64With=", null, null, () -> "SGVsbG8=", "checksum", NOW, null, NOW,
             null, null, null, null, 0, 1L, NOW, null);
 
-    final Secret secret2 = new Secret(2, "secret2_name", null, () -> "secret_value2", "checksum2", NOW, null, NOW, null,
+    final Secret secret2 = new Secret(2, "secret2_name", null, null, () -> "secret_value2", "checksum2", NOW, null, NOW, null,
             null, null, null, 0, 1L, NOW, null);
 
 

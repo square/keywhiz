@@ -43,11 +43,11 @@ public class SecretsDeliveryResourceTest {
   @Mock AclDAO aclDAO;
   SecretsDeliveryResource secretsDeliveryResource;
 
-  Secret firstSecret = new Secret(0, "first_secret_name", null,
+  Secret firstSecret = new Secret(0, "first_secret_name", null, null,
       () -> Base64.getEncoder().encodeToString("first_secret_contents".getBytes(UTF_8)), "checksum", NOW, null, NOW, null, null,
       null, null, 0, 1L, NOW, null);
   SanitizedSecret sanitizedFirstSecret = SanitizedSecret.fromSecret(firstSecret);
-  Secret secondSecret = new Secret(1, "second_secret_name", null,
+  Secret secondSecret = new Secret(1, "second_secret_name", null, null,
       () -> Base64.getEncoder().encodeToString("second_secret_contents".getBytes(UTF_8)), "checksum", NOW, null, NOW, null, null,
       null, null, 0, 1L, NOW, null);
   SanitizedSecret sanitizedSecondSecret = SanitizedSecret.fromSecret(secondSecret);

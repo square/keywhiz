@@ -63,7 +63,7 @@ public class SecretSeriesDAOTest {
     secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
 
     SecretSeries expected =
-        SecretSeries.of(id, "newSecretSeries", "desc", nowDate, "creator", nowDate,
+        SecretSeries.of(id, "newSecretSeries", null, "desc", nowDate, "creator", nowDate,
             "creator", null, ImmutableMap.of("foo", "bar"), contentId);
 
     assertThat(tableSize()).isEqualTo(before + 1);
@@ -344,7 +344,7 @@ public class SecretSeriesDAOTest {
     secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
 
     List<SecretSeries> expected =
-            List.of(SecretSeries.of(id, "newSecretSeries", "desc", nowDate, "creator", nowDate,
+            List.of(SecretSeries.of(id, "newSecretSeries", null, "desc", nowDate, "creator", nowDate,
                     "creator", null, ImmutableMap.of("foo", "bar"), contentId));
 
     assertThat(tableSize()).isEqualTo(before + 1);
@@ -366,7 +366,7 @@ public class SecretSeriesDAOTest {
     secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
 
     List<SecretSeries> expected =
-            List.of(SecretSeries.of(id, "newSecretSeries", "desc", nowDate, "creator", nowDate,
+            List.of(SecretSeries.of(id, "newSecretSeries", null, "desc", nowDate, "creator", nowDate,
                     "creator", null, ImmutableMap.of("foo", "bar"), contentId));
 
     assertThat(tableSize()).isEqualTo(before + 1);
@@ -402,9 +402,9 @@ public class SecretSeriesDAOTest {
 
     assertThat(tableSize()).isEqualTo(before + 2);
 
-    SecretSeries expected1 = SecretSeries.of(id, "newSecretSeries", "desc", nowDate, "creator", nowDate,
+    SecretSeries expected1 = SecretSeries.of(id, "newSecretSeries", null, "desc", nowDate, "creator", nowDate,
             "creator", null, ImmutableMap.of("foo", "bar"), contentId);
-    SecretSeries expected2 = SecretSeries.of(id2, "newSecretSeries2", "desc", nowDate, "creator", nowDate,
+    SecretSeries expected2 = SecretSeries.of(id2, "newSecretSeries2", null, "desc", nowDate, "creator", nowDate,
             "creator", null, ImmutableMap.of("f00", "b4r"), contentId2);
 
     List<SecretSeries> actual = secretSeriesDAO.getMultipleSecretSeriesByName(List.of("newSecretSeries", "newSecretSeries2"));

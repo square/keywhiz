@@ -64,7 +64,7 @@ public class SecretDAOTest {
   private ImmutableMap<String, String> emptyMetadata = ImmutableMap.of();
 
   private SecretSeries series1 =
-      SecretSeries.of(1, "secret1", "desc1", date, "creator", date, "updater", null, null, 101L);
+      SecretSeries.of(1, "secret1", null, "desc1", date, "creator", date, "updater", null, null, 101L);
   private String content = "c2VjcmV0MQ==";
   private String encryptedContent =
       cryptographer.encryptionKeyDerivedFrom(series1.name()).encrypt(content);
@@ -74,7 +74,7 @@ public class SecretDAOTest {
   private SecretSeriesAndContent secret1 = SecretSeriesAndContent.of(series1, content1);
 
   private SecretSeries series2 =
-      SecretSeries.of(2, "secret2", "desc2", date, "creator", date, "updater", null, null, 103L);
+      SecretSeries.of(2, "secret2", null, "desc2", date, "creator", date, "updater", null, null, 103L);
   private SecretContent content2a =
       SecretContent.of(102, 2, encryptedContent, "checksum", date, "creator", date, "updater",
           emptyMetadata, 0);
@@ -86,7 +86,7 @@ public class SecretDAOTest {
   private SecretSeriesAndContent secret2b = SecretSeriesAndContent.of(series2, content2b);
 
   private SecretSeries series3 =
-      SecretSeries.of(3, "secret3", "desc3", date, "creator", date, "updater", null, null, null);
+      SecretSeries.of(3, "secret3", null, "desc3", date, "creator", date, "updater", null, null, null);
   private SecretContent content3 =
       SecretContent.of(104, 3, encryptedContent, "checksum", date, "creator", date, "updater",
           emptyMetadata, 0);

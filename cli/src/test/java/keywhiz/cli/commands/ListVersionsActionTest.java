@@ -33,10 +33,10 @@ public class ListVersionsActionTest {
 
   private static final ApiDate NOW = ApiDate.now();
   Secret secretV2 =
-      new Secret(0, "secret", null, () -> "c2VjcmV0MQ==", "checksum2", NOW, null, NOW, null, null,
+      new Secret(0, "secret", null, null, () -> "c2VjcmV0MQ==", "checksum2", NOW, null, NOW, null, null,
           null, ImmutableMap.of(), 0, 1L, NOW, "creator2");
   Secret secretV1 =
-      new Secret(0, "secret", null, () -> "c2VjcmV0MQ==", "checksum1", NOW, null, NOW, null, null,
+      new Secret(0, "secret", null, null, () -> "c2VjcmV0MQ==", "checksum1", NOW, null, NOW, null, null,
           null, ImmutableMap.of(), 0, -1L, NOW, "creator1");
   SanitizedSecret sanitizedSecretV2 = SanitizedSecret.fromSecret(secretV2);
   SanitizedSecret sanitizedSecretV1 = SanitizedSecret.fromSecret(secretV1);

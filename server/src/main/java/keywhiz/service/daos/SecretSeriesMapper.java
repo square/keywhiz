@@ -39,6 +39,7 @@ public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSer
     return SecretSeries.of(
         r.getId(),
         r.getName(),
+        null,
         r.getDescription(),
         new ApiDate(r.getCreatedat()),
         r.getCreatedby(),
