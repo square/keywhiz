@@ -37,8 +37,24 @@ public class AutomationSecretResponseTest {
       ImmutableMap.of("key1", "value1", "key2", "value2");
   private static final ApiDate NOW = ApiDate.now();
   private static final Secret secret =
-      new Secret(0, "name", null, () -> "YWJj", "checksum", NOW, null, NOW, null, metadata,
-          "upload", null, 1136214245, null, null, null);
+      new Secret(
+          0,
+          "name",
+          "owner",
+          null,
+          () -> "YWJj",
+          "checksum",
+          NOW,
+          null,
+          NOW,
+          null,
+          metadata,
+          "upload",
+          null,
+          1136214245,
+          null,
+          null,
+          null);
 
   @Test
   public void setsLength() {
@@ -55,10 +71,11 @@ public class AutomationSecretResponseTest {
   }
 
   @Test
-  public void serializesCorrectly() throws Exception {
+  public void roundTrip() throws Exception {
     AutomationSecretResponse automationSecretResponse = AutomationSecretResponse.create(
         0,
         "Database_Password",
+        "owner",
         "YXNkZGFz",
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
         ImmutableMap.of(),
@@ -67,7 +84,35 @@ public class AutomationSecretResponseTest {
     assertThat(
         fromJson(asJson(automationSecretResponse), AutomationSecretResponse.class)).isEqualTo(
         automationSecretResponse);
+  }
+
+  @Test
+  public void responseWithoutOwnerDeserializesCorrectly() throws Exception {
+    AutomationSecretResponse automationSecretResponse = AutomationSecretResponse.create(
+        0,
+        "Database_Password",
+        null,
+        "YXNkZGFz",
+        ApiDate.parse("2011-09-29T15:46:00.000Z"),
+        ImmutableMap.of(),
+        ImmutableList.of(),
+        1136214245);
     assertThat(fromJson(jsonFixture("fixtures/automationSecretResponse.json"),
+        AutomationSecretResponse.class)).isEqualTo(automationSecretResponse);
+  }
+
+  @Test
+  public void responseWithOwnerDeserializesCorrectly() throws Exception {
+    AutomationSecretResponse automationSecretResponse = AutomationSecretResponse.create(
+        0,
+        "Database_Password",
+        "owner",
+        "YXNkZGFz",
+        ApiDate.parse("2011-09-29T15:46:00.000Z"),
+        ImmutableMap.of(),
+        ImmutableList.of(),
+        1136214245);
+    assertThat(fromJson(jsonFixture("fixtures/automationSecretResponseWithOwner.json"),
         AutomationSecretResponse.class)).isEqualTo(automationSecretResponse);
   }
 
@@ -78,6 +123,7 @@ public class AutomationSecretResponseTest {
     AutomationSecretResponse automationSecretResponseWithMetadata = AutomationSecretResponse.create(
         66,
         "Nobody_PgPass",
+        "owner",
         "YXNkZGFz",
         ApiDate.parse("2011-09-29T15:46:00.000Z"),
         ImmutableMap.of("mode", "0400", "owner", "nobody"),

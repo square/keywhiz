@@ -77,6 +77,7 @@ public class AutomationSecretResourceTest {
   @Test
   public void addSecret() {
     CreateSecretRequest request = new CreateSecretRequest("mySecret",
+        null,
         "some secret",
         "ponies",
         null,
@@ -85,6 +86,7 @@ public class AutomationSecretResourceTest {
     Secret secret = new Secret(0, /* Set by DB */
         request.name,
         request.description,
+        null,
         () -> Base64.getUrlEncoder().encodeToString(request.content.getBytes(UTF_8)),
         "checksum",
         NOW,
@@ -113,7 +115,7 @@ public class AutomationSecretResourceTest {
 
   @Test
   public void deleteSecret() throws Exception {
-    Secret secret = new Secret(0, "mySecret", null, (Secret.LazyString) () -> "meh",
+    Secret secret = new Secret(0, "mySecret", null, null, (Secret.LazyString) () -> "meh",
         "checksum", NOW, null, NOW, null, ImmutableMap.of(), null, null, 0, 1L, NOW, null);
 
     HashSet<Group> groups = new HashSet<>();
@@ -135,7 +137,7 @@ public class AutomationSecretResourceTest {
 
     doThrow(exception).when(secretBuilder).create();
 
-    CreateSecretRequest req = new CreateSecretRequest("name", "desc", "content", emptyMap, 0);
+    CreateSecretRequest req = new CreateSecretRequest("name", null, "desc", "content", emptyMap, 0);
     resource.createSecret(automation, req);
   }
 }

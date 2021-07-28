@@ -33,6 +33,9 @@ public class SecretDetailResponse {
   public final String name;
 
   @JsonProperty
+  public final String owner;
+
+  @JsonProperty
   public final String description;
 
   @JsonProperty
@@ -62,6 +65,7 @@ public class SecretDetailResponse {
 
   public SecretDetailResponse(@JsonProperty("id") long id,
       @JsonProperty("name") String name,
+      @JsonProperty("owner") String owner,
       @JsonProperty("description") String description,
       @JsonProperty("createdAt") ApiDate createdAt,
       @JsonProperty("createdBy") String createdBy,
@@ -72,6 +76,7 @@ public class SecretDetailResponse {
       @JsonProperty("clients") ImmutableList<Client> clients) {
     this.id = id;
     this.name = name;
+    this.owner = owner;
     this.description = description;
     this.createdAt = createdAt;
     this.createdBy = createdBy;
@@ -86,6 +91,7 @@ public class SecretDetailResponse {
       ImmutableList<Client> clients) {
     return new SecretDetailResponse(secret.getId(),
         secret.getName(),
+        secret.getOwner(),
         secret.getDescription(),
         secret.getCreatedAt(),
         secret.getCreatedBy(),
@@ -98,8 +104,18 @@ public class SecretDetailResponse {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, name, description, createdAt, createdBy, updatedAt, updatedBy,
-        metadata, groups, clients);
+    return Objects.hashCode(
+        id,
+        name,
+        owner,
+        description,
+        createdAt,
+        createdBy,
+        updatedAt,
+        updatedBy,
+        metadata,
+        groups,
+        clients);
   }
 
   @Override
@@ -108,6 +124,7 @@ public class SecretDetailResponse {
       SecretDetailResponse that = (SecretDetailResponse) o;
       if (this.id == that.id &&
           Objects.equal(this.name, that.name) &&
+          Objects.equal(this.owner, that.owner) &&
           Objects.equal(this.description, that.description) &&
           Objects.equal(this.createdAt, that.createdAt) &&
           Objects.equal(this.createdBy, that.createdBy) &&
@@ -127,6 +144,7 @@ public class SecretDetailResponse {
     return MoreObjects.toStringHelper(this)
         .add("id", id)
         .add("name", name)
+        .add("owner", owner)
         .add("description", description)
         .add("createdAt", createdAt)
         .add("createdBy", createdBy)

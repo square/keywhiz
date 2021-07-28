@@ -32,6 +32,7 @@ public class SanitizedSecretWithGroupsTest {
   private SanitizedSecret sanitizedSecret = SanitizedSecret.of(
       767,
       "trapdoor",
+      null,
       "v1",
       "checksum",
       ApiDate.parse("2013-03-28T21:42:42.000Z"),
@@ -81,6 +82,7 @@ public class SanitizedSecretWithGroupsTest {
         new Secret(
             767,
             "trapdoor",
+            null,
             "v1",
             () -> "foo",
             "checksum",
@@ -108,6 +110,7 @@ public class SanitizedSecretWithGroupsTest {
                 SecretSeries.of(
                     767,
                     "trapdoor",
+                    null,
                     "v1",
                     ApiDate.parse("2013-03-28T21:42:42.000Z"),
                     "keywhizAdmin",

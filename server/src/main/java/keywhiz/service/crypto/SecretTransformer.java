@@ -47,6 +47,7 @@ public class SecretTransformer {
     return new Secret(
         series.id(),
         series.name(),
+        series.owner(),
         series.description(),
         () -> cryptographer.decrypt(content.encryptedContent()),
         content.hmac(),

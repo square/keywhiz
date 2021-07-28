@@ -427,6 +427,7 @@ public class AclDAO {
     return SanitizedSecret.of(
         series.id(),
         series.name(),
+        series.owner(),
         series.description(),
         row.getValue(SECRETS_CONTENT.CONTENT_HMAC),
         series.createdAt(),

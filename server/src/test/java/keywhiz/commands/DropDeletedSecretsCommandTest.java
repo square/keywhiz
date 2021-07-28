@@ -40,7 +40,7 @@ public class DropDeletedSecretsCommandTest {
 
   // an undeleted secret
   private SecretSeries series1 =
-      SecretSeries.of(1, "secret1", "desc1", january18, "creator", january19, "updater", null, null,
+      SecretSeries.of(1, "secret1", null, "desc1", january18, "creator", january19, "updater", null, null,
           101L);
   private String content = "c2VjcmV0MQ==";
   private String encryptedContent =
@@ -52,7 +52,7 @@ public class DropDeletedSecretsCommandTest {
 
   // a secret deleted on 2018-01-01T00:00:00Z
   private SecretSeries series2 =
-      SecretSeries.of(2, "secret2", "desc2", january18, "creator", january18, "updater", null, null,
+      SecretSeries.of(2, "secret2", null, "desc2", january18, "creator", january18, "updater", null, null,
           null);
   private SecretContent content2a =
       SecretContent.of(102, 2, encryptedContent, "checksum", january18, "creator", january18,
@@ -66,7 +66,7 @@ public class DropDeletedSecretsCommandTest {
 
   // a secret deleted on 2019-01-01T00:00:00Z
   private SecretSeries series3 =
-      SecretSeries.of(3, "secret3", "desc3", january18, "creator", january19, "updater", null, null,
+      SecretSeries.of(3, "secret3", null, "desc3", january18, "creator", january19, "updater", null, null,
           null);
   private SecretContent content3 =
       SecretContent.of(104, 3, encryptedContent, "checksum", january18, "creator", january18,

@@ -37,6 +37,7 @@ public abstract class SecretSeries {
   public static SecretSeries of(
       long id,
       String name,
+      String owner,
       @Nullable String description,
       ApiDate createdAt,
       @Nullable String createdBy,
@@ -47,11 +48,23 @@ public abstract class SecretSeries {
       @Nullable Long currentVersion) {
     ImmutableMap<String, String> options = (generationOptions == null) ?
         ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
-    return new AutoValue_SecretSeries(id, name, nullToEmpty(description), createdAt, nullToEmpty(createdBy), updatedAt, nullToEmpty(updatedBy), Optional.ofNullable(type), options, Optional.ofNullable(currentVersion));
+    return new AutoValue_SecretSeries(
+        id,
+        name,
+        owner,
+        nullToEmpty(description),
+        createdAt,
+        nullToEmpty(createdBy),
+        updatedAt,
+        nullToEmpty(updatedBy),
+        Optional.ofNullable(type),
+        options,
+        Optional.ofNullable(currentVersion));
   }
 
   public abstract long id();
   public abstract String name();
+  @Nullable public abstract String owner();
   public abstract String description();
   public abstract ApiDate createdAt();
   public abstract String createdBy();

@@ -29,6 +29,7 @@ import static com.google.common.base.Strings.nullToEmpty;
     abstract SecretDetailResponseV2 autoBuild();
 
     public abstract Builder name(String name);
+    public abstract Builder owner(@Nullable String owner);
     public abstract Builder description(String description);
     public abstract Builder checksum(String checksum);
     public abstract Builder createdAtSeconds(long createdAt);
@@ -48,6 +49,7 @@ import static com.google.common.base.Strings.nullToEmpty;
     public Builder seriesAndContent(SecretSeriesAndContent seriesAndContent) {
       return this
           .name(seriesAndContent.series().name())
+          .owner(seriesAndContent.series().owner())
           .description(seriesAndContent.series().description())
           .checksum(seriesAndContent.content().hmac())
           .createdAtSeconds(seriesAndContent.series().createdAt().toEpochSecond())
@@ -65,6 +67,7 @@ import static com.google.common.base.Strings.nullToEmpty;
     public Builder sanitizedSecret(SanitizedSecret sanitizedSecret) {
       return this
           .name(sanitizedSecret.name())
+          .owner(sanitizedSecret.owner())
           .description(sanitizedSecret.description())
           .checksum(sanitizedSecret.checksum())
           .createdAtSeconds(sanitizedSecret.createdAt().toEpochSecond())
@@ -91,6 +94,7 @@ import static com.google.common.base.Strings.nullToEmpty;
   @SuppressWarnings("unused")
   @JsonCreator public static SecretDetailResponseV2 fromParts(
       @JsonProperty("name") String name,
+      @JsonProperty("owner") @Nullable String owner,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("checksum") String checksum,
       @JsonProperty("createdAtSeconds") long createdAtSeconds,
@@ -105,6 +109,7 @@ import static com.google.common.base.Strings.nullToEmpty;
       @JsonProperty("contentCreatedBy") @Nullable String contentCreatedBy) {
     return builder()
         .name(name)
+        .owner(owner)
         .description(nullToEmpty(description))
         .checksum(checksum)
         .createdAtSeconds(createdAtSeconds)
@@ -122,6 +127,7 @@ import static com.google.common.base.Strings.nullToEmpty;
 
   // TODO: Consider Optional values in place of Nullable.
   @JsonProperty("name") public abstract String name();
+  @JsonProperty("owner") @Nullable public abstract String owner();
   @JsonProperty("description") public abstract String description();
   @JsonProperty("checksum") public abstract String checksum();
   @JsonProperty("createdAtSeconds") public abstract long createdAtSeconds();
@@ -138,6 +144,7 @@ import static com.google.common.base.Strings.nullToEmpty;
   @Override public final String toString() {
     return MoreObjects.toStringHelper(this)
         .add("name", name())
+        .add("owner", owner())
         .add("description", description())
         .add("checksum", checksum())
         .add("createdAtSeconds", createdAtSeconds())

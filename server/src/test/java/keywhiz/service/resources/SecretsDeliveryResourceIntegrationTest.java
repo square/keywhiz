@@ -53,21 +53,21 @@ public class SecretsDeliveryResourceIntegrationTest {
 
     generalPassword = SecretDeliveryResponse.fromSanitizedSecret(
         SanitizedSecret.fromSecret(
-            new Secret(0, "General_Password", null, () -> "YXNkZGFz", "checksum",
+            new Secret(0, "General_Password", null, null, () -> "YXNkZGFz", "checksum",
                 ApiDate.parse("2011-09-29T15:46:00.312Z"), null,
                 ApiDate.parse("2011-09-29T15:46:00.312Z"), null,
                 null, null, null, 0, 1L,
                 ApiDate.parse("2011-09-29T15:46:00.312Z"), null)));
     databasePassword = SecretDeliveryResponse.fromSanitizedSecret(
         SanitizedSecret.fromSecret(
-            new Secret(1, "Database_Password", null, () -> "MTIzNDU=","checksum",
+            new Secret(1, "Database_Password", null, null, () -> "MTIzNDU=","checksum",
                 ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
                 ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
                 null, null, null, 0, 2L,
                 ApiDate.parse("2011-09-29T15:46:00.312Z"), null)));
     nobodyPgPassPassword = SecretDeliveryResponse.fromSanitizedSecret(
         SanitizedSecret.fromSecret(
-            new Secret(2, "Nobody_PgPass", null,
+            new Secret(2, "Nobody_PgPass", null, null,
                 () -> "c29tZWhvc3Quc29tZXBsYWNlLmNvbTo1NDMyOnNvbWVkYXRhYmFzZTptaXN0ZXJhd2Vzb21lOmhlbGwwTWNGbHkK",
                 "checksum",
                 ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
@@ -76,7 +76,7 @@ public class SecretsDeliveryResourceIntegrationTest {
                 ApiDate.parse("2011-09-29T15:46:00.312Z"), null)));
     nonExistentOwnerPass = SecretDeliveryResponse.fromSanitizedSecret(
         SanitizedSecret.fromSecret(
-            new Secret(3, "NonexistentOwner_Pass", null, () -> "MTIzNDU=", "checksum",
+            new Secret(3, "NonexistentOwner_Pass", null, null, () -> "MTIzNDU=", "checksum",
                 ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
                 ApiDate.parse("2011-09-29T15:46:00.232Z"), null,
                 ImmutableMap.of("owner", "NonExistent", "mode", "0400"), null, null, 0, 4L,

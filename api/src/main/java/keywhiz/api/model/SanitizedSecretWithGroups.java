@@ -36,9 +36,23 @@ public abstract class SanitizedSecretWithGroups {
   }
 
   public static SanitizedSecretWithGroups of(long id, String name, List<Group> groups) {
-    SanitizedSecret sanitizedSecret = SanitizedSecret.of(id, name, null, "",
-        new ApiDate(0), null, new ApiDate(0), null, null, null, null, 0,
-        null, null, null);
+    SanitizedSecret sanitizedSecret = SanitizedSecret.of(
+        id,
+        name,
+        null,
+        null,
+        "",
+        new ApiDate(0),
+        null,
+        new ApiDate(0),
+        null,
+        null,
+        null,
+        null,
+        0,
+        null,
+        null,
+        null);
     return SanitizedSecretWithGroups.of(sanitizedSecret, groups);
   }
 

@@ -34,13 +34,43 @@ public class SecretDeliveryResponseTest {
   private static final ImmutableMap<String, String> metadata =
       ImmutableMap.of("key1", "value1", "key2", "value2");
   private static final ApiDate NOW = ApiDate.now();
-  private static final Secret secret = new Secret(0, "name", null,
-      () -> "YWJj", "checksum", NOW, null, NOW, null, metadata,
-      "upload", null, 0, null, NOW, null);
+  private static final Secret secret = new Secret(
+      0,
+      "name",
+      "owner",
+      null,
+      () -> "YWJj",
+      "checksum",
+      NOW,
+      null,
+      NOW,
+      null,
+      metadata,
+      "upload",
+      null,
+      0,
+      null,
+      NOW,
+      null);
 
   private static final SanitizedSecret sanitizedSecret =
-      SanitizedSecret.of(0, "name", null, "checksum",
-          NOW, null, NOW, null, metadata, "upload", null, 0, null, NOW, null);
+      SanitizedSecret.of(
+          0,
+          "name",
+          "owner",
+          null,
+          "checksum",
+          NOW,
+          null,
+          NOW,
+          null,
+          metadata,
+          "upload",
+          null,
+          0,
+          null,
+          NOW,
+          null);
 
   @Test
   public void setsLength() {
