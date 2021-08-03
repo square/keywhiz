@@ -110,6 +110,15 @@ public class KeywhizService extends Application<KeywhizConfig> {
 
   @SuppressWarnings("unchecked")
   @Override public void run(KeywhizConfig config, Environment environment) throws Exception {
+    try {
+      doRun(config, environment);
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+      throw e;
+    }
+  }
+
+  private void doRun(KeywhizConfig config, Environment environment) {
     if (injector == null) {
       logger.debug("No existing guice injector; creating new one");
       injector = Guice.createInjector(new ServiceModule(config, environment));
@@ -184,4 +193,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     return objectMapper;
   }
+
+  @Override
+  public void onFatalError() {}
 }
