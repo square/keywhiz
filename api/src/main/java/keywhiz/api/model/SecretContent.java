@@ -31,12 +31,30 @@ import static com.google.common.base.Strings.nullToEmpty;
  */
 @AutoValue
 public abstract class SecretContent {
-  public static SecretContent of(long id, long secretSeriesId, String encryptedContent, String hmac, ApiDate createdAt,
-                                 @Nullable String createdBy, ApiDate updatedAt, @Nullable String updatedBy,
-                                 ImmutableMap<String, String> metadata, long expiry) {
-    return new AutoValue_SecretContent(id, secretSeriesId, encryptedContent, hmac,
-        createdAt, nullToEmpty(createdBy), updatedAt,
-        nullToEmpty(updatedBy), metadata, expiry);
+  public static SecretContent of(
+      long id,
+      long secretSeriesId,
+      String encryptedContent,
+      String hmac,
+      ApiDate createdAt,
+      @Nullable String createdBy,
+      ApiDate updatedAt,
+      @Nullable String updatedBy,
+      ImmutableMap<String, String> metadata,
+      long expiry) {
+
+    return builder()
+        .id(id)
+        .secretSeriesId(secretSeriesId)
+        .encryptedContent(encryptedContent)
+        .hmac(hmac)
+        .createdAt(createdAt)
+        .createdBy(nullToEmpty(createdBy))
+        .updatedAt(updatedAt)
+        .updatedBy(nullToEmpty(updatedBy))
+        .metadata(metadata)
+        .expiry(expiry)
+        .build();
   }
 
   public abstract long id();
@@ -63,5 +81,27 @@ public abstract class SecretContent {
         .add("metadata", metadata())
         .add("expiry", expiry())
         .omitNullValues().toString();
+  }
+
+  public static Builder builder() {
+    return new AutoValue_SecretContent.Builder();
+  }
+
+  public abstract Builder toBuilder();
+
+  @AutoValue.Builder
+  public static abstract class Builder {
+    public abstract Builder id(long id);
+    public abstract Builder secretSeriesId(long secretSeriesId);
+    public abstract Builder encryptedContent(String encryptedContent);
+    public abstract Builder hmac(String hmac);
+    public abstract Builder createdAt(ApiDate createdAt);
+    public abstract Builder createdBy(String createdBy);
+    public abstract Builder updatedAt(ApiDate updatedAt);
+    public abstract Builder updatedBy(String updatedBy);
+    @JsonAnyGetter public abstract Builder metadata(ImmutableMap<String, String> metadata);
+    public abstract Builder expiry(long expiry);
+
+    public abstract SecretContent build();
   }
 }

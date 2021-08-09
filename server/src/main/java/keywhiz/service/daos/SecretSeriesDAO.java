@@ -75,8 +75,14 @@ public class SecretSeriesDAO {
     this.rowHmacGenerator = rowHmacGenerator;
   }
 
-  long createSecretSeries(String name, String creator, String description, @Nullable String type,
-      @Nullable Map<String, String> generationOptions, long now) {
+  long createSecretSeries(
+      String name,
+      Long ownerId,
+      String creator,
+      String description,
+      @Nullable String type,
+      @Nullable Map<String, String> generationOptions,
+      long now) {
     SecretsRecord r = dslContext.newRecord(SECRETS);
 
     long generatedId = rowHmacGenerator.getNextLongSecure();
@@ -85,6 +91,7 @@ public class SecretSeriesDAO {
 
     r.setId(generatedId);
     r.setName(name);
+    r.setOwner(ownerId);
     r.setDescription(description);
     r.setCreatedby(creator);
     r.setCreatedat(now);

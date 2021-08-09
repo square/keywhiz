@@ -19,6 +19,7 @@ package keywhiz.service.daos;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.UUID;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
@@ -26,10 +27,10 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
+import keywhiz.service.config.Readwrite;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
 import keywhiz.service.crypto.RowHmacGenerator;
-import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import org.joda.time.DateTime;
 import org.jooq.DSLContext;
 import org.jooq.Table;
@@ -51,16 +52,20 @@ import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(KeywhizTestRunner.class)
 public class SecretDAOTest {
+  private static final ContentCryptographer cryptographer = CryptoFixtures.contentCryptographer();
+  private static final ApiDate date = ApiDate.now();
+  private static final ImmutableMap<String, String> NO_METADATA = ImmutableMap.of();
+
   @Inject private DSLContext jooqContext;
   @Inject private ObjectMapper objectMapper;
-  @Inject private SecretDAOFactory secretDAOFactory;
+  @Inject @Readwrite private SecretDAO secretDAO;
+  @Inject @Readwrite private GroupDAO groupDAO;
   @Inject private RowHmacGenerator rowHmacGenerator;
 
-  private final static ContentCryptographer cryptographer = CryptoFixtures.contentCryptographer();
-  private final static ApiDate date = ApiDate.now();
   private ImmutableMap<String, String> emptyMetadata = ImmutableMap.of();
 
   private SecretSeries series1 =
@@ -91,8 +96,6 @@ public class SecretDAOTest {
       SecretContent.of(104, 3, encryptedContent, "checksum", date, "creator", date, "updater",
           emptyMetadata, 0);
   private SecretSeriesAndContent secret3 = SecretSeriesAndContent.of(series3, content3);
-
-  private SecretDAO secretDAO;
 
   @Before
   public void setUp() throws Exception {
@@ -200,13 +203,44 @@ public class SecretDAOTest {
                     secret3.content().id())
         ))
         .execute();
-
-    secretDAO = secretDAOFactory.readwrite();
   }
 
   //---------------------------------------------------------------------------------------
   // createSecret
   //---------------------------------------------------------------------------------------
+
+  @Test public void createsSecretWithOwner() {
+    String owner = createGroup();
+    long secretId = createSecretWithOwner(owner);
+
+    SecretSeriesAndContent secret = secretDAO.getSecretById(secretId).get();
+    assertEquals(owner, secret.series().owner());
+  }
+
+  @Test
+  public void createOrUpdateNonExistingSecretWithOwner() {
+    String owner = createGroup();
+    long secretId = createOrUpdateSecretWithOwner(owner);
+
+    SecretSeriesAndContent secret = secretDAO.getSecretById(secretId).get();
+    assertEquals(owner, secret.series().owner());
+  }
+
+  @Test
+  public void createOrUpdateExistingSecretDoesNotChangeOwner() {
+    String owner1 = createGroup();
+    String owner2 = createGroup();
+
+    String secretName = randomName();
+
+    long secretId1 = this.createOrUpdateSecretWithOwner(secretName, owner1);
+    long secretId2 = this.createOrUpdateSecretWithOwner(secretName, owner2);
+
+    assertEquals(secretId1, secretId2);
+
+    SecretSeriesAndContent secret = secretDAO.getSecretById(secretId1).get();
+    assertEquals(owner1, secret.series().owner());
+  }
 
   @Test public void createSecret() {
     int secretsBefore = tableSize(SECRETS);
@@ -216,7 +250,7 @@ public class SecretDAOTest {
     String content = "c2VjcmV0MQ==";
     String hmac = cryptographer.computeHmac(content.getBytes(UTF_8), "hmackey");
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    long newId = secretDAO.createSecret(name, encryptedContent, hmac, "creator",
+    long newId = secretDAO.createSecret(name, null, encryptedContent, hmac, "creator",
         ImmutableMap.of(), 0, "", null, ImmutableMap.of());
     SecretSeriesAndContent newSecret = secretDAO.getSecretById(newId).get();
 
@@ -230,16 +264,16 @@ public class SecretDAOTest {
   @Test(expected = DataAccessException.class)
   public void createSecretFailsIfSecretExists() {
     String name = "newSecret";
-    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
+    secretDAO.createSecret(name, null, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
         null, ImmutableMap.of());
-    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
+    secretDAO.createSecret(name, null, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
         null, ImmutableMap.of());
   }
 
   @Test(expected = BadRequestException.class)
   public void createSecretFailsIfNameHasLeadingPeriod() {
     String name = ".newSecret";
-    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
+    secretDAO.createSecret(name, null, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
         null, ImmutableMap.of());
   }
 
@@ -247,14 +281,14 @@ public class SecretDAOTest {
   public void createSecretFailsIfNameIsTooLong() {
     String name =
         "newSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecret";
-    secretDAO.createSecret(name, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
+    secretDAO.createSecret(name, null, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
         null, ImmutableMap.of());
   }
 
   @Test(expected = DataAccessException.class)
   public void createSecretFailsIfNameMatchesDeletedSecret() {
     String name = "newSecret";
-    long firstId = secretDAO.createSecret(name, "content1",
+    long firstId = secretDAO.createSecret(name, null, "content1",
         cryptographer.computeHmac("content1".getBytes(UTF_8), "hmackey"), "creator1",
         ImmutableMap.of("foo", "bar"), 1000, "description1", "type1", ImmutableMap.of());
 
@@ -265,8 +299,8 @@ public class SecretDAOTest {
         .where(SECRETS.ID.eq(firstId))
         .execute();
 
-     secretDAO.createSecret(name, "content2",
-        cryptographer.computeHmac("content2".getBytes(UTF_8), "hmackey"), "creator2",
+     secretDAO.createSecret(name, "content2", null,
+         cryptographer.computeHmac("content2".getBytes(UTF_8), "hmackey"), "creator2",
         ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
   }
 
@@ -282,7 +316,7 @@ public class SecretDAOTest {
     String content = "c2VjcmV0MQ==";
     String hmac = cryptographer.computeHmac(content.getBytes(UTF_8), "hmackey");
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    long newId = secretDAO.createOrUpdateSecret(name, encryptedContent, hmac, "creator",
+    long newId = secretDAO.createOrUpdateSecret(name, null, encryptedContent, hmac, "creator",
         ImmutableMap.of(), 0, "", null, ImmutableMap.of());
     SecretSeriesAndContent newSecret = secretDAO.getSecretById(newId).get();
 
@@ -295,11 +329,11 @@ public class SecretDAOTest {
 
   @Test public void createOrUpdateSecretWhenSecretExists() {
     String name = "newSecret";
-    long firstId = secretDAO.createSecret(name, "content1",
+    long firstId = secretDAO.createSecret(name, null, "content1",
         cryptographer.computeHmac("content1".getBytes(UTF_8), "hmackey"), "creator1",
         ImmutableMap.of("foo", "bar"), 1000, "description1", "type1", ImmutableMap.of());
 
-    long secondId = secretDAO.createOrUpdateSecret(name, "content2",
+    long secondId = secretDAO.createOrUpdateSecret(name, null, "content2",
         cryptographer.computeHmac("content2".getBytes(UTF_8), "hmackey"), "creator2",
         ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
     assertThat(secondId).isEqualTo(firstId);
@@ -425,7 +459,7 @@ public class SecretDAOTest {
     String name = "nonExistantSecret";
     assertThat(secretDAO.getSecretByName(name)).isEmpty();
 
-    long newId = secretDAO.createSecret(name, "content",
+    long newId = secretDAO.createSecret(name, null, "content",
         cryptographer.computeHmac("content".getBytes(UTF_8), "hmackey"), "creator", ImmutableMap.of(), 0, "",
         null, ImmutableMap.of());
     SecretSeriesAndContent newSecret = secretDAO.getSecretById(newId).get();
@@ -476,7 +510,7 @@ public class SecretDAOTest {
   }
 
   @Test public void deleteSecretsByName() {
-    secretDAO.createSecret("toBeDeleted_deleteSecretsByName", "encryptedShhh",
+    secretDAO.createSecret("toBeDeleted_deleteSecretsByName", null, "encryptedShhh",
         cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
@@ -488,7 +522,7 @@ public class SecretDAOTest {
   }
 
   @Test public void deleteSecretsByNameAndRecreate() {
-    secretDAO.createSecret("toBeDeletedAndReplaced", "encryptedShhh",
+    secretDAO.createSecret("toBeDeletedAndReplaced", null, "encryptedShhh",
         cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
@@ -497,7 +531,7 @@ public class SecretDAOTest {
     Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
     assertThat(secret).isEmpty();
 
-    secretDAO.createSecret("toBeDeletedAndReplaced", "secretsgohere",
+    secretDAO.createSecret("toBeDeletedAndReplaced", null, "secretsgohere",
         cryptographer.computeHmac("secretsgohere".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
     secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
@@ -505,7 +539,7 @@ public class SecretDAOTest {
   }
 
   @Test public void deleteSecretsByNameAndRecreateWithUpdate() {
-    secretDAO.createSecret("toBeDeletedAndReplaced", "encryptedShhh",
+    secretDAO.createSecret("toBeDeletedAndReplaced", null, "encryptedShhh",
         cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
@@ -514,7 +548,7 @@ public class SecretDAOTest {
     Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
     assertThat(secret).isEmpty();
 
-    secretDAO.createOrUpdateSecret("toBeDeletedAndReplaced", "secretsgohere",
+    secretDAO.createOrUpdateSecret("toBeDeletedAndReplaced", null, "secretsgohere",
         cryptographer.computeHmac("secretsgohere".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
     secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
@@ -528,12 +562,12 @@ public class SecretDAOTest {
   }
 
   @Test public void undeleteSecret() {
-    secretDAO.createSecret("toBeDeletedAndUndeleted", "encryptedShhh",
+    secretDAO.createSecret("toBeDeletedAndUndeleted", null, "encryptedShhh",
         cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
     //Update secret so that there will be a new secrets content
-    secretDAO.createOrUpdateSecret("toBeDeletedAndUndeleted", "secretsgohere",
+    secretDAO.createOrUpdateSecret("toBeDeletedAndUndeleted", null, "secretsgohere",
         cryptographer.computeHmac("secretsgohere".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
@@ -542,7 +576,7 @@ public class SecretDAOTest {
     Optional<SecretSeriesAndContent> undeleteSecret1 = secretDAO.getSecretByName("toBeDeletedAndUndeleted");
     assertThat(undeleteSecret1).isEmpty();
 
-    secretDAO.createSecret("toBeDeletedAndUndeleted", "blah",
+    secretDAO.createSecret("toBeDeletedAndUndeleted", null, "blah",
         cryptographer.computeHmac("blah".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
@@ -586,12 +620,12 @@ public class SecretDAOTest {
   }
 
   @Test public void undeleteSecretWithExistingSecretHavingDeletedName() {
-    secretDAO.createSecret("toBeDeletedAndUndeleted", "encryptedShhh",
+    secretDAO.createSecret("toBeDeletedAndUndeleted", null, "encryptedShhh",
         cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
     //Update secret so that there will be a new secrets content
-    secretDAO.createOrUpdateSecret("toBeDeletedAndUndeleted", "secretsgohere",
+    secretDAO.createOrUpdateSecret("toBeDeletedAndUndeleted", null, "secretsgohere",
         cryptographer.computeHmac("secretsgohere".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
@@ -600,7 +634,7 @@ public class SecretDAOTest {
     Optional<SecretSeriesAndContent> undeleteSecret1 = secretDAO.getSecretByName("toBeDeletedAndUndeleted");
     assertThat(undeleteSecret1).isEmpty();
 
-    secretDAO.createSecret("toBeDeletedAndUndeleted", "blah",
+    secretDAO.createSecret("toBeDeletedAndUndeleted", null, "blah",
         cryptographer.computeHmac("blah".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
@@ -610,7 +644,7 @@ public class SecretDAOTest {
     assertThat(undeleteSecret2).isEmpty();
 
     //Don't delete this secret so that when undeleting undeleteSecret1 later, we have to rename undeleteSecret1
-    secretDAO.createSecret("toBeDeletedAndUndeleted", "blah",
+    secretDAO.createSecret("toBeDeletedAndUndeleted", null, "blah",
         cryptographer.computeHmac("blah".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
@@ -662,7 +696,7 @@ public class SecretDAOTest {
   //---------------------------------------------------------------------------------------
   @Test public void renameSecretById() {
     long secretId =
-        secretDAO.createSecret("toBeRenamed_renameSecretByIdName", "encryptedShhh",
+        secretDAO.createSecret("toBeRenamed_renameSecretByIdName", null, "encryptedShhh",
         cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
         ImmutableMap.of(), 0, "", null, null);
 
@@ -676,7 +710,7 @@ public class SecretDAOTest {
     assertThat(secret.get().series().name()).isEqualTo("newName");
 
     long secret2Id =
-        secretDAO.createSecret("toBeRenamed_renameSecretByIdName2", "encryptedShhh",
+        secretDAO.createSecret("toBeRenamed_renameSecretByIdName2", null, "encryptedShhh",
             cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
             ImmutableMap.of(), 0, "", null, null);
 
@@ -797,5 +831,47 @@ public class SecretDAOTest {
     assertThat(response.size()).isEqualTo(2);
     assertThat(response).contains(secret1);
     assertThat(response).contains(secret2b);
+  }
+
+  private String createGroup() {
+    String name = randomName();
+    groupDAO.createGroup(name, "creator", "description", NO_METADATA);
+    return name;
+  }
+
+  private long createSecretWithOwner(String owner) {
+    return secretDAO.createSecret(
+        randomName(),
+        owner,
+        "encryptedSecret",
+        "hmac",
+        "creator",
+        NO_METADATA,
+        0,
+        "description",
+        null,
+        null);
+  }
+
+  private long createOrUpdateSecretWithOwner(String owner) {
+    return createOrUpdateSecretWithOwner(randomName(), owner);
+  }
+
+  private long createOrUpdateSecretWithOwner(String name, String owner) {
+    return secretDAO.createOrUpdateSecret(
+        name,
+        owner,
+        "encryptedSecret",
+        "hmac",
+        "creator",
+        NO_METADATA,
+        0,
+        "description",
+        null,
+        null);
+  }
+
+  private static String randomName() {
+    return UUID.randomUUID().toString();
   }
 }

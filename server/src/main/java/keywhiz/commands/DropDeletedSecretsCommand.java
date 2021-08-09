@@ -43,7 +43,7 @@ public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> 
 
   @VisibleForTesting
   public DropDeletedSecretsCommand(SecretDAO secretDAO) {
-    super("drop-deleted-secrets", "PERMANENTLY REMOVES database records for deleted secrets");
+    this();
     this.secretDAO = secretDAO;
   }
 

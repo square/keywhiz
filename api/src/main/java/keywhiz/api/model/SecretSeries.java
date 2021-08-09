@@ -46,20 +46,23 @@ public abstract class SecretSeries {
       @Nullable String type,
       @Nullable Map<String, String> generationOptions,
       @Nullable Long currentVersion) {
+
     ImmutableMap<String, String> options = (generationOptions == null) ?
         ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
-    return new AutoValue_SecretSeries(
-        id,
-        name,
-        owner,
-        nullToEmpty(description),
-        createdAt,
-        nullToEmpty(createdBy),
-        updatedAt,
-        nullToEmpty(updatedBy),
-        Optional.ofNullable(type),
-        options,
-        Optional.ofNullable(currentVersion));
+
+    return builder()
+        .id(id)
+        .name(name)
+        .owner(owner)
+        .description(nullToEmpty(description))
+        .createdAt(createdAt)
+        .createdBy(nullToEmpty(createdBy))
+        .updatedAt(updatedAt)
+        .updatedBy(nullToEmpty(updatedBy))
+        .type(Optional.ofNullable(type))
+        .generationOptions(options)
+        .currentVersion(Optional.ofNullable(currentVersion))
+        .build();
   }
 
   public abstract long id();
@@ -73,4 +76,27 @@ public abstract class SecretSeries {
   public abstract Optional<String> type();
   public abstract ImmutableMap<String, String> generationOptions();
   public abstract Optional<Long> currentVersion();
+
+  public static Builder builder() {
+    return new AutoValue_SecretSeries.Builder();
+  }
+
+  public abstract Builder toBuilder();
+
+  @AutoValue.Builder
+  public static abstract class Builder {
+    public abstract Builder id(long id);
+    public abstract Builder name(String name);
+    @Nullable public abstract Builder owner(String owner);
+    public abstract Builder description(String description);
+    public abstract Builder createdAt(ApiDate createdAt);
+    public abstract Builder createdBy(String createdBy);
+    public abstract Builder updatedAt(ApiDate updatedAt);
+    public abstract Builder updatedBy(String updatedBy);
+    public abstract Builder type(Optional<String> type);
+    public abstract Builder generationOptions(ImmutableMap<String, String> options);
+    public abstract Builder currentVersion(Optional<Long> currentVersion);
+
+    public abstract SecretSeries build();
+  }
 }
