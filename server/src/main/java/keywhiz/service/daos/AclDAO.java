@@ -529,6 +529,12 @@ public class AclDAO {
         .execute();
   }
 
+  public ImmutableSet<SecretSeries> getSecretSeriesFor(Group group) {
+    checkNotNull(group);
+
+    return dslContext.transactionResult(configuration -> getSecretSeriesFor(configuration, group));
+  }
+
   protected ImmutableSet<SecretSeries> getSecretSeriesFor(Configuration configuration, Group group) {
     List<SecretSeries> r = DSL.using(configuration)
         .select(SECRETS.fields())
