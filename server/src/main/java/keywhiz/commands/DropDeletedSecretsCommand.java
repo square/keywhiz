@@ -2,23 +2,19 @@ package keywhiz.commands;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Injector;
 import io.dropwizard.cli.ConfiguredCommand;
+import io.dropwizard.db.ManagedDataSource;
 import io.dropwizard.setup.Bootstrap;
 import java.io.Console;
-import java.sql.SQLException;
 import java.util.Scanner;
-import javax.sql.DataSource;
+import keywhiz.Environments;
+import keywhiz.inject.InjectorFactory;
 import keywhiz.KeywhizConfig;
-import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
-import keywhiz.service.daos.SecretContentMapper;
 import keywhiz.service.daos.SecretDAO;
-import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
-import keywhiz.service.daos.SecretSeriesMapper;
-import keywhiz.utility.DSLContexts;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import org.joda.time.DateTime;
-import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,35 +138,18 @@ public class DropDeletedSecretsCommand extends ConfiguredCommand<KeywhizConfig> 
     }
   }
 
-  private SecretDAO getSecretDAO(Bootstrap<KeywhizConfig> bootstrap, KeywhizConfig config)
-      throws SQLException {
-    DataSource dataSource = config.getDataSourceFactory()
+  @VisibleForTesting
+  static SecretDAO getSecretDAO(Bootstrap<KeywhizConfig> bootstrap, KeywhizConfig config) {
+    ManagedDataSource dataSource = config.getDataSourceFactory()
         .build(new MetricRegistry(), "drop-deleted-secrets-datasource");
-    DSLContext dslContext = DSLContexts.databaseAgnostic(dataSource);
 
-    SecretContentDAOFactory secretContentDAOFactory = new SecretContentDAOFactory(
-        dslContext,
-        dslContext,
-        bootstrap.getObjectMapper(),
-        new SecretContentMapper(bootstrap.getObjectMapper()),
-        null,
-        null
-    );
+    Injector injector = InjectorFactory.createInjector(
+        config,
+        Environments.fromBootstrap(bootstrap),
+        dataSource);
 
-    SecretSeriesDAOFactory secretSeriesDAOFactory = new SecretSeriesDAOFactory(
-        dslContext,
-        dslContext,
-        bootstrap.getObjectMapper(),
-        new SecretSeriesMapper(bootstrap.getObjectMapper()),
-        null
-    );
-
-    return new SecretDAO(
-        dslContext,
-        secretContentDAOFactory,
-        secretSeriesDAOFactory,
-        null
-    );
+    SecretDAO.SecretDAOFactory factory = injector.getInstance(SecretDAO.SecretDAOFactory.class);
+    return factory.readwrite();
   }
 
   private DateTime getDateIfValid(String deletedBeforeStr) {

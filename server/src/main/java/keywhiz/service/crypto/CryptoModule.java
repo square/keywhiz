@@ -26,6 +26,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.SecureRandom;
 import java.security.Security;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
@@ -54,7 +55,9 @@ public class CryptoModule extends AbstractModule {
     this.keyStoreConfig = keyStoreConfig;
   }
 
-  @Override protected void configure() {}
+  @Override protected void configure() {
+    bind(SecureRandom.class).toProvider(SecureRandom::new);
+  }
 
   @Provides @Derivation @Singleton SecretKey baseDerivationKey(@Derivation Provider provider) {
     String alias = keyStoreConfig.alias();

@@ -15,20 +15,9 @@
  */
 package keywhiz;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Throwables;
-import com.google.common.io.Resources;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
-import io.dropwizard.configuration.ConfigurationException;
-import io.dropwizard.configuration.YamlConfigurationFactory;
 import io.dropwizard.logging.BootstrapLogging;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
-import java.io.File;
-import java.io.IOException;
-import javax.validation.Validation;
-import javax.validation.Validator;
+import keywhiz.inject.InjectorFactory;
 import keywhiz.jooq.tables.Accessgrants;
 import keywhiz.jooq.tables.Clients;
 import keywhiz.jooq.tables.Groups;
@@ -36,6 +25,8 @@ import keywhiz.jooq.tables.Memberships;
 import keywhiz.jooq.tables.Secrets;
 import keywhiz.jooq.tables.SecretsContent;
 import keywhiz.jooq.tables.Users;
+import keywhiz.test.KeywhizTests;
+import keywhiz.test.ServiceContext;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -49,35 +40,7 @@ public class KeywhizTestRunner extends BlockJUnit4ClassRunner {
     BootstrapLogging.bootstrap();
   }
 
-  private static final Injector injector = createInjector();
-
-  static Injector createInjector() {
-    KeywhizService service = new KeywhizService();
-    Bootstrap<KeywhizConfig> bootstrap = new Bootstrap<>(service);
-    service.initialize(bootstrap);
-
-    File yamlFile = new File(Resources.getResource("keywhiz-test.yaml").getFile());
-    Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-    ObjectMapper objectMapper = bootstrap.getObjectMapper().copy();
-    KeywhizConfig config;
-    try {
-      config = new YamlConfigurationFactory<>(KeywhizConfig.class, validator, objectMapper, "dw")
-          .build(yamlFile);
-    } catch (IOException | ConfigurationException e) {
-      throw Throwables.propagate(e);
-    }
-
-    Environment environment = new Environment(service.getName(),
-        objectMapper,
-        validator,
-        bootstrap.getMetricRegistry(),
-        bootstrap.getClassLoader());
-
-    Injector injector = Guice.createInjector(new ServiceModule(config, environment));
-
-    service.setInjector(injector);
-    return injector;
-  }
+  private static final Injector injector = KeywhizTests.createInjector();
 
   @Override protected Object createTest() throws Exception {
     // Reset database. Sometimes, the truncate command fails. I don't know why?
@@ -104,8 +67,9 @@ public class KeywhizTestRunner extends BlockJUnit4ClassRunner {
       jooqContext.truncate(Secrets.SECRETS).execute();
     } catch(DataAccessException e) {}
 
-    Object object = injector.getInstance(getTestClass().getJavaClass());
-    MockitoAnnotations.initMocks(object);
-    return object;
+    Object test = getTestClass().getJavaClass().getDeclaredConstructor().newInstance();
+    injector.injectMembers(test);
+    MockitoAnnotations.initMocks(test);
+    return test;
   }
 }

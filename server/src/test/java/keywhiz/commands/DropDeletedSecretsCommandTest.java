@@ -15,6 +15,7 @@ import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
 import keywhiz.service.daos.SecretDAO;
+import keywhiz.test.ServiceContext;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.jooq.DSLContext;
 import org.junit.Before;
@@ -26,6 +27,7 @@ import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(KeywhizTestRunner.class)
 public class DropDeletedSecretsCommandTest {
@@ -232,6 +234,12 @@ public class DropDeletedSecretsCommandTest {
     checkExpectedSecretSeries(ImmutableList.of(series1, series2, series3), ImmutableList.of());
     checkExpectedSecretContents(ImmutableList.of(content1, content2a, content2b, content3),
         ImmutableList.of());
+  }
+
+  @Test
+  public void injectsDao() {
+    ServiceContext context = ServiceContext.create();
+    assertNotNull(DropDeletedSecretsCommand.getSecretDAO(context.getBootstrap(), context.getConfig()));
   }
 
   private void runCommandWithConfirmationAndDate(String confirmation, String date,
