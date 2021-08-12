@@ -35,7 +35,7 @@ public class JooqHealthCheck extends HealthCheck {
 
   private static final Logger logger = LoggerFactory.getLogger(JooqHealthCheck.class);
 
-  public enum OnFailure {
+  enum OnFailure {
     RETURN_UNHEALTHY, LOG_ONLY
   }
 

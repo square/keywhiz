@@ -1,9 +1,11 @@
-package keywhiz.inject;
+package keywhiz;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.db.ManagedDataSource;
 import javax.inject.Inject;
+import keywhiz.ServiceDataSourceModule;
+import keywhiz.inject.ContextModule;
 import keywhiz.service.config.Readonly;
 import keywhiz.test.ServiceContext;
 import org.junit.Test;

@@ -16,7 +16,6 @@
 
 package keywhiz.service.daos;
 
-import com.google.inject.Inject;
 import java.util.Optional;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;

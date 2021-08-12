@@ -5,6 +5,7 @@ import com.google.inject.Injector;
 import io.dropwizard.db.ManagedDataSource;
 import io.dropwizard.setup.Environment;
 import keywhiz.KeywhizConfig;
+import keywhiz.ServiceDataSourceModule;
 import keywhiz.ServiceModule;
 
 public final class InjectorFactory {

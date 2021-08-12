@@ -1,4 +1,4 @@
-package keywhiz.inject;
+package keywhiz;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -13,7 +13,7 @@ import keywhiz.service.config.Readonly;
 import static keywhiz.JooqHealthCheck.OnFailure.LOG_ONLY;
 import static keywhiz.JooqHealthCheck.OnFailure.RETURN_UNHEALTHY;
 
-class ServiceDataSourceModule extends AbstractModule {
+public class ServiceDataSourceModule extends AbstractModule {
   @Provides @Singleton ManagedDataSource dataSource(Environment environment,
       KeywhizConfig config) {
     DataSourceFactory dataSourceFactory = config.getDataSourceFactory();
