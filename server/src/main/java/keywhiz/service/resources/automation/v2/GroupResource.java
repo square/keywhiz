@@ -30,6 +30,7 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SanitizedSecretWithGroups;
+import keywhiz.api.model.SecretSeries;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
@@ -141,8 +142,8 @@ public class GroupResource {
     Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
 
-    Set<String> secrets = aclDAOReadOnly.getSanitizedSecretsFor(group).stream()
-        .map(SanitizedSecret::name)
+    Set<String> secrets = aclDAOReadOnly.getSecretSeriesFor(group).stream()
+        .map(SecretSeries::name)
         .collect(toSet());
 
     Set<String> clients = aclDAOReadOnly.getClientsFor(group).stream()
