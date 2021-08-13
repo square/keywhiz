@@ -18,6 +18,7 @@ package keywhiz.service.daos;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
+import javax.inject.Inject;
 import keywhiz.auth.bcrypt.BcryptAuthenticator;
 import org.jooq.DSLContext;
 
@@ -27,7 +28,7 @@ import static keywhiz.jooq.tables.Users.USERS;
 public class UserDAO {
   private final DSLContext dslContext;
 
-  public UserDAO(DSLContext dslContext) {
+  @Inject public UserDAO(DSLContext dslContext) {
     this.dslContext = checkNotNull(dslContext);
   }
 

@@ -16,15 +16,17 @@
 package keywhiz.commands;
 
 import com.codahale.metrics.MetricRegistry;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Injector;
 import io.dropwizard.cli.ConfiguredCommand;
+import io.dropwizard.db.ManagedDataSource;
 import io.dropwizard.setup.Bootstrap;
 import java.io.Console;
-import javax.sql.DataSource;
+import keywhiz.Environments;
+import keywhiz.inject.InjectorFactory;
 import keywhiz.KeywhizConfig;
 import keywhiz.service.daos.UserDAO;
-import keywhiz.utility.DSLContexts;
 import net.sourceforge.argparse4j.inf.Namespace;
-import org.jooq.DSLContext;
 
 public class AddUserCommand extends ConfiguredCommand<KeywhizConfig> {
   public AddUserCommand() {
@@ -33,15 +35,25 @@ public class AddUserCommand extends ConfiguredCommand<KeywhizConfig> {
 
   @Override protected void run(Bootstrap<KeywhizConfig> bootstrap, Namespace namespace,
                                KeywhizConfig config) throws Exception {
-    DataSource dataSource = config.getDataSourceFactory()
-      .build(new MetricRegistry(), "add-user-datasource");
 
     Console console = System.console();
     System.out.format("New username:");
     String user = console.readLine();
     System.out.format("password for '%s': ", user);
     char[] password = console.readPassword();
-    DSLContext dslContext = DSLContexts.databaseAgnostic(dataSource);
-    new UserDAO(dslContext).createUser(user, new String(password));
+    getUserDAO(bootstrap, config).createUser(user, new String(password));
+  }
+
+  @VisibleForTesting
+  static UserDAO getUserDAO(Bootstrap<KeywhizConfig> bootstrap, KeywhizConfig config) {
+    ManagedDataSource dataSource = config.getDataSourceFactory()
+        .build(new MetricRegistry(), "add-user-datasource");
+
+    Injector injector = InjectorFactory.createInjector(
+        config,
+        Environments.fromBootstrap(bootstrap),
+        dataSource);
+
+    return injector.getInstance(UserDAO.class);
   }
 }

@@ -19,10 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import io.dropwizard.Configuration;
 import io.dropwizard.auth.Authenticator;
 import io.dropwizard.auth.basic.BasicCredentials;
-import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.db.ManagedDataSource;
 import io.dropwizard.setup.Environment;
 import java.sql.SQLException;
@@ -32,6 +30,9 @@ import keywhiz.auth.User;
 import keywhiz.auth.cookie.CookieConfig;
 import keywhiz.auth.cookie.CookieModule;
 import keywhiz.auth.cookie.SessionCookie;
+import keywhiz.auth.mutualssl.ClientCertificateFilter;
+import keywhiz.inject.ContextModule;
+import keywhiz.inject.StrictGuiceModule;
 import keywhiz.log.AuditLog;
 import keywhiz.log.SimpleLogger;
 import keywhiz.service.config.Readonly;
@@ -39,15 +40,16 @@ import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoModule;
 import keywhiz.service.crypto.SecretTransformer;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
+import keywhiz.service.daos.DaoModule;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
+import keywhiz.service.filters.SecurityHeadersFilter;
+import keywhiz.service.resources.admin.SessionMeResource;
 import keywhiz.utility.DSLContexts;
 import org.jooq.DSLContext;
 import org.jooq.impl.DefaultTransactionProvider;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static keywhiz.JooqHealthCheck.OnFailure.LOG_ONLY;
-import static keywhiz.JooqHealthCheck.OnFailure.RETURN_UNHEALTHY;
 
 public class ServiceModule extends AbstractModule {
   private final Environment environment;
@@ -62,50 +64,24 @@ public class ServiceModule extends AbstractModule {
     // Initialize the BouncyCastle security provider for cryptography support.
     BouncyCastle.require();
 
+    bind(ClientCertificateFilter.class).toProvider(ClientCertificateFilter::new);
     bind(Clock.class).toInstance(Clock.systemUTC());
-
-    install(new CookieModule(config.getCookieKey()));
-    install(new CryptoModule(config.getDerivationProviderClass(), config.getContentKeyStore()));
-
     bind(CookieConfig.class).annotatedWith(SessionCookie.class)
         .toInstance(config.getSessionCookieConfig());
+    bind(SecurityHeadersFilter.class).toProvider(SecurityHeadersFilter::new);
+    bind(SessionMeResource.class).toProvider(SessionMeResource::new);
 
-    // TODO(justin): Consider https://github.com/HubSpot/dropwizard-guice.
-    bind(Environment.class).toInstance(environment);
-    bind(Configuration.class).toInstance(config);
-    bind(KeywhizConfig.class).toInstance(config);
+    install(new ContextModule(config, environment));
+    install(new CookieModule(config.getCookieKey()));
+    install(new CryptoModule(config.getDerivationProviderClass(), config.getContentKeyStore()));
+    install(new DaoModule());
+    install(new StrictGuiceModule());
   }
 
   // AuditLog
 
   @Provides @Singleton AuditLog simpleLogger() {
     return new SimpleLogger();
-  }
-
-  // ManagedDataSource
-
-  @Provides @Singleton ManagedDataSource dataSource(Environment environment,
-      KeywhizConfig config) {
-    DataSourceFactory dataSourceFactory = config.getDataSourceFactory();
-    ManagedDataSource dataSource = dataSourceFactory.build(environment.metrics(), "db-writable");
-    environment.lifecycle().manage(dataSource);
-
-    environment.healthChecks().register("db-read-write-health",
-        new JooqHealthCheck(dataSource, LOG_ONLY));
-
-    return dataSource;
-  }
-
-  @Provides @Singleton @Readonly ManagedDataSource readonlyDataSource(Environment environment,
-      KeywhizConfig config) {
-    DataSourceFactory dataSourceFactory = config.getReadonlyDataSourceFactory();
-    ManagedDataSource dataSource = dataSourceFactory.build(environment.metrics(), "db-readonly");
-    environment.lifecycle().manage(dataSource);
-
-    environment.healthChecks().register("db-readonly-health",
-        new JooqHealthCheck(dataSource, RETURN_UNHEALTHY));
-
-    return dataSource;
   }
 
   @Provides ObjectMapper configuredObjectMapper(Environment environment) {

@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.inject.Guice;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
@@ -35,6 +35,7 @@ import keywhiz.commands.DropDeletedSecretsCommand;
 import keywhiz.commands.GenerateAesKeyCommand;
 import keywhiz.commands.MigrateCommand;
 import keywhiz.commands.PreviewMigrateCommand;
+import keywhiz.inject.InjectorFactory;
 import keywhiz.service.filters.CookieRenewingFilter;
 import keywhiz.service.filters.SecurityHeadersFilter;
 import keywhiz.service.providers.AuthResolver;
@@ -119,10 +120,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
   }
 
   private void doRun(KeywhizConfig config, Environment environment) {
-    if (injector == null) {
-      logger.debug("No existing guice injector; creating new one");
-      injector = Guice.createInjector(new ServiceModule(config, environment));
-    }
+    ensureInjectorCreated(config, environment);
 
     JerseyEnvironment jersey = environment.jersey();
 
@@ -170,6 +168,14 @@ public class KeywhizService extends Application<KeywhizConfig> {
     validateDatabase(config);
 
     logger.debug("Keywhiz configuration complete");
+  }
+
+  @VisibleForTesting
+  void ensureInjectorCreated(KeywhizConfig config, Environment environment) {
+    if (injector == null) {
+      logger.debug("No existing guice injector; creating new one");
+      injector = InjectorFactory.createInjector(config, environment);
+    }
   }
 
   private void validateDatabase(KeywhizConfig config) {
