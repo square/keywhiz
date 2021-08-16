@@ -615,9 +615,18 @@ public class SecretDAO {
   }
 
   private Long getOwnerId(Configuration configuration, String owner) {
+    if (owner == null) {
+      return null;
+    }
+
     GroupDAO groupDAO = groupDAOFactory.using(configuration);
-    Optional<Group> group = groupDAO.getGroup(owner);
-    return group.isPresent() ? group.get().getId() : null;
+    Optional<Group> maybeGroup = groupDAO.getGroup(owner);
+
+    if (maybeGroup.isEmpty()) {
+      throw new IllegalArgumentException(String.format("Unknown owner %s", owner));
+    }
+
+    return maybeGroup.get().getId();
   }
 
   public static class SecretDAOFactory implements DAOFactory<SecretDAO> {

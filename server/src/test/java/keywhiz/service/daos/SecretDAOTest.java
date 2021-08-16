@@ -53,6 +53,7 @@ import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 @RunWith(KeywhizTestRunner.class)
 public class SecretDAOTest {
@@ -209,6 +210,10 @@ public class SecretDAOTest {
   // createSecret
   //---------------------------------------------------------------------------------------
 
+  @Test public void failsToCreateSecretWithNonExistingOwner() {
+    assertThrows(IllegalArgumentException.class, () -> createSecretWithOwner(randomName()));
+  }
+
   @Test public void createsSecretWithOwner() {
     String owner = createGroup();
     long secretId = createSecretWithOwner(owner);
@@ -299,7 +304,7 @@ public class SecretDAOTest {
         .where(SECRETS.ID.eq(firstId))
         .execute();
 
-     secretDAO.createSecret(name, "content2", null,
+     secretDAO.createSecret(name, null, "content2",
          cryptographer.computeHmac("content2".getBytes(UTF_8), "hmackey"), "creator2",
         ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
   }
