@@ -79,112 +79,112 @@ public class SecretControllerTest {
 
   @Test
   public void createsSecretWithOwner() {
-    String owner = UUID.randomUUID().toString();
-    groupDAO.createGroup(owner, "creator", "description", ImmutableMap.of());
+    String ownerName = UUID.randomUUID().toString();
+    groupDAO.createGroup(ownerName, "creator", "description", ImmutableMap.of());
 
     String secretName = UUID.randomUUID().toString();
     Secret created = secretController
         .builder(secretName, "secret", "creator", now)
-        .withOwner(owner)
+        .withOwnerName(ownerName)
         .create();
 
-    assertEquals(owner, created.getOwner());
+    assertEquals(ownerName, created.getOwner());
   }
 
   @Test
   public void createsOrUpdatesNewSecretWithOwner() {
-    String owner = UUID.randomUUID().toString();
+    String ownerName = UUID.randomUUID().toString();
 
-    groupDAO.createGroup(owner, "creator", "description", ImmutableMap.of());
+    groupDAO.createGroup(ownerName, "creator", "description", ImmutableMap.of());
 
     String secretName = UUID.randomUUID().toString();
 
     Secret created = secretController
         .builder(secretName, "secret", "creator", now)
-        .withOwner(owner)
+        .withOwnerName(ownerName)
         .createOrUpdate();
 
-    assertEquals(owner, created.getOwner());
+    assertEquals(ownerName, created.getOwner());
   }
 
   @Test
   public void createsOrUpdatesExistingSecretWithOwner() {
-    String owner = UUID.randomUUID().toString();
+    String ownerName = UUID.randomUUID().toString();
 
-    groupDAO.createGroup(owner, "creator", "description", ImmutableMap.of());
+    groupDAO.createGroup(ownerName, "creator", "description", ImmutableMap.of());
 
     String secretName = UUID.randomUUID().toString();
 
     Secret created = secretController
         .builder(secretName, "secret", "creator", now)
-        .withOwner(owner)
+        .withOwnerName(ownerName)
         .create();
 
     Secret updated = secretController
         .builder(secretName, "secret", "creator", now)
-        .withOwner(owner)
+        .withOwnerName(ownerName)
         .createOrUpdate();
 
-    assertEquals(owner, updated.getOwner());
+    assertEquals(ownerName, updated.getOwner());
   }
 
   // Updating ownership will come in a future phase.
   // For now, documenting current behavior.
   @Test
   public void updateDoesNotOverwriteOwner() {
-    String owner1 = UUID.randomUUID().toString();
-    String owner2 = UUID.randomUUID().toString();
+    String ownerName1 = UUID.randomUUID().toString();
+    String ownerName2 = UUID.randomUUID().toString();
 
-    groupDAO.createGroup(owner1, "creator", "description", ImmutableMap.of());
-    groupDAO.createGroup(owner2, "creator", "description", ImmutableMap.of());
+    groupDAO.createGroup(ownerName1, "creator", "description", ImmutableMap.of());
+    groupDAO.createGroup(ownerName2, "creator", "description", ImmutableMap.of());
 
     String secretName = UUID.randomUUID().toString();
 
     Secret created = secretController
         .builder(secretName, "secret", "creator", now)
-        .withOwner(owner1)
+        .withOwnerName(ownerName1)
         .create();
 
     Secret updated = secretController
         .builder(secretName, "secret", "creator", now)
-        .withOwner(owner2)
+        .withOwnerName(ownerName2)
         .createOrUpdate();
 
-    assertEquals(owner1, updated.getOwner());
+    assertEquals(ownerName1, updated.getOwner());
   }
 
   @Test
   public void loadsSecretWithOwnerById() {
-    String owner = UUID.randomUUID().toString();
+    String ownerName = UUID.randomUUID().toString();
 
-    groupDAO.createGroup(owner, "creator", "description", ImmutableMap.of());
+    groupDAO.createGroup(ownerName, "creator", "description", ImmutableMap.of());
 
     String secretName = UUID.randomUUID().toString();
 
     Secret created = secretController
         .builder(secretName, "secret", "creator", now)
-        .withOwner(owner)
+        .withOwnerName(ownerName)
         .create();
 
     Secret persisted = secretController.getSecretById(created.getId()).get();
-    assertEquals(owner, persisted.getOwner());
+    assertEquals(ownerName, persisted.getOwner());
   }
 
   @Test
   public void loadsSecretWithOwnerByName() {
-    String owner = UUID.randomUUID().toString();
+    String ownerName = UUID.randomUUID().toString();
 
-    groupDAO.createGroup(owner, "creator", "description", ImmutableMap.of());
+    groupDAO.createGroup(ownerName, "creator", "description", ImmutableMap.of());
 
     String secretName = UUID.randomUUID().toString();
 
     Secret created = secretController
         .builder(secretName, "secret", "creator", now)
-        .withOwner(owner)
+        .withOwnerName(ownerName)
         .create();
 
     Secret persisted = secretController.getSecretByName(secretName).get();
-    assertEquals(owner, persisted.getOwner());
+    assertEquals(ownerName, persisted.getOwner());
   }
 
   @Test

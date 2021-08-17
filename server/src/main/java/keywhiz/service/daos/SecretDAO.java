@@ -95,7 +95,7 @@ public class SecretDAO {
   @VisibleForTesting
   public long createSecret(
       String name,
-      String owner,
+      String ownerName,
       String encryptedSecret,
       String hmac,
       String creator,
@@ -124,7 +124,7 @@ public class SecretDAO {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
 
-      Long ownerId = getOwnerId(configuration, owner);
+      Long ownerId = getOwnerId(configuration, ownerName);
 
       Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
       long secretId;
@@ -614,16 +614,16 @@ public class SecretDAO {
     }
   }
 
-  private Long getOwnerId(Configuration configuration, String owner) {
-    if (owner == null) {
+  private Long getOwnerId(Configuration configuration, String ownerName) {
+    if (ownerName == null) {
       return null;
     }
 
     GroupDAO groupDAO = groupDAOFactory.using(configuration);
-    Optional<Group> maybeGroup = groupDAO.getGroup(owner);
+    Optional<Group> maybeGroup = groupDAO.getGroup(ownerName);
 
     if (maybeGroup.isEmpty()) {
-      throw new IllegalArgumentException(String.format("Unknown owner %s", owner));
+      throw new IllegalArgumentException(String.format("Unknown owner %s", ownerName));
     }
 
     return maybeGroup.get().getId();

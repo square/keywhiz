@@ -31,14 +31,14 @@ public class SecretSeriesMapperTest {
 
   @Test
   public void mapsRecordWithExistingOwner() {
-    String owner = randomName();
-    Long ownerId = createGroup(owner);
+    String ownerName = randomName();
+    Long ownerId = createGroup(ownerName);
 
     SecretsRecord record = minimalRecord();
     record.setOwner(ownerId);
 
     SecretSeries series = mapper.map(record);
-    assertEquals(owner, series.owner());
+    assertEquals(ownerName, series.owner());
   }
 
   @Test
@@ -48,8 +48,9 @@ public class SecretSeriesMapperTest {
 
     assertThrows(IllegalStateException.class, () -> mapper.map(record));
   }
-  private Long createGroup(String owner) {
-    return groupDAO.createGroup(owner, null , null, ImmutableMap.of());
+
+  private Long createGroup(String ownerName) {
+    return groupDAO.createGroup(ownerName, null , null, ImmutableMap.of());
   }
 
   private SecretsRecord minimalRecord() {

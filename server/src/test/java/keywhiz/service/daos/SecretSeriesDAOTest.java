@@ -48,9 +48,9 @@ public class SecretSeriesDAOTest {
   @Inject @Readwrite GroupDAO groupDAO;
 
   @Test public void ownerRoundTrip() {
-    String owner = "foo";
+    String ownerName = "foo";
     long ownerId = groupDAO.createGroup(
-        owner,
+        ownerName,
         null,
         null,
         ImmutableMap.of());
@@ -67,7 +67,7 @@ public class SecretSeriesDAOTest {
     createSecretContent(secretId);
 
     SecretSeries series = secretSeriesDAO.getSecretSeriesById(secretId).get();
-    assertEquals(owner, series.owner());
+    assertEquals(ownerName, series.owner());
   }
 
   @Test

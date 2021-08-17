@@ -36,10 +36,10 @@ public class SecretTransformerTest {
 
   @Test
   public void transformsOwner() {
-    String owner = "foo";
+    String ownerName = "foo";
 
     SecretSeries series = validSeries().toBuilder()
-        .owner(owner)
+        .owner(ownerName)
         .build();
 
     SecretContent content = validContent();
@@ -47,7 +47,7 @@ public class SecretTransformerTest {
     SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
 
     Secret secret = transformer.transform(seriesAndContent);
-    assertEquals(owner, secret.getOwner());
+    assertEquals(ownerName, secret.getOwner());
   }
 
   private static SecretSeries validSeries() {

@@ -44,12 +44,12 @@ public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSer
   }
 
   public SecretSeries map(SecretsRecord r) {
-    String owner = getOwner(r);
+    String ownerName = getOwnerName(r);
 
     return SecretSeries.of(
         r.getId(),
         r.getName(),
-        owner,
+        ownerName,
         r.getDescription(),
         new ApiDate(r.getCreatedat()),
         r.getCreatedby(),
@@ -60,7 +60,7 @@ public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSer
         r.getCurrent());
   }
 
-  private String getOwner(SecretsRecord r) {
+  private String getOwnerName(SecretsRecord r) {
     Long ownerId = r.getOwner();
     if (ownerId == null) {
       return null;

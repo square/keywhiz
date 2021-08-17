@@ -215,36 +215,36 @@ public class SecretDAOTest {
   }
 
   @Test public void createsSecretWithOwner() {
-    String owner = createGroup();
-    long secretId = createSecretWithOwner(owner);
+    String ownerName = createGroup();
+    long secretId = createSecretWithOwner(ownerName);
 
     SecretSeriesAndContent secret = secretDAO.getSecretById(secretId).get();
-    assertEquals(owner, secret.series().owner());
+    assertEquals(ownerName, secret.series().owner());
   }
 
   @Test
   public void createOrUpdateNonExistingSecretWithOwner() {
-    String owner = createGroup();
-    long secretId = createOrUpdateSecretWithOwner(owner);
+    String ownerName = createGroup();
+    long secretId = createOrUpdateSecretWithOwner(ownerName);
 
     SecretSeriesAndContent secret = secretDAO.getSecretById(secretId).get();
-    assertEquals(owner, secret.series().owner());
+    assertEquals(ownerName, secret.series().owner());
   }
 
   @Test
   public void createOrUpdateExistingSecretDoesNotChangeOwner() {
-    String owner1 = createGroup();
-    String owner2 = createGroup();
+    String ownerName1 = createGroup();
+    String ownerName2 = createGroup();
 
     String secretName = randomName();
 
-    long secretId1 = this.createOrUpdateSecretWithOwner(secretName, owner1);
-    long secretId2 = this.createOrUpdateSecretWithOwner(secretName, owner2);
+    long secretId1 = createOrUpdateSecretWithOwner(secretName, ownerName1);
+    long secretId2 = createOrUpdateSecretWithOwner(secretName, ownerName2);
 
     assertEquals(secretId1, secretId2);
 
     SecretSeriesAndContent secret = secretDAO.getSecretById(secretId1).get();
-    assertEquals(owner1, secret.series().owner());
+    assertEquals(ownerName1, secret.series().owner());
   }
 
   @Test public void createSecret() {
@@ -844,10 +844,10 @@ public class SecretDAOTest {
     return name;
   }
 
-  private long createSecretWithOwner(String owner) {
+  private long createSecretWithOwner(String ownerName) {
     return secretDAO.createSecret(
         randomName(),
-        owner,
+        ownerName,
         "encryptedSecret",
         "hmac",
         "creator",
@@ -858,14 +858,14 @@ public class SecretDAOTest {
         null);
   }
 
-  private long createOrUpdateSecretWithOwner(String owner) {
-    return createOrUpdateSecretWithOwner(randomName(), owner);
+  private long createOrUpdateSecretWithOwner(String ownerName) {
+    return createOrUpdateSecretWithOwner(randomName(), ownerName);
   }
 
-  private long createOrUpdateSecretWithOwner(String name, String owner) {
+  private long createOrUpdateSecretWithOwner(String secretName, String ownerName) {
     return secretDAO.createOrUpdateSecret(
-        name,
-        owner,
+        secretName,
+        ownerName,
         "encryptedSecret",
         "hmac",
         "creator",
