@@ -249,6 +249,7 @@ public class SecretController {
     private final String encryptedSecret;
     private final String hmac;
     private final String creator;
+    private String ownerName;
     private String description = "";
     private Map<String, String> metadata = ImmutableMap.of();
     private long expiry = 0;
@@ -271,6 +272,16 @@ public class SecretController {
       this.hmac = hmac;
       this.creator = creator;
       this.expiry = expiry;
+    }
+
+    /**
+     * Supply an optional owner of the secret.
+     * @param ownerName owner of secret
+     * @return the builder
+     */
+    public SecretBuilder withOwnerName(String ownerName) {
+      this.ownerName = checkNotNull(ownerName);
+      return this;
     }
 
     /**
@@ -309,13 +320,31 @@ public class SecretController {
      * @return an instance of the newly created secret.
      */
     public Secret create() {
-        secretDAO.createSecret(name, encryptedSecret, hmac, creator, metadata, expiry, description, type,
+        secretDAO.createSecret(
+            name,
+            ownerName,
+            encryptedSecret,
+            hmac,
+            creator,
+            metadata,
+            expiry,
+            description,
+            type,
             generationOptions);
         return transformer.transform(secretDAO.getSecretByName(name).get());
     }
 
     public Secret createOrUpdate() {
-      secretDAO.createOrUpdateSecret(name, encryptedSecret, hmac, creator, metadata, expiry, description, type,
+      secretDAO.createOrUpdateSecret(
+          name,
+          ownerName,
+          encryptedSecret,
+          hmac,
+          creator,
+          metadata,
+          expiry,
+          description,
+          type,
           generationOptions);
       return transformer.transform(secretDAO.getSecretByName(name).get());
     }

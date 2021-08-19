@@ -18,12 +18,12 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Random;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretSeries;
-import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
+import keywhiz.service.config.Readwrite;
 import org.jooq.DSLContext;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -36,19 +36,57 @@ import java.util.Set;
 
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 
 @RunWith(KeywhizTestRunner.class)
 public class SecretSeriesDAOTest {
   @Inject DSLContext jooqContext;
-  @Inject SecretSeriesDAOFactory secretSeriesDAOFactory;
-  @Inject SecretContentDAO.SecretContentDAOFactory secretContentDAOFactory;
+  @Inject @Readwrite SecretSeriesDAO secretSeriesDAO;
+  @Inject @Readwrite SecretContentDAO secretContentDAO;
+  @Inject @Readwrite GroupDAO groupDAO;
 
-  SecretSeriesDAO secretSeriesDAO;
-  SecretContentDAO secretContentDAO;
+  @Test public void ownerRoundTrip() {
+    String ownerName = "foo";
+    long ownerId = groupDAO.createGroup(
+        ownerName,
+        null,
+        null,
+        ImmutableMap.of());
 
-  @Before public void setUp() {
-    secretSeriesDAO = secretSeriesDAOFactory.readwrite();
-    secretContentDAO = secretContentDAOFactory.readwrite();
+    long secretId = secretSeriesDAO.createSecretSeries(
+        "name",
+        ownerId,
+        null,
+        null,
+        null,
+        null,
+        ApiDate.now().toEpochSecond());
+
+    createSecretContent(secretId);
+
+    SecretSeries series = secretSeriesDAO.getSecretSeriesById(secretId).get();
+    assertEquals(ownerName, series.owner());
+  }
+
+  @Test
+  public void failsToLoadSecretWithNonExistentOwner() {
+    long ownerId = new Random().nextInt(Integer.MAX_VALUE);
+    assertFalse(groupDAO.getGroupById(ownerId).isPresent());
+
+    long secretId = secretSeriesDAO.createSecretSeries(
+        "name",
+        ownerId,
+        null,
+        null,
+        null,
+        null,
+        ApiDate.now().toEpochSecond());
+
+    createSecretContent(secretId);
+
+    assertThrows(IllegalStateException.class, () -> secretSeriesDAO.getSecretSeriesById(secretId));
   }
 
   @Test public void createAndLookupSecretSeries() {
@@ -56,7 +94,7 @@ public class SecretSeriesDAOTest {
     long now = OffsetDateTime.now().toEpochSecond();
     ApiDate nowDate = new ApiDate(now);
 
-    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
+    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", null, "creator", "desc", null,
         ImmutableMap.of("foo", "bar"), now);
     long contentId = secretContentDAO.createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
@@ -81,7 +119,7 @@ public class SecretSeriesDAOTest {
   @Test public void setCurrentVersion() {
     long now = OffsetDateTime.now().toEpochSecond();
 
-    long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", "creator",
+    long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", null, "creator",
         "", null, null, now);
     Optional<SecretSeries> secretSeriesById = secretSeriesDAO.getSecretSeriesById(id);
     assertThat(secretSeriesById).isEmpty();
@@ -99,9 +137,9 @@ public class SecretSeriesDAOTest {
   @Test(expected = IllegalStateException.class)
   public void setCurrentVersion_failsWithIncorrectSecretContent() {
     long now = OffsetDateTime.now().toEpochSecond();
-    long id = secretSeriesDAO.createSecretSeries("someSecret", "creator", "",
+    long id = secretSeriesDAO.createSecretSeries("someSecret", null, "creator", "",
         null, null, now);
-    long other = secretSeriesDAO.createSecretSeries("someOtherSecret", "creator", "",
+    long other = secretSeriesDAO.createSecretSeries("someOtherSecret", null, "creator", "",
         null, null, now);
     long contentId = secretContentDAO.createSecretContent(other, "blah",
         "checksum", "creator", null, 0, now);
@@ -111,7 +149,7 @@ public class SecretSeriesDAOTest {
 
   @Test public void deleteSecretSeriesByName() {
     long now = OffsetDateTime.now().toEpochSecond();
-    long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", "creator",
+    long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesByName", null, "creator",
         "", null, null, now);
     long contentId = secretContentDAO.createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
@@ -129,7 +167,7 @@ public class SecretSeriesDAOTest {
 
   @Test public void deleteSecretSeriesByNameAndRecreate() {
     long now = OffsetDateTime.now().toEpochSecond();
-    long id = secretSeriesDAO.createSecretSeries("toBeDeletedAndReplaced", "creator",
+    long id = secretSeriesDAO.createSecretSeries("toBeDeletedAndReplaced", null, "creator",
         "", null, null, now);
     long contentId = secretContentDAO.createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
@@ -144,7 +182,7 @@ public class SecretSeriesDAOTest {
         secretSeriesDAO.getSecretSeriesByName("toBeDeletedAndReplaced")).isEmpty();
     assertThat(secretSeriesDAO.getSecretSeriesById(id)).isEmpty();
 
-    id = secretSeriesDAO.createSecretSeries("toBeDeletedAndReplaced", "creator",
+    id = secretSeriesDAO.createSecretSeries("toBeDeletedAndReplaced", null, "creator",
         "", null, null, now);
     contentId = secretContentDAO.createSecretContent(id, "blah2",
         "checksum", "creator", null, 0, now);
@@ -158,7 +196,7 @@ public class SecretSeriesDAOTest {
   @Test public void deleteSecretSeriesById() {
     long now = OffsetDateTime.now().toEpochSecond();
     long id = secretSeriesDAO.createSecretSeries("toBeDeleted_deleteSecretSeriesById",
-        "creator", "", null, null, now);
+        null, "creator", "", null, null, now);
     long contentId = secretContentDAO.createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
     secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
@@ -172,7 +210,7 @@ public class SecretSeriesDAOTest {
     long now = OffsetDateTime.now().toEpochSecond();
     String oldName = "toBeRenamed_renameSecretSeriesById";
     long id = secretSeriesDAO.createSecretSeries(oldName,
-        "creator", "", null, null, now);
+        null, "creator", "", null, null, now);
     long contentId = secretContentDAO.createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
     secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
@@ -186,7 +224,7 @@ public class SecretSeriesDAOTest {
   @Test public void updateSecretSeriesContentById() {
     long now = OffsetDateTime.now().toEpochSecond();
     long id = secretSeriesDAO.createSecretSeries("toBeUpdated_updateSecretSeriesContentById",
-        "creator", "", null, null, now);
+        null, "creator", "", null, null, now);
     long oldContentId = secretContentDAO.createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
     secretSeriesDAO.setCurrentVersion(id, oldContentId, "creator", now);
@@ -204,7 +242,7 @@ public class SecretSeriesDAOTest {
   @Test public void getSecretSeriesByDeletedName() {
     long now = OffsetDateTime.now().toEpochSecond();
     long id = secretSeriesDAO.createSecretSeries("toBeFound_getSecretSeriesByDeletedName",
-        "creator", "", null, null, now);
+        null, "creator", "", null, null, now);
     long oldContentId = secretContentDAO.createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
     secretSeriesDAO.setCurrentVersion(id, oldContentId, "creator", now);
@@ -221,7 +259,7 @@ public class SecretSeriesDAOTest {
   @Test public void getDeletedSecretSeriesById() {
     long now = OffsetDateTime.now().toEpochSecond();
     long id = secretSeriesDAO.createSecretSeries("toBeFound_getSecretSeriesByDeletedId",
-        "creator", "", null, null, now);
+        null, "creator", "", null, null, now);
     long oldContentId = secretContentDAO.createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
     secretSeriesDAO.setCurrentVersion(id, oldContentId, "creator", now);
@@ -249,32 +287,32 @@ public class SecretSeriesDAOTest {
     long thirdExpiry = now + 30000;
     long fourthExpiry = now + 40000;
     long firstId = secretSeriesDAO.createSecretSeries("expiringFirst",
-        "creator", "", null, null, now);
+        null, "creator", "", null, null, now);
     long firstContentId = secretContentDAO.createSecretContent(firstId,
         "blah", "checksum", "creator", null, firstExpiry, now);
     secretSeriesDAO.setCurrentVersion(firstId, firstContentId, "creator", now);
 
     long secondId = secretSeriesDAO.createSecretSeries("expiringSecond",
-        "creator", "", null, null, now);
+        null, "creator", "", null, null, now);
     long secondContentId = secretContentDAO.createSecretContent(secondId, "blah",
         "checksum", "creator", null, secondExpiry, now);
     secretSeriesDAO.setCurrentVersion(secondId, secondContentId, "creator", now);
 
     // Make sure the rows aren't ordered by expiry
     long fourthId = secretSeriesDAO.createSecretSeries("expiringFourth",
-        "creator", "", null, null, now);
+        null, "creator", "", null, null, now);
     long fourthContentId = secretContentDAO.createSecretContent(fourthId, "blah",
         "checksum", "creator", null, fourthExpiry, now);
     secretSeriesDAO.setCurrentVersion(fourthId, fourthContentId, "creator", now);
 
     long thirdId = secretSeriesDAO.createSecretSeries("expiringThird",
-        "creator", "", null, null, now);
+        null, "creator", "", null, null, now);
     long thirdContentId = secretContentDAO.createSecretContent(thirdId, "blah",
         "checksum", "creator", null, thirdExpiry, now);
     secretSeriesDAO.setCurrentVersion(thirdId, thirdContentId, "creator", now);
 
     long fifthId = secretSeriesDAO.createSecretSeries("laterInAlphabetExpiringFourth",
-        "creator", "", null, null, now);
+        null, "creator", "", null, null, now);
     long fifthContentId = secretContentDAO.createSecretContent(fifthId, "blah",
         "checksum", "creator", null, fourthExpiry, now);
     secretSeriesDAO.setCurrentVersion(fifthId, fifthContentId, "creator", now);
@@ -337,7 +375,7 @@ public class SecretSeriesDAOTest {
     long now = OffsetDateTime.now().toEpochSecond();
     ApiDate nowDate = new ApiDate(now);
 
-    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
+    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", null, "creator", "desc", null,
             ImmutableMap.of("foo", "bar"), now);
     long contentId = secretContentDAO.createSecretContent(id, "blah",
             "checksum", "creator", null, 0, now);
@@ -359,7 +397,7 @@ public class SecretSeriesDAOTest {
     long now = OffsetDateTime.now().toEpochSecond();
     ApiDate nowDate = new ApiDate(now);
 
-    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
+    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", null, "creator", "desc", null,
             ImmutableMap.of("foo", "bar"), now);
     long contentId = secretContentDAO.createSecretContent(id, "blah",
             "checksum", "creator", null, 0, now);
@@ -388,13 +426,13 @@ public class SecretSeriesDAOTest {
     long now = OffsetDateTime.now().toEpochSecond();
     ApiDate nowDate = new ApiDate(now);
 
-    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", "creator", "desc", null,
+    long id = secretSeriesDAO.createSecretSeries("newSecretSeries", null, "creator", "desc", null,
             ImmutableMap.of("foo", "bar"), now);
     long contentId = secretContentDAO.createSecretContent(id, "blah",
             "checksum", "creator", null, 0, now);
     secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
 
-    long id2 = secretSeriesDAO.createSecretSeries("newSecretSeries2", "creator", "desc", null,
+    long id2 = secretSeriesDAO.createSecretSeries("newSecretSeries2", null, "creator", "desc", null,
             ImmutableMap.of("f00", "b4r"), now);
     long contentId2 = secretContentDAO.createSecretContent(id2, "blah",
             "checksum", "creator", null, 0, now);
@@ -411,7 +449,23 @@ public class SecretSeriesDAOTest {
 
     assertThat(actual).contains(expected1);
     assertThat(actual).contains(expected2);
+  }
 
+  private long createSecretContent(long secretId) {
+    long now = OffsetDateTime.now().toEpochSecond();
+
+    long contentId = secretContentDAO.createSecretContent(
+        secretId,
+        "blah",
+        "checksum",
+        "creator",
+        null,
+        0,
+        now);
+
+    secretSeriesDAO.setCurrentVersion(secretId, contentId, "creator", now);
+
+    return contentId;
   }
 }
 

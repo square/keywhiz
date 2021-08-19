@@ -4,6 +4,7 @@ import com.google.inject.Injector;
 import io.dropwizard.db.ManagedDataSource;
 import javax.inject.Inject;
 import keywhiz.service.config.Readonly;
+import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.daos.UserDAO;
 import org.junit.Test;
 
@@ -40,5 +41,18 @@ public class InjectorFactoryTest {
   @Test
   public void injectsUserDAO() {
     assertNotNull(createInjector().getInstance(UserDAO.class));
+  }
+
+  @Test
+  public void injectsReadonlyGroupDAO() {
+    class Holder {
+      @Inject @Readonly GroupDAO dao;
+    }
+
+    Holder holder = new Holder();
+
+    createInjector().injectMembers(holder);
+
+    assertNotNull(holder.dao);
   }
 }

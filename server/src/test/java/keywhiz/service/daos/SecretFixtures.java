@@ -59,7 +59,7 @@ public class SecretFixtures {
       throw new ContentEncodingException("Error encoding content in SecretFixture!");
     }
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
-    long id = secretDAO.createSecret(name, encryptedContent, hmac, "creator", ImmutableMap.of(), 0, "", null,
+    long id = secretDAO.createSecret(name, null, encryptedContent, hmac, "creator", ImmutableMap.of(), 0, "", null,
         ImmutableMap.of());
     return transformer.transform(secretDAO.getSecretById(id).get());
   }

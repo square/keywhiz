@@ -68,6 +68,7 @@ public class SecretDAO {
   private final DSLContext dslContext;
   private final SecretContentDAOFactory secretContentDAOFactory;
   private final SecretSeriesDAOFactory secretSeriesDAOFactory;
+  private final GroupDAO.GroupDAOFactory groupDAOFactory;
   private final ContentCryptographer cryptographer;
 
   // this is the maximum length of a secret name, so that it will still fit in the 255 char limit
@@ -78,18 +79,32 @@ public class SecretDAO {
   // to permanently remove secrets
   private static final int MAX_ROWS_REMOVED_PER_TRANSACTION = 1000;
 
-  public SecretDAO(DSLContext dslContext, SecretContentDAOFactory secretContentDAOFactory,
-      SecretSeriesDAOFactory secretSeriesDAOFactory, ContentCryptographer cryptographer) {
+  public SecretDAO(
+      DSLContext dslContext,
+      SecretContentDAOFactory secretContentDAOFactory,
+      SecretSeriesDAOFactory secretSeriesDAOFactory,
+      GroupDAO.GroupDAOFactory groupDAOFactory,
+      ContentCryptographer cryptographer) {
     this.dslContext = dslContext;
     this.secretContentDAOFactory = secretContentDAOFactory;
     this.secretSeriesDAOFactory = secretSeriesDAOFactory;
+    this.groupDAOFactory = groupDAOFactory;
     this.cryptographer = cryptographer;
   }
 
   @VisibleForTesting
-  public long createSecret(String name, String encryptedSecret, String hmac,
-      String creator, Map<String, String> metadata, long expiry, String description,
-      @Nullable String type, @Nullable Map<String, String> generationOptions) {
+  public long createSecret(
+      String name,
+      String ownerName,
+      String encryptedSecret,
+      String hmac,
+      String creator,
+      Map<String, String> metadata,
+      long expiry,
+      String description,
+      @Nullable String type,
+      @Nullable Map<String, String> generationOptions) {
+
     return dslContext.transactionResult(configuration -> {
       // disallow use of a leading period in secret names
       // check is here because this is where all APIs converge on secret creation
@@ -109,6 +124,8 @@ public class SecretDAO {
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
 
+      Long ownerId = getOwnerId(configuration, ownerName);
+
       Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
       long secretId;
       if (secretSeries.isPresent()) {
@@ -121,8 +138,14 @@ public class SecretDAO {
               format("secret %s retrieved without current version set", name));
         }
       } else {
-        secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type,
-            generationOptions, now);
+        secretId = secretSeriesDAO.createSecretSeries(
+            name,
+            ownerId,
+            creator,
+            description,
+            type,
+            generationOptions,
+            now);
       }
 
       long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, hmac,
@@ -134,8 +157,16 @@ public class SecretDAO {
   }
 
   @VisibleForTesting
-  public long createOrUpdateSecret(String name, String encryptedSecret, String hmac, String creator,
-      Map<String, String> metadata, long expiry, String description, @Nullable String type,
+  public long createOrUpdateSecret(
+      String name,
+      String owner,
+      String encryptedSecret,
+      String hmac,
+      String creator,
+      Map<String, String> metadata,
+      long expiry,
+      String description,
+      @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
     // SecretController should have already checked that the contents are not empty
     return dslContext.transactionResult(configuration -> {
@@ -143,6 +174,8 @@ public class SecretDAO {
 
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+
+      Long ownerId = getOwnerId(configuration, owner);
 
       Optional<SecretSeries> secretSeries = secretSeriesDAO.getSecretSeriesByName(name);
       long secretId;
@@ -152,8 +185,14 @@ public class SecretDAO {
         secretSeriesDAO.updateSecretSeries(secretId, name, creator, description, type,
             generationOptions, now);
       } else {
-        secretId = secretSeriesDAO.createSecretSeries(name, creator, description, type,
-            generationOptions, now);
+        secretId = secretSeriesDAO.createSecretSeries(
+            name,
+            ownerId,
+            creator,
+            description,
+            type,
+            generationOptions,
+            now);
       }
 
       long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedSecret, hmac,
@@ -575,36 +614,69 @@ public class SecretDAO {
     }
   }
 
+  private Long getOwnerId(Configuration configuration, String ownerName) {
+    if (ownerName == null) {
+      return null;
+    }
+
+    GroupDAO groupDAO = groupDAOFactory.using(configuration);
+    Optional<Group> maybeGroup = groupDAO.getGroup(ownerName);
+
+    if (maybeGroup.isEmpty()) {
+      throw new IllegalArgumentException(String.format("Unknown owner %s", ownerName));
+    }
+
+    return maybeGroup.get().getId();
+  }
+
   public static class SecretDAOFactory implements DAOFactory<SecretDAO> {
     private final DSLContext jooq;
     private final DSLContext readonlyJooq;
     private final SecretContentDAOFactory secretContentDAOFactory;
     private final SecretSeriesDAOFactory secretSeriesDAOFactory;
+    private final GroupDAO.GroupDAOFactory groupDAOFactory;
     private final ContentCryptographer cryptographer;
 
-    @Inject public SecretDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
+    @Inject public SecretDAOFactory(
+        DSLContext jooq,
+        @Readonly DSLContext readonlyJooq,
         SecretContentDAOFactory secretContentDAOFactory,
         SecretSeriesDAOFactory secretSeriesDAOFactory,
+        GroupDAO.GroupDAOFactory groupDAOFactory,
         ContentCryptographer cryptographer) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.secretContentDAOFactory = secretContentDAOFactory;
       this.secretSeriesDAOFactory = secretSeriesDAOFactory;
+      this.groupDAOFactory = groupDAOFactory;
       this.cryptographer = cryptographer;
     }
 
     @Override public SecretDAO readwrite() {
-      return new SecretDAO(jooq, secretContentDAOFactory, secretSeriesDAOFactory, cryptographer);
+      return new SecretDAO(
+          jooq,
+          secretContentDAOFactory,
+          secretSeriesDAOFactory,
+          groupDAOFactory,
+          cryptographer);
     }
 
     @Override public SecretDAO readonly() {
-      return new SecretDAO(readonlyJooq, secretContentDAOFactory, secretSeriesDAOFactory,
+      return new SecretDAO(
+          readonlyJooq,
+          secretContentDAOFactory,
+          secretSeriesDAOFactory,
+          groupDAOFactory,
           cryptographer);
     }
 
     @Override public SecretDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretDAO(dslContext, secretContentDAOFactory, secretSeriesDAOFactory,
+      return new SecretDAO(
+          dslContext,
+          secretContentDAOFactory,
+          secretSeriesDAOFactory,
+          groupDAOFactory,
           cryptographer);
     }
   }

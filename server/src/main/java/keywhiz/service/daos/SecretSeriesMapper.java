@@ -20,26 +20,36 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 import keywhiz.api.ApiDate;
+import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
+import keywhiz.service.config.Readonly;
 import org.jooq.RecordMapper;
 
 public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSeries> {
   private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE =
       new TypeReference<>() {};
-  private final ObjectMapper mapper;
 
-  @Inject public SecretSeriesMapper(ObjectMapper mapper) {
+  private final ObjectMapper mapper;
+  private final GroupDAO groupDAO;
+
+  @Inject public SecretSeriesMapper(
+      ObjectMapper mapper,
+      @Readonly GroupDAO groupDAO) {
     this.mapper = mapper;
+    this.groupDAO = groupDAO;
   }
 
   public SecretSeries map(SecretsRecord r) {
+    String ownerName = getOwnerName(r);
+
     return SecretSeries.of(
         r.getId(),
         r.getName(),
-        null,
+        ownerName,
         r.getDescription(),
         new ApiDate(r.getCreatedat()),
         r.getCreatedby(),
@@ -48,6 +58,25 @@ public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSer
         r.getType(),
         tryToReadMapValue(r),
         r.getCurrent());
+  }
+
+  private String getOwnerName(SecretsRecord r) {
+    Long ownerId = r.getOwner();
+    if (ownerId == null) {
+      return null;
+    }
+
+    Optional<Group> maybeGroup = groupDAO.getGroupById(ownerId);
+    if (maybeGroup.isEmpty()) {
+      throw new IllegalStateException(
+          String.format(
+              "Unable to find owner for secret [%s] (ID %s): group ID %s not found",
+              r.getName(),
+              r.getId(),
+              ownerId));
+    }
+
+    return maybeGroup.get().getName();
   }
 
   private Map<String, String> tryToReadMapValue(SecretsRecord r) {
