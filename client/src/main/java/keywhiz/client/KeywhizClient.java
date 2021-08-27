@@ -55,6 +55,8 @@ import static java.lang.String.format;
 public class KeywhizClient {
   public static final MediaType JSON = MediaType.parse("application/json");
 
+  private static final String NO_OWNER = null;
+
   public static class MalformedRequestException extends IOException {
 
     @Override public String getMessage() {
@@ -168,8 +170,31 @@ public class KeywhizClient {
     });
   }
 
-  public SecretDetailResponse createSecret(String name, String description, byte[] content,
-      ImmutableMap<String, String> metadata, long expiry) throws IOException {
+  public SecretDetailResponse createSecret(
+      String name,
+      String description,
+      byte[] content,
+      ImmutableMap<String, String> metadata,
+      long expiry) throws IOException {
+
+    return createSecret(
+        name,
+        NO_OWNER,
+        description,
+        content,
+        metadata,
+        expiry
+    );
+  }
+
+  public SecretDetailResponse createSecret(
+      String name,
+      String owner,
+      String description,
+      byte[] content,
+      ImmutableMap<String, String> metadata,
+      long expiry) throws IOException {
+
     checkArgument(!name.isEmpty());
     checkArgument(content.length > 0, "Content must not be empty");
 
@@ -177,6 +202,7 @@ public class KeywhizClient {
     CreateSecretRequestV2 request =
         CreateSecretRequestV2.builder()
             .name(name)
+            .owner(owner)
             .description(description)
             .content(b64Content)
             .metadata(metadata)

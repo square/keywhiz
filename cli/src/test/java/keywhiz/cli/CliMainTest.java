@@ -4,11 +4,14 @@ import static org.junit.Assert.assertEquals;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
+import java.util.UUID;
+import keywhiz.cli.configs.AddActionConfig;
 import keywhiz.cli.configs.RenameActionConfig;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class CliMainTest {
@@ -64,5 +67,33 @@ public class CliMainTest {
     assertEquals("secret", config.resourceType);
     assertEquals("foo", config.oldName);
     assertEquals("bar", config.newName);
+  }
+
+  @Test
+  public void parsesAddCommandWithoutOwner() {
+    CliMain.CommandLineParsingContext context = new CliMain.CommandLineParsingContext();
+    JCommander commander = context.getCommander();
+    commander.parse("add", "secret", "--name", "foo");
+
+    String parsedCommand = commander.getParsedCommand();
+    assertEquals("add", parsedCommand);
+
+    AddActionConfig config = (AddActionConfig) context.getCommands().get(parsedCommand);
+    assertNull(config.getOwner());
+  }
+
+  @Test
+  public void parsesAddCommandWithOwner() {
+    String owner = UUID.randomUUID().toString();
+
+    CliMain.CommandLineParsingContext context = new CliMain.CommandLineParsingContext();
+    JCommander commander = context.getCommander();
+    commander.parse("add", "secret", "--name", "foo", "--owner", owner);
+
+    String parsedCommand = commander.getParsedCommand();
+    assertEquals("add", parsedCommand);
+
+    AddActionConfig config = (AddActionConfig) context.getCommands().get(parsedCommand);
+    assertEquals(owner, config.getOwner());
   }
 }

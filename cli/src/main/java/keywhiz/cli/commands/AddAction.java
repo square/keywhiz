@@ -94,7 +94,13 @@ public class AddAction implements Runnable {
         byte[] content = readSecretContent();
         ImmutableMap<String, String> metadata = config.getMetadata(mapper);
 
-        createAndAssignSecret(name, config.getDescription(), content, metadata, config.getExpiry());
+        createAndAssignSecret(
+            name,
+            config.getOwner(),
+            config.getDescription(),
+            content,
+            metadata,
+            config.getExpiry());
         break;
 
       case "client":
@@ -119,11 +125,22 @@ public class AddAction implements Runnable {
     }
   }
 
-  private void createAndAssignSecret(String secretName, String description, byte[] content,
-      ImmutableMap<String, String> metadata, long expiry) {
+  private void createAndAssignSecret(
+      String secretName,
+      String owner,
+      String description,
+      byte[] content,
+      ImmutableMap<String, String> metadata,
+      long expiry) {
     try {
       SecretDetailResponse secretResponse =
-          keywhizClient.createSecret(secretName, description, content, metadata, expiry);
+          keywhizClient.createSecret(
+              secretName,
+              owner,
+              description,
+              content,
+              metadata,
+              expiry);
       long secretId = secretResponse.id;
 
       logger.info("Creating secret '{}'.", secretName);
