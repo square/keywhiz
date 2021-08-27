@@ -46,6 +46,9 @@ public class AddOrUpdateActionConfig {
   @Parameter(names = { "-e", "--expiry" }, description = "Secret expiry. For keystores, it is recommended to use the expiry of the earliest key. Format should be 2006-01-02T15:04:05Z or seconds since epoch.")
   public String expiry;
 
+  @Parameter(names = { "-o", "--owner" }, description = "Owning group (secrets only)")
+  public String owner;
+
   public String getDescription() {
     return nullToEmpty(description);
   }
@@ -78,6 +81,10 @@ public class AddOrUpdateActionConfig {
       return dt.getMillis()/1000;
     }
     return 0;
+  }
+
+  public String getOwner() {
+    return owner;
   }
 
   private static void validateMetadata(ImmutableMap<String, String> metadata) {
