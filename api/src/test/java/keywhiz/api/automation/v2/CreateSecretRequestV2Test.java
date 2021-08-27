@@ -23,6 +23,7 @@ import static keywhiz.testing.JsonHelpers.asJson;
 import static keywhiz.testing.JsonHelpers.fromJson;
 import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 public class CreateSecretRequestV2Test {
   private CreateSecretRequestV2 createSecretRequest = CreateSecretRequestV2.builder()
@@ -34,6 +35,12 @@ public class CreateSecretRequestV2Test {
       .type("text/plain")
       .groups("secret-group1", "secret-group2")
       .build();
+
+  @Test
+  public void deserializesOwner() throws Exception {
+    CreateSecretRequestV2 request = fromJson(jsonFixture("fixtures/v2/createSecretRequestWithOwner.json"), CreateSecretRequestV2.class);
+    assertEquals("secret-owner", request.owner());
+  }
 
   @Test public void roundTripSerialization() throws Exception {
     assertThat(fromJson(asJson(createSecretRequest), CreateSecretRequestV2.class)).isEqualTo(

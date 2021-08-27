@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -42,6 +43,7 @@ import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.auth.User;
 import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
 import keywhiz.log.SimpleLogger;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
@@ -52,12 +54,14 @@ import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -76,6 +80,8 @@ public class SecretsResourceTest {
   @Mock AclDAO aclDAO;
   @Mock SecretDAO secretDAO;
   @Mock SecretController secretController;
+  @Mock SecretController.SecretBuilder secretBuilder;
+  @Mock SimpleLogger auditLog;
 
   User user = User.named("user");
   ImmutableMap<String, String> emptyMap = ImmutableMap.of();
@@ -99,13 +105,54 @@ public class SecretsResourceTest {
               NOW, "creator", NOW, "updater",
               emptyMap, 0));
 
-  AuditLog auditLog = new SimpleLogger();
-
   SecretsResource resource;
 
   @Before
   public void setUp() {
     resource = new SecretsResource(secretController, aclDAO, secretDAO, auditLog);
+
+    when(secretController.builder(any(), any(), any(), anyLong()))
+        .thenReturn(secretBuilder);
+    when(secretBuilder.withDescription(any())).thenReturn(secretBuilder);
+    when(secretBuilder.withMetadata(any())).thenReturn(secretBuilder);
+    when(secretBuilder.withOwnerName(any())).thenReturn(secretBuilder);
+    when(secretBuilder.withType(any())).thenReturn(secretBuilder);
+    when(secretBuilder.create()).thenReturn(secret);
+    when(secretBuilder.createOrUpdate()).thenReturn(secret);
+
+    when(secretController.getSecretById(secret.getId())).thenReturn(Optional.of(secret));
+  }
+
+  @Test
+  public void createsSecretWithOwner() {
+    String owner = UUID.randomUUID().toString();
+
+    CreateSecretRequestV2 request = CreateSecretRequestV2.builder()
+        .content(secret.getSecret())
+        .owner(owner)
+        .name(secret.getName())
+        .build();
+
+    resource.createSecret(user, request);
+
+    verify(secretBuilder).withOwnerName(owner);
+  }
+
+  @Test
+  public void secretCreationSendsOwnerToAuditLog() {
+    String owner = UUID.randomUUID().toString();
+
+    CreateSecretRequestV2 request = CreateSecretRequestV2.builder()
+        .content(secret.getSecret())
+        .owner(owner)
+        .name(secret.getName())
+        .build();
+
+    resource.createSecret(user, request);
+
+    ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+    verify(auditLog).recordEvent(eventCaptor.capture());
+    assertEquals(owner, eventCaptor.getValue().getExtraInfo().get("owner"));
   }
 
   @Test
@@ -142,13 +189,6 @@ public class SecretsResourceTest {
 
   @Test
   public void createsSecret() throws Exception {
-    when(secretController.getSecretById(secret.getId())).thenReturn(Optional.of(secret));
-
-    SecretController.SecretBuilder secretBuilder = mock(SecretController.SecretBuilder.class);
-    when(secretController.builder(secret.getName(), secret.getSecret(), user.getName(), 0))
-        .thenReturn(secretBuilder);
-    when(secretBuilder.create()).thenReturn(secret);
-
     CreateSecretRequestV2 req =
         CreateSecretRequestV2.builder()
             .name(secret.getName())
@@ -164,16 +204,6 @@ public class SecretsResourceTest {
 
   @Test
   public void createOrUpdateSecret() throws Exception {
-    when(secretController.getSecretById(secret.getId())).thenReturn(Optional.of(secret));
-
-    SecretController.SecretBuilder secretBuilder = mock(SecretController.SecretBuilder.class);
-    when(secretController.builder(secret.getName(), secret.getSecret(), user.getName(), 0))
-        .thenReturn(secretBuilder);
-    when(secretBuilder.withDescription(any())).thenReturn(secretBuilder);
-    when(secretBuilder.withMetadata(any())).thenReturn(secretBuilder);
-    when(secretBuilder.withType(any())).thenReturn(secretBuilder);
-    when(secretBuilder.createOrUpdate()).thenReturn(secret);
-
     CreateOrUpdateSecretRequestV2 req = CreateOrUpdateSecretRequestV2.builder()
         .description(secret.getDescription())
         .content(secret.getSecret())
@@ -188,8 +218,6 @@ public class SecretsResourceTest {
 
   @Test
   public void partialUpdateSecret() throws Exception {
-    when(secretController.getSecretById(secret.getId())).thenReturn(Optional.of(secret));
-
     PartialUpdateSecretRequestV2 req = PartialUpdateSecretRequestV2.builder()
         .description(secret.getDescription())
         .descriptionPresent(true)

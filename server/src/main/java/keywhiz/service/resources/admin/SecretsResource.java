@@ -211,7 +211,7 @@ public class SecretsResource {
   @Consumes(APPLICATION_JSON)
   public Response createSecret(@Auth User user, @Valid CreateSecretRequestV2 request) {
 
-    logger.info("User '{}' creating secret '{}'.", user, request.name());
+    logger.info("User '{}' creating secret '{}'.", user, request);
 
     Secret secret;
     try {
@@ -225,6 +225,10 @@ public class SecretsResource {
 
       if (request.metadata() != null) {
         builder.withMetadata(request.metadata());
+      }
+
+      if (request.owner() != null) {
+        builder.withOwnerName(request.owner());
       }
 
       secret = builder.create();
@@ -247,6 +251,9 @@ public class SecretsResource {
       }
       if (request.metadata() != null) {
         extraInfo.put("metadata", request.metadata().toString());
+      }
+      if (request.owner() != null) {
+        extraInfo.put("owner", request.owner());
       }
       extraInfo.put("expiry", Long.toString(request.expiry()));
       auditLog.recordEvent(
