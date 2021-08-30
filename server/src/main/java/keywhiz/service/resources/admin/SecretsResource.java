@@ -211,7 +211,7 @@ public class SecretsResource {
   @Consumes(APPLICATION_JSON)
   public Response createSecret(@Auth User user, @Valid CreateSecretRequestV2 request) {
 
-    logger.info("User '{}' creating secret '{}'.", user, request);
+    logger.info("User '{}' creating secret '{}'.", user, request.name());
 
     Secret secret;
     try {
