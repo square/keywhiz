@@ -227,6 +227,10 @@ public class SecretsResource {
         builder.withMetadata(request.metadata());
       }
 
+      if (request.owner() != null) {
+        builder.withOwnerName(request.owner());
+      }
+
       secret = builder.create();
     } catch (DataAccessException e) {
       logger.info(format("Cannot create secret %s", request.name()), e);
@@ -247,6 +251,9 @@ public class SecretsResource {
       }
       if (request.metadata() != null) {
         extraInfo.put("metadata", request.metadata().toString());
+      }
+      if (request.owner() != null) {
+        extraInfo.put("owner", request.owner());
       }
       extraInfo.put("expiry", Long.toString(request.expiry()));
       auditLog.recordEvent(

@@ -17,8 +17,10 @@ package keywhiz.service.resources.admin;
 
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 import keywhiz.IntegrationTestRule;
 import keywhiz.TestClients;
 import keywhiz.api.SecretDetailResponse;
@@ -33,6 +35,8 @@ import org.junit.rules.RuleChain;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 public class SecretsResourceIntegrationTest {
   KeywhizClient keywhizClient;
@@ -43,8 +47,41 @@ public class SecretsResourceIntegrationTest {
     keywhizClient = TestClients.keywhizClient();
   }
 
+  @Test
+  public void createsSecretWithOwner() throws Exception {
+    login();
+
+    String owner = UUID.randomUUID().toString();
+
+    keywhizClient.createGroup(owner, "description", ImmutableMap.of());
+
+    SecretDetailResponse response = keywhizClient.createSecret(
+        "name",
+        owner,
+        "description",
+        "content".getBytes(StandardCharsets.UTF_8),
+        ImmutableMap.of(),
+        0);
+    assertEquals(owner, response.owner);
+  }
+
+  @Test
+  public void createSecretWithUnknownOwnerFails() throws Exception {
+    login();
+
+    String owner = UUID.randomUUID().toString();
+
+    assertThrows(IOException.class, () -> keywhizClient.createSecret(
+        "name",
+        owner,
+        "description",
+        "content".getBytes(StandardCharsets.UTF_8),
+        ImmutableMap.of(),
+        0));
+  }
+
   @Test public void listsSecrets() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    login();
     assertThat(keywhizClient.allSecrets().stream().map(SanitizedSecret::name).toArray())
         .contains("Nobody_PgPass", "Hacking_Password", "General_Password", "NonexistentOwner_Pass",
             "Versioned_Password");
@@ -53,7 +90,7 @@ public class SecretsResourceIntegrationTest {
   @Test public void listingExcludesSecretContent() throws IOException {
     // This is checking that the response body doesn't contain the secret information anywhere, not
     // just that the resulting Java objects parsed by gson don't.
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    login();
 
     String base64 = "c29tZWhvc3Quc29tZXBsYWNlLmNvbTo1NDMyOnNvbWVkYXRhYmFzZTptaXN0ZXJhd2Vzb21lOmhlbGwwTWNGbHkK";
 
@@ -76,7 +113,7 @@ public class SecretsResourceIntegrationTest {
   }
 
   @Test public void createsSecret() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    login();
     SecretDetailResponse secretDetails = keywhizClient.createSecret("newSecret", "",
         "content".getBytes(UTF_8), ImmutableMap.of(), 0);
     assertThat(secretDetails.name).isEqualTo("newSecret");
@@ -87,14 +124,14 @@ public class SecretsResourceIntegrationTest {
 
   @Test(expected = KeywhizClient.ConflictException.class)
   public void rejectsCreatingDuplicateSecretWithoutVersion() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    login();
 
     keywhizClient.createSecret("passage", "v1", "content".getBytes(UTF_8), ImmutableMap.of(), 0);
     keywhizClient.createSecret("passage", "v2", "content".getBytes(UTF_8), ImmutableMap.of(), 0);
   }
 
   @Test public void deletesSecret() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    login();
     keywhizClient.deleteSecretWithId(739);
 
     try {
@@ -106,14 +143,14 @@ public class SecretsResourceIntegrationTest {
   }
 
   @Test public void listsSpecificSecret() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    login();
 
     SecretDetailResponse response = keywhizClient.secretDetailsForId(737);
     assertThat(response.name).isEqualTo("Nobody_PgPass");
   }
 
   @Test public void listSpecificNonVersionedSecretByName() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    login();
 
     SanitizedSecret sanitizedSecret = keywhizClient.getSanitizedSecretByName("Nobody_PgPass");
     assertThat(sanitizedSecret.id()).isEqualTo(737);
@@ -121,18 +158,18 @@ public class SecretsResourceIntegrationTest {
 
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void notFoundOnBadSecretId() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    login();
     keywhizClient.secretDetailsForId(283092384);
   }
 
   @Test(expected = KeywhizClient.NotFoundException.class)
   public void notFoundOnBadSecretName() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    login();
     keywhizClient.getSanitizedSecretByName("non-existent-secret");
   }
 
   @Test public void doesNotRetrieveDeletedSecretVersions() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+    login();
     String name = "versionSecret";
 
     // Create a secret
@@ -162,5 +199,9 @@ public class SecretsResourceIntegrationTest {
     versions = keywhizClient.listSecretVersions(name, 0, 10);
     assertThat(versions.size()).isEqualTo(1);
     assertThat(versions.get(0).description()).isEqualTo("second secret");
+  }
+
+  private void login() throws IOException {
+    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
   }
 }
