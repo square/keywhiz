@@ -211,7 +211,16 @@ public class SecretsResource {
   @Consumes(APPLICATION_JSON)
   public Response createSecret(@Auth User user, @Valid CreateSecretRequestV2 request) {
 
-    logger.info("User '{}' creating secret '{}'.", user, request.name());
+    {
+      String ownerPart = request.owner() == null
+          ? "with no owner"
+          : String.format("with owner '%s'", request.owner());
+      logger.info(
+          "User '{}' creating secret '{}' {}.",
+          user,
+          request.name(),
+          ownerPart);
+    }
 
     Secret secret;
     try {
