@@ -163,6 +163,11 @@ public class Printing {
       throw Throwables.propagate(e);
     }
 
+    System.out.println(INDENT + "Owner:");
+    if (secret.owner() != null) {
+      System.out.println(DOUBLE_INDENT + secret.owner());
+    }
+
     System.out.println(INDENT + "Groups:");
     secretDetails.groups.stream()
         .sorted(Comparator.comparing(Group::getName))
