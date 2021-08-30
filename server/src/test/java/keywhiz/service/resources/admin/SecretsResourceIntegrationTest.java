@@ -49,15 +49,18 @@ public class SecretsResourceIntegrationTest {
         .contains("Nobody_PgPass", "Hacking_Password", "General_Password", "NonexistentOwner_Pass",
             "Versioned_Password");
   }
+
   @Test public void listingExcludesSecretContent() throws IOException {
     // This is checking that the response body doesn't contain the secret information anywhere, not
     // just that the resulting Java objects parsed by gson don't.
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
 
+    String base64 = "c29tZWhvc3Quc29tZXBsYWNlLmNvbTo1NDMyOnNvbWVkYXRhYmFzZTptaXN0ZXJhd2Vzb21lOmhlbGwwTWNGbHkK";
+
     List<SanitizedSecret> sanitizedSecrets = keywhizClient.allSecrets();
     assertThat(sanitizedSecrets.toString())
-        .doesNotContain("MTMzNw==")
-        .doesNotContain(new String(Base64.getDecoder().decode("MTMzNw=="), UTF_8));
+        .doesNotContain(base64)
+        .doesNotContain(new String(Base64.getDecoder().decode(base64), UTF_8));
 
   }
 
@@ -149,7 +152,7 @@ public class SecretsResourceIntegrationTest {
     keywhizClient.deleteSecretWithId(secretDetails.id);
     assertThat(keywhizClient.allSecrets().stream().map(SanitizedSecret::name).toArray())
         .doesNotContain(name);
-    
+
     // Create a second secret with the same name
     secretDetails = keywhizClient.createSecret(name, "second secret",
         "content".getBytes(UTF_8), ImmutableMap.of(), 0);
