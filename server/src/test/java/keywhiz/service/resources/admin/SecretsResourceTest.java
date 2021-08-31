@@ -310,9 +310,7 @@ public class SecretsResourceTest {
   }
 
   @Test(expected = ConflictException.class)
-  public void triesToCreateDuplicateSecret() throws Exception {
-    SecretController.SecretBuilder secretBuilder = mock(SecretController.SecretBuilder.class);
-    when(secretController.builder("name", "content", user.getName(), 0)).thenReturn(secretBuilder);
+  public void triesToCreateDuplicateSecret() {
     DataAccessException exception = new DataAccessException("");
     doThrow(exception).when(secretBuilder).create();
 

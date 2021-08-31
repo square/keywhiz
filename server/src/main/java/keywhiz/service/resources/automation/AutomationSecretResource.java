@@ -113,9 +113,14 @@ public class AutomationSecretResource {
       @Auth AutomationClient automationClient,
       @Valid CreateSecretRequest request) {
 
-    SecretController.SecretBuilder builder = secretController.builder(request.name, request.content,
-        automationClient.getName(), request.expiry)
-        .withDescription(nullToEmpty(request.description));
+    SecretController.SecretBuilder builder = secretController
+        .builder(
+            request.name,
+            request.content,
+            automationClient.getName(),
+            request.expiry)
+        .withDescription(nullToEmpty(request.description))
+        .withOwnerName(request.owner);
 
     if (request.metadata != null) {
       builder.withMetadata(request.metadata);

@@ -8,6 +8,8 @@ import keywhiz.KeywhizTestRunner;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readwrite;
+import org.jooq.DSLContext;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -17,8 +19,16 @@ import static org.junit.Assert.assertThrows;
 
 @RunWith(KeywhizTestRunner.class)
 public class SecretSeriesMapperTest {
-  @Inject private SecretSeriesMapper mapper;
+  @Inject private SecretSeriesMapper.SecretSeriesMapperFactory mapperFactory;
+  @Inject private DSLContext jooq;
   @Inject @Readwrite private GroupDAO groupDAO;
+
+  private SecretSeriesMapper mapper;
+
+  @Before
+  public void before() {
+    mapper = mapperFactory.using(jooq);
+  }
 
   @Test
   public void mapsRecordWithNullOwner() {

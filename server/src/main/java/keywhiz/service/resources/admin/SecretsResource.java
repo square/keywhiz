@@ -225,8 +225,13 @@ public class SecretsResource {
     Secret secret;
     try {
       SecretController.SecretBuilder builder =
-          secretController.builder(request.name(), request.content(), user.getName(),
-              request.expiry());
+          secretController
+              .builder(
+                  request.name(),
+                  request.content(),
+                  user.getName(),
+                  request.expiry())
+              .withOwnerName(request.owner());
 
       if (request.description() != null) {
         builder.withDescription(request.description());
@@ -234,10 +239,6 @@ public class SecretsResource {
 
       if (request.metadata() != null) {
         builder.withMetadata(request.metadata());
-      }
-
-      if (request.owner() != null) {
-        builder.withOwnerName(request.owner());
       }
 
       secret = builder.create();

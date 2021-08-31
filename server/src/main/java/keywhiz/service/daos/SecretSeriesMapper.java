@@ -26,7 +26,7 @@ import keywhiz.api.ApiDate;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
-import keywhiz.service.config.Readonly;
+import org.jooq.DSLContext;
 import org.jooq.RecordMapper;
 
 public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSeries> {
@@ -36,9 +36,9 @@ public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSer
   private final ObjectMapper mapper;
   private final GroupDAO groupDAO;
 
-  @Inject public SecretSeriesMapper(
+  public SecretSeriesMapper(
       ObjectMapper mapper,
-      @Readonly GroupDAO groupDAO) {
+      GroupDAO groupDAO) {
     this.mapper = mapper;
     this.groupDAO = groupDAO;
   }
@@ -90,5 +90,24 @@ public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSer
       }
     }
     return null;
+  }
+
+  public static class SecretSeriesMapperFactory {
+    private final ObjectMapper mapper;
+    private final GroupDAO.GroupDAOFactory groupDAOFactory;
+
+    @Inject
+    public SecretSeriesMapperFactory(
+        ObjectMapper mapper,
+        GroupDAO.GroupDAOFactory groupDAOFactory) {
+      this.mapper = mapper;
+      this.groupDAOFactory = groupDAOFactory;
+    }
+
+    public SecretSeriesMapper using(DSLContext context) {
+      return new SecretSeriesMapper(
+          mapper,
+          groupDAOFactory.using(context));
+    }
   }
 }
