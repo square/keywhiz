@@ -392,21 +392,18 @@ public class SecretSeriesDAO {
     private final ObjectMapper objectMapper;
     private final SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory;
     private final RowHmacGenerator rowHmacGenerator;
-    private final GroupDAO.GroupDAOFactory groupDAOFactory;
 
     @Inject public SecretSeriesDAOFactory(
         DSLContext jooq,
         @Readonly DSLContext readonlyJooq,
         ObjectMapper objectMapper,
         SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory,
-        RowHmacGenerator rowHmacGenerator,
-        GroupDAO.GroupDAOFactory groupDAOFactory) {
+        RowHmacGenerator rowHmacGenerator) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
       this.secretSeriesMapperFactory = secretSeriesMapperFactory;
       this.rowHmacGenerator = rowHmacGenerator;
-      this.groupDAOFactory = groupDAOFactory;
     }
 
     @Override public SecretSeriesDAO readwrite() {
