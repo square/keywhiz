@@ -14,6 +14,7 @@ import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
@@ -48,6 +49,7 @@ import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static keywhiz.TestClients.clientRequest;
 import static keywhiz.client.KeywhizClient.JSON;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 public class SecretResourceTest {
   private static final ObjectMapper mapper =
@@ -65,6 +67,23 @@ public class SecretResourceTest {
   //---------------------------------------------------------------------------------------
   // createSecret
   //---------------------------------------------------------------------------------------
+
+  @Test public void createSecretWithOwner() throws Exception {
+    String secretName = UUID.randomUUID().toString();
+    String ownerName = UUID.randomUUID().toString();
+
+    assertEquals(201, createGroup(ownerName).code());
+
+    CreateSecretRequestV2 request = CreateSecretRequestV2.builder()
+        .name(secretName)
+        .owner(ownerName)
+        .content(encode("foo"))
+        .build();
+    create(request);
+
+    SecretDetailResponseV2 details = lookup(secretName);
+    assertEquals(ownerName, details.owner());
+  }
 
   @Test public void createSecret_successUnVersioned() throws Exception {
     CreateSecretRequestV2 request = CreateSecretRequestV2.builder()
@@ -1156,5 +1175,9 @@ public class SecretResourceTest {
   Response deleteSeries(String name) throws IOException {
     Request delete = clientRequest("/automation/v2/secrets/" + name).delete().build();
     return mutualSslClient.newCall(delete).execute();
+  }
+
+  private static String encode(String s) {
+    return encoder.encodeToString(s.getBytes(UTF_8));
   }
 }

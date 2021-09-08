@@ -42,6 +42,7 @@ import org.mockito.junit.MockitoRule;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -72,6 +73,7 @@ public class AutomationSecretResourceTest {
 
     when(secretController.builder(anyString(), anyString(), anyString(), anyLong())).thenReturn(secretBuilder);
     when(secretBuilder.withDescription(anyString())).thenReturn(secretBuilder);
+    when(secretBuilder.withOwnerName(any())).thenReturn(secretBuilder);
   }
 
   @Test

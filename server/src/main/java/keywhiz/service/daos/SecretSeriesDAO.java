@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
-import keywhiz.jooq.tables.SecretsContent;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
@@ -67,8 +66,11 @@ public class SecretSeriesDAO {
   private final SecretSeriesMapper secretSeriesMapper;
   private final RowHmacGenerator rowHmacGenerator;
 
-  private SecretSeriesDAO(DSLContext dslContext, ObjectMapper mapper,
-      SecretSeriesMapper secretSeriesMapper, RowHmacGenerator rowHmacGenerator) {
+  private SecretSeriesDAO(
+      DSLContext dslContext,
+      ObjectMapper mapper,
+      SecretSeriesMapper secretSeriesMapper,
+      RowHmacGenerator rowHmacGenerator) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretSeriesMapper = secretSeriesMapper;
@@ -388,30 +390,45 @@ public class SecretSeriesDAO {
     private final DSLContext jooq;
     private final DSLContext readonlyJooq;
     private final ObjectMapper objectMapper;
-    private final SecretSeriesMapper secretSeriesMapper;
+    private final SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory;
     private final RowHmacGenerator rowHmacGenerator;
 
-    @Inject public SecretSeriesDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq,
-        ObjectMapper objectMapper, SecretSeriesMapper secretSeriesMapper,
+    @Inject public SecretSeriesDAOFactory(
+        DSLContext jooq,
+        @Readonly DSLContext readonlyJooq,
+        ObjectMapper objectMapper,
+        SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory,
         RowHmacGenerator rowHmacGenerator) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
-      this.secretSeriesMapper = secretSeriesMapper;
+      this.secretSeriesMapperFactory = secretSeriesMapperFactory;
       this.rowHmacGenerator = rowHmacGenerator;
     }
 
     @Override public SecretSeriesDAO readwrite() {
-      return new SecretSeriesDAO(jooq, objectMapper, secretSeriesMapper, rowHmacGenerator);
+      return new SecretSeriesDAO(
+          jooq,
+          objectMapper,
+          secretSeriesMapperFactory.using(jooq),
+          rowHmacGenerator);
     }
 
     @Override public SecretSeriesDAO readonly() {
-      return new SecretSeriesDAO(readonlyJooq, objectMapper, secretSeriesMapper, rowHmacGenerator);
+      return new SecretSeriesDAO(
+          readonlyJooq,
+          objectMapper,
+          secretSeriesMapperFactory.using(readonlyJooq),
+          rowHmacGenerator);
     }
 
     @Override public SecretSeriesDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new SecretSeriesDAO(dslContext, objectMapper, secretSeriesMapper, rowHmacGenerator);
+      return new SecretSeriesDAO(
+          dslContext,
+          objectMapper,
+          secretSeriesMapperFactory.using(dslContext),
+          rowHmacGenerator);
     }
   }
 

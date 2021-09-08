@@ -131,5 +131,9 @@ public class GroupDAO {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
       return new GroupDAO(dslContext, groupMapper, mapper);
     }
+
+    public GroupDAO using(DSLContext dslContext) {
+      return new GroupDAO(dslContext, groupMapper, mapper);
+    }
   }
 }

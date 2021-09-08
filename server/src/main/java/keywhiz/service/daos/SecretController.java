@@ -280,7 +280,7 @@ public class SecretController {
      * @return the builder
      */
     public SecretBuilder withOwnerName(String ownerName) {
-      this.ownerName = checkNotNull(ownerName);
+      this.ownerName = ownerName;
       return this;
     }
 

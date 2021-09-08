@@ -578,17 +578,24 @@ public class AclDAO {
     private final SecretSeriesDAOFactory secretSeriesDAOFactory;
     private final ClientMapper clientMapper;
     private final GroupMapper groupMapper;
-    private final SecretSeriesMapper secretSeriesMapper;
+    private final SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory;
     private final SecretContentMapper secretContentMapper;
     private final RowHmacGenerator rowHmacGenerator;
     private final KeywhizConfig config;
 
-    @Inject public AclDAOFactory(DSLContext jooq, @Readonly DSLContext readonlyJooq, ClientDAOFactory clientDAOFactory,
-                                 GroupDAOFactory groupDAOFactory, SecretContentDAOFactory secretContentDAOFactory,
-                                 SecretSeriesDAOFactory secretSeriesDAOFactory, ClientMapper clientMapper,
-                                 GroupMapper groupMapper, SecretSeriesMapper secretSeriesMapper,
-                                 SecretContentMapper secretContentMapper, RowHmacGenerator rowHmacGenerator,
-                                 KeywhizConfig config) {
+    @Inject public AclDAOFactory(
+        DSLContext jooq,
+        @Readonly DSLContext readonlyJooq,
+        ClientDAOFactory clientDAOFactory,
+        GroupDAOFactory groupDAOFactory,
+        SecretContentDAOFactory secretContentDAOFactory,
+        SecretSeriesDAOFactory secretSeriesDAOFactory,
+        ClientMapper clientMapper,
+        GroupMapper groupMapper,
+        SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory,
+        SecretContentMapper secretContentMapper,
+        RowHmacGenerator rowHmacGenerator,
+        KeywhizConfig config) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.clientDAOFactory = clientDAOFactory;
@@ -597,29 +604,56 @@ public class AclDAO {
       this.secretSeriesDAOFactory = secretSeriesDAOFactory;
       this.clientMapper = clientMapper;
       this.groupMapper = groupMapper;
-      this.secretSeriesMapper = secretSeriesMapper;
+      this.secretSeriesMapperFactory = secretSeriesMapperFactory;
       this.secretContentMapper = secretContentMapper;
       this.rowHmacGenerator = rowHmacGenerator;
       this.config = config;
     }
 
     @Override public AclDAO readwrite() {
-      return new AclDAO(jooq, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper,
-          rowHmacGenerator, config);
+      return new AclDAO(
+          jooq,
+          clientDAOFactory,
+          groupDAOFactory,
+          secretContentDAOFactory,
+          secretSeriesDAOFactory,
+          clientMapper,
+          groupMapper,
+          secretSeriesMapperFactory.using(jooq),
+          secretContentMapper,
+          rowHmacGenerator,
+          config);
     }
 
     @Override public AclDAO readonly() {
-      return new AclDAO(readonlyJooq, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper,
-          rowHmacGenerator, config);
+      return new AclDAO(
+          readonlyJooq,
+          clientDAOFactory,
+          groupDAOFactory,
+          secretContentDAOFactory,
+          secretSeriesDAOFactory,
+          clientMapper,
+          groupMapper,
+          secretSeriesMapperFactory.using(readonlyJooq),
+          secretContentMapper,
+          rowHmacGenerator,
+          config);
     }
 
     @Override public AclDAO using(Configuration configuration) {
       DSLContext dslContext = DSL.using(checkNotNull(configuration));
-      return new AclDAO(dslContext, clientDAOFactory, groupDAOFactory, secretContentDAOFactory,
-          secretSeriesDAOFactory, clientMapper, groupMapper, secretSeriesMapper, secretContentMapper,
-          rowHmacGenerator, config);
+      return new AclDAO(
+          dslContext,
+          clientDAOFactory,
+          groupDAOFactory,
+          secretContentDAOFactory,
+          secretSeriesDAOFactory,
+          clientMapper,
+          groupMapper,
+          secretSeriesMapperFactory.using(dslContext),
+          secretContentMapper,
+          rowHmacGenerator,
+          config);
     }
   }
 }

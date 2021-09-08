@@ -123,9 +123,14 @@ public class SecretResource {
     String user = automationClient.getName();
 
     SecretBuilder builder = secretController
-        .builder(name, request.content(), automationClient.getName(), request.expiry())
+        .builder(
+            name,
+            request.content(),
+            automationClient.getName(),
+            request.expiry())
         .withDescription(request.description())
         .withMetadata(request.metadata())
+        .withOwnerName(request.owner())
         .withType(request.type());
 
     Secret secret;
