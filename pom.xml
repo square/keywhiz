@@ -199,7 +199,7 @@
       <dependency>
         <groupId>com.unboundid</groupId>
         <artifactId>unboundid-ldapsdk</artifactId>
-        <version>6.0.0</version>
+        <version>6.0.1</version>
       </dependency>
       <dependency>
         <groupId>io.dropwizard</groupId>
@@ -585,7 +585,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
-          <version>3.0.0-M3</version>
+          <version>3.0.0</version>
           <executions>
             <execution>
               <id>enforce-unlimited-crypto-policy</id>
