@@ -30,6 +30,7 @@ import io.dropwizard.setup.Environment;
 import javax.sql.DataSource;
 import keywhiz.auth.mutualssl.ClientCertificateFilter;
 import keywhiz.commands.AddUserCommand;
+import keywhiz.commands.BackfillOwnershipCommand;
 import keywhiz.commands.DbSeedCommand;
 import keywhiz.commands.DropDeletedSecretsCommand;
 import keywhiz.commands.GenerateAesKeyCommand;
@@ -107,6 +108,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     bootstrap.addCommand(new GenerateAesKeyCommand());
     bootstrap.addCommand(new AddUserCommand());
     bootstrap.addCommand(new DropDeletedSecretsCommand());
+    bootstrap.addCommand(new BackfillOwnershipCommand());
   }
 
   @SuppressWarnings("unchecked")
