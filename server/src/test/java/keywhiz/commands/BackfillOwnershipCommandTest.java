@@ -5,6 +5,7 @@ import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -37,9 +38,78 @@ public class BackfillOwnershipCommandTest {
     grantAccess(secretId, group2Id);
     grantAccess(secretId, group3Id);
 
-    backfill();
+    assertNoOwner(secretId);
+
+    assertEquals(1, backfill());
 
     assertOwnerEquals(secretId, group1Id);
+  }
+
+  @Test
+  public void doesNotOverwriteExistingOwner() {
+    long group1Id = insertGroup();
+    long secretId = insertSecretWithOwner(group1Id);
+    long group2Id = insertGroup();
+
+    grantAccess(secretId, group2Id);
+    grantAccess(secretId, group1Id);
+
+    assertOwnerEquals(secretId, group1Id);
+
+    assertEquals(0, backfill());
+
+    assertOwnerEquals(secretId, group1Id);
+  }
+
+  @Test
+  public void doesNotModifySecretWithNoAccessGrants() {
+    long secretId = insertSecret();
+
+    assertNoOwner(secretId);
+
+    assertEquals(1, backfill());
+
+    assertNoOwner(secretId);
+  }
+
+  @Test
+  public void backfillsMultipleBatches() {
+    long secret1Id = insertSecret();
+    long secret2Id = insertSecret();
+    long secret3Id = insertSecret();
+
+    long group1Id = insertGroup();
+    long group2Id = insertGroup();
+    long group3Id = insertGroup();
+
+    grantAccess(secret1Id, group1Id);
+
+    grantAccess(secret2Id, group2Id);
+    grantAccess(secret2Id, group1Id);
+
+    grantAccess(secret3Id, group3Id);
+    grantAccess(secret3Id, group2Id);
+    grantAccess(secret3Id, group1Id);
+
+    assertNoOwner(secret1Id);
+    assertNoOwner(secret2Id);
+    assertNoOwner(secret3Id);
+
+    assertEquals(3, backfill());
+
+    assertOwnerEquals(secret1Id, group1Id);
+    assertOwnerEquals(secret2Id, group2Id);
+    assertOwnerEquals(secret3Id, group3Id);
+  }
+
+  private void assertNoOwner(long secretId) {
+    Record1<Long> record = jooq.select(SECRETS.OWNER)
+        .from(SECRETS)
+        .where(SECRETS.ID.eq(secretId))
+        .fetchOne();
+
+    assertNotNull(record);
+    assertNull(record.value1());
   }
 
   private void assertOwnerEquals(long secretId, long groupId) {
@@ -52,14 +122,10 @@ public class BackfillOwnershipCommandTest {
     assertEquals(Long.valueOf(groupId), record.value1());
   }
 
-  private void backfill() {
+  private int backfill() {
     ServiceContext context = ServiceContext.create();
     Namespace namespace = new Namespace(Collections.emptyMap());
-    try {
-      new BackfillOwnershipCommand().run(context.getBootstrap(), namespace, context.getConfig());
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    return new BackfillOwnershipCommand().execute(context.getBootstrap(), namespace, context.getConfig());
   }
 
   private void grantAccess(long secretId, long groupId) {
@@ -74,7 +140,7 @@ public class BackfillOwnershipCommandTest {
         .set(ACCESSGRANTS.UPDATEDAT, now)
         .execute();
 
-    waitOneMillisecond();
+    waitABit();
   }
 
   private long insertSecret() {
@@ -85,6 +151,22 @@ public class BackfillOwnershipCommandTest {
     jooq.insertInto(SECRETS)
         .set(SECRETS.ID, secretId)
         .set(SECRETS.NAME, secretName)
+        .set(SECRETS.CREATEDAT, now)
+        .set(SECRETS.UPDATEDAT, now)
+        .execute();
+
+    return secretId;
+  }
+
+  private long insertSecretWithOwner(long ownerId) {
+    long secretId = new Random().nextInt(Integer.MAX_VALUE);
+    String secretName = UUID.randomUUID().toString();
+    long now = Instant.now().toEpochMilli();
+
+    jooq.insertInto(SECRETS)
+        .set(SECRETS.ID, secretId)
+        .set(SECRETS.NAME, secretName)
+        .set(SECRETS.OWNER, ownerId)
         .set(SECRETS.CREATEDAT, now)
         .set(SECRETS.UPDATEDAT, now)
         .execute();
@@ -108,9 +190,9 @@ public class BackfillOwnershipCommandTest {
     return groupId;
   }
 
-  private static void waitOneMillisecond() {
+  private static void waitABit() {
     try {
-      TimeUnit.MILLISECONDS.sleep(1);
+      TimeUnit.MILLISECONDS.sleep(2);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException(e);

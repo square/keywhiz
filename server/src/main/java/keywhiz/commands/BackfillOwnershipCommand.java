@@ -37,18 +37,22 @@ public class BackfillOwnershipCommand extends ConfiguredCommand<KeywhizConfig> {
         .dest(Args.BATCH_SIZE)
         .type(Integer.class)
         .setDefault(1)
-        .help("Number of records to process in one batch");
+        .help("Number of records to process in one batch (default is 1)");
 
     subparser.addArgument("--delay")
         .dest(Args.DELAY)
         .type(String.class)
         .setDefault("PT0S")
-        .help("Delay between batches in ISO 8601 duration format e.g. PT0.1s");
+        .help("Delay between batches in ISO 8601 duration format e.g. PT0.1s (default is no delay)");
   }
 
   @Override protected void run(Bootstrap<KeywhizConfig> bootstrap, Namespace namespace,
       KeywhizConfig config) throws Exception {
+    execute(bootstrap, namespace, config);
+  }
 
+  public int execute(Bootstrap<KeywhizConfig> bootstrap, Namespace namespace,
+      KeywhizConfig config) {
     ManagedDataSource dataSource = config.getDataSourceFactory().build(new MetricRegistry(), "backfill-ownership-datasource");
     Injector injector = InjectorFactory.createInjector(
         config,
@@ -59,7 +63,7 @@ public class BackfillOwnershipCommand extends ConfiguredCommand<KeywhizConfig> {
     int batchSize = getBatchSize(namespace);
     Duration delay = getDelay(namespace);
 
-    new Backfill(jooq, batchSize, delay).run();
+    return new Backfill(jooq, batchSize, delay).execute();
   }
 
   private static int getBatchSize(Namespace namespace) {
@@ -76,7 +80,7 @@ public class BackfillOwnershipCommand extends ConfiguredCommand<KeywhizConfig> {
         : Duration.parse(delayToken);
   }
 
-  private static class Backfill implements Runnable {
+  private static class Backfill {
     private final DSLContext jooq;
     private final int batchSize;
     private final Duration delay;
@@ -90,11 +94,14 @@ public class BackfillOwnershipCommand extends ConfiguredCommand<KeywhizConfig> {
       this.delay = delay;
     }
 
-    public void run() {
+    public int execute() {
+      int nBatches = 0;
+
       Cursor<Record1<Long>> cursor = allSecretsWithoutOwners();
       try {
         while (cursor.hasNext()) {
           processBatch(cursor);
+          nBatches++;
           System.out.print(".");
           sleepQuietly();
         }
@@ -104,6 +111,9 @@ public class BackfillOwnershipCommand extends ConfiguredCommand<KeywhizConfig> {
         }
       }
       System.out.println();
+      System.out.println(String.format("Ownership backfill complete. Batches: %s", nBatches));
+
+      return nBatches;
     }
 
     private void processBatch(Cursor<Record1<Long>> cursor) {
