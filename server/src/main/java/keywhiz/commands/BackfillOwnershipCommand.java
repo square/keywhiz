@@ -33,17 +33,19 @@ public class BackfillOwnershipCommand extends ConfiguredCommand<KeywhizConfig> {
   }
 
   @Override public void configure(Subparser subparser) {
+    super.configure(subparser);
+
     subparser.addArgument("--batchSize")
         .dest(Args.BATCH_SIZE)
         .type(Integer.class)
         .setDefault(1)
-        .help("Number of records to process in one batch (default is 1)");
+        .help("Number of records to process in one batch");
 
     subparser.addArgument("--delay")
         .dest(Args.DELAY)
         .type(String.class)
         .setDefault("PT0S")
-        .help("Delay between batches in ISO 8601 duration format e.g. PT0.1s (default is no delay)");
+        .help("Delay between batches in ISO 8601 duration format");
   }
 
   @Override protected void run(Bootstrap<KeywhizConfig> bootstrap, Namespace namespace,
