@@ -41,7 +41,7 @@
     <!-- 1.2.0-1 is the last version of dropwizard-raven JAR. The development continues under dropwizard-sentry -->
     <dropwizard-raven.version>1.2.0-1</dropwizard-raven.version>
     <guice.version>4.2.3</guice.version>
-    <jackson.version>2.12.5</jackson.version>
+    <jackson.version>2.13.0</jackson.version>
     <jackson.databind.version>2.12.5</jackson.databind.version>
     <jooq.version>3.15.2</jooq.version>
     <powermock.version>2.0.9</powermock.version>
