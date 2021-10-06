@@ -226,19 +226,15 @@ public class SecretsResourceClientIntegrationTest {
     keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
   }
 
-  private SecretDetailResponse createSecretWithOwner(String owner) {
+  private SecretDetailResponse createSecretWithOwner(String owner) throws IOException {
     String secretName = UUID.randomUUID().toString();
-    try {
-      return keywhizClient.createSecret(
-          secretName,
-          owner,
-          "description",
-          "content".getBytes(StandardCharsets.UTF_8),
-          ImmutableMap.of(),
-          0);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return keywhizClient.createSecret(
+        secretName,
+        owner,
+        "description",
+        "content".getBytes(StandardCharsets.UTF_8),
+        ImmutableMap.of(),
+        0);
   }
 
   private String createGroup() {
