@@ -27,7 +27,6 @@ import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.cli.configs.AddOrUpdateActionConfig;
 import keywhiz.cli.configs.UpdateActionConfig;
 import keywhiz.client.KeywhizClient;
-import org.joda.time.Partial;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
