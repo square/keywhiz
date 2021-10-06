@@ -36,12 +36,12 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -117,8 +117,21 @@ public class UpdateActionTest {
         .thenReturn(secretDetailResponse);
 
     updateAction.run();
-    verify(keywhizClient, times(1)).updateSecret(secret.getName(), false, "", true, content, false,
-        updateActionConfig.getMetadata(Jackson.newObjectMapper()), true, 1136214245);
+
+    ArgumentCaptor<PartialUpdateSecretRequestV2> updateRequestCaptor = ArgumentCaptor.forClass(PartialUpdateSecretRequestV2.class);
+    verify(keywhizClient).partialUpdateSecret(eq(secret.getName()), updateRequestCaptor.capture());
+
+    PartialUpdateSecretRequestV2 updateRequest = updateRequestCaptor.getValue();
+
+    assertFalse(updateRequest.descriptionPresent());
+
+    assertTrue(updateRequest.contentPresent());
+    assertArrayEquals(content, Base64.getDecoder().decode(updateRequest.content()));
+
+    assertFalse(updateRequest.metadataPresent());
+
+    assertTrue(updateRequest.expiryPresent());
+    assertEquals(Long.valueOf(1136214245), updateRequest.expiry());
   }
 
   @Test
@@ -139,8 +152,13 @@ public class UpdateActionTest {
 
     updateAction.run();
 
-    verify(keywhizClient, times(1)).updateSecret(secret.getName(), true, "metadata test", true, content, true,
-        updateActionConfig.getMetadata(Jackson.newObjectMapper()), false, 0);
+    ArgumentCaptor<PartialUpdateSecretRequestV2> updateRequestCaptor = ArgumentCaptor.forClass(PartialUpdateSecretRequestV2.class);
+    verify(keywhizClient).partialUpdateSecret(eq(secret.getName()), updateRequestCaptor.capture());
+
+    PartialUpdateSecretRequestV2 updateRequest = updateRequestCaptor.getValue();
+    assertTrue(updateRequest.metadataPresent());
+    ImmutableMap<String, String> metadata = updateActionConfig.getMetadata(Jackson.newObjectMapper());
+    assertEquals(metadata, updateRequest.metadata());
   }
 
   @Test
@@ -162,9 +180,12 @@ public class UpdateActionTest {
 
     updateAction.run();
 
+    ArgumentCaptor<PartialUpdateSecretRequestV2> updateRequestCaptor = ArgumentCaptor.forClass(PartialUpdateSecretRequestV2.class);
+    verify(keywhizClient).partialUpdateSecret(eq(secret.getName()), updateRequestCaptor.capture());
+    PartialUpdateSecretRequestV2 updateRequest = updateRequestCaptor.getValue();
     // Content should not have been sent to Keywhiz, even though it was piped in (warning should also have been printed to stdout)
-    verify(keywhizClient, times(1)).updateSecret(secret.getName(), true, "content test", false, new byte[]{}, true,
-        updateActionConfig.getMetadata(Jackson.newObjectMapper()), false, 0);
+    assertFalse(updateRequest.contentPresent());
+    assertEquals("", updateRequest.content());
   }
 
   @Test(expected = IllegalArgumentException.class)
