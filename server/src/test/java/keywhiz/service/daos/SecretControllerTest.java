@@ -128,10 +128,8 @@ public class SecretControllerTest {
     assertEquals(ownerName, updated.getOwner());
   }
 
-  // Updating ownership will come in a future phase.
-  // For now, documenting current behavior.
   @Test
-  public void updateDoesNotOverwriteOwner() {
+  public void updateOverwritesOwner() {
     String ownerName1 = UUID.randomUUID().toString();
     String ownerName2 = UUID.randomUUID().toString();
 
@@ -150,7 +148,7 @@ public class SecretControllerTest {
         .withOwnerName(ownerName2)
         .createOrUpdate();
 
-    assertEquals(ownerName1, updated.getOwner());
+    assertEquals(ownerName2, updated.getOwner());
   }
 
   @Test

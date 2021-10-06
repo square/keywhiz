@@ -20,8 +20,10 @@ import com.google.common.collect.ImmutableMap;
 import io.dropwizard.jackson.Jackson;
 import java.io.ByteArrayInputStream;
 import java.util.Base64;
+import java.util.UUID;
 import keywhiz.api.ApiDate;
 import keywhiz.api.SecretDetailResponse;
+import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Secret;
 import keywhiz.cli.configs.UpdateActionConfig;
 import keywhiz.client.KeywhizClient;
@@ -29,10 +31,16 @@ import keywhiz.client.KeywhizClient.NotFoundException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,6 +64,41 @@ public class UpdateActionTest {
   public void setUp() {
     updateActionConfig = new UpdateActionConfig();
     updateAction = new UpdateAction(updateActionConfig, keywhizClient, Jackson.newObjectMapper());
+  }
+
+  @Test
+  public void updatePassesOwnerToClientWhenPresent() throws Exception {
+    String secretName = UUID.randomUUID().toString();
+    String owner = UUID.randomUUID().toString();
+
+    updateActionConfig.name = secretName;
+    updateActionConfig.owner = owner;
+
+    updateAction.run();
+
+    ArgumentCaptor<PartialUpdateSecretRequestV2> updateRequestCaptor = ArgumentCaptor.forClass(PartialUpdateSecretRequestV2.class);
+    verify(keywhizClient).partialUpdateSecret(eq(secretName), updateRequestCaptor.capture());
+
+    PartialUpdateSecretRequestV2 updateRequest = updateRequestCaptor.getValue();
+    assertTrue(updateRequest.ownerPresent());
+    assertEquals(owner, updateRequest.owner());
+  }
+
+  @Test
+  public void updateDoesNotPassOwnerToClientWhenNotPresent() throws Exception {
+    String secretName = UUID.randomUUID().toString();
+
+    updateActionConfig.name = secretName;
+    updateActionConfig.owner = null;
+
+    updateAction.run();
+
+    ArgumentCaptor<PartialUpdateSecretRequestV2> updateRequestCaptor = ArgumentCaptor.forClass(PartialUpdateSecretRequestV2.class);
+    verify(keywhizClient).partialUpdateSecret(eq(secretName), updateRequestCaptor.capture());
+
+    PartialUpdateSecretRequestV2 updateRequest = updateRequestCaptor.getValue();
+    assertFalse(updateRequest.ownerPresent());
+    assertNull(updateRequest.owner());
   }
 
   @Test

@@ -212,6 +212,17 @@ public class KeywhizClient {
     return mapper.readValue(response, SecretDetailResponse.class);
   }
 
+  public SecretDetailResponse partialUpdateSecret(
+      String secretName,
+      PartialUpdateSecretRequestV2 request) throws IOException {
+    HttpUrl url = baseUrl.resolve(
+        format(
+            "/admin/secrets/%s/partialupdate",
+            secretName));
+    String response = httpPost(url, request);
+    return mapper.readValue(response, SecretDetailResponse.class);
+  }
+
   public SecretDetailResponse updateSecret(String name, boolean descriptionPresent,
       String description, boolean contentPresent, byte[] content,
       boolean metadataPresent, ImmutableMap<String, String> metadata, boolean expiryPresent,

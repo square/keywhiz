@@ -182,8 +182,15 @@ public class SecretDAO {
       if (secretSeries.isPresent()) {
         SecretSeries secretSeries1 = secretSeries.get();
         secretId = secretSeries1.id();
-        secretSeriesDAO.updateSecretSeries(secretId, name, creator, description, type,
-            generationOptions, now);
+        secretSeriesDAO.updateSecretSeries(
+            secretId,
+            name,
+            ownerId,
+            creator,
+            description,
+            type,
+            generationOptions,
+            now);
       } else {
         secretId = secretSeriesDAO.createSecretSeries(
             name,
@@ -222,12 +229,24 @@ public class SecretDAO {
       long secretId = secretSeries.id();
 
       // Set the fields to the original series and current version's values or the request values if provided
-      String description =
-          request.descriptionPresent() ? request.description() : secretSeries.description();
-      String type = request.typePresent() ? request.type() : secretSeries.type().orElse("");
-      ImmutableMap<String, String> metadata =
-          request.metadataPresent() ? request.metadata() : secretContent.metadata();
-      Long expiry = request.expiryPresent() ? request.expiry() : secretContent.expiry();
+      String description = request.descriptionPresent()
+          ? request.description()
+          : secretSeries.description();
+      String type = request.typePresent()
+          ? request.type()
+          : secretSeries.type().orElse("");
+      ImmutableMap<String, String> metadata = request.metadataPresent()
+          ? request.metadata()
+          : secretContent.metadata();
+      Long expiry = request.expiryPresent()
+          ? request.expiry()
+          : secretContent.expiry();
+
+      String owner = request.ownerPresent()
+          ? request.owner()
+          : secretSeries.owner();
+      Long ownerId = getOwnerId(configuration, owner);
+
       String encryptedContent = secretContent.encryptedContent();
       String hmac = secretContent.hmac();
       // Mirrors hmac-creation in SecretController
@@ -242,8 +261,15 @@ public class SecretDAO {
         encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(request.content());
       }
 
-      secretSeriesDAO.updateSecretSeries(secretId, name, creator, description, type,
-          secretSeries.generationOptions(), now);
+      secretSeriesDAO.updateSecretSeries(
+          secretId,
+          name,
+          ownerId,
+          creator,
+          description,
+          type,
+          secretSeries.generationOptions(),
+          now);
 
       long secretContentId = secretContentDAO.createSecretContent(secretId, encryptedContent, hmac,
           creator, metadata, expiry, now);
@@ -615,7 +641,7 @@ public class SecretDAO {
   }
 
   private Long getOwnerId(Configuration configuration, String ownerName) {
-    if (ownerName == null) {
+    if (ownerName == null || ownerName.length() == 0) {
       return null;
     }
 

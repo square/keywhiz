@@ -1,207 +1,126 @@
-/*
- * Copyright (C) 2015 Square, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package keywhiz.service.resources.admin;
 
 import com.google.common.collect.ImmutableMap;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
 import java.util.UUID;
-import keywhiz.IntegrationTestRule;
-import keywhiz.TestClients;
-import keywhiz.api.SecretDetailResponse;
-import keywhiz.api.model.SanitizedSecret;
-import keywhiz.client.KeywhizClient;
-import keywhiz.commands.DbSeedCommand;
-import org.junit.Before;
-import org.junit.ClassRule;
+import javax.inject.Inject;
+import keywhiz.KeywhizTestRunner;
+import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
+import keywhiz.api.model.SecretSeriesAndContent;
+import keywhiz.auth.User;
+import keywhiz.service.config.Readwrite;
+import keywhiz.service.daos.GroupDAO;
+import keywhiz.service.daos.SecretDAO;
 import org.junit.Test;
-import org.junit.rules.RuleChain;
+import org.junit.runner.RunWith;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertNull;
 
+@RunWith(KeywhizTestRunner.class)
 public class SecretsResourceIntegrationTest {
-  KeywhizClient keywhizClient;
+  private static final ImmutableMap<String, String> NO_METADATA = ImmutableMap.of();
 
-  @ClassRule public static final RuleChain chain = IntegrationTestRule.rule();
+  @Inject private SecretsResource resource;
 
-  @Before public void setUp() {
-    keywhizClient = TestClients.keywhizClient();
+  @Inject @Readwrite private SecretDAO secretDAO;
+  @Inject @Readwrite private GroupDAO groupDAO;
+
+  @Test
+  public void partialUpdateSecretIgnoresOwnerIfNotPresent() {
+    String secretName = createSecretWithOwner(null);
+
+    SecretSeriesAndContent originalSecret = getSecret(secretName);
+    assertNull(originalSecret.series().owner());
+
+    String groupName = createGroup();
+
+    PartialUpdateSecretRequestV2 request = PartialUpdateSecretRequestV2.builder()
+        .ownerPresent(false)
+        .owner(groupName)
+        .build();
+    resource.partialUpdateSecret(User.named("nobody"), secretName, request);
+
+    SecretSeriesAndContent updatedSecret = getSecret(secretName);
+    assertNull(updatedSecret.series().owner());
   }
 
   @Test
-  public void createsSecretWithOwner() throws Exception {
-    login();
+  public void partialUpdateSecretOverwritesNullOwnerWithNonNullValue() {
+    String secretName = createSecretWithOwner(null);
 
-    String owner = UUID.randomUUID().toString();
+    SecretSeriesAndContent originalSecret = getSecret(secretName);
+    assertNull(originalSecret.series().owner());
 
-    keywhizClient.createGroup(owner, "description", ImmutableMap.of());
+    String groupName = createGroup();
 
-    SecretDetailResponse response = keywhizClient.createSecret(
-        "name",
-        owner,
-        "description",
-        "content".getBytes(StandardCharsets.UTF_8),
-        ImmutableMap.of(),
-        0);
-    assertEquals(owner, response.owner);
+    updateOwner(secretName, groupName);
+
+    SecretSeriesAndContent updatedSecret = getSecret(secretName);
+    assertEquals(groupName, updatedSecret.series().owner());
   }
 
   @Test
-  public void createSecretWithUnknownOwnerFails() throws Exception {
-    login();
+  public void partialUpdateSecretOverwritesNonNullOwnerWithNullValue() {
+    String groupName = createGroup();
 
-    String owner = UUID.randomUUID().toString();
+    String secretName = createSecretWithOwner(groupName);
 
-    assertThrows(IOException.class, () -> keywhizClient.createSecret(
-        "name",
+    SecretSeriesAndContent originalSecret = getSecret(secretName);
+    assertEquals(groupName, originalSecret.series().owner());
+
+    updateOwner(secretName, null);
+
+    SecretSeriesAndContent updatedSecret = getSecret(secretName);
+    assertNull(updatedSecret.series().owner());
+  }
+
+  @Test
+  public void partialUpdateSecretOverwritesNonNullOwnerWithNonNullValue() {
+    String group1 = createGroup();
+    String group2 = createGroup();
+
+    String secretName = createSecretWithOwner(group1);
+
+    SecretSeriesAndContent originalSecret = getSecret(secretName);
+    assertEquals(group1, originalSecret.series().owner());
+
+    updateOwner(secretName, group2);
+
+    SecretSeriesAndContent updatedSecret = getSecret(secretName);
+    assertEquals(group2, updatedSecret.series().owner());
+  }
+
+  private void updateOwner(String secretName, String owner) {
+    PartialUpdateSecretRequestV2 request = PartialUpdateSecretRequestV2.builder()
+        .ownerPresent(true)
+        .owner(owner)
+        .build();
+    resource.partialUpdateSecret(User.named("nobody"), secretName, request);
+  }
+
+  private String createSecretWithOwner(String owner) {
+    String secretName = UUID.randomUUID().toString();
+    secretDAO.createSecret(
+        secretName,
         owner,
+        "encryptedSecret",
+        "hmac",
+        "creator",
+        NO_METADATA,
+        0,
         "description",
-        "content".getBytes(StandardCharsets.UTF_8),
-        ImmutableMap.of(),
-        0));
+        null,
+        null);
+    return secretName;
   }
 
-  @Test public void listsSecrets() throws IOException {
-    login();
-    assertThat(keywhizClient.allSecrets().stream().map(SanitizedSecret::name).toArray())
-        .contains("Nobody_PgPass", "Hacking_Password", "General_Password", "NonexistentOwner_Pass",
-            "Versioned_Password");
+  private SecretSeriesAndContent getSecret(String secretName) {
+    return secretDAO.getSecretByName(secretName).get();
   }
 
-  @Test public void listingExcludesSecretContent() throws IOException {
-    // This is checking that the response body doesn't contain the secret information anywhere, not
-    // just that the resulting Java objects parsed by gson don't.
-    login();
-
-    String base64 = "c29tZWhvc3Quc29tZXBsYWNlLmNvbTo1NDMyOnNvbWVkYXRhYmFzZTptaXN0ZXJhd2Vzb21lOmhlbGwwTWNGbHkK";
-
-    List<SanitizedSecret> sanitizedSecrets = keywhizClient.allSecrets();
-    assertThat(sanitizedSecrets.toString())
-        .doesNotContain(base64)
-        .doesNotContain(new String(Base64.getDecoder().decode(base64), UTF_8));
-
-  }
-
-  @Test(expected = KeywhizClient.UnauthorizedException.class)
-  public void adminRejectsNonKeywhizUsers() throws IOException {
-    keywhizClient.login("username", "password".toCharArray());
-    keywhizClient.allSecrets();
-  }
-
-  @Test(expected = KeywhizClient.UnauthorizedException.class)
-  public void adminRejectsWithoutCookie() throws IOException {
-    keywhizClient.allSecrets();
-  }
-
-  @Test public void createsSecret() throws IOException {
-    login();
-    SecretDetailResponse secretDetails = keywhizClient.createSecret("newSecret", "",
-        "content".getBytes(UTF_8), ImmutableMap.of(), 0);
-    assertThat(secretDetails.name).isEqualTo("newSecret");
-
-    assertThat(keywhizClient.allSecrets().stream().map(SanitizedSecret::name).toArray())
-        .contains("newSecret");
-  }
-
-  @Test(expected = KeywhizClient.ConflictException.class)
-  public void rejectsCreatingDuplicateSecretWithoutVersion() throws IOException {
-    login();
-
-    keywhizClient.createSecret("passage", "v1", "content".getBytes(UTF_8), ImmutableMap.of(), 0);
-    keywhizClient.createSecret("passage", "v2", "content".getBytes(UTF_8), ImmutableMap.of(), 0);
-  }
-
-  @Test public void deletesSecret() throws IOException {
-    login();
-    keywhizClient.deleteSecretWithId(739);
-
-    try {
-      keywhizClient.secretDetailsForId(739);
-      failBecauseExceptionWasNotThrown(KeywhizClient.NotFoundException.class);
-    } catch (KeywhizClient.NotFoundException e) {
-      // Secret was successfully deleted
-    }
-  }
-
-  @Test public void listsSpecificSecret() throws IOException {
-    login();
-
-    SecretDetailResponse response = keywhizClient.secretDetailsForId(737);
-    assertThat(response.name).isEqualTo("Nobody_PgPass");
-  }
-
-  @Test public void listSpecificNonVersionedSecretByName() throws IOException {
-    login();
-
-    SanitizedSecret sanitizedSecret = keywhizClient.getSanitizedSecretByName("Nobody_PgPass");
-    assertThat(sanitizedSecret.id()).isEqualTo(737);
-  }
-
-  @Test(expected = KeywhizClient.NotFoundException.class)
-  public void notFoundOnBadSecretId() throws IOException {
-    login();
-    keywhizClient.secretDetailsForId(283092384);
-  }
-
-  @Test(expected = KeywhizClient.NotFoundException.class)
-  public void notFoundOnBadSecretName() throws IOException {
-    login();
-    keywhizClient.getSanitizedSecretByName("non-existent-secret");
-  }
-
-  @Test public void doesNotRetrieveDeletedSecretVersions() throws IOException {
-    login();
-    String name = "versionSecret";
-
-    // Create a secret
-    SecretDetailResponse secretDetails = keywhizClient.createSecret(name, "first secret",
-        "content".getBytes(UTF_8), ImmutableMap.of(), 0);
-    assertThat(secretDetails.name).isEqualTo(name);
-
-    assertThat(keywhizClient.allSecrets().stream().map(SanitizedSecret::name).toArray())
-        .contains(name);
-
-    // Retrieve versions for the first secret
-    List<SanitizedSecret> versions = keywhizClient.listSecretVersions(name, 0, 10);
-    assertThat(versions.size()).isEqualTo(1);
-    assertThat(versions.get(0).description()).isEqualTo("first secret");
-
-    // Delete this first secret
-    keywhizClient.deleteSecretWithId(secretDetails.id);
-    assertThat(keywhizClient.allSecrets().stream().map(SanitizedSecret::name).toArray())
-        .doesNotContain(name);
-
-    // Create a second secret with the same name
-    secretDetails = keywhizClient.createSecret(name, "second secret",
-        "content".getBytes(UTF_8), ImmutableMap.of(), 0);
-    assertThat(secretDetails.name).isEqualTo(name);
-
-    // Retrieve versions for the second secret and check that the first secret's version is not included
-    versions = keywhizClient.listSecretVersions(name, 0, 10);
-    assertThat(versions.size()).isEqualTo(1);
-    assertThat(versions.get(0).description()).isEqualTo("second secret");
-  }
-
-  private void login() throws IOException {
-    keywhizClient.login(DbSeedCommand.defaultUser, DbSeedCommand.defaultPassword.toCharArray());
+  private String createGroup() {
+    String groupName = UUID.randomUUID().toString();
+    groupDAO.createGroup(groupName, "creator", "description", NO_METADATA);
+    return groupName;
   }
 }

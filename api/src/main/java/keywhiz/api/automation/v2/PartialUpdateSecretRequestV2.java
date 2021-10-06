@@ -28,7 +28,9 @@ import javax.annotation.Nullable;
         .expiryPresent(false)
         .expiry(0L)
         .typePresent(false)
-        .type("");
+        .type("")
+        .ownerPresent(false)
+        .owner("");
   }
 
   @AutoValue.Builder public abstract static class Builder {
@@ -47,6 +49,8 @@ import javax.annotation.Nullable;
     public abstract Builder type(String type);
     public abstract Builder expiryPresent(boolean expiryPresent);
     public abstract Builder expiry(Long expiry);
+    public abstract Builder ownerPresent(boolean ownerPresent);
+    public abstract Builder owner(String owner);
 
     /**
      * @throws IllegalArgumentException if builder data is invalid.
@@ -75,7 +79,9 @@ import javax.annotation.Nullable;
       @JsonProperty("expiryPresent") boolean expiryPresent,
       @JsonProperty("expiry") @Nullable Long expiry,
       @JsonProperty("typePresent") boolean typePresent,
-      @JsonProperty("type") @Nullable String type) {
+      @JsonProperty("type") @Nullable String type,
+      @JsonProperty("ownerPresent") boolean ownerPresent,
+      @JsonProperty("owner") @Nullable String owner) {
     return builder()
         .contentPresent(contentPresent)
         .content(Strings.nullToEmpty(content))
@@ -87,6 +93,8 @@ import javax.annotation.Nullable;
         .expiry(expiry == null ? Long.valueOf(0) : expiry)
         .typePresent(typePresent)
         .type(Strings.nullToEmpty(type))
+        .ownerPresent(ownerPresent)
+        .owner(owner)
         .build();
   }
 
@@ -100,6 +108,8 @@ import javax.annotation.Nullable;
   @JsonProperty("expiry") public abstract Long expiry();
   @JsonProperty("typePresent") public abstract boolean typePresent();
   @JsonProperty("type") public abstract String type();
+  @JsonProperty("ownerPresent") public abstract boolean ownerPresent();
+  @JsonProperty("owner") @Nullable public abstract String owner();
 
   @Override public final String toString() {
     return MoreObjects.toStringHelper(this)
@@ -108,6 +118,7 @@ import javax.annotation.Nullable;
         .add("metadata", metadata())
         .add("expiry", expiry())
         .add("type", type())
+        .add("owner", owner())
         .omitNullValues()
         .toString();
   }

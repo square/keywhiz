@@ -232,7 +232,7 @@ public class SecretDAOTest {
   }
 
   @Test
-  public void createOrUpdateExistingSecretDoesNotChangeOwner() {
+  public void createOrUpdateExistingSecretUpdatesOwner() {
     String ownerName1 = createGroup();
     String ownerName2 = createGroup();
 
@@ -244,7 +244,7 @@ public class SecretDAOTest {
     assertEquals(secretId1, secretId2);
 
     SecretSeriesAndContent secret = secretDAO.getSecretById(secretId1).get();
-    assertEquals(ownerName1, secret.series().owner());
+    assertEquals(ownerName2, secret.series().owner());
   }
 
   @Test public void createSecret() {
