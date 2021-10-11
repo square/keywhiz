@@ -116,8 +116,16 @@ public class SecretSeriesDAO {
     return r.getId();
   }
 
-  void updateSecretSeries(long secretId, String name, String creator, String description,
-      @Nullable String type, @Nullable Map<String, String> generationOptions, long now) {
+  void updateSecretSeries(
+      long secretId,
+      String name,
+      Long ownerId,
+      String creator,
+      String description,
+      @Nullable String type,
+      @Nullable Map<String, String> generationOptions,
+      long now) {
+
     if (generationOptions == null) {
       generationOptions = ImmutableMap.of();
     }
@@ -128,6 +136,7 @@ public class SecretSeriesDAO {
 
       dslContext.update(SECRETS)
           .set(SECRETS.NAME, name)
+          .set(SECRETS.OWNER, ownerId)
           .set(SECRETS.DESCRIPTION, description)
           .set(SECRETS.UPDATEDBY, creator)
           .set(SECRETS.UPDATEDAT, now)

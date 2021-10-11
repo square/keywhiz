@@ -22,6 +22,8 @@ import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Base64;
+import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.cli.configs.AddOrUpdateActionConfig;
 import keywhiz.cli.configs.UpdateActionConfig;
 import keywhiz.client.KeywhizClient;
@@ -81,9 +83,21 @@ public class UpdateAction implements Runnable {
   private void partialUpdateSecret(String secretName, byte[] content,
       AddOrUpdateActionConfig config) {
     try {
-      keywhizClient.updateSecret(secretName, config.description != null,
-          config.getDescription(), content.length > 0, content, config.json != null,
-          config.getMetadata(mapper), config.expiry != null, config.getExpiry());
+      PartialUpdateSecretRequestV2 request = PartialUpdateSecretRequestV2.builder()
+          .descriptionPresent(config.description != null)
+          .description(config.getDescription())
+          .contentPresent(content.length > 0)
+          .content(Base64.getEncoder().encodeToString(content))
+          .metadataPresent(config.json != null)
+          .metadata(config.getMetadata(mapper))
+          .expiryPresent(config.expiry != null)
+          .expiry(config.getExpiry())
+          .ownerPresent(config.owner != null)
+          .owner(config.owner)
+          .build();
+
+      keywhizClient.partialUpdateSecret(secretName, request);
+
       logger.info("partialUpdate secret '{}'.", secretName);
     } catch (IOException e) {
       throw Throwables.propagate(e);
