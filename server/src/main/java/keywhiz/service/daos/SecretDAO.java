@@ -182,10 +182,15 @@ public class SecretDAO {
       if (secretSeries.isPresent()) {
         SecretSeries secretSeries1 = secretSeries.get();
         secretId = secretSeries1.id();
+
+        Long effectiveOwnerId = ownerId != null
+            ? ownerId
+            : getOwnerId(configuration, secretSeries1.owner());
+
         secretSeriesDAO.updateSecretSeries(
             secretId,
             name,
-            ownerId,
+            effectiveOwnerId,
             creator,
             description,
             type,

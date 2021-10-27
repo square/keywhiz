@@ -50,6 +50,7 @@ import static keywhiz.TestClients.clientRequest;
 import static keywhiz.client.KeywhizClient.JSON;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class SecretResourceTest {
   private static final ObjectMapper mapper =
@@ -114,6 +115,34 @@ public class SecretResourceTest {
   //---------------------------------------------------------------------------------------
   // createOrUpdateSecret
   //---------------------------------------------------------------------------------------
+
+  @Test public void createOrUpdateSecretPreservesExistingSecretOwner() throws Exception {
+    String secretName = UUID.randomUUID().toString();
+    String ownerName = UUID.randomUUID().toString();
+
+    assertEquals(201, createGroup(ownerName).code());
+
+    CreateSecretRequestV2 createRequest = CreateSecretRequestV2.builder()
+        .name(secretName)
+        .owner(ownerName)
+        .content(encode("foo"))
+        .build();
+    create(createRequest);
+
+    SecretDetailResponseV2 originalDetails = lookup(secretName);
+    assertEquals(ownerName, originalDetails.owner());
+
+    CreateOrUpdateSecretRequestV2 updateRequest = CreateOrUpdateSecretRequestV2.builder()
+        .content(encode("bar"))
+        .description(UUID.randomUUID().toString())
+        .build();
+
+    assertEquals(201, createOrUpdate(updateRequest, secretName).code());
+
+    SecretDetailResponseV2 updatedDetails = lookup(secretName);
+    assertNotNull("Updated secret's owner was null", updatedDetails.owner());
+    assertEquals(ownerName, updatedDetails.owner());
+  }
 
   @Test public void createOrUpdateSecret() throws Exception {
     CreateOrUpdateSecretRequestV2 request = CreateOrUpdateSecretRequestV2.builder()
