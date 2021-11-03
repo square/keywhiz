@@ -36,6 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
+import static keywhiz.jooq.tables.Secrets.SECRETS;
 
 public class GroupDAO {
   private final DSLContext dslContext;
@@ -87,6 +88,11 @@ public class GroupDAO {
               .delete(ACCESSGRANTS)
               .where(ACCESSGRANTS.GROUPID.eq(group.getId()))
               .execute();
+      DSL.using(configuration)
+          .update(SECRETS)
+          .set(SECRETS.OWNER, (Long) null)
+          .where(SECRETS.OWNER.eq(group.getId()))
+          .execute();
     });
   }
 

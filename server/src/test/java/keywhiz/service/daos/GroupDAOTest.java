@@ -17,11 +17,16 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableMap;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.model.Group;
+import keywhiz.api.model.SecretSeries;
+import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
@@ -32,18 +37,24 @@ import org.junit.runner.RunWith;
 import static java.util.stream.Collectors.toList;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 @RunWith(KeywhizTestRunner.class)
 public class GroupDAOTest {
   @Inject DSLContext jooqContext;
   @Inject GroupDAOFactory groupDAOFactory;
+  @Inject SecretDAO.SecretDAOFactory secretDAOFactory;
 
-  Group group1, group2;
+  private Group group1, group2;
 
-  GroupDAO groupDAO;
+  private GroupDAO groupDAO;
+  private SecretDAO secretDAO;
 
   @Before public void setUp() throws Exception {
     groupDAO = groupDAOFactory.readwrite();
+    secretDAO = secretDAOFactory.readwrite();
+
     long now = OffsetDateTime.now().toEpochSecond();
 
     jooqContext.insertInto(GROUPS, GROUPS.NAME, GROUPS.DESCRIPTION, GROUPS.CREATEDBY,
@@ -76,6 +87,22 @@ public class GroupDAOTest {
     assertThat(groupDAO.getGroups()).containsOnly(group2);
   }
 
+  @Test public void deleteSetsSecretOwnerToNull() {
+    String groupName = randomName();
+    long groupId = groupDAO.createGroup(groupName, "creator", "description", ImmutableMap.of());
+
+    long secretId = secretDAO.createSecret(randomName(), groupName, "encryptedSecret", "hmac", "creator",
+        Collections.emptyMap(), 0, "description", null, null);
+
+    SecretSeriesAndContent original = secretDAO.getSecretById(secretId).get();
+    assertEquals(groupName, original.series().owner());
+
+    groupDAO.deleteGroup(groupDAO.getGroupById(groupId).get());
+
+    SecretSeriesAndContent updated = secretDAO.getSecretById(secretId).get();
+    assertNull(updated.series().owner());
+  }
+
   @Test public void getGroup() {
     // getGroup is performed in setup()
     assertThat(group1.getName()).isEqualTo("group1");
@@ -104,5 +131,9 @@ public class GroupDAOTest {
 
   private int tableSize() {
     return jooqContext.fetchCount(GROUPS);
+  }
+
+  private static String randomName() {
+    return UUID.randomUUID().toString();
   }
 }
