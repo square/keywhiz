@@ -31,6 +31,7 @@ import keywhiz.service.config.Readwrite;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
 import keywhiz.service.crypto.RowHmacGenerator;
+import keywhiz.service.exceptions.ConflictException;
 import org.joda.time.DateTime;
 import org.jooq.DSLContext;
 import org.jooq.Table;
@@ -683,7 +684,7 @@ public class SecretDAOTest {
 
     long secretIdFinal= secretId;
     assertThatThrownBy(() -> secretDAO.renameSecretById(secretIdFinal, "toBeDeletedAndUndeleted", "creator"))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ConflictException.class)
         .hasMessage("name toBeDeletedAndUndeleted already used by an existing secret in keywhiz");
 
     //Because there is already an undeleted secret with the name "toBeDeletedAndUndeleted", we must
@@ -721,7 +722,7 @@ public class SecretDAOTest {
 
     assertThatThrownBy(() -> secretDAO.renameSecretById(secret2Id,
         "newName", "creator"))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ConflictException.class)
         .hasMessage("name newName already used by an existing secret in keywhiz");
   }
     //---------------------------------------------------------------------------------------

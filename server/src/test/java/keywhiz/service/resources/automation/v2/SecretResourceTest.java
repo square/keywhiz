@@ -69,7 +69,7 @@ public class SecretResourceTest {
   }
 
   //---------------------------------------------------------------------------------------
-  // createSecret
+  // renameSecret
   //---------------------------------------------------------------------------------------
 
   @Test public void renamesSecret() throws Exception {
@@ -90,7 +90,7 @@ public class SecretResourceTest {
     String newName = UUID.randomUUID().toString();
     createSecret(newName);
 
-    assertEquals(500, renameSecret(oldName, newName));
+    assertEquals(409, renameSecret(oldName, newName));
   }
 
   @Test public void cannotRenameNonexistentSecret() throws Exception {
