@@ -33,6 +33,7 @@ import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.ContentEncodingException;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
+import keywhiz.service.exceptions.ConflictException;
 import org.joda.time.DateTime;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
@@ -571,7 +572,7 @@ public class SecretDAO {
     Optional<SecretSeries> secretSeriesWithName =
         secretSeriesDAOFactory.using(dslContext.configuration()).getSecretSeriesByName(name);
     if(secretSeriesWithName.isPresent()) {
-      throw new IllegalArgumentException(
+      throw new ConflictException(
           String.format("name %s already used by an existing secret in keywhiz", name));
     }
 

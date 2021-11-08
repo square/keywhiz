@@ -50,8 +50,10 @@ import static keywhiz.TestClients.clientRequest;
 import static keywhiz.client.KeywhizClient.JSON;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class SecretResourceTest {
   private static final ObjectMapper mapper =
@@ -64,6 +66,37 @@ public class SecretResourceTest {
 
   @Before public void setUp() {
     mutualSslClient = TestClients.mutualSslClient();
+  }
+
+  //---------------------------------------------------------------------------------------
+  // renameSecret
+  //---------------------------------------------------------------------------------------
+
+  @Test public void renamesSecret() throws Exception {
+    String oldName = UUID.randomUUID().toString();
+    createSecret(oldName);
+
+    String newName = UUID.randomUUID().toString();
+    assertEquals(200, renameSecret(oldName, newName));
+
+    assertFalse(getSecret(oldName).isPresent());
+    assertTrue(getSecret(newName).isPresent());
+  }
+
+  @Test public void cannotRenameSecretToExistingSecret() throws Exception {
+    String oldName = UUID.randomUUID().toString();
+    createSecret(oldName);
+
+    String newName = UUID.randomUUID().toString();
+    createSecret(newName);
+
+    assertEquals(409, renameSecret(oldName, newName));
+  }
+
+  @Test public void cannotRenameNonexistentSecret() throws Exception {
+    String oldName = UUID.randomUUID().toString();
+    String newName = UUID.randomUUID().toString();
+    assertEquals(404, renameSecret(oldName, newName));
   }
 
   //---------------------------------------------------------------------------------------
@@ -1186,6 +1219,22 @@ public class SecretResourceTest {
     assertThat(httpResponse.code()).isEqualTo(201);
   }
 
+  Optional<SecretDetailResponseV2> getSecret(String name) throws IOException {
+    Request get = clientRequest("/automation/v2/secrets/" + name).get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    if (httpResponse.code() == 200) {
+      return Optional.of(mapper.readValue(httpResponse.body().byteStream(), SecretDetailResponseV2.class));
+    } else if (httpResponse.code() == 404) {
+      return Optional.empty();
+    } else {
+      throw new RuntimeException(
+          String.format(
+              "Unexpected response code %s while fetching secret %s",
+              httpResponse.code(),
+              name));
+    }
+  }
+
   SecretDetailResponseV2 lookup(String name) throws IOException {
     Request get = clientRequest("/automation/v2/secrets/" + name).get().build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
@@ -1228,6 +1277,26 @@ public class SecretResourceTest {
   Response deleteSeries(String name) throws IOException {
     Request delete = clientRequest("/automation/v2/secrets/" + name).delete().build();
     return mutualSslClient.newCall(delete).execute();
+  }
+
+  private int renameSecret(String oldName, String newName) throws IOException {
+    Request rename = clientRequest(
+        String.format(
+            "/automation/v2/secrets/%s/rename/%s",
+            oldName,
+            newName))
+        .post(RequestBody.create(JSON, ""))
+        .build();
+    Response httpResponse = mutualSslClient.newCall(rename).execute();
+    return httpResponse.code();
+  }
+
+  private void createSecret(String secretName) throws IOException {
+    CreateSecretRequestV2 request = CreateSecretRequestV2.builder()
+        .name(secretName)
+        .content(encode("foo"))
+        .build();
+    create(request);
   }
 
   private static String encode(String s) {

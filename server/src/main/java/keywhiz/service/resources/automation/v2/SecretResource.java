@@ -198,6 +198,21 @@ public class SecretResource {
     return Response.created(uriBuilder.build()).build();
   }
 
+  @Timed @ExceptionMetered
+  @Path("{oldName}/rename/{newName}")
+  @POST
+  @Consumes(APPLICATION_JSON)
+  public Response renameSecret(
+      @Auth AutomationClient automationClient,
+      @PathParam("oldName") String oldName,
+      @PathParam("newName") String newName) {
+    SecretSeriesAndContent secret = secretDAO.getSecretByName(oldName)
+        .orElseThrow(NotFoundException::new);
+    secretDAO.renameSecretById(secret.series().id(), newName, automationClient.getName());
+
+    return Response.ok().build();
+  }
+
   /**
    * Updates a subset of the fields of an existing secret
    *
