@@ -210,7 +210,8 @@ public class SecretResource {
         .orElseThrow(NotFoundException::new);
     secretDAO.renameSecretById(secret.series().id(), newName, automationClient.getName());
 
-    return Response.ok().build();
+    UriBuilder uriBuilder = UriBuilder.fromResource(SecretResource.class).path(newName);
+    return Response.created(uriBuilder.build()).build();
   }
 
   /**

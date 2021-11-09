@@ -77,7 +77,7 @@ public class SecretResourceTest {
     createSecret(oldName);
 
     String newName = UUID.randomUUID().toString();
-    assertEquals(200, renameSecret(oldName, newName));
+    assertEquals(201, renameSecret(oldName, newName));
 
     assertFalse(getSecret(oldName).isPresent());
     assertTrue(getSecret(newName).isPresent());
