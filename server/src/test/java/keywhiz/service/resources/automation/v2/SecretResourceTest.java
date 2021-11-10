@@ -77,7 +77,11 @@ public class SecretResourceTest {
     createSecret(oldName);
 
     String newName = UUID.randomUUID().toString();
-    assertEquals(200, renameSecret(oldName, newName));
+    Response response = renameSecret(oldName, newName);
+    assertEquals(201, response.code());
+    assertEquals(
+        "https://localhost:4445/automation/v2/secrets/" + newName,
+        response.header("Location"));
 
     assertFalse(getSecret(oldName).isPresent());
     assertTrue(getSecret(newName).isPresent());
@@ -90,13 +94,13 @@ public class SecretResourceTest {
     String newName = UUID.randomUUID().toString();
     createSecret(newName);
 
-    assertEquals(409, renameSecret(oldName, newName));
+    assertEquals(409, renameSecret(oldName, newName).code());
   }
 
   @Test public void cannotRenameNonexistentSecret() throws Exception {
     String oldName = UUID.randomUUID().toString();
     String newName = UUID.randomUUID().toString();
-    assertEquals(404, renameSecret(oldName, newName));
+    assertEquals(404, renameSecret(oldName, newName).code());
   }
 
   //---------------------------------------------------------------------------------------
@@ -1279,7 +1283,7 @@ public class SecretResourceTest {
     return mutualSslClient.newCall(delete).execute();
   }
 
-  private int renameSecret(String oldName, String newName) throws IOException {
+  private Response renameSecret(String oldName, String newName) throws IOException {
     Request rename = clientRequest(
         String.format(
             "/automation/v2/secrets/%s/rename/%s",
@@ -1288,7 +1292,7 @@ public class SecretResourceTest {
         .post(RequestBody.create(JSON, ""))
         .build();
     Response httpResponse = mutualSslClient.newCall(rename).execute();
-    return httpResponse.code();
+    return httpResponse;
   }
 
   private void createSecret(String secretName) throws IOException {
