@@ -18,6 +18,7 @@ package keywhiz.service.daos;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -85,13 +86,33 @@ public class SecretSeriesDAO {
       @Nullable String type,
       @Nullable Map<String, String> generationOptions,
       long now) {
+    long generatedId = rowHmacGenerator.getNextLongSecure();
+    return createSecretSeries(
+        generatedId,
+        name,
+        ownerId,
+        creator,
+        description,
+        type,
+        generationOptions,
+        now);
+  }
+
+  @VisibleForTesting
+  long createSecretSeries(
+      long id,
+      String name,
+      Long ownerId,
+      String creator,
+      String description,
+      @Nullable String type,
+      @Nullable Map<String, String> generationOptions,
+      long now) {
     SecretsRecord r = dslContext.newRecord(SECRETS);
 
-    long generatedId = rowHmacGenerator.getNextLongSecure();
-    String rowHmac = rowHmacGenerator.computeRowHmac(
-        SECRETS.getName(), List.of(name, generatedId));
+    String rowHmac = computeRowHmac(id, name);
 
-    r.setId(generatedId);
+    r.setId(id);
     r.setName(name);
     r.setOwner(ownerId);
     r.setDescription(description);
@@ -131,8 +152,7 @@ public class SecretSeriesDAO {
     }
 
     try {
-      String rowHmac = rowHmacGenerator.computeRowHmac(
-          SECRETS.getName(), List.of(name, secretId));
+      String rowHmac = computeRowHmac(secretId, name);
 
       dslContext.update(SECRETS)
           .set(SECRETS.NAME, name)
@@ -348,8 +368,10 @@ public class SecretSeriesDAO {
   }
 
   public void renameSecretSeriesById(long secretId, String name, String creator, long now) {
+    String rowHmac = computeRowHmac(secretId, name);
     dslContext.update(SECRETS)
         .set(SECRETS.NAME, name)
+        .set(SECRETS.ROW_HMAC, rowHmac)
         .set(SECRETS.UPDATEDBY, creator)
         .set(SECRETS.UPDATEDAT, now)
         .where(SECRETS.ID.eq(secretId))
@@ -446,5 +468,13 @@ public class SecretSeriesDAO {
   private String transformNameForDeletion(String name) {
     long now = OffsetDateTime.now().toEpochSecond();
     return String.format(".%s.deleted.%d.%s", name, now, UUID.randomUUID().toString());
+  }
+
+  private String computeRowHmac(long secretSeriesId, String secretSeriesName) {
+    return rowHmacGenerator.computeRowHmac(
+        SECRETS.getName(),
+        List.of(
+            secretSeriesName,
+            secretSeriesId));
   }
 }

@@ -23,8 +23,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import javax.inject.Inject;
+import keywhiz.KeywhizConfig;
 import keywhiz.KeywhizTestRunner;
+import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -55,6 +58,7 @@ public class AclDAOTest {
   @Inject ClientDAOFactory clientDAOFactory;
   @Inject GroupDAOFactory groupDAOFactory;
   @Inject AclDAO.AclDAOFactory aclDAOFactory;
+  @Inject KeywhizConfig keywhizConfig;
 
   Client client1, client2;
   Group group1, group2, group3;
@@ -88,6 +92,26 @@ public class AclDAOTest {
     SecretFixtures secretFixtures = SecretFixtures.using(secretDAOFactory.readwrite());
     secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==");
     secret2 = secretFixtures.createSecret("secret2", "c2VjcmV0Mg==");
+  }
+
+  @Test public void listingRenamedSecretDoesNotFailHmacCheck() {
+    aclDAO.enrollClient(jooqContext.configuration(), client1.getId(), group1.getId());
+    aclDAO.allowAccess(jooqContext.configuration(), secret1.getId(), group1.getId());
+
+    String newName = UUID.randomUUID().toString();
+    secretSeriesDAO.renameSecretSeriesById(
+        secret1.getId(),
+        newName,
+        client1.getName(),
+        ApiDate.now().toEpochSecond());
+
+    KeywhizConfig.RowHmacCheck originalHmacCheck = keywhizConfig.getRowHmacCheck();
+    try {
+      keywhizConfig.setRowHmacCheck(KeywhizConfig.RowHmacCheck.ENFORCED);
+      aclDAO.getSanitizedSecretsFor(client1);
+    } finally {
+      keywhizConfig.setRowHmacCheck(originalHmacCheck);
+    }
   }
 
   @Test public void allowsAccess() {
