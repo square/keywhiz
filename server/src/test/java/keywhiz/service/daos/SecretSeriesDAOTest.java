@@ -19,9 +19,11 @@ package keywhiz.service.daos;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.Random;
+import java.util.UUID;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readwrite;
 import org.jooq.DSLContext;
 import org.junit.Test;
@@ -38,6 +40,7 @@ import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
 
 @RunWith(KeywhizTestRunner.class)
@@ -46,6 +49,51 @@ public class SecretSeriesDAOTest {
   @Inject @Readwrite SecretSeriesDAO secretSeriesDAO;
   @Inject @Readwrite SecretContentDAO secretContentDAO;
   @Inject @Readwrite GroupDAO groupDAO;
+
+  @Test public void renameUpdatesRowHmac() {
+    long id = createRandomSecretSeries();
+    String originalHmac = getRowHmac(id);
+
+    String newName = randomName();
+    secretSeriesDAO.renameSecretSeriesById(id, newName, "creator", ApiDate.now().toEpochSecond());
+    String renamedHmac = getRowHmac(id);
+
+    assertNotEquals(originalHmac, renamedHmac);
+  }
+
+  @Test public void createSecretSeriesUsesSuppliedId() {
+    long wellKnownId = 123;
+
+    long id = secretSeriesDAO.createSecretSeries(
+        wellKnownId,
+        "abc",
+        null,
+        null,
+        null,
+        null,
+        null,
+        ApiDate.now().toEpochSecond());
+
+    assertEquals(wellKnownId, id);
+  }
+
+  @Test public void computesWellKnownRowHmac() {
+    long wellKnownId = 123;
+
+    secretSeriesDAO.createSecretSeries(
+        wellKnownId,
+        "abc",
+        null,
+        null,
+        null,
+        null,
+        null,
+        ApiDate.now().toEpochSecond());
+
+    assertEquals(
+        "649F23AF8C88F32AAEDD848EB5F42A8770BBE59B6DBE20E66DDA2AB915E28876",
+        getRowHmac(wellKnownId));
+  }
 
   @Test public void ownerRoundTrip() {
     String ownerName = "foo";
@@ -451,6 +499,24 @@ public class SecretSeriesDAOTest {
     assertThat(actual).contains(expected2);
   }
 
+  private String getRowHmac(long secretSeriesId) {
+    SecretsRecord r = jooqContext.fetchOne(SECRETS, SECRETS.ID.eq(secretSeriesId));
+    String rowHmac = r.getValue(SECRETS.ROW_HMAC);
+    return rowHmac;
+  }
+
+  private long createRandomSecretSeries() {
+    long id = secretSeriesDAO.createSecretSeries(
+        randomName(),
+        null,
+        null,
+        null,
+        null,
+        null,
+        ApiDate.now().toEpochSecond());
+    return id;
+  }
+
   private long createSecretContent(long secretId) {
     long now = OffsetDateTime.now().toEpochSecond();
 
@@ -466,6 +532,10 @@ public class SecretSeriesDAOTest {
     secretSeriesDAO.setCurrentVersion(secretId, contentId, "creator", now);
 
     return contentId;
+  }
+
+  private static String randomName() {
+    return UUID.randomUUID().toString();
   }
 }
 
