@@ -19,6 +19,24 @@ public class KeywhizConfigTest {
   private static final String TEST_CONFIGS_PREFIX = "configs/";
 
   @Test
+  public void parsesRowHmacCheckDisabled() {
+    KeywhizConfig config = loadConfig("row-hmac-check-disabled.yaml");
+    assertEquals(KeywhizConfig.RowHmacCheck.DISABLED, config.getRowHmacCheck());
+  }
+
+  @Test
+  public void parsesRowHmacCheckEnforced() {
+    KeywhizConfig config = loadConfig("row-hmac-check-enforced.yaml");
+    assertEquals(KeywhizConfig.RowHmacCheck.ENFORCED, config.getRowHmacCheck());
+  }
+
+  @Test
+  public void parsesRowHmacCheckLogging() {
+    KeywhizConfig config = loadConfig("row-hmac-check-logging.yaml");
+    assertEquals(KeywhizConfig.RowHmacCheck.DISABLED_BUT_LOG, config.getRowHmacCheck());
+  }
+
+  @Test
   public void parsesMaximumSecretLength() {
     KeywhizConfig config = loadConfig("with-secret-size-limit-123456.yaml");
     assertEquals(Long.valueOf(123456), config.getMaximumSecretSizeInBytesInclusive());
