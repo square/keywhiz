@@ -33,7 +33,6 @@ import keywhiz.auth.cookie.CookieConfig;
 import keywhiz.service.config.ClientAuthConfig;
 import keywhiz.service.config.KeyStoreConfig;
 import keywhiz.service.config.Templates;
-import keywhiz.service.crypto.RowHmacGenerator;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -90,7 +89,7 @@ public class KeywhizConfig extends Configuration {
   private String statusCacheExpiry;
 
   @JsonProperty
-  private String rowHmacCheck;
+  private RowHmacCheck rowHmacCheck;
 
   @JsonProperty
   private String flywaySchemaTable;
@@ -102,19 +101,12 @@ public class KeywhizConfig extends Configuration {
   private Long maximumSecretSizeInBytesInclusive;
 
   public enum RowHmacCheck {
-    DISABLED("disabled"),
-    DISABLED_BUT_LOG("logging"),
-    ENFORCED("enforced");
-
-    private final String configEntry;
-
-    RowHmacCheck(String configEntry) {
-      this.configEntry = configEntry;
-    }
-
-    public String getConfigEntry() {
-      return configEntry;
-    }
+    @JsonProperty("disabled")
+    DISABLED,
+    @JsonProperty("logging")
+    DISABLED_BUT_LOG,
+    @JsonProperty("enforced")
+    ENFORCED;
   }
 
   public String getEnvironment() {
@@ -214,20 +206,12 @@ public class KeywhizConfig extends Configuration {
   }
 
   public RowHmacCheck getRowHmacCheck() {
-    for (RowHmacCheck e : RowHmacCheck.values()) {
-      if (e.getConfigEntry().equals(rowHmacCheck)) {
-        return e;
-      }
-    }
-
-    throw new IllegalArgumentException(
-        String.format("%s is an invalid rowHmacCheck parameter", rowHmacCheck)
-    );
+    return rowHmacCheck;
   }
 
   @VisibleForTesting
-  public void setRowHmacCheck(RowHmacCheck check) {
-    rowHmacCheck = check.getConfigEntry();
+  public void setRowHmacCheck(RowHmacCheck rowHmacCheck) {
+    this.rowHmacCheck = rowHmacCheck;
   }
 
   public String getFlywaySchemaTable() {
