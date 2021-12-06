@@ -3,8 +3,10 @@ package keywhiz.service.resources.automation.v2;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -43,6 +45,32 @@ public class BackfillRowHmacResource {
   public BackfillRowHmacResource(DSLContext jooq, RowHmacGenerator rowHmacGenerator) {
     this.jooq = jooq;
     this.rowHmacGenerator = rowHmacGenerator;
+  }
+
+  /**
+   * Backfill row_hmac for a specific secret.
+   */
+  @Timed @ExceptionMetered
+  @Path("secret/name/{secretName}")
+  @POST
+  @Consumes(APPLICATION_JSON)
+  @Produces(APPLICATION_JSON)
+  public void backfillSecretRowHmacByName(@PathParam("secretName") String secretName) {
+    Optional<SecretsRecord> maybeRow = jooq.selectFrom(SECRETS)
+        .where(SECRETS.NAME.eq(secretName))
+        .fetchOptional();
+
+    if (!maybeRow.isPresent()) {
+      throw new NotFoundException();
+    }
+
+    SecretsRecord row = maybeRow.get();
+      String rowHmac = rowHmacGenerator.computeRowHmac(SECRETS.getName(),
+          List.of(row.getName(), row.getId()));
+      jooq.update(SECRETS)
+          .set(SECRETS.ROW_HMAC, rowHmac)
+          .where(SECRETS.ID.eq(row.getId()))
+          .execute();
   }
 
   /**

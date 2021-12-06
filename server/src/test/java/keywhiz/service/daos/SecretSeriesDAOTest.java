@@ -50,6 +50,17 @@ public class SecretSeriesDAOTest {
   @Inject @Readwrite SecretContentDAO secretContentDAO;
   @Inject @Readwrite GroupDAO groupDAO;
 
+  @Test public void setsRowHmacByName() {
+    String secretName = randomName();
+    createSecretSeries(secretName);
+
+    String newHmac = UUID.randomUUID().toString();
+    secretSeriesDAO.setRowHmacByName(secretName, newHmac);
+
+    String updatedHmac = jooqContext.fetchOne(SECRETS, SECRETS.NAME.eq(secretName)).getRowHmac();
+    assertEquals(newHmac, updatedHmac);
+  }
+
   @Test public void renameUpdatesRowHmac() {
     long id = createRandomSecretSeries();
     String originalHmac = getRowHmac(id);
@@ -505,9 +516,9 @@ public class SecretSeriesDAOTest {
     return rowHmac;
   }
 
-  private long createRandomSecretSeries() {
+  private long createSecretSeries(String name) {
     long id = secretSeriesDAO.createSecretSeries(
-        randomName(),
+        name,
         null,
         null,
         null,
@@ -515,6 +526,10 @@ public class SecretSeriesDAOTest {
         null,
         ApiDate.now().toEpochSecond());
     return id;
+  }
+
+  private long createRandomSecretSeries() {
+    return createSecretSeries(randomName());
   }
 
   private long createSecretContent(long secretId) {
