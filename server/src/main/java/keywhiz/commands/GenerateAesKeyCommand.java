@@ -68,7 +68,7 @@ public class GenerateAesKeyCommand extends Command {
 
   @Override public void run(Bootstrap<?> bootstrap, Namespace namespace) throws Exception {
     char[] password = namespace.getString("storepass").toCharArray();
-    Path destination = Paths.get(namespace.get("keystore"));
+    Path destination = Paths.get(namespace.getString("keystore"));
     int keySize = namespace.getInt("keysize");
     String alias = namespace.getString("alias");
 

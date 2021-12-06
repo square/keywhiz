@@ -109,6 +109,6 @@ contentKeyStore:
   password: CHANGE
   alias: basekey
 
-rowHmacCheck: logging
+rowHmacCheck: DISABLED_BUT_LOG
 
 flywaySchemaTable: schema_version
