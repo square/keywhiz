@@ -1,72 +1,103 @@
 package keywhiz.service.resources.automation.v2;
 
-import java.util.Collections;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Map;
 import java.util.UUID;
-import javax.inject.Inject;
-import keywhiz.KeywhizTestRunner;
-import keywhiz.service.daos.SecretDAO;
-import keywhiz.service.daos.SecretSeriesDAO;
+import keywhiz.api.ApiDate;
+import keywhiz.api.model.AutomationClient;
+import keywhiz.api.model.Client;
+import keywhiz.jooq.tables.records.SecretsRecord;
+import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
+import keywhiz.log.EventTag;
+import keywhiz.service.crypto.RowHmacGenerator;
+import keywhiz.test.TestDSLContexts;
 import org.jooq.DSLContext;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-import static keywhiz.jooq.tables.Secrets.SECRETS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
-@RunWith(KeywhizTestRunner.class)
 public class BackfillRowHmacResourceTest {
-  @Inject private BackfillRowHmacResource resource;
-  @Inject private SecretDAO.SecretDAOFactory secretDAOFactory;
-  @Inject private SecretSeriesDAO.SecretSeriesDAOFactory secretSeriesDAOFactory;
-  @Inject private DSLContext dslContext;
+  @Mock
+  private RowHmacGenerator rowHmacGenerator;
+  @Mock
+  private AuditLog auditLog;
 
-  private SecretDAO secretDAO;
-  private SecretSeriesDAO secretSeriesDAO;
+  @Captor
+  private ArgumentCaptor<Event> eventCaptor;
 
   @Before
   public void before() {
-    secretDAO = secretDAOFactory.readwrite();
-    secretSeriesDAO = secretSeriesDAOFactory.readwrite();
+    MockitoAnnotations.initMocks(this);
   }
 
   @Test
-  public void backfillsNonNullSecretHmac() {
+  public void backfillSecretHmacByNameHandlesNullOldHmac() {
+    SecretsRecord record = new SecretsRecord();
+    record.setId(1L);
+    record.setName("foo");
+    record.setRowHmac(null);
+
+    DSLContext context = TestDSLContexts.returning(record);
+
+    when(rowHmacGenerator.computeRowHmac(any(), any())).thenReturn("newHmac");
+
+    BackfillRowHmacResource resource = new BackfillRowHmacResource(context, rowHmacGenerator, auditLog);
+
+    String clientName = UUID.randomUUID().toString();
     String secretName = UUID.randomUUID().toString();
-    createSecret(secretName);
 
-    String originalHmac = getHmac(secretName);
-    assertNotNull(originalHmac);
+    AutomationClient automationClient = newAutomationClient(clientName);
 
+    resource.backfillSecretRowHmacByName(automationClient, secretName, true);
+  }
+
+  @Test
+  public void backfillSecretHmacByNameWritesToAuditLog() {
+    String oldHmac = UUID.randomUUID().toString();
     String newHmac = UUID.randomUUID().toString();
-    secretSeriesDAO.setRowHmacByName(secretName, newHmac);
 
-    resource.backfillSecretRowHmacByName(secretName);
+    when(rowHmacGenerator.computeRowHmac(any(), any())).thenReturn(newHmac);
 
-    String updatedHmac = getHmac(secretName);
-    assertNotEquals(newHmac, updatedHmac);
-    assertEquals(originalHmac, updatedHmac);
+    SecretsRecord record = new SecretsRecord();
+    record.setId(1L);
+    record.setName("foo");
+    record.setRowHmac(oldHmac);
+
+    DSLContext context = TestDSLContexts.returning(record);
+
+    BackfillRowHmacResource resource = new BackfillRowHmacResource(context, rowHmacGenerator, auditLog);
+
+    String clientName = UUID.randomUUID().toString();
+    String secretName = UUID.randomUUID().toString();
+
+    AutomationClient automationClient = newAutomationClient(clientName);
+
+    resource.backfillSecretRowHmacByName(automationClient, secretName, true);
+
+    verify(auditLog).recordEvent(eventCaptor.capture());
+
+    Event event = eventCaptor.getValue();
+    assertEquals(EventTag.SECRET_BACKFILLHMAC, event.getType());
+    assertEquals(clientName, event.getUser());
+    assertEquals(secretName, event.getObjectName());
+
+    Map<String, String> extraInfo = event.getExtraInfo();
+    assertEquals(oldHmac, extraInfo.get("oldHmac"));
+    assertEquals(newHmac, extraInfo.get("newHmac"));
   }
 
-  private String getHmac(String secretName) {
-    return dslContext.fetchOne(SECRETS, SECRETS.NAME.eq(secretName)).getRowHmac();
-  }
-
-  private long createSecret(String name) {
-    long secretId = secretDAO.createSecret(
-        name,
-        null,
-        "encryptedSecret",
-        "hmac",
-        null,
-        Collections.emptyMap(),
-        0,
-        null,
-        null,
-        null);
-    return secretId;
+  private static AutomationClient newAutomationClient(String clientName) {
+    ApiDate now = ApiDate.now();
+    Client client = new Client(1, clientName, "1st client", null, now, "test", now, "test", null, null, true, true);
+    AutomationClient automationClient = AutomationClient.of(client);
+    return automationClient;
   }
 }

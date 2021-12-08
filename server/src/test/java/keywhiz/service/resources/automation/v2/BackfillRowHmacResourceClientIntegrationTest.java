@@ -23,7 +23,7 @@ import static keywhiz.TestClients.clientRequest;
 import static keywhiz.client.KeywhizClient.JSON;
 import static org.junit.Assert.assertEquals;
 
-public class BackfillRowHmacResourceClientTest {
+public class BackfillRowHmacResourceClientIntegrationTest {
   private static final ObjectMapper mapper =
       KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
   private static final Base64.Encoder encoder = Base64.getEncoder();
@@ -36,12 +36,33 @@ public class BackfillRowHmacResourceClientTest {
     mutualSslClient = TestClients.mutualSslClient();
   }
 
+  @Test public void backfillSecretHmacRequiresAuthentication() throws Exception {
+    String secretName = UUID.randomUUID().toString();
+    assertEquals(401, backfillSecretHmac(TestClients.unauthenticatedClient(), secretName, null).code());
+  }
+
   // The HMAC is internal (never exposed to the client) so we can only really check
   // whether the call succeeds or not.
-  @Test public void backfillsSecretHmac() throws Exception {
+  @Test public void backfillsSecretHmacWithForceMissing() throws Exception {
     String secretName = UUID.randomUUID().toString();
     createSecret(secretName);
     assertEquals(204, backfillSecretHmac(secretName).code());
+  }
+
+  // The HMAC is internal (never exposed to the client) so we can only really check
+  // whether the call succeeds or not.
+  @Test public void backfillsSecretHmacWithForceTrue() throws Exception {
+    String secretName = UUID.randomUUID().toString();
+    createSecret(secretName);
+    assertEquals(204, backfillSecretHmac(secretName, true).code());
+  }
+
+  // The HMAC is internal (never exposed to the client) so we can only really check
+  // whether the call succeeds or not.
+  @Test public void backfillsSecretHmacWithForceFalse() throws Exception {
+    String secretName = UUID.randomUUID().toString();
+    createSecret(secretName);
+    assertEquals(204, backfillSecretHmac(secretName, false).code());
   }
 
   @Test public void backfillingNonExistentSecretThrows404() throws Exception {
@@ -49,10 +70,21 @@ public class BackfillRowHmacResourceClientTest {
     assertEquals(404, backfillSecretHmac(secretName).code());
   }
 
+  private Response backfillSecretHmac(String secretName, boolean force) throws IOException {
+    return backfillSecretHmac(mutualSslClient, secretName, force);
+  }
+
   private Response backfillSecretHmac(String secretName) throws IOException {
+    return backfillSecretHmac(mutualSslClient, secretName, null);
+  }
+
+  private Response backfillSecretHmac(OkHttpClient client, String secretName, Boolean force) throws IOException {
     String url = String.format("/automation/v2/backfill-row-hmac/secret/name/%s", secretName);
+    if (force != null) {
+      url += String.format("?force=%s", force);
+    }
     Request request = clientRequest(url).post(emptyBody()).build();
-    Response response = mutualSslClient.newCall(request).execute();
+    Response response = client.newCall(request).execute();
     return response;
   }
 
