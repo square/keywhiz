@@ -2,18 +2,30 @@ package keywhiz.service.resources.automation.v2;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.collect.ImmutableMap;
+import io.dropwizard.auth.Auth;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import keywhiz.api.model.AutomationClient;
 import keywhiz.jooq.tables.records.AccessgrantsRecord;
 import keywhiz.jooq.tables.records.ClientsRecord;
 import keywhiz.jooq.tables.records.MembershipsRecord;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
+import keywhiz.log.AuditLog;
+import keywhiz.log.Event;
+import keywhiz.log.EventTag;
 import keywhiz.service.crypto.RowHmacGenerator;
 import org.jooq.DSLContext;
 import org.jooq.Result;
@@ -38,11 +50,65 @@ public class BackfillRowHmacResource {
 
   private final DSLContext jooq;
   private final RowHmacGenerator rowHmacGenerator;
+  private final AuditLog auditLog;
 
   @Inject
-  public BackfillRowHmacResource(DSLContext jooq, RowHmacGenerator rowHmacGenerator) {
+  public BackfillRowHmacResource(
+      DSLContext jooq,
+      RowHmacGenerator rowHmacGenerator,
+      AuditLog auditLog) {
     this.jooq = jooq;
     this.rowHmacGenerator = rowHmacGenerator;
+    this.auditLog = auditLog;
+  }
+
+  /**
+   * Backfill row_hmac for a specific secret.
+   */
+  @Timed @ExceptionMetered
+  @Path("secret/name/{secretName}")
+  @POST
+  @Consumes(APPLICATION_JSON)
+  @Produces(APPLICATION_JSON)
+  public void backfillSecretRowHmacByName(
+      @Auth AutomationClient automationClient,
+      @PathParam("secretName") String secretName,
+      @QueryParam("force") boolean force) {
+    Optional<SecretsRecord> maybeRow = jooq.selectFrom(SECRETS)
+        .where(SECRETS.NAME.eq(secretName))
+        .fetchOptional();
+
+    if (!maybeRow.isPresent()) {
+      throw new NotFoundException();
+    }
+
+    SecretsRecord row = maybeRow.get();
+    String oldHmac = row.getRowHmac();
+
+    if (oldHmac != null && !force) {
+      return;
+    }
+
+    String newHmac = rowHmacGenerator.computeRowHmac(
+        SECRETS.getName(),
+        List.of(row.getName(), row.getId()));
+
+    jooq.update(SECRETS)
+        .set(SECRETS.ROW_HMAC, newHmac)
+        .where(SECRETS.ID.eq(row.getId()))
+        .execute();
+
+    Map<String, String> extraInfo = ImmutableMap.<String, String>builder()
+        .put("oldHmac", Objects.toString(oldHmac))
+        .put("newHmac", newHmac)
+        .build();
+
+    auditLog.recordEvent(new Event(
+        Instant.now(),
+        EventTag.SECRET_BACKFILLHMAC,
+        automationClient.getName(),
+        secretName,
+        extraInfo));
   }
 
   /**

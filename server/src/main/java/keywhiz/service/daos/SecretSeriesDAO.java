@@ -182,6 +182,13 @@ public class SecretSeriesDAO {
         .execute();
   }
 
+  public int setRowHmacByName(String secretName, String hmac) {
+    return dslContext.update(SECRETS)
+        .set(SECRETS.ROW_HMAC, hmac)
+        .where(SECRETS.NAME.eq(secretName))
+        .execute();
+  }
+
   public int setHmac(long secretContentId, String hmac) {
     return dslContext.update(SECRETS_CONTENT)
         .set(SECRETS_CONTENT.CONTENT_HMAC, hmac)
