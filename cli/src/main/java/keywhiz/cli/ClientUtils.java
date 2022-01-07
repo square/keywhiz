@@ -35,6 +35,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -108,7 +109,8 @@ public class ClientUtils {
     OkHttpClient.Builder client = new OkHttpClient().newBuilder()
         .sslSocketFactory(socketFactory, trustManager)
         .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS))
-        .followSslRedirects(false);
+        .followSslRedirects(false)
+        .readTimeout(Duration.ofMinutes(2));
 
     client.retryOnConnectionFailure(false);
 
