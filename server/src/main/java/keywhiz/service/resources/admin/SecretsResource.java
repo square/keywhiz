@@ -72,6 +72,7 @@ import org.slf4j.LoggerFactory;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static keywhiz.Tracing.trace;
 
 /**
  * parentEndpointName secrets-admin
@@ -176,8 +177,10 @@ public class SecretsResource {
   }
 
   protected List<SanitizedSecret> listSecretsNameOnly(@Auth User user) {
-    logger.info("User '{}' listing secrets.", user);
-    return secretController.getSecretsNameOnly();
+    return trace("SecretsResource.listSecretsNameOnly", () -> {
+      logger.info("User '{}' listing secrets.", user);
+      return secretController.getSecretsNameOnly();
+    });
   }
 
   protected List<SanitizedSecret> listSecretsBatched(@Auth User user, int idx, int num,
