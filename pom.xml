@@ -291,7 +291,7 @@
       <dependency>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-core</artifactId>
-        <version>7.15.0</version>
+        <version>8.5.7</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate</groupId>
@@ -474,7 +474,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.2.4</version>
+          <version>3.3.0</version>
           <configuration>
             <shadedArtifactAttached>true</shadedArtifactAttached>
             <shadedClassifierName>shaded</shadedClassifierName>
