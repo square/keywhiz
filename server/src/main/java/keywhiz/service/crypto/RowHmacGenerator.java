@@ -1,6 +1,7 @@
 package keywhiz.service.crypto;
 
 import java.nio.ByteBuffer;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Objects;
@@ -34,6 +35,18 @@ public class RowHmacGenerator {
         .collect(Collectors.joining("|"));
     String hmacContent = table + "|" + joinedFields;
     return cryptographer.computeHmacWithSecretKey(hmacContent.getBytes(UTF_8), hmacKey);
+  }
+
+  /**
+   * Checks whether two HMACs are equal.
+   *
+   * Uses MessageDigest to prevent timing attacks.
+   * */
+  public static boolean compareHmacs(String left, String right) {
+    return MessageDigest.isEqual(
+        left.getBytes(UTF_8),
+        right.getBytes(UTF_8)
+    );
   }
 
   /**

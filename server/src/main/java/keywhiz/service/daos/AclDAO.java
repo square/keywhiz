@@ -370,7 +370,7 @@ public class AclDAO {
     String secretHmac = rowHmacGenerator.computeRowHmac(
         SECRETS.getName(), List.of(row.getValue(SECRETS.NAME), row.getValue(SECRETS.ID))
     );
-    if (!secretHmac.equals(row.getValue(SECRETS.ROW_HMAC))) {
+    if (!RowHmacGenerator.compareHmacs(secretHmac, row.getValue(SECRETS.ROW_HMAC))) {
       String errorMessage = String.format(
           "Secret HMAC verification failed for secret: %s", row.getValue(SECRETS.NAME));
       if (rowHmacLog) {
@@ -384,7 +384,7 @@ public class AclDAO {
     String clientHmac = rowHmacGenerator.computeRowHmac(
         CLIENTS.getName(), List.of(client.getName(), client.getId())
     );
-    if (!clientHmac.equals(row.getValue(CLIENTS.ROW_HMAC))) {
+    if (!RowHmacGenerator.compareHmacs(clientHmac, row.getValue(CLIENTS.ROW_HMAC))) {
       String errorMessage = String.format(
           "Client HMAC verification failed for client: %s", client.getName());
       if (rowHmacLog) {
@@ -397,7 +397,7 @@ public class AclDAO {
 
     String membershipsHmac = rowHmacGenerator.computeRowHmac(
         MEMBERSHIPS.getName(), List.of(client.getId(), row.getValue(MEMBERSHIPS.GROUPID)));
-    if (!membershipsHmac.equals(row.getValue(MEMBERSHIPS.ROW_HMAC))) {
+    if (!RowHmacGenerator.compareHmacs(membershipsHmac, row.getValue(MEMBERSHIPS.ROW_HMAC))) {
       String errorMessage = String.format(
           "Memberships HMAC verification failed for clientId: %d in groupId: %d",
           client.getId(), row.getValue(MEMBERSHIPS.GROUPID));
@@ -412,7 +412,7 @@ public class AclDAO {
     String accessgrantsHmac = rowHmacGenerator.computeRowHmac(
         ACCESSGRANTS.getName(),
         List.of(row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID)));
-    if (!accessgrantsHmac.equals(row.getValue(ACCESSGRANTS.ROW_HMAC))) {
+    if (!RowHmacGenerator.compareHmacs(accessgrantsHmac, row.getValue(ACCESSGRANTS.ROW_HMAC))) {
       String errorMessage = String.format(
           "Access Grants HMAC verification failed for groupId: %d in secretId: %d",
           row.getValue(MEMBERSHIPS.GROUPID), row.getValue(SECRETS.ID));
