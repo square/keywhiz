@@ -42,7 +42,7 @@ public class RowHmacGenerator {
    *
    * Uses MessageDigest to prevent timing attacks.
    * */
-  public boolean compareHmacs(String left, String right) {
+  public static boolean compareHmacs(String left, String right) {
     return MessageDigest.isEqual(
         left.getBytes(UTF_8),
         right.getBytes(UTF_8)
