@@ -291,7 +291,7 @@
       <dependency>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-core</artifactId>
-        <version>7.15.0</version>
+        <version>8.5.11</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate</groupId>
@@ -370,7 +370,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.7</version>
+        <version>0.8.8</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
