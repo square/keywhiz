@@ -1,16 +1,9 @@
 package keywhiz.api;
 
-import autovalue.shaded.org.checkerframework$.checker.nullness.qual.$MonotonicNonNull;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import org.hibernate.validator.constraints.NotEmpty;
-
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-import java.util.List;
 
 /**
  * Batch Secret Request.
