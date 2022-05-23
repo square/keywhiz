@@ -41,7 +41,7 @@
     <!-- 1.2.0-1 is the last version of dropwizard-raven JAR. The development continues under dropwizard-sentry -->
     <dropwizard-raven.version>1.2.0-1</dropwizard-raven.version>
     <guice.version>4.2.3</guice.version>
-    <jackson.version>2.13.2</jackson.version>
+    <jackson.version>2.13.3</jackson.version>
     <jackson.databind.version>2.13.2.1</jackson.databind.version>
     <jooq.version>3.16.5</jooq.version>
     <powermock.version>2.0.9</powermock.version>
@@ -321,7 +321,7 @@
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>4.3.1</version>
+        <version>4.5.1</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
