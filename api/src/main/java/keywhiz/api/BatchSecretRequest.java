@@ -1,6 +1,5 @@
 package keywhiz.api;
 
-import autovalue.shaded.org.checkerframework$.checker.nullness.qual.$MonotonicNonNull;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
