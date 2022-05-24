@@ -50,22 +50,10 @@ updates:
     - ">= 6.a, < 7"
   - dependency-name: org.flywaydb:flyway-core
     versions:
-    - 7.5.3
-    - 7.5.4
-    - 7.6.0
-    - 7.7.0
-    - 7.7.1
-    - 7.7.2
-    - 7.7.3
+    - ">= 8"
   - dependency-name: org.flywaydb:flyway-maven-plugin
     versions:
-    - 7.5.3
-    - 7.5.4
-    - 7.6.0
-    - 7.7.0
-    - 7.7.1
-    - 7.7.2
-    - 7.7.3
+    - ">= 8"
   - dependency-name: org.mockito:mockito-core
     versions:
     - 3.7.7
