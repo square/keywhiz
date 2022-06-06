@@ -1,5 +1,6 @@
 package keywhiz.test;
 
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.io.Resources;
@@ -19,16 +20,19 @@ public class ServiceContext {
   private final Bootstrap<KeywhizConfig> bootstrap;
   private final KeywhizConfig config;
   private final Environment environment;
+  private final MetricRegistry metricRegistry;
 
   private ServiceContext(
       KeywhizService service,
       Bootstrap<KeywhizConfig> bootstrap,
       KeywhizConfig config,
-      Environment environment) {
+      Environment environment,
+      MetricRegistry metricRegistry) {
     this.service = service;
     this.bootstrap = bootstrap;
     this.config = config;
     this.environment = environment;
+    this.metricRegistry = metricRegistry;
   }
 
   public static ServiceContext create() {
@@ -48,7 +52,9 @@ public class ServiceContext {
         bootstrap.getMetricRegistry(),
         bootstrap.getClassLoader());
 
-    return new ServiceContext(service, bootstrap, config, environment);
+    MetricRegistry metricRegistry = environment.metrics();
+
+    return new ServiceContext(service, bootstrap, config, environment, metricRegistry);
   }
 
   public KeywhizService getService() { return service; }
@@ -67,5 +73,9 @@ public class ServiceContext {
     } catch (IOException | ConfigurationException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  public MetricRegistry getMetricRegistry() {
+    return metricRegistry;
   }
 }

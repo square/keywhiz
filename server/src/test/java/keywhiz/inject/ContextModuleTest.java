@@ -1,5 +1,6 @@
 package keywhiz.inject;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Guice;
 import io.dropwizard.Configuration;
 import io.dropwizard.setup.Environment;
@@ -17,6 +18,8 @@ public class ContextModuleTest {
       @Inject KeywhizConfig keywhizConfig;
       @Inject Configuration config;
       @Inject Environment environment;
+      @Inject MetricRegistry metricRegistry1;
+      @Inject MetricRegistry metricRegistry2;
     }
 
     Holder holder = new Holder();
@@ -29,5 +32,8 @@ public class ContextModuleTest {
     assertSame(context.getConfig(), holder.keywhizConfig);
     assertSame(context.getConfig(), holder.config);
     assertSame(context.getEnvironment(), holder.environment);
+    assertSame(context.getMetricRegistry(), holder.metricRegistry1);
+    assertSame(context.getMetricRegistry(), holder.metricRegistry2);
+    assertSame(holder.metricRegistry1, holder.metricRegistry2);
   }
 }

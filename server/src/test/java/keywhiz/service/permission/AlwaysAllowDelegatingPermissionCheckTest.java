@@ -1,0 +1,97 @@
+package keywhiz.service.permission;
+
+import com.codahale.metrics.MetricRegistry;
+import java.util.Objects;
+import keywhiz.service.permissions.Action;
+import keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck;
+import keywhiz.service.permissions.KeywhizPrincipal;
+import keywhiz.service.permissions.PermissionCheck;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+
+public class AlwaysAllowDelegatingPermissionCheckTest {
+
+  @Rule public MockitoRule mockito = MockitoJUnit.rule();
+
+  @Mock PermissionCheck delegate;
+
+  private MetricRegistry metricRegistry;
+  private AlwaysAllowDelegatingPermissionCheck alwaysAllow;
+
+  private static KeywhizPrincipal principal;
+  private static Objects target;
+
+  private static final String ISALLOWED_SUCCESS_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.isAllowed.success.histogram";
+  private static final String ISALLOWED_FAILURE_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.isAllowed.failure.histogram";
+  private static final String CHECKALLOWEDORTHROW_SUCCESS_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.checkAllowedOrThrow.success.histogram";
+  private static final String CHECKALLOWEDORTHROW_EXCEPTION_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.checkAllowedOrThrow.exception.histogram";
+
+  @Before
+  public void setUp() {
+    metricRegistry = new MetricRegistry();
+    alwaysAllow = new AlwaysAllowDelegatingPermissionCheck(metricRegistry, delegate);
+  }
+
+  @Test public void isAllowedReturnsTrueWhenDelegateReturnsTrue() {
+    when(delegate.isAllowed(any(), any(), any())).thenReturn(true);
+
+    boolean permitted = alwaysAllow.isAllowed(principal, Action.ADD, target);
+
+    assertThat(permitted);
+
+    assertThat(metricRegistry.histogram(ISALLOWED_SUCCESS_METRIC_NAME).getCount()).isEqualTo(1);
+    assertThat(metricRegistry.histogram(ISALLOWED_SUCCESS_METRIC_NAME).getSnapshot().getMean()).isEqualTo(1);
+
+    assertThat(metricRegistry.histogram(ISALLOWED_FAILURE_METRIC_NAME).getCount()).isEqualTo(1);
+    assertThat(metricRegistry.histogram(ISALLOWED_FAILURE_METRIC_NAME).getSnapshot().getMean()).isEqualTo(0);
+  }
+
+  @Test public void isAllowedReturnsTrueWhenDelegateReturnsFalse() {
+    when(delegate.isAllowed(any(), any(), any())).thenReturn(false);
+
+    boolean permitted = alwaysAllow.isAllowed(principal, Action.ADD, target);
+
+    assertThat(permitted);
+
+    assertThat(metricRegistry.histogram(ISALLOWED_SUCCESS_METRIC_NAME).getCount()).isEqualTo(1);
+    assertThat(metricRegistry.histogram(ISALLOWED_SUCCESS_METRIC_NAME).getSnapshot().getMean()).isEqualTo(0);
+
+    assertThat(metricRegistry.histogram(ISALLOWED_FAILURE_METRIC_NAME).getCount()).isEqualTo(1);
+    assertThat(metricRegistry.histogram(ISALLOWED_FAILURE_METRIC_NAME).getSnapshot().getMean()).isEqualTo(1);
+  }
+
+  @Test public void CheckAllowedOrThrowReturnsVoidWhenDelegateReturnsVoid() {
+    doNothing().when(delegate).checkAllowedOrThrow(any(), any(), any());
+
+    alwaysAllow.checkAllowedOrThrow(principal, Action.ADD, target);
+
+    assertThat(metricRegistry.histogram(CHECKALLOWEDORTHROW_SUCCESS_METRIC_NAME).getCount()).isEqualTo(1);
+    assertThat(metricRegistry.histogram(CHECKALLOWEDORTHROW_SUCCESS_METRIC_NAME).getSnapshot().getMean()).isEqualTo(1);
+
+    assertThat(metricRegistry.histogram(CHECKALLOWEDORTHROW_EXCEPTION_METRIC_NAME).getCount()).isEqualTo(1);
+    assertThat(metricRegistry.histogram(CHECKALLOWEDORTHROW_EXCEPTION_METRIC_NAME).getSnapshot().getMean()).isEqualTo(0);
+  }
+
+  @Test public void CheckAllowedOrThrowReturnsVoidWhenDelegateThrowException() {
+    doThrow(RuntimeException.class).when(delegate).checkAllowedOrThrow(any(), any(), any());
+
+    alwaysAllow.checkAllowedOrThrow(principal, Action.ADD, target);
+
+    assertThat(metricRegistry.histogram(CHECKALLOWEDORTHROW_SUCCESS_METRIC_NAME).getCount()).isEqualTo(1);
+    assertThat(metricRegistry.histogram(CHECKALLOWEDORTHROW_SUCCESS_METRIC_NAME).getSnapshot().getMean()).isEqualTo(0);
+
+    assertThat(metricRegistry.histogram(CHECKALLOWEDORTHROW_EXCEPTION_METRIC_NAME).getCount()).isEqualTo(1);
+    assertThat(metricRegistry.histogram(CHECKALLOWEDORTHROW_EXCEPTION_METRIC_NAME).getSnapshot().getMean()).isEqualTo(1);
+  }
+}
+

@@ -39,6 +39,7 @@ import keywhiz.commands.PreviewMigrateCommand;
 import keywhiz.inject.InjectorFactory;
 import keywhiz.service.filters.CookieRenewingFilter;
 import keywhiz.service.filters.SecurityHeadersFilter;
+import keywhiz.service.permissions.PermissionCheck;
 import keywhiz.service.providers.AuthResolver;
 import keywhiz.service.providers.AutomationClientAuthFactory;
 import keywhiz.service.providers.ClientAuthFactory;
@@ -139,6 +140,8 @@ public class KeywhizService extends Application<KeywhizConfig> {
     jersey.register(new AuthResolver.Binder(injector.getInstance(ClientAuthFactory.class),
         injector.getInstance(AutomationClientAuthFactory.class),
         injector.getInstance(UserAuthFactory.class)));
+
+    jersey.register(injector.getInstance(PermissionCheck.class));
 
     logger.debug("Registering resources");
     jersey.register(injector.getInstance(BackfillRowHmacResource.class));
