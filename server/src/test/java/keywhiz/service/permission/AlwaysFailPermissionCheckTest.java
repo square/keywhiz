@@ -4,7 +4,6 @@ import com.codahale.metrics.MetricRegistry;
 import java.util.Objects;
 import keywhiz.service.permissions.Action;
 import keywhiz.service.permissions.AlwaysFailPermissionCheck;
-import keywhiz.service.permissions.KeywhizPrincipal;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,8 +13,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class AlwaysFailPermissionCheckTest {
   MetricRegistry metricRegistry;
   AlwaysFailPermissionCheck alwaysFail;
-  KeywhizPrincipal principal;
   Objects target;
+  Objects principal;
 
   @Before
   public void setUp() {

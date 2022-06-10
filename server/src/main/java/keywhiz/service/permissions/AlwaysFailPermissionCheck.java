@@ -6,7 +6,7 @@ public class AlwaysFailPermissionCheck implements PermissionCheck {
   @Inject
   public AlwaysFailPermissionCheck() {}
 
-  public boolean isAllowed(KeywhizPrincipal source, String action, Object target) {
+  public boolean isAllowed(Object source, String action, Object target) {
     return false;
   }
 }
