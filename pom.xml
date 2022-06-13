@@ -271,7 +271,7 @@
       <dependency>
         <groupId>org.assertj</groupId>
         <artifactId>assertj-guava</artifactId>
-        <version>3.4.0</version>
+        <version>3.5.0</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
