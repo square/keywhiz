@@ -31,10 +31,10 @@ public class AlwaysAllowDelegatingPermissionCheckTest {
   private static KeywhizPrincipal principal;
   private static Objects target;
 
-  private static final String ISALLOWED_SUCCESS_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.isAllowed.success.histogram";
-  private static final String ISALLOWED_FAILURE_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.isAllowed.failure.histogram";
-  private static final String CHECKALLOWEDORTHROW_SUCCESS_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.checkAllowedOrThrow.success.histogram";
-  private static final String CHECKALLOWEDORTHROW_EXCEPTION_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.checkAllowedOrThrow.exception.histogram";
+  private static final String ISALLOWED_SUCCESS_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.success.histogram";
+  private static final String ISALLOWED_FAILURE_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.failure.histogram";
+  private static final String CHECKALLOWEDORTHROW_SUCCESS_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.success.histogram";
+  private static final String CHECKALLOWEDORTHROW_EXCEPTION_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.failure.histogram";
 
   @Before
   public void setUp() {

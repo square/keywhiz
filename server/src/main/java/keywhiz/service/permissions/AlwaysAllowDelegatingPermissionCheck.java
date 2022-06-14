@@ -20,13 +20,7 @@ public class AlwaysAllowDelegatingPermissionCheck implements PermissionCheck {
   public boolean isAllowed(KeywhizPrincipal source, String action, Object target) {
     boolean hasPermission = delegate.isAllowed(source, action, target);
 
-    int hasPermissionSuccessMetricInt = hasPermission ? 1 : 0;
-    String successMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "isAllowed", "success", "histogram");
-    metricRegistry.histogram(successMetricName).update(hasPermissionSuccessMetricInt);
-
-    int hasPermissionFailureMetricInt = hasPermission ? 0 : 1;
-    String failureMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "isAllowed", "failure", "histogram");
-    metricRegistry.histogram(failureMetricName).update(hasPermissionFailureMetricInt);
+    emitHistogramMetrics(hasPermission);
 
     logger.info(
         String.format("isAllowed Actor: %s, Action: %s, Target: %s, Result: %s", source, action, target,
@@ -37,18 +31,25 @@ public class AlwaysAllowDelegatingPermissionCheck implements PermissionCheck {
 
   @Override
   public void checkAllowedOrThrow(KeywhizPrincipal source, String action, Object target) {
-    String successMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "checkAllowedOrThrow", "success", "histogram");
-    String exceptionMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "checkAllowedOrThrow", "exception", "histogram");
+    Boolean isPermitted;
     try {
       delegate.checkAllowedOrThrow(source, action, target);
-
-      metricRegistry.histogram(successMetricName).update(1);
-      metricRegistry.histogram(exceptionMetricName).update(0);
+      isPermitted = true;
     } catch (RuntimeException e) {
-      metricRegistry.histogram(successMetricName).update(0);
-      metricRegistry.histogram(exceptionMetricName).update(1);
-
       logger.error(String.format("checkAllowedOrThrow Actor: %s, Action: %s, Target: %s throws exception", source, action, target),e);
+      isPermitted = false;
     }
+
+    emitHistogramMetrics(isPermitted);
+  }
+
+  private void emitHistogramMetrics(Boolean isPermitted) {
+    int hasPermissionSuccessMetricInt = isPermitted ? 1 : 0;
+    String successMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "success", "histogram");
+    metricRegistry.histogram(successMetricName).update(hasPermissionSuccessMetricInt);
+
+    int hasPermissionFailureMetricInt = isPermitted ? 0 : 1;
+    String failureMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "failure", "histogram");
+    metricRegistry.histogram(failureMetricName).update(hasPermissionFailureMetricInt);
   }
 }
