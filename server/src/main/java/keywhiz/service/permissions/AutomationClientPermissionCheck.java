@@ -2,6 +2,8 @@ package keywhiz.service.permissions;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
+import io.dropwizard.auth.Auth;
+import keywhiz.api.model.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,9 +31,12 @@ public class AutomationClientPermissionCheck implements PermissionCheck{
   }
 
   private boolean isAutomation(KeywhizPrincipal source) {
-    //TODO(violet): authenticate source as automation, return true for now
+    if (source instanceof Client) {
+      Client client = (Client) source;
+      return client.isAutomationAllowed();
+    }
 
-    return true;
+    return false;
   }
 
   private void emitHistogramMetrics(Boolean isPermitted) {
