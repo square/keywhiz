@@ -13,6 +13,23 @@
 
   <profiles>
     <profile>
+      <id>container</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>sql-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>create-keywhiz-database</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
       <id>
         no-custom-mysql-port
       </id>
@@ -265,6 +282,7 @@
         <artifactId>sql-maven-plugin</artifactId>
         <executions>
           <execution>
+            <id>create-keywhiz-database</id>
             <phase>process-test-classes</phase>
             <goals>
               <goal>execute</goal>
