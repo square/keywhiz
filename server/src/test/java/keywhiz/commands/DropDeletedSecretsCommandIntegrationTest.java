@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
 import javax.inject.Inject;
+import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
@@ -19,7 +20,9 @@ import keywhiz.test.ServiceContext;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.jooq.DSLContext;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -30,7 +33,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
 
 @RunWith(KeywhizTestRunner.class)
-public class DropDeletedSecretsCommandTest {
+public class DropDeletedSecretsCommandIntegrationTest {
+  @ClassRule public static final RuleChain chain = IntegrationTestRule.rule();
+
   @Inject private DSLContext jooqContext;
   @Inject private ObjectMapper objectMapper;
   @Inject private SecretDAO.SecretDAOFactory secretDAOFactory;
