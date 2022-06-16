@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class AutomationClientPermissionCheckTest {
 
@@ -71,5 +72,28 @@ public class AutomationClientPermissionCheckTest {
 
     assertThat(metricRegistry.histogram(ISALLOWED_FAILURE_METRIC_NAME).getCount()).isEqualTo(1);
     assertThat(metricRegistry.histogram(ISALLOWED_FAILURE_METRIC_NAME).getSnapshot().getMean()).isEqualTo(1);
+  }
+
+  @Test public void testCheckAllowedOrThrowAutomationClient() {
+    automationCheck.checkAllowedOrThrow(automationClient, Action.ADD, target);
+
+    assertThat(metricRegistry.histogram(CHECKALLOWEDORTHROW_SUCCESS_METRIC_NAME).getCount()).isEqualTo(1);
+    assertThat(metricRegistry.histogram(CHECKALLOWEDORTHROW_SUCCESS_METRIC_NAME).getSnapshot().getMean()).isEqualTo(1);
+
+    assertThat(metricRegistry.histogram(CHECKALLOWEDORTHROW_EXCEPTION_METRIC_NAME).getCount()).isEqualTo(1);
+    assertThat(metricRegistry.histogram(CHECKALLOWEDORTHROW_EXCEPTION_METRIC_NAME).getSnapshot().getMean()).isEqualTo(0);
+
+  }
+
+  @Test public void testCheckAllowedOrThrowNonAutomationClient() {
+    assertThatThrownBy(() -> automationCheck.checkAllowedOrThrow(nonAutomationClient, Action.ADD,
+        target)).isInstanceOf(RuntimeException.class);
+
+    assertThat(metricRegistry.histogram(ISALLOWED_SUCCESS_METRIC_NAME).getCount()).isEqualTo(1);
+    assertThat(metricRegistry.histogram(ISALLOWED_SUCCESS_METRIC_NAME).getSnapshot().getMean()).isEqualTo(0);
+
+    assertThat(metricRegistry.histogram(ISALLOWED_FAILURE_METRIC_NAME).getCount()).isEqualTo(1);
+    assertThat(metricRegistry.histogram(ISALLOWED_FAILURE_METRIC_NAME).getSnapshot().getMean()).isEqualTo(1);
+
   }
 }
