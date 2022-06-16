@@ -1,4 +1,5 @@
 package keywhiz.service.permissions;
 
-public interface KeywhizPrincipal {
-}
+import java.security.Principal;
+
+public interface KeywhizPrincipal extends Principal {}

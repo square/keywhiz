@@ -2,7 +2,6 @@ package keywhiz.service.permissions;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
-import io.dropwizard.auth.Auth;
 import keywhiz.api.model.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
