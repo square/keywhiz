@@ -11,6 +11,68 @@
   <artifactId>keywhiz-server</artifactId>
   <name>Keywhiz Server</name>
 
+  <profiles>
+    <profile>
+      <id>container</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>sql-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>create-keywhiz-database</id>
+                <!-- This disables database creation -->
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>
+        no-custom-mysql-port
+      </id>
+      <activation>
+        <property>
+          <name>!env.KEYWHIZ_CUSTOM_MYSQL_PORT</name>
+        </property>
+      </activation>
+      <properties>
+        <db.create-url>
+          jdbc:mysql://(host=localhost,useUnicode=true,characterEncoding=utf8)
+        </db.create-url>
+        <db.migrate-url>
+          jdbc:mysql://(host=localhost,useUnicode=true,characterEncoding=utf8)/keywhizdb_test
+        </db.migrate-url>
+      </properties>
+    </profile>
+    <profile>
+      <id>
+        custom-mysql-port
+      </id>
+      <activation>
+        <property>
+          <name>env.KEYWHIZ_CUSTOM_MYSQL_PORT</name>
+        </property>
+      </activation>
+      <properties>
+        <db.create-url>
+          jdbc:mysql://(host=localhost,port=${env.KEYWHIZ_CUSTOM_MYSQL_PORT},useUnicode=true,characterEncoding=utf8)
+        </db.create-url>
+        <db.migrate-url>
+          jdbc:mysql://(host=localhost,port=${env.KEYWHIZ_CUSTOM_MYSQL_PORT},useUnicode=true,characterEncoding=utf8)/keywhizdb_test
+        </db.migrate-url>
+      </properties>
+    </profile>
+  </profiles>
+
+  <properties>
+    <db.driver>com.mysql.cj.jdbc.Driver</db.driver>
+    <db.username>root</db.username>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.squareup.keywhiz</groupId>
@@ -215,6 +277,31 @@
 
   <build>
     <plugins>
+      <!-- Creates (or re-creates) a keywhizdb_test database. -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>sql-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>create-keywhiz-database</id>
+            <phase>process-test-classes</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+          </execution>
+        </executions>
+
+        <configuration>
+          <driver>${db.driver}</driver>
+          <url>${db.create-url}</url>
+          <username>${db.username}</username>
+          <autocommit>true</autocommit>
+          <sqlCommand>
+            DROP DATABASE IF EXISTS keywhizdb_test;
+            CREATE DATABASE keywhizdb_test;
+          </sqlCommand>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>

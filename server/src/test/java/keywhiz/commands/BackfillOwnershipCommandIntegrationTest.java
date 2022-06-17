@@ -13,16 +13,21 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.test.ServiceContext;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.jooq.DSLContext;
 import org.jooq.Record1;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 @RunWith(KeywhizTestRunner.class)
-public class BackfillOwnershipCommandTest {
+public class BackfillOwnershipCommandIntegrationTest {
+  @ClassRule public static final RuleChain chain = IntegrationTestRule.rule();
+
   @Inject
   private DSLContext jooq;
 

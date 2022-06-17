@@ -96,19 +96,29 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src-generated/main/java</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <!-- Creates (or re-creates) a keywhizdb_test database. -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>sql-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>initialize</phase>
-            <goals>
-              <goal>execute</goal>
-            </goals>
-          </execution>
-        </executions>
-
         <configuration>
           <driver>${db.driver}</driver>
           <url>${db.create-url}</url>
@@ -124,16 +134,6 @@
       <plugin>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-maven-plugin</artifactId>
-
-        <executions>
-          <execution>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>migrate</goal>
-            </goals>
-          </execution>
-        </executions>
-
         <configuration>
           <driver>${db.driver}</driver>
           <url>${db.migrate-url}</url>
@@ -148,17 +148,6 @@
       <plugin>
         <groupId>org.jooq</groupId>
         <artifactId>jooq-codegen-maven</artifactId>
-
-        <!-- The plugin should hook into the generate goal -->
-        <executions>
-          <execution>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-          </execution>
-        </executions>
-
         <configuration>
           <jdbc>
             <driver>${db.driver}</driver>
@@ -215,6 +204,7 @@
             </database>
             <target>
               <packageName>keywhiz.jooq</packageName>
+              <directory>src-generated/main/java</directory>
             </target>
           </generator>
         </configuration>
