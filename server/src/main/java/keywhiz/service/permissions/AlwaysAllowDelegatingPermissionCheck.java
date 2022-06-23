@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 
 public class AlwaysAllowDelegatingPermissionCheck implements PermissionCheck {
   private static final Logger logger = LoggerFactory.getLogger(AlwaysAllowDelegatingPermissionCheck.class);
+  private static final String successMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "success", "histogram");
+  private static final String failureMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "failure", "histogram");
 
   private PermissionCheck delegate;
   private MetricRegistry metricRegistry;
@@ -17,16 +19,10 @@ public class AlwaysAllowDelegatingPermissionCheck implements PermissionCheck {
     this.metricRegistry = metricRegistry;
   }
 
-  public boolean isAllowed(KeywhizPrincipal source, String action, Object target) {
+  public boolean isAllowed(Object source, String action, Object target) {
     boolean hasPermission = delegate.isAllowed(source, action, target);
 
-    int hasPermissionSuccessMetricInt = hasPermission ? 1 : 0;
-    String successMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "isAllowed", "success", "histogram");
-    metricRegistry.histogram(successMetricName).update(hasPermissionSuccessMetricInt);
-
-    int hasPermissionFailureMetricInt = hasPermission ? 0 : 1;
-    String failureMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "isAllowed", "failure", "histogram");
-    metricRegistry.histogram(failureMetricName).update(hasPermissionFailureMetricInt);
+    emitHistogramMetrics(hasPermission);
 
     logger.info(
         String.format("isAllowed Actor: %s, Action: %s, Target: %s, Result: %s", source, action, target,
@@ -36,19 +32,24 @@ public class AlwaysAllowDelegatingPermissionCheck implements PermissionCheck {
   }
 
   @Override
-  public void checkAllowedOrThrow(KeywhizPrincipal source, String action, Object target) {
-    String successMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "checkAllowedOrThrow", "success", "histogram");
-    String exceptionMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "checkAllowedOrThrow", "exception", "histogram");
+  public void checkAllowedOrThrow(Object source, String action, Object target) {
+    Boolean isPermitted;
     try {
       delegate.checkAllowedOrThrow(source, action, target);
-
-      metricRegistry.histogram(successMetricName).update(1);
-      metricRegistry.histogram(exceptionMetricName).update(0);
+      isPermitted = true;
     } catch (RuntimeException e) {
-      metricRegistry.histogram(successMetricName).update(0);
-      metricRegistry.histogram(exceptionMetricName).update(1);
-
       logger.error(String.format("checkAllowedOrThrow Actor: %s, Action: %s, Target: %s throws exception", source, action, target),e);
+      isPermitted = false;
     }
+
+    emitHistogramMetrics(isPermitted);
+  }
+
+  private void emitHistogramMetrics(Boolean isPermitted) {
+    int hasPermissionSuccessMetricInt = isPermitted ? 1 : 0;
+    metricRegistry.histogram(successMetricName).update(hasPermissionSuccessMetricInt);
+
+    int hasPermissionFailureMetricInt = isPermitted ? 0 : 1;
+    metricRegistry.histogram(failureMetricName).update(hasPermissionFailureMetricInt);
   }
 }

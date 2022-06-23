@@ -4,7 +4,6 @@ import com.codahale.metrics.MetricRegistry;
 import java.util.Objects;
 import keywhiz.service.permissions.Action;
 import keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck;
-import keywhiz.service.permissions.KeywhizPrincipal;
 import keywhiz.service.permissions.PermissionCheck;
 import org.junit.Before;
 import org.junit.Rule;
@@ -28,13 +27,13 @@ public class AlwaysAllowDelegatingPermissionCheckTest {
   private MetricRegistry metricRegistry;
   private AlwaysAllowDelegatingPermissionCheck alwaysAllow;
 
-  private static KeywhizPrincipal principal;
   private static Objects target;
+  private static Objects principal;
 
-  private static final String ISALLOWED_SUCCESS_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.isAllowed.success.histogram";
-  private static final String ISALLOWED_FAILURE_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.isAllowed.failure.histogram";
-  private static final String CHECKALLOWEDORTHROW_SUCCESS_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.checkAllowedOrThrow.success.histogram";
-  private static final String CHECKALLOWEDORTHROW_EXCEPTION_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.checkAllowedOrThrow.exception.histogram";
+  private static final String ISALLOWED_SUCCESS_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.success.histogram";
+  private static final String ISALLOWED_FAILURE_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.failure.histogram";
+  private static final String CHECKALLOWEDORTHROW_SUCCESS_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.success.histogram";
+  private static final String CHECKALLOWEDORTHROW_EXCEPTION_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.failure.histogram";
 
   @Before
   public void setUp() {
