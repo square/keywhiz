@@ -7,11 +7,12 @@ import org.slf4j.LoggerFactory;
 
 public class AlwaysAllowDelegatingPermissionCheck implements PermissionCheck {
   private static final Logger logger = LoggerFactory.getLogger(AlwaysAllowDelegatingPermissionCheck.class);
-  private static final String successMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "success", "histogram");
-  private static final String failureMetricName = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "failure", "histogram");
 
-  private PermissionCheck delegate;
-  private MetricRegistry metricRegistry;
+  private static final String SUCCESS_METRIC_NAME = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "success", "histogram");
+  private static final String FAILURE_METRIC_NAME = MetricRegistry.name(AlwaysAllowDelegatingPermissionCheck.class, "failure", "histogram");
+
+  private final PermissionCheck delegate;
+  private final MetricRegistry metricRegistry;
 
   @Inject
   public AlwaysAllowDelegatingPermissionCheck(MetricRegistry metricRegistry, PermissionCheck delegate) {
@@ -47,9 +48,9 @@ public class AlwaysAllowDelegatingPermissionCheck implements PermissionCheck {
 
   private void emitHistogramMetrics(Boolean isPermitted) {
     int hasPermissionSuccessMetricInt = isPermitted ? 1 : 0;
-    metricRegistry.histogram(successMetricName).update(hasPermissionSuccessMetricInt);
+    metricRegistry.histogram(SUCCESS_METRIC_NAME).update(hasPermissionSuccessMetricInt);
 
     int hasPermissionFailureMetricInt = isPermitted ? 0 : 1;
-    metricRegistry.histogram(failureMetricName).update(hasPermissionFailureMetricInt);
+    metricRegistry.histogram(FAILURE_METRIC_NAME).update(hasPermissionFailureMetricInt);
   }
 }
