@@ -26,24 +26,20 @@ public class AnyPermissionCheckTest {
   private static Object source;
   private static Object target;
 
-  @Test public void isAllowedReturnsTrueWithEmptyCheckList() {
+  @Test public void isAllowedReturnsFalseWithEmptyCheckList() {
     PermissionCheck anyPermissionCheck = new AnyPermissionCheck(Collections.emptyList());
 
     assertFalse(anyPermissionCheck.isAllowed(source, Action.ADD, target));
   }
 
   @Test public void isAllowedReturnsFalseWhenAllDelegatesReturnFalse() {
-    when(delegate1.isAllowed(any(), any(), any())).thenReturn(false);
-    when(delegate2.isAllowed(any(), any(), any())).thenReturn(false);
-    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(List.of(delegate1, delegate2));
+    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(createDelegatesList(false, false));
 
     assertFalse(anyPermissionCheck.isAllowed(source, Action.ADD, target));
   }
 
   @Test public void isAllowedReturnsTrueWhenOneDelegateReturnsTrue() {
-    when(delegate1.isAllowed(any(), any(), any())).thenReturn(true);
-    when(delegate2.isAllowed(any(), any(), any())).thenReturn(false);
-    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(List.of(delegate1, delegate2));
+    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(createDelegatesList(true, false));
 
     assertTrue(anyPermissionCheck.isAllowed(source, Action.ADD, target));
   }
@@ -56,19 +52,21 @@ public class AnyPermissionCheckTest {
   }
 
   @Test public void checkAllowedOrThrowThrowsExceptionWhenAllDelegatesReturnFalse() {
-    when(delegate1.isAllowed(any(), any(), any())).thenReturn(false);
-    when(delegate2.isAllowed(any(), any(), any())).thenReturn(false);
-    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(List.of(delegate1, delegate2));
+    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(createDelegatesList(false, false));
 
     assertThatThrownBy(() -> anyPermissionCheck.checkAllowedOrThrow(source, Action.ADD, target))
         .isInstanceOf(RuntimeException.class);
   }
 
   @Test public void checkAllowedOrThrowReturnsVoidWhenOneDelegateReturnsTrue() {
-    when(delegate1.isAllowed(any(), any(), any())).thenReturn(true);
-    when(delegate2.isAllowed(any(), any(), any())).thenReturn(false);
-    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(List.of(delegate1, delegate2));
+    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(createDelegatesList(true, false));
 
-    anyPermissionCheck.isAllowed(source, Action.ADD, target);
+    anyPermissionCheck.checkAllowedOrThrow(source, Action.ADD, target);
+  }
+
+  private List<PermissionCheck> createDelegatesList(boolean delegate1Allowed, boolean delegate2Allowed) {
+    when(delegate1.isAllowed(any(), any(), any())).thenReturn(delegate1Allowed);
+    when(delegate2.isAllowed(any(), any(), any())).thenReturn(delegate2Allowed);
+    return List.of(delegate1, delegate2);
   }
 }

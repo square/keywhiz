@@ -1,5 +1,6 @@
 package keywhiz.service.permissions;
 
+import com.google.common.collect.ImmutableList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +12,7 @@ public class AnyPermissionCheck implements PermissionCheck {
   private List<PermissionCheck> subordinateChecks;
 
   public AnyPermissionCheck(List<PermissionCheck> subordinateChecks) {
-    this.subordinateChecks = subordinateChecks;
+    this.subordinateChecks = ImmutableList.copyOf(subordinateChecks);
   }
 
   public boolean isAllowed(Object source, String action, Object target) {
