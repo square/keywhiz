@@ -41,7 +41,7 @@ public class AutomationClientPermissionCheckTest {
   @Test public void testIsAllowedWithAutomationClient() {
     boolean permitted = automationCheck.isAllowed(automationClient, Action.ADD, target);
 
-    assertThat(permitted);
+    assertThat(permitted).isTrue();
 
     checkCorrectMetrics(1);
   }
@@ -49,7 +49,7 @@ public class AutomationClientPermissionCheckTest {
   @Test public void testIsAllowedWithNonAutomationClient() {
     boolean permitted = automationCheck.isAllowed(nonAutomationClient, Action.ADD, target);
 
-    assertThat(!permitted);
+    assertThat(permitted).isFalse();
 
     checkCorrectMetrics(0);
   }

@@ -46,7 +46,7 @@ public class AlwaysAllowDelegatingPermissionCheckTest {
 
     boolean permitted = alwaysAllow.isAllowed(principal, Action.ADD, target);
 
-    assertThat(permitted);
+    assertThat(permitted).isTrue();
 
     assertThat(metricRegistry.histogram(ISALLOWED_SUCCESS_METRIC_NAME).getCount()).isEqualTo(1);
     assertThat(metricRegistry.histogram(ISALLOWED_SUCCESS_METRIC_NAME).getSnapshot().getMean()).isEqualTo(1);
@@ -60,7 +60,7 @@ public class AlwaysAllowDelegatingPermissionCheckTest {
 
     boolean permitted = alwaysAllow.isAllowed(principal, Action.ADD, target);
 
-    assertThat(permitted);
+    assertThat(permitted).isTrue();
 
     assertThat(metricRegistry.histogram(ISALLOWED_SUCCESS_METRIC_NAME).getCount()).isEqualTo(1);
     assertThat(metricRegistry.histogram(ISALLOWED_SUCCESS_METRIC_NAME).getSnapshot().getMean()).isEqualTo(0);

@@ -24,7 +24,7 @@ public class AlwaysFailPermissionCheckTest {
   @Test
   public void isAllowedReturnsFalse() {
     boolean permitted = alwaysFail.isAllowed(principal, Action.ADD, target);
-    assertThat(permitted).isEqualTo(false);
+    assertThat(permitted).isFalse();
   }
 
   @Test

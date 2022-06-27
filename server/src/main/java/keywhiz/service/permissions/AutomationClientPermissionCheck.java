@@ -7,12 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AutomationClientPermissionCheck implements PermissionCheck{
-  private static final Logger logger = LoggerFactory.getLogger(
-      AutomationClientPermissionCheck.class);
-  private static final String successMetricName = MetricRegistry.name(AutomationClientPermissionCheck.class, "success", "histogram");
-  private static final String failureMetricName = MetricRegistry.name(AutomationClientPermissionCheck.class, "failure", "histogram");
+  private static final Logger logger = LoggerFactory.getLogger(AutomationClientPermissionCheck.class);
 
-  private MetricRegistry metricRegistry;
+  private static final String SUCCESS_METRIC_NAME = MetricRegistry.name(AutomationClientPermissionCheck.class, "success", "histogram");
+  private static final String FAILURE_METRIC_NAME = MetricRegistry.name(AutomationClientPermissionCheck.class, "failure", "histogram");
+
+  private final MetricRegistry metricRegistry;
 
   @Inject
   public AutomationClientPermissionCheck(MetricRegistry metricRegistry) {
@@ -42,9 +42,9 @@ public class AutomationClientPermissionCheck implements PermissionCheck{
 
   private void emitHistogramMetrics(Boolean isPermitted) {
     int hasPermissionSuccessMetricInt = isPermitted ? 1 : 0;
-    metricRegistry.histogram(successMetricName).update(hasPermissionSuccessMetricInt);
+    metricRegistry.histogram(SUCCESS_METRIC_NAME).update(hasPermissionSuccessMetricInt);
 
     int hasPermissionFailureMetricInt = isPermitted ? 0 : 1;
-    metricRegistry.histogram(failureMetricName).update(hasPermissionFailureMetricInt);
+    metricRegistry.histogram(FAILURE_METRIC_NAME).update(hasPermissionFailureMetricInt);
   }
 }
