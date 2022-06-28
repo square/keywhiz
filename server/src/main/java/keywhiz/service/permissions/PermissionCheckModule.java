@@ -3,6 +3,7 @@ package keywhiz.service.permissions;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import java.util.List;
 
 public class PermissionCheckModule extends AbstractModule {
 
@@ -10,9 +11,10 @@ public class PermissionCheckModule extends AbstractModule {
   protected void configure() {}
 
   @Provides
-  public PermissionCheck createPermissionCheck(MetricRegistry metricRegistry) {
-    PermissionCheck alwaysFail = new AlwaysFailPermissionCheck();
-    PermissionCheck alwaysAllow = new AlwaysAllowDelegatingPermissionCheck(metricRegistry, alwaysFail);
-    return alwaysAllow;
+  public PermissionCheck createPermissionCheck(MetricRegistry metricRegistry,
+      AutomationClientPermissionCheck automationClientCheck,
+      OwnershipPermissionCheck ownershipCheck) {
+    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(List.of(ownershipCheck, automationClientCheck));
+    return new AlwaysAllowDelegatingPermissionCheck(metricRegistry, anyPermissionCheck);
   }
 }
