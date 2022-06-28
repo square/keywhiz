@@ -60,12 +60,16 @@ public class SecretResourceTest {
       KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
   private static final Encoder encoder = Base64.getEncoder();
 
+  SecretResourceTestHelper secretResourceTestHelper;
+
   OkHttpClient mutualSslClient;
 
-  @ClassRule public static final RuleChain chain = IntegrationTestRule.rule();
+  @ClassRule public static RuleChain chain = IntegrationTestRule.rule(
+      "keywhiz-test.yaml");
 
   @Before public void setUp() {
     mutualSslClient = TestClients.mutualSslClient();
+    secretResourceTestHelper = new SecretResourceTestHelper(mutualSslClient, mapper);
   }
 
   //---------------------------------------------------------------------------------------
@@ -83,8 +87,8 @@ public class SecretResourceTest {
         "https://localhost:4445/automation/v2/secrets/" + newName,
         response.header("Location"));
 
-    assertFalse(getSecret(oldName).isPresent());
-    assertTrue(getSecret(newName).isPresent());
+    assertFalse(secretResourceTestHelper.getSecret(oldName).isPresent());
+    assertTrue(secretResourceTestHelper.getSecret(newName).isPresent());
   }
 
   @Test public void cannotRenameSecretToExistingSecret() throws Exception {
@@ -118,9 +122,9 @@ public class SecretResourceTest {
         .owner(ownerName)
         .content(encode("foo"))
         .build();
-    create(request);
+   secretResourceTestHelper.create(request);
 
-    SecretDetailResponseV2 details = lookup(secretName);
+    SecretDetailResponseV2 details = secretResourceTestHelper.lookup(secretName);
     assertEquals(ownerName, details.owner());
   }
 
@@ -132,7 +136,7 @@ public class SecretResourceTest {
         .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
         .type("password")
         .build();
-    Response httpResponse = create(request);
+    Response httpResponse =secretResourceTestHelper.create(request);
     assertThat(httpResponse.code()).isEqualTo(201);
     URI location = URI.create(httpResponse.header(LOCATION));
     assertThat(location.getPath()).isEqualTo("/automation/v2/secrets/secret1");
@@ -144,9 +148,9 @@ public class SecretResourceTest {
         .content(encoder.encodeToString("supa secret2".getBytes(UTF_8)))
         .description("desc")
         .build();
-    Response httpResponse = create(request);
+    Response httpResponse =secretResourceTestHelper.create(request);
     assertThat(httpResponse.code()).isEqualTo(201);
-    httpResponse = create(request);
+    httpResponse =secretResourceTestHelper.create(request);
     assertThat(httpResponse.code()).isEqualTo(409);
   }
 
@@ -161,9 +165,9 @@ public class SecretResourceTest {
         .name(secretName)
         .content(encode("foo"))
         .build();
-    create(createRequest);
+   secretResourceTestHelper.create(createRequest);
 
-    SecretDetailResponseV2 originalDetails = lookup(secretName);
+    SecretDetailResponseV2 originalDetails = secretResourceTestHelper.lookup(secretName);
     assertNull(originalDetails.owner());
 
     CreateOrUpdateSecretRequestV2 updateRequest = CreateOrUpdateSecretRequestV2.builder()
@@ -171,9 +175,9 @@ public class SecretResourceTest {
         .description(UUID.randomUUID().toString())
         .build();
 
-    assertEquals(201, createOrUpdate(updateRequest, secretName).code());
+    assertEquals(201, secretResourceTestHelper.createOrUpdate(updateRequest, secretName).code());
 
-    SecretDetailResponseV2 updatedDetails = lookup(secretName);
+    SecretDetailResponseV2 updatedDetails = secretResourceTestHelper.lookup(secretName);
     assertNull(updatedDetails.owner());
   }
 
@@ -188,9 +192,9 @@ public class SecretResourceTest {
         .owner(ownerName)
         .content(encode("foo"))
         .build();
-    create(createRequest);
+   secretResourceTestHelper.create(createRequest);
 
-    SecretDetailResponseV2 originalDetails = lookup(secretName);
+    SecretDetailResponseV2 originalDetails = secretResourceTestHelper.lookup(secretName);
     assertEquals(ownerName, originalDetails.owner());
 
     CreateOrUpdateSecretRequestV2 updateRequest = CreateOrUpdateSecretRequestV2.builder()
@@ -198,9 +202,9 @@ public class SecretResourceTest {
         .description(UUID.randomUUID().toString())
         .build();
 
-    assertEquals(201, createOrUpdate(updateRequest, secretName).code());
+    assertEquals(201, secretResourceTestHelper.createOrUpdate(updateRequest, secretName).code());
 
-    SecretDetailResponseV2 updatedDetails = lookup(secretName);
+    SecretDetailResponseV2 updatedDetails = secretResourceTestHelper.lookup(secretName);
     assertNotNull("Updated secret's owner was null", updatedDetails.owner());
     assertEquals(ownerName, updatedDetails.owner());
   }
@@ -212,12 +216,12 @@ public class SecretResourceTest {
         .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
         .type("password")
         .build();
-    Response httpResponse = createOrUpdate(request, "secret3");
+    Response httpResponse = secretResourceTestHelper.createOrUpdate(request, "secret3");
     assertThat(httpResponse.code()).isEqualTo(201);
     URI location = URI.create(httpResponse.header(LOCATION));
     assertThat(location.getPath()).isEqualTo("/automation/v2/secrets/secret3");
 
-    httpResponse = createOrUpdate(request, "secret3");
+    httpResponse = secretResourceTestHelper.createOrUpdate(request, "secret3");
     assertThat(httpResponse.code()).isEqualTo(201);
     location = URI.create(httpResponse.header(LOCATION));
     assertThat(location.getPath()).isEqualTo("/automation/v2/secrets/secret3");
@@ -252,7 +256,7 @@ public class SecretResourceTest {
         .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
         .type("password")
         .build();
-    Response httpResponse = createOrUpdate(createRequest, "secret3");
+    Response httpResponse = secretResourceTestHelper.createOrUpdate(createRequest, "secret3");
     assertThat(httpResponse.code()).isEqualTo(201);
     URI location = URI.create(httpResponse.header(LOCATION));
     assertThat(location.getPath()).isEqualTo("/automation/v2/secrets/secret3");
@@ -264,13 +268,13 @@ public class SecretResourceTest {
         .expiry(1487268151L)
         .expiryPresent(true)
         .build();
-    httpResponse = partialUpdate(request, "secret3");
+    httpResponse = secretResourceTestHelper.partialUpdate(request, "secret3");
     assertThat(httpResponse.code()).isEqualTo(201);
     location = URI.create(httpResponse.header(LOCATION));
     assertThat(location.getPath()).isEqualTo("/automation/v2/secrets/secret3");
 
     // Check the characteristics of the updated secret
-    SecretDetailResponseV2 response = lookup("secret3");
+    SecretDetailResponseV2 response = secretResourceTestHelper.lookup("secret3");
     assertThat(response.name()).isEqualTo("secret3");
     assertThat(response.createdBy()).isEqualTo("client");
     assertThat(response.updatedBy()).isEqualTo("client");
@@ -308,7 +312,7 @@ public class SecretResourceTest {
 
   @Test public void secretInfo_success() throws Exception {
     // Sample secret
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret6")
         .content(encoder.encodeToString("supa secret6".getBytes(UTF_8)))
         .description("desc")
@@ -316,7 +320,7 @@ public class SecretResourceTest {
         .type("password")
         .build());
 
-    SecretDetailResponseV2 response = lookup("secret6");
+    SecretDetailResponseV2 response = secretResourceTestHelper.lookup("secret6");
     assertThat(response.name()).isEqualTo("secret6");
     assertThat(response.createdBy()).isEqualTo("client");
     assertThat(response.updatedBy()).isEqualTo("client");
@@ -340,7 +344,7 @@ public class SecretResourceTest {
 
   @Test public void getSanitizedSecret_success() throws Exception {
     // Sample secret
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret12455")
         .content(encoder.encodeToString("supa secret12455".getBytes(UTF_8)))
         .description("desc")
@@ -348,7 +352,7 @@ public class SecretResourceTest {
         .type("password")
         .build());
 
-    SanitizedSecret response = lookupSanitizedSecret("secret12455");
+    SanitizedSecret response = secretResourceTestHelper.lookupSanitizedSecret("secret12455");
     assertThat(response.name()).isEqualTo("secret12455");
     assertThat(response.createdBy()).isEqualTo("client");
     assertThat(response.updatedBy()).isEqualTo("client");
@@ -364,14 +368,15 @@ public class SecretResourceTest {
 
   @Test public void secretContents_empty() throws Exception {
     // No error expected when the list of requested secrets is empty
-    SecretContentsResponseV2 resp = contents(SecretContentsRequestV2.fromParts(ImmutableSet.of()));
+    SecretContentsResponseV2 resp = secretResourceTestHelper.contents(SecretContentsRequestV2.fromParts(ImmutableSet.of())
+    );
     assertThat(resp.successSecrets().isEmpty()).isTrue();
     assertThat(resp.missingSecrets().isEmpty()).isTrue();
   }
 
   @Test public void secretContents_success() throws Exception {
     // Sample secrets
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret23a")
         .content(encoder.encodeToString("supa secret23a".getBytes(UTF_8)))
         .description("desc")
@@ -379,7 +384,7 @@ public class SecretResourceTest {
         .type("password")
         .build());
 
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret23b")
         .content(encoder.encodeToString("supa secret23b".getBytes(UTF_8)))
         .description("desc")
@@ -388,7 +393,7 @@ public class SecretResourceTest {
     SecretContentsRequestV2 request = SecretContentsRequestV2.fromParts(
         ImmutableSet.of("secret23a", "secret23b", "non-existent")
     );
-    SecretContentsResponseV2 response = contents(request);
+    SecretContentsResponseV2 response = secretResourceTestHelper.contents(request);
     assertThat(response.successSecrets()).isEqualTo(ImmutableMap.of("secret23a",
         encoder.encodeToString("supa secret23a".getBytes(UTF_8)),
         "secret23b", encoder.encodeToString("supa secret23b".getBytes(UTF_8))));
@@ -411,13 +416,13 @@ public class SecretResourceTest {
     createGroup("group7b");
 
     // Sample secret
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret7")
         .content(encoder.encodeToString("supa secret7".getBytes(UTF_8)))
         .groups("group7a", "group7b")
         .build());
 
-    assertThat(groupsListing("secret7")).containsOnly("group7a", "group7b");
+    assertThat(secretResourceTestHelper.groupsListing("secret7")).containsOnly("group7a", "group7b");
   }
 
   //---------------------------------------------------------------------------------------
@@ -437,7 +442,7 @@ public class SecretResourceTest {
     createGroup("group8a");
     createGroup("group8b");
     createGroup("group8c");
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret8")
         .content(encoder.encodeToString("supa secret8".getBytes(UTF_8)))
         .groups("group8a", "group8b")
@@ -448,7 +453,7 @@ public class SecretResourceTest {
         .addGroups("group8c", "non-existent1")
         .removeGroups("group8a", "non-existent2")
         .build();
-    List<String> groups = modifyGroups("secret8", request);
+    List<String> groups = secretResourceTestHelper.modifyGroups("secret8", request);
     assertThat(groups).containsOnly("group8b", "group8c");
   }
 
@@ -457,12 +462,12 @@ public class SecretResourceTest {
   //---------------------------------------------------------------------------------------
 
   @Test public void deleteSecretSeries_notFound() throws Exception {
-    assertThat(deleteSeries("non-existent").code()).isEqualTo(404);
+    assertThat(secretResourceTestHelper.deleteSeries("non-existent").code()).isEqualTo(404);
   }
 
   @Test public void deleteSecretSeries_success() throws Exception {
     // Sample secret
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret12")
         .content(encoder.encodeToString("supa secret12".getBytes(UTF_8)))
         .build());
@@ -471,13 +476,13 @@ public class SecretResourceTest {
     ModifyGroupsRequestV2 request = ModifyGroupsRequestV2.builder()
         .addGroups("testGroup", "secret12")
         .build();
-    modifyGroups("secret12", request);
+    secretResourceTestHelper.modifyGroups("secret12", request);
 
     // Delete works
-    assertThat(deleteSeries("secret12").code()).isEqualTo(204);
+    assertThat(secretResourceTestHelper.deleteSeries("secret12").code()).isEqualTo(204);
 
     // Subsequent deletes can't find the secret series
-    assertThat(deleteSeries("secret12").code()).isEqualTo(404);
+    assertThat(secretResourceTestHelper.deleteSeries("secret12").code()).isEqualTo(404);
   }
 
   //---------------------------------------------------------------------------------------
@@ -486,19 +491,19 @@ public class SecretResourceTest {
 
   @Test public void secretListing_success() throws Exception {
     // Listing without secret16
-    assertThat(listing()).doesNotContain("secret16");
+    assertThat(secretResourceTestHelper.listing()).doesNotContain("secret16");
 
     // Sample secret
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret16")
         .description("test secret 16")
         .content(encoder.encodeToString("supa secret16".getBytes(UTF_8)))
         .build());
 
     // Listing with secret16
-    assertThat(listing()).contains("secret16");
+    assertThat(secretResourceTestHelper.listing()).contains("secret16");
 
-    List<SanitizedSecret> secrets = listingV2();
+    List<SanitizedSecret> secrets = secretResourceTestHelper.listingV2();
     boolean found = false;
     for (SanitizedSecret s : secrets) {
       if (s.name().equals("secret16")) {
@@ -514,7 +519,7 @@ public class SecretResourceTest {
     String name1 = "secret23";
     String name2 = "secret24";
     String name3 = "secret25";
-    List<String> s = listing();
+    List<String> s = secretResourceTestHelper.listing();
     assertThat(s).doesNotContain(name1);
     assertThat(s).doesNotContain(name2);
     assertThat(s).doesNotContain(name3);
@@ -527,21 +532,21 @@ public class SecretResourceTest {
     long now = System.currentTimeMillis() / 1000L;
 
     // add some secrets
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name(name1)
         .content(encoder.encodeToString("supa secret17".getBytes(UTF_8)))
         .expiry(now + 86400 * 3)
         .groups("group16a", "group16b")
         .build());
 
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name(name2)
         .content(encoder.encodeToString("supa secret18".getBytes(UTF_8)))
         .expiry(now + 86400)
         .groups("group16a")
         .build());
 
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name(name3)
         .content(encoder.encodeToString("supa secret19".getBytes(UTF_8)))
         .expiry(now + 86400 * 2)
@@ -551,10 +556,10 @@ public class SecretResourceTest {
     // check limiting by batch (hard to test because the batch results heavily depend on other
     // tests, which may be run in parallel and often execute fast enough that different tests'
     // secrets have the same creation time as the secrets created in this test)
-    List<String> s1 = listBatch(0, 2, false);
+    List<String> s1 = secretResourceTestHelper.listBatch(0, 2, false);
     assertThat(s1.size()).isEqualTo(2);
 
-    List<SanitizedSecret> s3 = listBatchV2(0, 2, true);
+    List<SanitizedSecret> s3 = secretResourceTestHelper.listBatchV2(0, 2, true);
     assertThat(s3.size()).isEqualTo(2);
   }
 
@@ -588,48 +593,48 @@ public class SecretResourceTest {
     byte[] p12 = Resources.toByteArray(Resources.getResource("fixtures/expiring-keystore.p12"));
     byte[] jceks = Resources.toByteArray(Resources.getResource("fixtures/expiring-keystore.jceks"));
 
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("certificate-chain.crt")
         .content(encoder.encodeToString(certs))
         .build());
 
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("public-keyring.gpg")
         .content(encoder.encodeToString(pubring))
         .build());
 
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("keystore.p12")
         .content(encoder.encodeToString(p12))
         .build());
 
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("keystore.jceks")
         .content(encoder.encodeToString(jceks))
         .build());
 
-    Response response = backfillExpiration("certificate-chain.crt", ImmutableList.of());
+    Response response = secretResourceTestHelper.backfillExpiration("certificate-chain.crt", ImmutableList.of());
     assertThat(response.isSuccessful()).isTrue();
 
-    response = backfillExpiration("public-keyring.gpg", ImmutableList.of());
+    response = secretResourceTestHelper.backfillExpiration("public-keyring.gpg", ImmutableList.of());
     assertThat(response.isSuccessful()).isTrue();
 
-    response = backfillExpiration("keystore.p12", ImmutableList.of("password"));
+    response = secretResourceTestHelper.backfillExpiration("keystore.p12", ImmutableList.of("password"));
     assertThat(response.isSuccessful()).isTrue();
 
-    response = backfillExpiration("keystore.jceks", ImmutableList.of("password"));
+    response = secretResourceTestHelper.backfillExpiration("keystore.jceks", ImmutableList.of("password"));
     assertThat(response.isSuccessful()).isTrue();
 
-    SecretDetailResponseV2 details = lookup("certificate-chain.crt");
+    SecretDetailResponseV2 details = secretResourceTestHelper.lookup("certificate-chain.crt");
     assertThat(details.expiry()).isEqualTo(1501533950);
 
-    details = lookup("public-keyring.gpg");
+    details = secretResourceTestHelper.lookup("public-keyring.gpg");
     assertThat(details.expiry()).isEqualTo(1536442365);
 
-    details = lookup("keystore.p12");
+    details = secretResourceTestHelper.lookup("keystore.p12");
     assertThat(details.expiry()).isEqualTo(1681596851);
 
-    details = lookup("keystore.jceks");
+    details = secretResourceTestHelper.lookup("keystore.jceks");
     assertThat(details.expiry()).isEqualTo(1681596851);
   }
 
@@ -639,7 +644,7 @@ public class SecretResourceTest {
 
   @Test public void secretListingExpiry_success() throws Exception {
     // Listing without secret17,18,19
-    List<String> initialList = listing();
+    List<String> initialList = secretResourceTestHelper.listing();
     assertThat(initialList).doesNotContain("secret17");
     assertThat(initialList).doesNotContain("secret18");
     assertThat(initialList).doesNotContain("secret19");
@@ -652,21 +657,21 @@ public class SecretResourceTest {
     long now = System.currentTimeMillis() / 1000L;
 
     // add some secrets
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret17")
         .content(encoder.encodeToString("supa secret17".getBytes(UTF_8)))
         .expiry(now + 86400 * 3)
         .groups("group15a", "group15b")
         .build());
 
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret18")
         .content(encoder.encodeToString("supa secret18".getBytes(UTF_8)))
         .expiry(now + 86400)
         .groups("group15a")
         .build());
 
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret19")
         .content(encoder.encodeToString("supa secret19".getBytes(UTF_8)))
         .expiry(now + 86400 * 2)
@@ -674,24 +679,25 @@ public class SecretResourceTest {
         .build());
 
     // check limiting by group and expiry
-    List<String> s1 = listExpiring(now + 86400 * 4, "group15a");
+    List<String> s1 = secretResourceTestHelper.listExpiring(now + 86400 * 4, "group15a");
     assertThat(s1).contains("secret17");
     assertThat(s1).contains("secret18");
 
-    List<String> s2 = listExpiring(now + 86400 * 4, "group15b");
+    List<String> s2 = secretResourceTestHelper.listExpiring(now + 86400 * 4, "group15b");
     assertThat(s2).contains("secret19");
     assertThat(s2).doesNotContain("secret18");
 
-    List<String> s3 = listExpiring(now + 86400 * 3, null);
+    List<String> s3 = secretResourceTestHelper.listExpiring(now + 86400 * 3, null);
     assertThat(s3).contains("secret18");
     assertThat(s3).doesNotContain("secret17");
 
-    List<SanitizedSecret> s4 = listExpiringV2(now + 86400 * 3, null);
+    List<SanitizedSecret> s4 = secretResourceTestHelper.listExpiringV2(now + 86400 * 3, null);
     List<String> s4Names = s4.stream().map(SanitizedSecret::name).collect(toList());
     assertListContainsSecretsWithNames(s4Names, ImmutableList.of("secret18", "secret19"));
     assertListDoesNotContainSecretsWithNames(s4Names, ImmutableList.of("secret17"));
 
-    List<SanitizedSecretWithGroups> s5 = listExpiringV3(now + 86400 * 3);
+    List<SanitizedSecretWithGroups> s5 = secretResourceTestHelper.listExpiringV3(now + 86400 * 3
+    );
     List<String> s5Names = s5.stream().map(s -> s.secret().name()).collect(toList());
     assertListContainsSecretsWithNames(s5Names, ImmutableList.of("secret18", "secret19"));
     assertListDoesNotContainSecretsWithNames(s5Names, ImmutableList.of("secret17"));
@@ -699,7 +705,7 @@ public class SecretResourceTest {
 
   @Test public void secretListingExpiry_successWithCursor() throws Exception {
     // Listing without secret26,27,28
-    List<String> initialSecrets = listing();
+    List<String> initialSecrets = secretResourceTestHelper.listing();
     assertThat(initialSecrets).doesNotContain("secret26");
     assertThat(initialSecrets).doesNotContain("secret27");
     assertThat(initialSecrets).doesNotContain("secret28");
@@ -712,21 +718,21 @@ public class SecretResourceTest {
     long now = System.currentTimeMillis() / 1000L;
 
     // add some secrets
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret26")
         .content(encoder.encodeToString("supa secret26".getBytes(UTF_8)))
         .expiry(now + 86400 * 3)
         .groups("group15a", "group15b")
         .build());
 
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret27")
         .content(encoder.encodeToString("supa secret27".getBytes(UTF_8)))
         .expiry(now + 86400)
         .groups("group15a")
         .build());
 
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name("secret28")
         .content(encoder.encodeToString("supa secret28".getBytes(UTF_8)))
         .expiry(now + 86400 * 2)
@@ -771,7 +777,7 @@ public class SecretResourceTest {
     SecretRetrievalCursor cursor = null;
     do {
       SanitizedSecretWithGroupsListAndCursor retrievedSecretsAndCursor =
-          listExpiringV4(minTime, maxTime, limit, cursor);
+          secretResourceTestHelper.listExpiringV4(minTime, maxTime, limit, cursor);
       cursor = retrievedSecretsAndCursor.decodedCursor();
 
       List<SanitizedSecretWithGroups> secrets = retrievedSecretsAndCursor.secrets();
@@ -827,7 +833,7 @@ public class SecretResourceTest {
     int totalVersions = 6;
     int sleepInterval = 1100; // Delay so secrets have different creation timestamps
     List<SecretDetailResponseV2> versions;
-    assertThat(listing()).doesNotContain("secret20");
+    assertThat(secretResourceTestHelper.listing()).doesNotContain("secret20");
 
     // get current time to calculate timestamps off for expiry
     long now = System.currentTimeMillis() / 1000L;
@@ -835,7 +841,7 @@ public class SecretResourceTest {
     // Create secrets 1 second apart, so that the order of the versions, which
     // will be listed by content creation time, is fixed
     for (int i = 0; i < totalVersions; i++) {
-      createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
+      secretResourceTestHelper.createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
           .content(encoder.encodeToString(format("supa secret20_v%d", i).getBytes(UTF_8)))
           .description(format("secret20, version %d", i))
           .expiry(now + 86400 * 2)
@@ -887,14 +893,14 @@ public class SecretResourceTest {
     SecretDetailResponseV2 initialCurrentVersion;
     SecretDetailResponseV2 finalCurrentVersion;
 
-    assertThat(listing()).doesNotContain(name);
+    assertThat(secretResourceTestHelper.listing()).doesNotContain(name);
 
     // get current time to calculate timestamps off for expiry
     long now = System.currentTimeMillis() / 1000L;
 
     // Create secrets
     for (int i = 0; i < totalVersions; i++) {
-      createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
+      secretResourceTestHelper.createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
           .content(encoder.encodeToString(format("supa secret21_v%d", i).getBytes(UTF_8)))
           .description(format("%s, version %d", name, i))
           .expiry(now + 86400 * 2)
@@ -904,7 +910,7 @@ public class SecretResourceTest {
     }
 
     // Get the current version (the last version created)
-    initialCurrentVersion = lookup(name);
+    initialCurrentVersion = secretResourceTestHelper.lookup(name);
     assertThat(initialCurrentVersion.name()).isEqualTo(name);
     assertThat(
         initialCurrentVersion.description()).isEqualTo(format("%s, version %d", name, totalVersions - 1));
@@ -918,7 +924,7 @@ public class SecretResourceTest {
         SetSecretVersionRequestV2.builder().name(name).version(versions.get(0).version()).build());
 
     // Get the current version
-    finalCurrentVersion = lookup(name);
+    finalCurrentVersion = secretResourceTestHelper.lookup(name);
     assertThat(finalCurrentVersion).isEqualToIgnoringGivenFields(versions.get(0), "updatedAtSeconds");
     assertThat(finalCurrentVersion).isNotEqualTo(initialCurrentVersion);
   }
@@ -930,14 +936,14 @@ public class SecretResourceTest {
     SecretDetailResponseV2 initialCurrentVersion;
     SecretDetailResponseV2 finalCurrentVersion;
 
-    assertThat(listing()).doesNotContain(name);
+    assertThat(secretResourceTestHelper.listing()).doesNotContain(name);
 
     // get current time to calculate timestamps off for expiry
     long now = System.currentTimeMillis() / 1000L;
 
     // Create secrets
     for (int i = 0; i < totalVersions; i++) {
-      createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
+      secretResourceTestHelper.createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
           .content(encoder.encodeToString(format("supa secret22_v%d", i).getBytes(UTF_8)))
           .description(format("%s, version %d", name, i))
           .expiry(now + 86400 * 2)
@@ -946,7 +952,7 @@ public class SecretResourceTest {
     }
 
     // Get the current version (the last version created)
-    initialCurrentVersion = lookup(name);
+    initialCurrentVersion = secretResourceTestHelper.lookup(name);
     assertThat(initialCurrentVersion.name()).isEqualTo(name);
     assertThat(initialCurrentVersion.description()).isEqualTo(format("%s, version %d", name, totalVersions - 1));
 
@@ -965,7 +971,7 @@ public class SecretResourceTest {
       assertThat(httpResponse.code()).isEqualTo(400);
 
       // Get the current version, which should not have changed
-      finalCurrentVersion = lookup(name);
+      finalCurrentVersion = secretResourceTestHelper.lookup(name);
       assertThat(finalCurrentVersion).isEqualTo(initialCurrentVersion);
     }
   }
@@ -1018,7 +1024,7 @@ public class SecretResourceTest {
     String secondDescription = "the second secret with this name";
 
     // Create a secret
-    create(CreateSecretRequestV2.builder()
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name(name)
         .description(firstDescription)
         .content(encoder.encodeToString("secret version 1".getBytes(UTF_8)))
@@ -1030,8 +1036,8 @@ public class SecretResourceTest {
     assertThat(versions.get(0).description()).isEqualTo(firstDescription);
 
     // Delete the secret and recreate it
-    deleteSeries(name);
-    create(CreateSecretRequestV2.builder()
+    secretResourceTestHelper.deleteSeries(name);
+   secretResourceTestHelper.create(CreateSecretRequestV2.builder()
         .name(name)
         .description(secondDescription)
         .content(encoder.encodeToString("secret version 2".getBytes(UTF_8)))
@@ -1048,157 +1054,8 @@ public class SecretResourceTest {
   //---------------------------------------------------------------------------------------
 
   private Response createGroup(String name) throws IOException {
-    GroupResourceTest groupResourceTest = new GroupResourceTest();
-    groupResourceTest.mutualSslClient = mutualSslClient;
-    return groupResourceTest.create(CreateGroupRequestV2.builder().name(name).build());
-  }
-
-  Response create(CreateSecretRequestV2 request) throws IOException {
-    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
-    Request post = clientRequest("/automation/v2/secrets").post(body).build();
-    return mutualSslClient.newCall(post).execute();
-  }
-
-  Response backfillExpiration(String name, List<String> passwords) throws IOException {
-    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(passwords));
-    Request post = clientRequest(String.format("/automation/v2/secrets/%s/backfill-expiration", name)).post(body).build();
-    return mutualSslClient.newCall(post).execute();
-  }
-
-  Response createOrUpdate(CreateOrUpdateSecretRequestV2 request, String name) throws IOException {
-    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
-    Request post = clientRequest(format("/automation/v2/secrets/%s", name)).post(body).build();
-    return mutualSslClient.newCall(post).execute();
-  }
-
-  Response partialUpdate(PartialUpdateSecretRequestV2 request, String name) throws IOException {
-    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
-    Request post = clientRequest(format("/automation/v2/secrets/%s/partialupdate", name)).post(body).build();
-    return mutualSslClient.newCall(post).execute();
-  }
-
-  List<String> listing() throws IOException {
-    Request get = clientRequest("/automation/v2/secrets").get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>() {
-    });
-  }
-
-  List<String> listBatch(int idx, int num, boolean newestFirst) throws IOException {
-    Request get = clientRequest(String.format("/automation/v2/secrets?idx=%d&num=%d&newestFirst=%s", idx, num, newestFirst)).get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>() {
-    });
-  }
-
-  List<SanitizedSecret> listingV2() throws IOException {
-    Request get = clientRequest("/automation/v2/secrets/v2").get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<SanitizedSecret>>() {
-    });
-  }
-
-  List<SanitizedSecret> listBatchV2(int idx, int num, boolean newestFirst) throws IOException {
-    Request get = clientRequest(String.format("/automation/v2/secrets/v2?idx=%d&num=%d&newestFirst=%s", idx, num, newestFirst)).get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<SanitizedSecret>>() {
-    });
-  }
-
-  List<String> listExpiring(Long time, String groupName) throws IOException {
-    String requestURL = "/automation/v2/secrets/expiring/";
-    if (time != null && time > 0) {
-      requestURL += time.toString() + '/';
-    }
-    if (groupName != null && groupName.length() > 0) {
-      requestURL += groupName;
-    }
-    Request get = clientRequest(requestURL).get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>() {
-    });
-  }
-
-  List<SanitizedSecret> listExpiringV2(Long time, String groupName) throws IOException {
-    String requestURL = "/automation/v2/secrets/expiring/v2/";
-    if (time != null && time > 0) {
-      requestURL += time.toString() + '/';
-    }
-    if (groupName != null && groupName.length() > 0) {
-      requestURL += groupName;
-    }
-    Request get = clientRequest(requestURL).get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<SanitizedSecret>>() {
-    });
-  }
-
-  List<SanitizedSecretWithGroups> listExpiringV3(Long maxTime) throws IOException {
-    String requestURL = "/automation/v2/secrets/expiring/v3/";
-    if (maxTime != null && maxTime > 0) {
-      requestURL += maxTime.toString() + '/';
-    }
-    Request get = clientRequest(requestURL).get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<SanitizedSecretWithGroups>>() {
-    });
-  }
-
-  SanitizedSecretWithGroupsListAndCursor listExpiringV4(Long minTime, Long maxTime, Integer limit, SecretRetrievalCursor cursor) throws IOException {
-    String requestURL = "/automation/v2/secrets/expiring/v4";
-    // This should probably be replaced with a proper query library
-    if (minTime != null || maxTime != null || limit != null || cursor != null) {
-      requestURL += "?";
-
-      boolean firstQueryParam = true;
-      if (minTime != null) {
-        // Redundant, but avoids copy-paste errors if another query param is added.
-        if(!firstQueryParam) {
-          requestURL += "&";
-        }
-        requestURL += "minTime=";
-        requestURL += minTime.toString();
-        firstQueryParam = false;
-      }
-
-      if (maxTime != null) {
-        if(!firstQueryParam) {
-          requestURL += "&";
-        }
-        requestURL += "maxTime=";
-        requestURL += maxTime.toString();
-        firstQueryParam = false;
-      }
-
-      if (limit != null) {
-        if(!firstQueryParam) {
-          requestURL += "&";
-        }
-        requestURL += "limit=";
-        requestURL += limit.toString();
-        firstQueryParam = false;
-      }
-
-      if (cursor != null) {
-        if(!firstQueryParam) {
-          requestURL += "&";
-        }
-        requestURL += "cursor=";
-        requestURL += SecretRetrievalCursor.toUrlEncodedString(cursor);
-      }
-    }
-
-    Request get = clientRequest(requestURL).get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), SanitizedSecretWithGroupsListAndCursor.class);
+    GroupResourceTestHelper groupResourceTestHelper = new GroupResourceTestHelper(mutualSslClient, mapper);
+    return groupResourceTestHelper.create(CreateGroupRequestV2.builder().name(name).build());
   }
 
   private List<SecretDetailResponseV2> listVersions(String name, int versionIdx, int numVersions)
@@ -1223,66 +1080,6 @@ public class SecretResourceTest {
     assertThat(httpResponse.code()).isEqualTo(201);
   }
 
-  Optional<SecretDetailResponseV2> getSecret(String name) throws IOException {
-    Request get = clientRequest("/automation/v2/secrets/" + name).get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    if (httpResponse.code() == 200) {
-      return Optional.of(mapper.readValue(httpResponse.body().byteStream(), SecretDetailResponseV2.class));
-    } else if (httpResponse.code() == 404) {
-      return Optional.empty();
-    } else {
-      throw new RuntimeException(
-          String.format(
-              "Unexpected response code %s while fetching secret %s",
-              httpResponse.code(),
-              name));
-    }
-  }
-
-  SecretDetailResponseV2 lookup(String name) throws IOException {
-    Request get = clientRequest("/automation/v2/secrets/" + name).get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), SecretDetailResponseV2.class);
-  }
-
-  SanitizedSecret lookupSanitizedSecret(String name) throws IOException {
-    Request get = clientRequest(format("/automation/v2/secrets/%s/sanitized", name)).get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), SanitizedSecret.class);
-  }
-
-  SecretContentsResponseV2 contents(SecretContentsRequestV2  request) throws IOException {
-    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
-    Request get = clientRequest("/automation/v2/secrets/request/contents").post(body).build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), SecretContentsResponseV2.class);
-  }
-
-  List<String> groupsListing(String name) throws IOException {
-    Request get = clientRequest(format("/automation/v2/secrets/%s/groups", name)).get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>() {
-    });
-  }
-
-  List<String> modifyGroups(String name, ModifyGroupsRequestV2 request) throws IOException {
-    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
-    Request put = clientRequest(format("/automation/v2/secrets/%s/groups", name)).put(body).build();
-    Response httpResponse = mutualSslClient.newCall(put).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>() {
-    });
-  }
-
-  Response deleteSeries(String name) throws IOException {
-    Request delete = clientRequest("/automation/v2/secrets/" + name).delete().build();
-    return mutualSslClient.newCall(delete).execute();
-  }
-
   private Response renameSecret(String oldName, String newName) throws IOException {
     Request rename = clientRequest(
         String.format(
@@ -1300,7 +1097,7 @@ public class SecretResourceTest {
         .name(secretName)
         .content(encode("foo"))
         .build();
-    create(request);
+   secretResourceTestHelper.create(request);
   }
 
   private static String encode(String s) {

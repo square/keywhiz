@@ -100,6 +100,9 @@ public class KeywhizConfig extends Configuration {
   @JsonProperty
   private Long maximumSecretSizeInBytesInclusive;
 
+  @JsonProperty
+  private NewSecretOwnershipStrategy newSecretOwnershipStrategy;
+
   public enum RowHmacCheck {
     @JsonProperty("disabled")
     DISABLED,
@@ -107,6 +110,13 @@ public class KeywhizConfig extends Configuration {
     DISABLED_BUT_LOG,
     @JsonProperty("enforced")
     ENFORCED;
+  }
+
+  public enum NewSecretOwnershipStrategy {
+    @JsonProperty("none")
+    NONE,
+    @JsonProperty("inferFromClient")
+    INFER_FROM_CLIENT;
   }
 
   public String getEnvironment() {
@@ -226,6 +236,10 @@ public class KeywhizConfig extends Configuration {
   }
 
   public Long getMaximumSecretSizeInBytesInclusive() { return maximumSecretSizeInBytesInclusive; }
+
+  public NewSecretOwnershipStrategy getNewSecretOwnershipStrategy() {
+    return newSecretOwnershipStrategy == null ? NewSecretOwnershipStrategy.NONE : newSecretOwnershipStrategy;
+  }
 
   @VisibleForTesting
   public void setMaximumSecretSizeInBytesInclusive(Long maximumSecretSizeInBytesInclusive) {

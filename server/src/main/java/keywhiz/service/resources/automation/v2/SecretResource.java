@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -30,6 +31,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import keywhiz.KeywhizConfig;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
@@ -39,6 +41,7 @@ import keywhiz.api.automation.v2.SecretContentsResponseV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.AutomationClient;
+import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SanitizedSecretWithGroups;
@@ -94,11 +97,12 @@ public class SecretResource {
   private final ContentCryptographer cryptographer;
   private final SecretController secretControllerReadOnly;
   private final PermissionCheck permissionCheck;
+  private final KeywhizConfig config;
 
   @Inject public SecretResource(SecretController secretController, AclDAOFactory aclDAOFactory,
       GroupDAOFactory groupDAOFactory, SecretDAOFactory secretDAOFactory, AuditLog auditLog,
       SecretSeriesDAOFactory secretSeriesDAOFactory, ContentCryptographer cryptographer,
-      @Readonly SecretController secretControllerReadOnly, PermissionCheck permissionCheck) {
+      @Readonly SecretController secretControllerReadOnly, PermissionCheck permissionCheck, KeywhizConfig config) {
     this.secretController = secretController;
     this.aclDAO = aclDAOFactory.readwrite();
     this.groupDAO = groupDAOFactory.readwrite();
@@ -108,6 +112,7 @@ public class SecretResource {
     this.cryptographer = cryptographer;
     this.secretControllerReadOnly = secretControllerReadOnly;
     this.permissionCheck = permissionCheck;
+    this.config = config;
   }
 
   /**
@@ -129,6 +134,22 @@ public class SecretResource {
     String name = request.name();
     String user = automationClient.getName();
 
+    String secretOwner = request.owner();
+    if (secretOwnerNotProvided(secretOwner) && shouldInferSecretOwnerUponCreation()) {
+      Set<Group> clientGroups = aclDAO.getGroupsFor(automationClient);
+      if (clientGroups.size() == 0) {
+        logger.warn(String.format("Client %s does not belong to any group.", automationClient));
+      } else if (clientGroups.size() == 1) {
+        Group clientGroup = clientGroups.stream().findFirst().get();
+        secretOwner = clientGroup.getName();
+      } else {
+        String groups = clientGroups.stream().map(group -> group.getName()).collect(Collectors.joining(","));
+        logger.warn(String.format("Client %s belongs to more than one group: %s",
+            automationClient,
+            groups));
+      }
+    }
+
     SecretBuilder builder = secretController
         .builder(
             name,
@@ -137,7 +158,7 @@ public class SecretResource {
             request.expiry())
         .withDescription(request.description())
         .withMetadata(request.metadata())
-        .withOwnerName(request.owner())
+        .withOwnerName(secretOwner)
         .withType(request.type());
 
     Secret secret;
@@ -819,5 +840,13 @@ public class SecretResource {
     return groupNames.stream()
         .map(groupDAO::getGroup)
         .map((group) -> group.map(Group::getId));
+  }
+
+  private boolean secretOwnerNotProvided(String secretOwner) {
+    return secretOwner == null || secretOwner.isEmpty();
+  }
+
+  private boolean shouldInferSecretOwnerUponCreation() {
+    return config.getNewSecretOwnershipStrategy() == KeywhizConfig.NewSecretOwnershipStrategy.INFER_FROM_CLIENT;
   }
 }

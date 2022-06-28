@@ -37,15 +37,18 @@ public class ClientResourceTest {
   private static final ObjectMapper mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
 
   OkHttpClient mutualSslClient;
+  ClientResourceTestHelper clientResourceTestHelper;
 
   @ClassRule public static final RuleChain chain = IntegrationTestRule.rule();
 
   @Before public void setUp() {
     mutualSslClient = TestClients.mutualSslClient();
+    clientResourceTestHelper = new ClientResourceTestHelper(mutualSslClient, mapper);
+
   }
 
   @Test public void createClient_success() throws Exception {
-    Response httpResponse = create(CreateClientRequestV2.builder()
+    Response httpResponse = clientResourceTestHelper.create(CreateClientRequestV2.builder()
         .name("client1")
         .description("description")
         .spiffeId("spiffe//example.org/client1")
@@ -54,7 +57,7 @@ public class ClientResourceTest {
     URI location = URI.create(Objects.requireNonNull(httpResponse.header(LOCATION)));
     assertThat(location.getPath()).isEqualTo("/automation/v2/clients/client1");
 
-    ClientDetailResponseV2 clientDetail = lookup("client1");
+    ClientDetailResponseV2 clientDetail = clientResourceTestHelper.lookup("client1");
     assertThat(clientDetail.name()).isEqualTo("client1");
     assertThat(clientDetail.description()).isEqualTo("description");
     assertThat(clientDetail.createdBy()).isEqualTo(clientDetail.updatedBy()).isEqualTo("client");
@@ -65,14 +68,14 @@ public class ClientResourceTest {
     CreateClientRequestV2 request = CreateClientRequestV2.builder().name("client2").build();
 
     // Initial request OK
-    create(request);
+    clientResourceTestHelper.create(request);
 
     // Duplicate request fails
-    Response httpResponse = create(request);
+    Response httpResponse = clientResourceTestHelper.create(request);
     assertThat(httpResponse.code()).isEqualTo(409);
 
     // The client was created by the first request
-    ClientDetailResponseV2 clientDetail = lookup("client2");
+    ClientDetailResponseV2 clientDetail = clientResourceTestHelper.lookup("client2");
     assertThat(clientDetail.name()).isEqualTo("client2");
     assertThat(clientDetail.description()).isEmpty();
     assertThat(clientDetail.createdBy()).isEqualTo(clientDetail.updatedBy()).isEqualTo("client");
@@ -87,28 +90,28 @@ public class ClientResourceTest {
 
   @Test public void clientInfo_groupExists() throws Exception {
     // Sample client
-    create(CreateClientRequestV2.builder().name("client3").build());
+    clientResourceTestHelper.create(CreateClientRequestV2.builder().name("client3").build());
 
-    ClientDetailResponseV2 clientDetail = lookup("client3");
+    ClientDetailResponseV2 clientDetail = clientResourceTestHelper.lookup("client3");
     assertThat(clientDetail.name()).isEqualTo("client3");
     assertThat(clientDetail.description()).isEmpty();
     assertThat(clientDetail.createdBy()).isEqualTo(clientDetail.updatedBy()).isEqualTo("client");
   }
 
   @Test public void clientListing() throws Exception {
-    Set<String> clientsBefore = listing();
+    Set<String> clientsBefore = clientResourceTestHelper.listing();
     Set<String> expected = ImmutableSet.<String>builder()
         .addAll(clientsBefore)
         .add("client4")
         .build();
 
-    create(CreateClientRequestV2.builder().name("client4").build());
-    assertThat(listing()).containsAll(expected);
+    clientResourceTestHelper.create(CreateClientRequestV2.builder().name("client4").build());
+    assertThat(clientResourceTestHelper.listing()).containsAll(expected);
   }
 
   @Test public void clientDelete_success() throws Exception {
     // Sample client
-    create(CreateClientRequestV2.builder().name("to-delete").build());
+    clientResourceTestHelper.create(CreateClientRequestV2.builder().name("to-delete").build());
 
     // Deleting is successful
     Response httpResponse = delete("to-delete");
@@ -131,14 +134,16 @@ public class ClientResourceTest {
   }
 
   @Test public void clientGroupsListing_nonExistingGroup() throws Exception {
-    create(CreateClientRequestV2.builder().name("client5").groups("non-existent").build());
+    clientResourceTestHelper.create(CreateClientRequestV2.builder().name("client5").groups("non-existent").build()
+    );
     assertThat(groupListing("client5")).isEmpty();
   }
 
   @Test public void clientGroupsListing_groupExists() throws Exception {
     // Sample group and client
     createGroup("group6");
-    create(CreateClientRequestV2.builder().name("client6").groups("group6").build());
+    clientResourceTestHelper.create(CreateClientRequestV2.builder().name("client6").groups("group6").build()
+    );
 
     assertThat(groupListing("client6")).containsOnly("group6");
   }
@@ -153,7 +158,8 @@ public class ClientResourceTest {
   @Test public void clientSecretsListing_secretExists() throws Exception {
     createGroup("group7");
     // TODO: create secret 'secret7' in group 'group7'
-    create(CreateClientRequestV2.builder().name("client7").groups("group7").build());
+    clientResourceTestHelper.create(CreateClientRequestV2.builder().name("client7").groups("group7").build()
+    );
 
     assertThat(secretListing("client7")).containsOnly("secret7");
   }
@@ -171,14 +177,15 @@ public class ClientResourceTest {
     createGroup("group8a");
     createGroup("group8b");
     createGroup("group8c");
-    create(CreateClientRequestV2.builder().name("client8").groups("group8a", "group8b").build());
+    clientResourceTestHelper.create(CreateClientRequestV2.builder().name("client8").groups("group8a", "group8b").build()
+    );
 
     // Modify client
     ModifyGroupsRequestV2 request = ModifyGroupsRequestV2.builder()
         .addGroups("group8c", "non-existent1")
         .removeGroups("group8a", "non-existent2")
         .build();
-    List<String> groups = modifyGroups("client8", request);
+    List<String> groups = clientResourceTestHelper.modifyGroups("client8", request);
     assertThat(groups).containsOnly("group8b", "group8c");
   }
 
@@ -193,57 +200,20 @@ public class ClientResourceTest {
   @Ignore
   @Test public void modifyClient_success() throws Exception {
     // Create sample client
-    create(CreateClientRequestV2.builder().name("client9").build());
-    ClientDetailResponseV2 originalClient = lookup("client9");
+    clientResourceTestHelper.create(CreateClientRequestV2.builder().name("client9").build());
+    ClientDetailResponseV2 originalClient = clientResourceTestHelper.lookup("client9");
 
     // Modify client
     ModifyClientRequestV2 request = ModifyClientRequestV2.forName("client9b");
-    ClientDetailResponseV2 clientDetail = modify("client9", request);
+    ClientDetailResponseV2 clientDetail = clientResourceTestHelper.modify("client9", request);
     assertThat(clientDetail.name()).isEqualTo("client9b");
     assertThat(clientDetail).isEqualToIgnoringGivenFields(originalClient, "name", "updateDate");
     assertThat(clientDetail.updatedAtSeconds()).isGreaterThan(originalClient.updatedAtSeconds());
   }
 
   private Response createGroup(String name) throws IOException {
-    GroupResourceTest groupResourceTest = new GroupResourceTest();
-    groupResourceTest.mutualSslClient = mutualSslClient;
-    return groupResourceTest.create(CreateGroupRequestV2.builder().name(name).build());
-  }
-
-  Response create(CreateClientRequestV2 request) throws IOException {
-    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
-    Request post = clientRequest("/automation/v2/clients").post(body).build();
-    return mutualSslClient.newCall(post).execute();
-  }
-
-  ClientDetailResponseV2 lookup(String client) throws IOException {
-    Request get = clientRequest("/automation/v2/clients/" + client).get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), ClientDetailResponseV2.class);
-  }
-
-  Set<String> listing() throws IOException {
-    Request get = clientRequest("/automation/v2/clients").get().build();
-    Response httpResponse = mutualSslClient.newCall(get).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<Set<String>>(){});
-  }
-
-  ClientDetailResponseV2 modify(String client, ModifyClientRequestV2 request) throws IOException {
-    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
-    Request post = clientRequest("/automation/v2/clients/" + client).post(body).build();
-    Response httpResponse = mutualSslClient.newCall(post).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), ClientDetailResponseV2.class);
-  }
-
-  List<String> modifyGroups(String client, ModifyGroupsRequestV2 request) throws IOException {
-    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
-    Request put = clientRequest(format("/automation/v2/clients/%s/groups", client)).put(body).build();
-    Response httpResponse = mutualSslClient.newCall(put).execute();
-    assertThat(httpResponse.code()).isEqualTo(200);
-    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<List<String>>(){});
+    GroupResourceTestHelper groupResourceTestHelper = new GroupResourceTestHelper(mutualSslClient, mapper);
+    return groupResourceTestHelper.create(CreateGroupRequestV2.builder().name(name).build());
   }
 
   Response delete(String name) throws IOException {

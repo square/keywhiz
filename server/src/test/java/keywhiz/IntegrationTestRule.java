@@ -24,7 +24,11 @@ public class IntegrationTestRule {
   public IntegrationTestRule() {}
 
   public static RuleChain rule() {
-    String configPath = Resources.getResource("keywhiz-test.yaml").getPath();
+    return rule("keywhiz-test.yaml");
+  }
+
+  public static RuleChain rule(String configFile) {
+    String configPath = Resources.getResource(configFile).getPath();
     return RuleChain
         .outerRule(new MigrationsRule())
         .around(new DropwizardAppRule<>(KeywhizService.class, configPath));
