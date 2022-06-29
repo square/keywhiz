@@ -173,7 +173,7 @@ public class SecretsResource {
 
   protected List<SanitizedSecret> listSecrets(@Auth User user) {
     logger.info("User '{}' listing secrets.", user);
-    return secretController.getSanitizedSecrets(null, null);
+    return secretController.getSanitizedSecrets(null, null, user);
   }
 
   protected List<SanitizedSecret> listSecretsNameOnly(@Auth User user) {
@@ -187,7 +187,7 @@ public class SecretsResource {
       boolean newestFirst) {
     logger.info("User '{}' listing secrets with idx '{}', num '{}', newestFirst '{}'.", user, idx,
         num, newestFirst);
-    return secretController.getSecretsBatched(idx, num, newestFirst);
+    return secretController.getSecretsBatched(idx, num, newestFirst, user);
   }
 
   protected SanitizedSecret retrieveSecret(@Auth User user, String name) {
@@ -233,7 +233,8 @@ public class SecretsResource {
                   request.name(),
                   request.content(),
                   user.getName(),
-                  request.expiry())
+                  request.expiry(),
+                  user)
               .withOwnerName(request.owner());
 
       if (request.description() != null) {
@@ -297,7 +298,7 @@ public class SecretsResource {
     logger.info("User '{}' createOrUpdate secret '{}'.", user, secretName);
 
     Secret secret = secretController
-        .builder(secretName, request.content(), user.getName(), request.expiry())
+        .builder(secretName, request.content(), user.getName(), request.expiry(), user)
         .withDescription(request.description())
         .withMetadata(request.metadata())
         .withType(request.type())

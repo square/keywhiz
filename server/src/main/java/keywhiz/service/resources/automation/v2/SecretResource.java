@@ -127,7 +127,8 @@ public class SecretResource {
             name,
             request.content(),
             automationClient.getName(),
-            request.expiry())
+            request.expiry(),
+            automationClient)
         .withDescription(request.description())
         .withMetadata(request.metadata())
         .withOwnerName(request.owner())
@@ -176,7 +177,7 @@ public class SecretResource {
       @PathParam("name") String name,
       @Valid CreateOrUpdateSecretRequestV2 request) {
     SecretBuilder builder = secretController
-        .builder(name, request.content(), automationClient.getName(), request.expiry())
+        .builder(name, request.content(), automationClient.getName(), request.expiry(), automationClient)
         .withDescription(request.description())
         .withMetadata(request.metadata())
         .withType(request.type());
@@ -269,11 +270,11 @@ public class SecretResource {
         throw new BadRequestException(
             "Index and num must both be positive when retrieving batched secrets!");
       }
-      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst).stream()
+      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst, automationClient).stream()
           .map(SanitizedSecret::name)
           .collect(toList());
     }
-    return secretControllerReadOnly.getSanitizedSecrets(null, null).stream()
+    return secretControllerReadOnly.getSanitizedSecrets(null, null, automationClient).stream()
         .map(SanitizedSecret::name)
         .collect(toSet());
   }
@@ -301,9 +302,9 @@ public class SecretResource {
         throw new BadRequestException(
             "Index and num must both be positive when retrieving batched secrets!");
       }
-      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst);
+      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst, automationClient);
     }
-    return secretControllerReadOnly.getSanitizedSecrets(null, null);
+    return secretControllerReadOnly.getSanitizedSecrets(null, null, automationClient);
   }
 
   /**
@@ -318,7 +319,7 @@ public class SecretResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> secretListingExpiring(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
-    List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, null);
+    List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, null, automationClient);
     return secrets.stream()
         .map(SanitizedSecret::name)
         .collect(toList());
@@ -336,7 +337,7 @@ public class SecretResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<SanitizedSecret> secretListingExpiringV2(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
-    List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, null);
+    List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, null, automationClient);
     return secrets;
   }
 
@@ -362,7 +363,7 @@ public class SecretResource {
   @Produces(APPLICATION_JSON)
   public Iterable<SanitizedSecretWithGroups> secretListingExpiringV3(@Auth AutomationClient automationClient,
       @PathParam("time") Long maxTime) {
-    return secretControllerReadOnly.getSanitizedSecretsWithGroups(maxTime);
+    return secretControllerReadOnly.getSanitizedSecretsWithGroups(maxTime, automationClient);
   }
 
   /**
@@ -400,7 +401,7 @@ public class SecretResource {
       cursorDecoded = SecretRetrievalCursor.fromUrlEncodedString(cursor);
     }
     return secretControllerReadOnly.getSanitizedSecretsWithGroupsAndCursor(minTime, maxTime, limit,
-        cursorDecoded);
+        cursorDecoded, automationClient);
   }
 
   /**
@@ -517,7 +518,7 @@ public class SecretResource {
       @PathParam("time") Long time, @PathParam("name") String name) {
     Group group = groupDAO.getGroup(name).orElseThrow(NotFoundException::new);
 
-    List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, group);
+    List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, group, automationClient);
     return secrets.stream()
         .map(SanitizedSecret::name)
         .collect(toSet());

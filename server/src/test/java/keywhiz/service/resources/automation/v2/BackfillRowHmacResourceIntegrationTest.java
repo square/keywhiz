@@ -91,7 +91,8 @@ public class BackfillRowHmacResourceIntegrationTest {
         0,
         null,
         null,
-        null);
+        null,
+        automationClient);
     return secretId;
   }
 }

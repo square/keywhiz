@@ -5,6 +5,7 @@ import java.util.UUID;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
+import keywhiz.api.model.Client;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.auth.User;
 import keywhiz.service.config.Readwrite;
@@ -19,6 +20,9 @@ import static org.junit.Assert.assertNull;
 @RunWith(KeywhizTestRunner.class)
 public class SecretsResourceIntegrationTest {
   private static final ImmutableMap<String, String> NO_METADATA = ImmutableMap.of();
+  private static final Client
+      automationClient = new Client(0, "automationClient", null, null, null, null, null, null, null,
+      null, false, true);
 
   @Inject private SecretsResource resource;
 
@@ -110,7 +114,8 @@ public class SecretsResourceIntegrationTest {
         0,
         "description",
         null,
-        null);
+        null,
+        automationClient);
     return secretName;
   }
 

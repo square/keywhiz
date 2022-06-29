@@ -118,7 +118,8 @@ public class AutomationSecretResource {
             request.name,
             request.content,
             automationClient.getName(),
-            request.expiry)
+            request.expiry,
+            automationClient)
         .withDescription(nullToEmpty(request.description))
         .withOwnerName(request.owner);
 
@@ -180,7 +181,7 @@ public class AutomationSecretResource {
           ImmutableList.copyOf(aclDAO.getGroupsFor(secret));
       responseBuilder.add(AutomationSecretResponse.fromSecret(secret, groups));
     } else {
-      List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(null, null);
+      List<SanitizedSecret> secrets = secretController.getSanitizedSecrets(null, null, automationClient);
 
       for (SanitizedSecret sanitizedSecret : secrets) {
         Secret secret = secretController.getSecretById(sanitizedSecret.id()).orElseThrow(() ->

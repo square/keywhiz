@@ -75,6 +75,9 @@ public class SecretsResourceTest {
   private static final ApiDate NOW = ApiDate.now();
   private static final ApiDate NOWPLUS = new ApiDate(NOW.toEpochSecond() + 10000);
 
+  private Client automationClient = new Client(0, "automationClient", null, null, null, null, null, null, null,
+      null, false, true);
+
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
 
   @Mock AclDAO aclDAO;
@@ -111,7 +114,7 @@ public class SecretsResourceTest {
   public void setUp() {
     resource = new SecretsResource(secretController, aclDAO, secretDAO, auditLog);
 
-    when(secretController.builder(any(), any(), any(), anyLong()))
+    when(secretController.builder(any(), any(), any(), anyLong(), any()))
         .thenReturn(secretBuilder);
     when(secretBuilder.withDescription(any())).thenReturn(secretBuilder);
     when(secretBuilder.withMetadata(any())).thenReturn(secretBuilder);
@@ -161,7 +164,7 @@ public class SecretsResourceTest {
         emptyMap, null, null, 1136214245, 125L, NOW, "user");
     SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", null, "desc","checksum", NOW, "user", NOW, "user",
         emptyMap, null, null, 1136214245, 250L, NOW, "user");
-    when(secretController.getSanitizedSecrets(null, null)).thenReturn(ImmutableList.of(secret1, secret2));
+    when(secretController.getSanitizedSecrets(null, null, user)).thenReturn(ImmutableList.of(secret1, secret2));
 
     List<SanitizedSecret> response = resource.listSecrets(user);
     assertThat(response).containsOnly(secret1, secret2);
@@ -173,9 +176,9 @@ public class SecretsResourceTest {
         emptyMap, null, null, 1136214245, 125L, NOW, "user");
     SanitizedSecret secret2 = SanitizedSecret.of(2, "name2", null, "desc", "checksum", NOWPLUS, "user", NOWPLUS, "user",
         emptyMap, null, null, 1136214245, 250L, NOW, "user");
-    when(secretController.getSecretsBatched(0, 1, false)).thenReturn(ImmutableList.of(secret1));
-    when(secretController.getSecretsBatched(0, 1, true)).thenReturn(ImmutableList.of(secret2));
-    when(secretController.getSecretsBatched(1, 1, false)).thenReturn(ImmutableList.of(secret2));
+    when(secretController.getSecretsBatched(0, 1, false, user)).thenReturn(ImmutableList.of(secret1));
+    when(secretController.getSecretsBatched(0, 1, true, user)).thenReturn(ImmutableList.of(secret2));
+    when(secretController.getSecretsBatched(1, 1, false, user)).thenReturn(ImmutableList.of(secret2));
 
     List<SanitizedSecret> response = resource.listSecretsBatched(user, 0, 1, false);
     assertThat(response).containsOnly(secret1);

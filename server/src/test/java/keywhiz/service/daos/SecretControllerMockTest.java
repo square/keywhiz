@@ -3,6 +3,7 @@ package keywhiz.service.daos;
 import java.util.Base64;
 import javax.swing.text.AbstractDocument;
 import keywhiz.KeywhizConfig;
+import keywhiz.api.model.Client;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.SecretTransformer;
 import org.junit.Rule;
@@ -17,6 +18,9 @@ public class SecretControllerMockTest {
   private static final Long MAXIMUM_SECRET_SIZE_IN_BYTES_INCLUSIVE = 100L;
   private static final long NO_EXPIRY = 0;
   private static final Long NO_MAXIMUM_SECRET_SIZE = null;
+
+  private static final Client automationClient = new Client(0, "automationClient", null, null, null, null, null, null, null,
+      null, false, true);
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();
@@ -62,7 +66,7 @@ public class SecretControllerMockTest {
 
   private void createSecret(SecretController controller, byte[] secret) {
     String base64EncodedSecret = Base64.getEncoder().encodeToString(secret);
-    controller.builder("name", base64EncodedSecret, "creator", NO_EXPIRY);
+    controller.builder("name", base64EncodedSecret, "creator", NO_EXPIRY, automationClient);
   }
 
   private SecretController createController(Long maximumSecretSizeInBytesInclusive) {

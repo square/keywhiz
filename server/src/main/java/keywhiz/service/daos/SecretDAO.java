@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import java.security.Permission;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -34,6 +35,8 @@ import keywhiz.service.crypto.ContentEncodingException;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
+import keywhiz.service.permissions.Action;
+import keywhiz.service.permissions.PermissionCheck;
 import org.joda.time.DateTime;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
@@ -71,6 +74,7 @@ public class SecretDAO {
   private final SecretSeriesDAOFactory secretSeriesDAOFactory;
   private final GroupDAO.GroupDAOFactory groupDAOFactory;
   private final ContentCryptographer cryptographer;
+  private final PermissionCheck permissionCheck;
 
   // this is the maximum length of a secret name, so that it will still fit in the 255 char limit
   // of the database field if it is deleted and auto-renamed
@@ -85,12 +89,14 @@ public class SecretDAO {
       SecretContentDAOFactory secretContentDAOFactory,
       SecretSeriesDAOFactory secretSeriesDAOFactory,
       GroupDAO.GroupDAOFactory groupDAOFactory,
-      ContentCryptographer cryptographer) {
+      ContentCryptographer cryptographer,
+      PermissionCheck permissionCheck) {
     this.dslContext = dslContext;
     this.secretContentDAOFactory = secretContentDAOFactory;
     this.secretSeriesDAOFactory = secretSeriesDAOFactory;
     this.groupDAOFactory = groupDAOFactory;
     this.cryptographer = cryptographer;
+    this.permissionCheck = permissionCheck;
   }
 
   @VisibleForTesting
@@ -104,9 +110,12 @@ public class SecretDAO {
       long expiry,
       String description,
       @Nullable String type,
-      @Nullable Map<String, String> generationOptions) {
+      @Nullable Map<String, String> generationOptions,
+      Object principal) {
 
     return dslContext.transactionResult(configuration -> {
+      permissionCheck.checkAllowedOrThrow(principal, Action.CREATE, null);
+
       // disallow use of a leading period in secret names
       // check is here because this is where all APIs converge on secret creation
       if (name.startsWith(".")) {
@@ -168,7 +177,8 @@ public class SecretDAO {
       long expiry,
       String description,
       @Nullable String type,
-      @Nullable Map<String, String> generationOptions) {
+      @Nullable Map<String, String> generationOptions,
+      Object principal) {
     // SecretController should have already checked that the contents are not empty
     return dslContext.transactionResult(configuration -> {
       long now = OffsetDateTime.now().toEpochSecond();
@@ -182,6 +192,8 @@ public class SecretDAO {
       long secretId;
       if (secretSeries.isPresent()) {
         SecretSeries secretSeries1 = secretSeries.get();
+        permissionCheck.checkAllowedOrThrow(principal, Action.UPDATE, secretSeries1);
+
         secretId = secretSeries1.id();
 
         Long effectiveOwnerId = ownerId != null
@@ -198,6 +210,8 @@ public class SecretDAO {
             generationOptions,
             now);
       } else {
+        permissionCheck.checkAllowedOrThrow(principal, Action.CREATE, null);
+
         secretId = secretSeriesDAO.createSecretSeries(
             name,
             ownerId,
@@ -400,8 +414,10 @@ public class SecretDAO {
    */
   public ImmutableList<SecretSeriesAndContent> getSecrets(@Nullable Long expireMaxTime,
       @Nullable Group group, @Nullable Long expireMinTime, @Nullable String minName,
-      @Nullable Integer limit) {
+      @Nullable Integer limit, Object principal) {
     return dslContext.transactionResult(configuration -> {
+      permissionCheck.checkAllowedOrThrow(principal, Action.READ, null);
+
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
 
@@ -438,8 +454,10 @@ public class SecretDAO {
    * @return A list of secrets
    */
   public ImmutableList<SecretSeriesAndContent> getSecretsBatched(int idx, int num,
-      boolean newestFirst) {
+      boolean newestFirst, Object principal) {
     return dslContext.transactionResult(configuration -> {
+      permissionCheck.checkAllowedOrThrow(principal, Action.READ, null);
+
       SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
       SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
 
@@ -668,6 +686,7 @@ public class SecretDAO {
     private final SecretSeriesDAOFactory secretSeriesDAOFactory;
     private final GroupDAO.GroupDAOFactory groupDAOFactory;
     private final ContentCryptographer cryptographer;
+    private final PermissionCheck permissionCheck;
 
     @Inject public SecretDAOFactory(
         DSLContext jooq,
@@ -675,13 +694,15 @@ public class SecretDAO {
         SecretContentDAOFactory secretContentDAOFactory,
         SecretSeriesDAOFactory secretSeriesDAOFactory,
         GroupDAO.GroupDAOFactory groupDAOFactory,
-        ContentCryptographer cryptographer) {
+        ContentCryptographer cryptographer,
+        PermissionCheck permissionCheck) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.secretContentDAOFactory = secretContentDAOFactory;
       this.secretSeriesDAOFactory = secretSeriesDAOFactory;
       this.groupDAOFactory = groupDAOFactory;
       this.cryptographer = cryptographer;
+      this.permissionCheck = permissionCheck;
     }
 
     @Override public SecretDAO readwrite() {
@@ -690,7 +711,8 @@ public class SecretDAO {
           secretContentDAOFactory,
           secretSeriesDAOFactory,
           groupDAOFactory,
-          cryptographer);
+          cryptographer,
+          permissionCheck);
     }
 
     @Override public SecretDAO readonly() {
@@ -699,7 +721,8 @@ public class SecretDAO {
           secretContentDAOFactory,
           secretSeriesDAOFactory,
           groupDAOFactory,
-          cryptographer);
+          cryptographer,
+          permissionCheck);
     }
 
     @Override public SecretDAO using(Configuration configuration) {
@@ -709,7 +732,8 @@ public class SecretDAO {
           secretContentDAOFactory,
           secretSeriesDAOFactory,
           groupDAOFactory,
-          cryptographer);
+          cryptographer,
+          permissionCheck);
     }
   }
 }

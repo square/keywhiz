@@ -17,6 +17,7 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableMap;
+import keywhiz.api.model.Client;
 import keywhiz.api.model.Secret;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.ContentEncodingException;
@@ -32,6 +33,9 @@ public class SecretFixtures {
   private final SecretDAO secretDAO;
   private final ContentCryptographer cryptographer;
   private final SecretTransformer transformer;
+  private final Client
+      automationClient = new Client(0, "automationClient", null, null, null, null, null, null, null,
+      null, false, true);
 
   private SecretFixtures(SecretDAO secretDAO) {
     this.secretDAO = secretDAO;
@@ -60,7 +64,7 @@ public class SecretFixtures {
     }
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
     long id = secretDAO.createSecret(name, null, encryptedContent, hmac, "creator", ImmutableMap.of(), 0, "", null,
-        ImmutableMap.of());
+        ImmutableMap.of(), automationClient);
     return transformer.transform(secretDAO.getSecretById(id).get());
   }
 }

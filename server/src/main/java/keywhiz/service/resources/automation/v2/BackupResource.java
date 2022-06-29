@@ -103,7 +103,7 @@ public class BackupResource {
 
     // SecretDeliveryResponse is the same data a client receives when requesting a secret,
     // so it should have all the relevant information we need (including content, checksum).
-    List<SecretDeliveryResponse> secrets = secretController.getSecretsForGroup(group).stream()
+    List<SecretDeliveryResponse> secrets = secretController.getSecretsForGroup(group, automationClient).stream()
         .map(SecretDeliveryResponse::fromSecret)
         .collect(toList());
 

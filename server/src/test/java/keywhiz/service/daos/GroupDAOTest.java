@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
+import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
@@ -50,6 +51,9 @@ public class GroupDAOTest {
 
   private GroupDAO groupDAO;
   private SecretDAO secretDAO;
+
+  private Client automationClient = new Client(0, "automationClient", null, null, null, null, null, null, null,
+      null, false, true);
 
   @Before public void setUp() throws Exception {
     groupDAO = groupDAOFactory.readwrite();
@@ -92,7 +96,7 @@ public class GroupDAOTest {
     long groupId = groupDAO.createGroup(groupName, "creator", "description", ImmutableMap.of());
 
     long secretId = secretDAO.createSecret(randomName(), groupName, "encryptedSecret", "hmac", "creator",
-        Collections.emptyMap(), 0, "description", null, null);
+        Collections.emptyMap(), 0, "description", null, null, automationClient);
 
     SecretSeriesAndContent original = secretDAO.getSecretById(secretId).get();
     assertEquals(groupName, original.series().owner());

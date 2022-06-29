@@ -21,7 +21,9 @@ public class AlwaysAllowDelegatingPermissionCheck implements PermissionCheck {
   }
 
   public boolean isAllowed(Object source, String action, Object target) {
+    System.out.println("before delegate");
     boolean hasPermission = delegate.isAllowed(source, action, target);
+    System.out.println("after delegate");
 
     emitHistogramMetrics(hasPermission);
 

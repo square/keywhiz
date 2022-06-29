@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -91,8 +92,8 @@ public class SecretController {
    * @param group limit results to secrets assigned to this group.
    * @return all existing secrets matching criteria.
    * */
-  public List<Secret> getSecretsForGroup(Group group) {
-    return secretDAO.getSecrets(null, group, null, null, null).stream()
+  public List<Secret> getSecretsForGroup(Group group, Object principal) {
+    return secretDAO.getSecrets(null, group, null, null, null, principal).stream()
         .map(transformer::transform)
         .collect(toList());
   }
@@ -102,8 +103,8 @@ public class SecretController {
    * @param group limit results to secrets assigned to this group, if provided.
    * @return all existing sanitized secrets matching criteria.
    * */
-  public List<SanitizedSecret> getSanitizedSecrets(@Nullable Long expireMaxTime, @Nullable Group group) {
-    return secretDAO.getSecrets(expireMaxTime, group, null, null, null).stream()
+  public List<SanitizedSecret> getSanitizedSecrets(@Nullable Long expireMaxTime, @Nullable Group group, Object principal) {
+    return secretDAO.getSecrets(expireMaxTime, group, null, null, null, principal).stream()
         .map(SanitizedSecret::fromSecretSeriesAndContent)
         .collect(toList());
   }
@@ -112,9 +113,9 @@ public class SecretController {
    * @param expireMaxTime timestamp for farthest expiry to include
    * @return all existing sanitized secrets and their groups matching criteria.
    * */
-  public List<SanitizedSecretWithGroups> getSanitizedSecretsWithGroups(@Nullable Long expireMaxTime) {
+  public List<SanitizedSecretWithGroups> getSanitizedSecretsWithGroups(@Nullable Long expireMaxTime, Object principal) {
     ImmutableList<SecretSeriesAndContent> secrets = secretDAO.getSecrets(expireMaxTime, null,
-        null, null, null);
+        null, null, null, principal);
 
     Map<Long, SecretSeriesAndContent> secretIds = secrets.stream()
         .collect(toMap(s -> s.series().id(), s -> s));
@@ -141,7 +142,8 @@ public class SecretController {
       @Nullable Long expireMinTime,
       @Nullable Long expireMaxTime,
       @Nullable Integer limit,
-      @Nullable SecretRetrievalCursor cursor) {
+      @Nullable SecretRetrievalCursor cursor,
+      Object principal) {
     // Retrieve secrets based on the cursor (if provided).
     ImmutableList<SecretSeriesAndContent> secrets;
 
@@ -152,10 +154,10 @@ public class SecretController {
     }
 
     if (cursor == null) {
-      secrets = secretDAO.getSecrets(expireMaxTime, null, expireMinTime, null, updatedLimit);
+      secrets = secretDAO.getSecrets(expireMaxTime, null, expireMinTime, null, updatedLimit, principal);
     } else {
       secrets = secretDAO.getSecrets(expireMaxTime, null, cursor.expiry(), cursor.name(),
-          updatedLimit);
+          updatedLimit, principal);
     }
 
     // Set the cursor and strip the final record from the secrets if necessary
@@ -203,25 +205,26 @@ public class SecretController {
    * @param newestFirst if true, order the secrets from newest creation time to oldest
    * @return A list of secret names
    */
-  public List<SanitizedSecret> getSecretsBatched(int idx, int num, boolean newestFirst) {
+  public List<SanitizedSecret> getSecretsBatched(int idx, int num, boolean newestFirst, Object principal) {
     checkArgument(idx >= 0, "Index must be positive when getting batched secret names!");
     checkArgument(num >= 0, "Num must be positive when getting batched secret names!");
-    return secretDAO.getSecretsBatched(idx, num, newestFirst).stream()
+    return secretDAO.getSecretsBatched(idx, num, newestFirst, principal).stream()
         .map(SanitizedSecret::fromSecretSeriesAndContent)
         .collect(toList());
   }
 
-  public SecretBuilder builder(String name, String secret, String creator, long expiry) {
+  public SecretBuilder builder(String name, String secret, String creator, long expiry, Object principal) {
     checkArgument(!name.isEmpty());
     checkArgument(!secret.isEmpty());
     validateSecretSize(secret);
     checkArgument(!creator.isEmpty());
+    checkArgument(Objects.nonNull(principal));
     String hmac = cryptographer.computeHmac(secret.getBytes(UTF_8), "hmackey"); // Compute HMAC on base64 encoded data
     if (hmac == null) {
       throw new ContentEncodingException("Error encoding content for SecretBuilder!");
     }
     String encryptedSecret = cryptographer.encryptionKeyDerivedFrom(name).encrypt(secret);
-    return new SecretBuilder(transformer, secretDAO, name, encryptedSecret, hmac, creator, expiry);
+    return new SecretBuilder(transformer, secretDAO, name, encryptedSecret, hmac, creator, expiry, principal);
   }
 
   private void validateSecretSize(String base64EncodedSecret) {
@@ -255,6 +258,7 @@ public class SecretController {
     private long expiry = 0;
     private String type;
     private Map<String, String> generationOptions = ImmutableMap.of();
+    private Object principal;
 
     /**
      * @param transformer
@@ -264,7 +268,7 @@ public class SecretController {
      * @param creator username responsible for creating this secret version.
      */
     private SecretBuilder(SecretTransformer transformer, SecretDAO secretDAO, String name, String encryptedSecret,
-        String hmac, String creator, long expiry) {
+        String hmac, String creator, long expiry, Object principal) {
       this.transformer = transformer;
       this.secretDAO = secretDAO;
       this.name = name;
@@ -272,6 +276,7 @@ public class SecretController {
       this.hmac = hmac;
       this.creator = creator;
       this.expiry = expiry;
+      this.principal = principal;
     }
 
     /**
@@ -330,7 +335,8 @@ public class SecretController {
             expiry,
             description,
             type,
-            generationOptions);
+            generationOptions,
+            principal);
         return transformer.transform(secretDAO.getSecretByName(name).get());
     }
 
@@ -345,7 +351,8 @@ public class SecretController {
           expiry,
           description,
           type,
-          generationOptions);
+          generationOptions,
+          principal);
       return transformer.transform(secretDAO.getSecretByName(name).get());
     }
   }

@@ -11,6 +11,7 @@ import java.util.UUID;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
+import keywhiz.api.model.Client;
 import keywhiz.api.model.SanitizedSecretWithGroups;
 import keywhiz.api.model.SanitizedSecretWithGroupsListAndCursor;
 import keywhiz.api.model.Secret;
@@ -37,6 +38,9 @@ public class SecretControllerTest {
   private long thirdId;
   private long fourthId;
   private long fifthId;
+
+  private Client automationClient = new Client(0, "automationClient", null, null, null, null, null, null, null,
+      null, false, true);
 
   @Inject DSLContext jooqContext;
   @Inject @Readwrite SecretSeriesDAO secretSeriesDAO;
@@ -84,7 +88,7 @@ public class SecretControllerTest {
 
     String secretName = UUID.randomUUID().toString();
     Secret created = secretController
-        .builder(secretName, "secret", "creator", now)
+        .builder(secretName, "secret", "creator", now, automationClient)
         .withOwnerName(ownerName)
         .create();
 
@@ -100,7 +104,7 @@ public class SecretControllerTest {
     String secretName = UUID.randomUUID().toString();
 
     Secret created = secretController
-        .builder(secretName, "secret", "creator", now)
+        .builder(secretName, "secret", "creator", now, automationClient)
         .withOwnerName(ownerName)
         .createOrUpdate();
 
@@ -116,12 +120,12 @@ public class SecretControllerTest {
     String secretName = UUID.randomUUID().toString();
 
     Secret created = secretController
-        .builder(secretName, "secret", "creator", now)
+        .builder(secretName, "secret", "creator", now, automationClient)
         .withOwnerName(ownerName)
         .create();
 
     Secret updated = secretController
-        .builder(secretName, "secret", "creator", now)
+        .builder(secretName, "secret", "creator", now, automationClient)
         .withOwnerName(ownerName)
         .createOrUpdate();
 
@@ -139,12 +143,12 @@ public class SecretControllerTest {
     String secretName = UUID.randomUUID().toString();
 
     Secret created = secretController
-        .builder(secretName, "secret", "creator", now)
+        .builder(secretName, "secret", "creator", now, automationClient)
         .withOwnerName(ownerName1)
         .create();
 
     Secret updated = secretController
-        .builder(secretName, "secret", "creator", now)
+        .builder(secretName, "secret", "creator", now, automationClient)
         .withOwnerName(ownerName2)
         .createOrUpdate();
 
@@ -160,7 +164,7 @@ public class SecretControllerTest {
     String secretName = UUID.randomUUID().toString();
 
     Secret created = secretController
-        .builder(secretName, "secret", "creator", now)
+        .builder(secretName, "secret", "creator", now, automationClient)
         .withOwnerName(ownerName)
         .create();
 
@@ -177,7 +181,7 @@ public class SecretControllerTest {
     String secretName = UUID.randomUUID().toString();
 
     Secret created = secretController
-        .builder(secretName, "secret", "creator", now)
+        .builder(secretName, "secret", "creator", now, automationClient)
         .withOwnerName(ownerName)
         .create();
 
@@ -240,7 +244,7 @@ public class SecretControllerTest {
     SecretRetrievalCursor cursor = null;
     do {
       SanitizedSecretWithGroupsListAndCursor retrievedSecretsAndCursor =
-          secretController.getSanitizedSecretsWithGroupsAndCursor(null, expireMaxTime, limit, cursor);
+          secretController.getSanitizedSecretsWithGroupsAndCursor(null, expireMaxTime, limit, cursor, automationClient);
       cursor = retrievedSecretsAndCursor.decodedCursor();
 
       List<SanitizedSecretWithGroups> secrets = retrievedSecretsAndCursor.secrets();

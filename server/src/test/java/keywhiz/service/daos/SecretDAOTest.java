@@ -23,6 +23,8 @@ import java.util.UUID;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
+import keywhiz.api.model.AutomationClient;
+import keywhiz.api.model.Client;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
@@ -32,6 +34,7 @@ import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
 import keywhiz.service.crypto.RowHmacGenerator;
 import keywhiz.service.exceptions.ConflictException;
+import keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck;
 import org.joda.time.DateTime;
 import org.jooq.DSLContext;
 import org.jooq.Table;
@@ -98,6 +101,9 @@ public class SecretDAOTest {
       SecretContent.of(104, 3, encryptedContent, "checksum", date, "creator", date, "updater",
           emptyMetadata, 0);
   private SecretSeriesAndContent secret3 = SecretSeriesAndContent.of(series3, content3);
+
+  private Client automationClient = new Client(0, "automationClient", null, null, null, null, null, null, null,
+      null, false, true);
 
   @Before
   public void setUp() throws Exception {
@@ -257,30 +263,30 @@ public class SecretDAOTest {
     String hmac = cryptographer.computeHmac(content.getBytes(UTF_8), "hmackey");
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
     long newId = secretDAO.createSecret(name, null, encryptedContent, hmac, "creator",
-        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+        ImmutableMap.of(), 0, "", null, ImmutableMap.of(), automationClient);
     SecretSeriesAndContent newSecret = secretDAO.getSecretById(newId).get();
 
     assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore + 1);
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore + 1);
 
     newSecret = secretDAO.getSecretByName(newSecret.series().name()).get();
-    assertThat(secretDAO.getSecrets(null, null, null,null, null)).containsOnly(secret1, secret2b, newSecret);
+    assertThat(secretDAO.getSecrets(null, null, null,null, null, automationClient)).containsOnly(secret1, secret2b, newSecret);
   }
 
   @Test(expected = DataAccessException.class)
   public void createSecretFailsIfSecretExists() {
     String name = "newSecret";
     secretDAO.createSecret(name, null, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
-        null, ImmutableMap.of());
+        null, ImmutableMap.of(), automationClient);
     secretDAO.createSecret(name, null, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
-        null, ImmutableMap.of());
+        null, ImmutableMap.of(), automationClient);
   }
 
   @Test(expected = BadRequestException.class)
   public void createSecretFailsIfNameHasLeadingPeriod() {
     String name = ".newSecret";
     secretDAO.createSecret(name, null, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
-        null, ImmutableMap.of());
+        null, ImmutableMap.of(), automationClient);
   }
 
   @Test(expected = BadRequestException.class)
@@ -288,7 +294,7 @@ public class SecretDAOTest {
     String name =
         "newSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecretnewSecret";
     secretDAO.createSecret(name, null, "some secret", "checksum", "creator", ImmutableMap.of(), 0, "",
-        null, ImmutableMap.of());
+        null, ImmutableMap.of(), automationClient);
   }
 
   @Test(expected = DataAccessException.class)
@@ -296,7 +302,7 @@ public class SecretDAOTest {
     String name = "newSecret";
     long firstId = secretDAO.createSecret(name, null, "content1",
         cryptographer.computeHmac("content1".getBytes(UTF_8), "hmackey"), "creator1",
-        ImmutableMap.of("foo", "bar"), 1000, "description1", "type1", ImmutableMap.of());
+        ImmutableMap.of("foo", "bar"), 1000, "description1", "type1", ImmutableMap.of(), automationClient);
 
     // When a secret is deleted, its name should be changed.  However, if the name is not changed
     // for some reason or a name matching the altered name is used, secret creation will fail.
@@ -307,7 +313,7 @@ public class SecretDAOTest {
 
      secretDAO.createSecret(name, null, "content2",
          cryptographer.computeHmac("content2".getBytes(UTF_8), "hmackey"), "creator2",
-        ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
+        ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of(), automationClient);
   }
 
   //---------------------------------------------------------------------------------------
@@ -323,25 +329,25 @@ public class SecretDAOTest {
     String hmac = cryptographer.computeHmac(content.getBytes(UTF_8), "hmackey");
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
     long newId = secretDAO.createOrUpdateSecret(name, null, encryptedContent, hmac, "creator",
-        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+        ImmutableMap.of(), 0, "", null, ImmutableMap.of(), null);
     SecretSeriesAndContent newSecret = secretDAO.getSecretById(newId).get();
 
     assertThat(tableSize(SECRETS)).isEqualTo(secretsBefore + 1);
     assertThat(tableSize(SECRETS_CONTENT)).isEqualTo(secretContentsBefore + 1);
 
     newSecret = secretDAO.getSecretByName(newSecret.series().name()).get();
-    assertThat(secretDAO.getSecrets(null, null, null, null, null)).containsOnly(secret1, secret2b, newSecret);
+    assertThat(secretDAO.getSecrets(null, null, null, null, null, automationClient)).containsOnly(secret1, secret2b, newSecret);
   }
 
   @Test public void createOrUpdateSecretWhenSecretExists() {
     String name = "newSecret";
     long firstId = secretDAO.createSecret(name, null, "content1",
         cryptographer.computeHmac("content1".getBytes(UTF_8), "hmackey"), "creator1",
-        ImmutableMap.of("foo", "bar"), 1000, "description1", "type1", ImmutableMap.of());
+        ImmutableMap.of("foo", "bar"), 1000, "description1", "type1", ImmutableMap.of(), automationClient);
 
     long secondId = secretDAO.createOrUpdateSecret(name, null, "content2",
         cryptographer.computeHmac("content2".getBytes(UTF_8), "hmackey"), "creator2",
-        ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of());
+        ImmutableMap.of("foo2", "bar2"), 2000, "description2", "type2", ImmutableMap.of(), automationClient);
     assertThat(secondId).isEqualTo(firstId);
 
     SecretSeriesAndContent newSecret = secretDAO.getSecretById(firstId).get();
@@ -467,7 +473,7 @@ public class SecretDAOTest {
 
     long newId = secretDAO.createSecret(name, null, "content",
         cryptographer.computeHmac("content".getBytes(UTF_8), "hmackey"), "creator", ImmutableMap.of(), 0, "",
-        null, ImmutableMap.of());
+        null, ImmutableMap.of(), automationClient);
     SecretSeriesAndContent newSecret = secretDAO.getSecretById(newId).get();
 
     assertThat(secretDAO.getSecretByName(name)).isPresent();
@@ -506,7 +512,7 @@ public class SecretDAOTest {
   }
 
   @Test public void getSecrets() {
-    assertThat(secretDAO.getSecrets(null, null, null, null, null)).containsOnly(secret1, secret2b);
+    assertThat(secretDAO.getSecrets(null, null, null, null, null, automationClient)).containsOnly(secret1, secret2b);
   }
 
   @Test public void getSecretsByNameOnly() {
@@ -518,7 +524,7 @@ public class SecretDAOTest {
   @Test public void deleteSecretsByName() {
     secretDAO.createSecret("toBeDeleted_deleteSecretsByName", null, "encryptedShhh",
         cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
-        ImmutableMap.of(), 0, "", null, null);
+        ImmutableMap.of(), 0, "", null, null, automationClient);
 
     secretDAO.deleteSecretsByName("toBeDeleted_deleteSecretsByName");
 
@@ -530,7 +536,7 @@ public class SecretDAOTest {
   @Test public void deleteSecretsByNameAndRecreate() {
     secretDAO.createSecret("toBeDeletedAndReplaced", null, "encryptedShhh",
         cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
-        ImmutableMap.of(), 0, "", null, null);
+        ImmutableMap.of(), 0, "", null, null, automationClient);
 
     secretDAO.deleteSecretsByName("toBeDeletedAndReplaced");
 
@@ -539,7 +545,7 @@ public class SecretDAOTest {
 
     secretDAO.createSecret("toBeDeletedAndReplaced", null, "secretsgohere",
         cryptographer.computeHmac("secretsgohere".getBytes(UTF_8), "hmackey"), "creator",
-        ImmutableMap.of(), 0, "", null, null);
+        ImmutableMap.of(), 0, "", null, null, automationClient);
     secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
     assertThat(secret).isPresent();
   }
@@ -547,7 +553,7 @@ public class SecretDAOTest {
   @Test public void deleteSecretsByNameAndRecreateWithUpdate() {
     secretDAO.createSecret("toBeDeletedAndReplaced", null, "encryptedShhh",
         cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
-        ImmutableMap.of(), 0, "", null, null);
+        ImmutableMap.of(), 0, "", null, null, automationClient);
 
     secretDAO.deleteSecretsByName("toBeDeletedAndReplaced");
 
@@ -556,7 +562,7 @@ public class SecretDAOTest {
 
     secretDAO.createOrUpdateSecret("toBeDeletedAndReplaced", null, "secretsgohere",
         cryptographer.computeHmac("secretsgohere".getBytes(UTF_8), "hmackey"), "creator",
-        ImmutableMap.of(), 0, "", null, null);
+        ImmutableMap.of(), 0, "", null, null, automationClient);
     secret = secretDAO.getSecretByName("toBeDeletedAndReplaced");
     assertThat(secret).isPresent();
 
@@ -570,12 +576,12 @@ public class SecretDAOTest {
   @Test public void undeleteSecret() {
     secretDAO.createSecret("toBeDeletedAndUndeleted", null, "encryptedShhh",
         cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
-        ImmutableMap.of(), 0, "", null, null);
+        ImmutableMap.of(), 0, "", null, null, automationClient);
 
     //Update secret so that there will be a new secrets content
     secretDAO.createOrUpdateSecret("toBeDeletedAndUndeleted", null, "secretsgohere",
         cryptographer.computeHmac("secretsgohere".getBytes(UTF_8), "hmackey"), "creator",
-        ImmutableMap.of(), 0, "", null, null);
+        ImmutableMap.of(), 0, "", null, null, automationClient);
 
     secretDAO.deleteSecretsByName("toBeDeletedAndUndeleted");
 
@@ -584,7 +590,7 @@ public class SecretDAOTest {
 
     secretDAO.createSecret("toBeDeletedAndUndeleted", null, "blah",
         cryptographer.computeHmac("blah".getBytes(UTF_8), "hmackey"), "creator",
-        ImmutableMap.of(), 0, "", null, null);
+        ImmutableMap.of(), 0, "", null, null, automationClient);
 
     secretDAO.deleteSecretsByName("toBeDeletedAndUndeleted");
 
@@ -628,12 +634,12 @@ public class SecretDAOTest {
   @Test public void undeleteSecretWithExistingSecretHavingDeletedName() {
     secretDAO.createSecret("toBeDeletedAndUndeleted", null, "encryptedShhh",
         cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
-        ImmutableMap.of(), 0, "", null, null);
+        ImmutableMap.of(), 0, "", null, null, automationClient);
 
     //Update secret so that there will be a new secrets content
     secretDAO.createOrUpdateSecret("toBeDeletedAndUndeleted", null, "secretsgohere",
         cryptographer.computeHmac("secretsgohere".getBytes(UTF_8), "hmackey"), "creator",
-        ImmutableMap.of(), 0, "", null, null);
+        ImmutableMap.of(), 0, "", null, null, automationClient);
 
     secretDAO.deleteSecretsByName("toBeDeletedAndUndeleted");
 
@@ -642,7 +648,7 @@ public class SecretDAOTest {
 
     secretDAO.createSecret("toBeDeletedAndUndeleted", null, "blah",
         cryptographer.computeHmac("blah".getBytes(UTF_8), "hmackey"), "creator",
-        ImmutableMap.of(), 0, "", null, null);
+        ImmutableMap.of(), 0, "", null, null, automationClient);
 
     secretDAO.deleteSecretsByName("toBeDeletedAndUndeleted");
 
@@ -652,7 +658,7 @@ public class SecretDAOTest {
     //Don't delete this secret so that when undeleting undeleteSecret1 later, we have to rename undeleteSecret1
     secretDAO.createSecret("toBeDeletedAndUndeleted", null, "blah",
         cryptographer.computeHmac("blah".getBytes(UTF_8), "hmackey"), "creator",
-        ImmutableMap.of(), 0, "", null, null);
+        ImmutableMap.of(), 0, "", null, null, automationClient);
 
     Optional<SecretSeriesAndContent> undeleteSecret3 = secretDAO.getSecretByName("toBeDeletedAndUndeleted");
     assertThat(undeleteSecret3).isPresent();
@@ -704,7 +710,7 @@ public class SecretDAOTest {
     long secretId =
         secretDAO.createSecret("toBeRenamed_renameSecretByIdName", null, "encryptedShhh",
         cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
-        ImmutableMap.of(), 0, "", null, null);
+        ImmutableMap.of(), 0, "", null, null, automationClient);
 
     Optional<SecretSeriesAndContent> secret = secretDAO.getSecretById(secretId);
     assertThat(secret.get().series().name()).isEqualTo("toBeRenamed_renameSecretByIdName");
@@ -718,7 +724,7 @@ public class SecretDAOTest {
     long secret2Id =
         secretDAO.createSecret("toBeRenamed_renameSecretByIdName2", null, "encryptedShhh",
             cryptographer.computeHmac("encryptedShhh".getBytes(UTF_8), "hmackey"), "creator",
-            ImmutableMap.of(), 0, "", null, null);
+            ImmutableMap.of(), 0, "", null, null, automationClient);
 
     assertThatThrownBy(() -> secretDAO.renameSecretById(secret2Id,
         "newName", "creator"))
@@ -856,7 +862,8 @@ public class SecretDAOTest {
         0,
         "description",
         null,
-        null);
+        null,
+        automationClient);
   }
 
   private long createOrUpdateSecretWithOwner(String ownerName) {
@@ -874,7 +881,8 @@ public class SecretDAOTest {
         0,
         "description",
         null,
-        null);
+        null,
+        automationClient);
   }
 
   private static String randomName() {
