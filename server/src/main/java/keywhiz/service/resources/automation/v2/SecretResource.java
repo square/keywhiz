@@ -135,7 +135,7 @@ public class SecretResource {
 
     Secret secret;
     try {
-      secret = builder.create();
+      secret = builder.create(automationClient);
     } catch (DataAccessException e) {
       logger.info(format("Cannot create secret %s", name), e);
       throw new ConflictException(format("Cannot create secret %s.", name));
@@ -181,7 +181,7 @@ public class SecretResource {
         .withMetadata(request.metadata())
         .withType(request.type());
 
-    builder.createOrUpdate();
+    builder.createOrUpdate(automationClient);
 
     Map<String, String> extraInfo = new HashMap<>();
     if (request.description() != null) {
@@ -269,11 +269,11 @@ public class SecretResource {
         throw new BadRequestException(
             "Index and num must both be positive when retrieving batched secrets!");
       }
-      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst).stream()
+      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst, automationClient).stream()
           .map(SanitizedSecret::name)
           .collect(toList());
     }
-    return secretControllerReadOnly.getSanitizedSecrets(null, null).stream()
+    return secretControllerReadOnly.getSanitizedSecrets(null, null, automationClient).stream()
         .map(SanitizedSecret::name)
         .collect(toSet());
   }
@@ -301,9 +301,9 @@ public class SecretResource {
         throw new BadRequestException(
             "Index and num must both be positive when retrieving batched secrets!");
       }
-      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst);
+      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst, automationClient);
     }
-    return secretControllerReadOnly.getSanitizedSecrets(null, null);
+    return secretControllerReadOnly.getSanitizedSecrets(null, null, automationClient);
   }
 
   /**
@@ -749,7 +749,7 @@ public class SecretResource {
     // Get the groups for this secret so they can be restored manually if necessary
     Set<String> groups = aclDAO.getGroupsFor(secret).stream().map(Group::getName).collect(toSet());
 
-    secretDAO.deleteSecretsByName(name);
+    secretDAO.deleteSecretsByName(name, automationClient);
 
     // Record the deletion in the audit log
     Map<String, String> extraInfo = new HashMap<>();

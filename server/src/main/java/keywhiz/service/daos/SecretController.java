@@ -108,6 +108,12 @@ public class SecretController {
         .collect(toList());
   }
 
+  public List<SanitizedSecret> getSanitizedSecrets(@Nullable Long expireMaxTime, @Nullable Group group, Object principal) {
+    return secretDAO.getSecrets(expireMaxTime, group, null, null, null, principal).stream()
+        .map(SanitizedSecret::fromSecretSeriesAndContent)
+        .collect(toList());
+  }
+
   /**
    * @param expireMaxTime timestamp for farthest expiry to include
    * @return all existing sanitized secrets and their groups matching criteria.
@@ -207,6 +213,14 @@ public class SecretController {
     checkArgument(idx >= 0, "Index must be positive when getting batched secret names!");
     checkArgument(num >= 0, "Num must be positive when getting batched secret names!");
     return secretDAO.getSecretsBatched(idx, num, newestFirst).stream()
+        .map(SanitizedSecret::fromSecretSeriesAndContent)
+        .collect(toList());
+  }
+
+  public List<SanitizedSecret> getSecretsBatched(int idx, int num, boolean newestFirst, Object principal) {
+    checkArgument(idx >= 0, "Index must be positive when getting batched secret names!");
+    checkArgument(num >= 0, "Num must be positive when getting batched secret names!");
+    return secretDAO.getSecretsBatched(idx, num, newestFirst, principal).stream()
         .map(SanitizedSecret::fromSecretSeriesAndContent)
         .collect(toList());
   }
@@ -334,6 +348,22 @@ public class SecretController {
         return transformer.transform(secretDAO.getSecretByName(name).get());
     }
 
+    public Secret create(Object principal) {
+      secretDAO.createSecret(
+          name,
+          ownerName,
+          encryptedSecret,
+          hmac,
+          creator,
+          metadata,
+          expiry,
+          description,
+          type,
+          generationOptions,
+          principal);
+      return transformer.transform(secretDAO.getSecretByName(name, principal).get());
+    }
+
     public Secret createOrUpdate() {
       secretDAO.createOrUpdateSecret(
           name,
@@ -347,6 +377,22 @@ public class SecretController {
           type,
           generationOptions);
       return transformer.transform(secretDAO.getSecretByName(name).get());
+    }
+
+    public Secret createOrUpdate(Object principal) {
+      secretDAO.createOrUpdateSecret(
+          name,
+          ownerName,
+          encryptedSecret,
+          hmac,
+          creator,
+          metadata,
+          expiry,
+          description,
+          type,
+          generationOptions,
+          principal);
+      return transformer.transform(secretDAO.getSecretByName(name, principal).get());
     }
   }
 }
