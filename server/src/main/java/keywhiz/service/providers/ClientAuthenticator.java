@@ -71,9 +71,10 @@ public class ClientAuthenticator {
           ? possibleClientSpiffeId.get().toString()
           : "";
       logger.info(
-          "Authenticating principal with possible client name %s and possible SPIFFE ID %s",
-          possibleClientName.orElse(""),
-          spiffeIdString);
+          String.format(
+              "Authenticating principal with possible client name %s and possible SPIFFE ID %s",
+              possibleClientName.orElse(""),
+              spiffeIdString));
     }
 
     Optional<Client> possibleClientFromName = possibleClientName.flatMap((name) -> {
