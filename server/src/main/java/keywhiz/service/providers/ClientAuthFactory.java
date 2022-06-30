@@ -116,11 +116,16 @@ public class ClientAuthFactory {
    */
   public Client provide(ContainerRequest containerRequest,
       HttpServletRequest httpServletRequest) {
-    return trace("ClientAuthFactory.provide", () -> {
-      Client client = doProvide(containerRequest, httpServletRequest);
-      setTag("authenticatedClient", client.getName());
-      return client;
-    });
+    try {
+      return trace("ClientAuthFactory.provide", () -> {
+        Client client = doProvide(containerRequest, httpServletRequest);
+        setTag("authenticatedClient", client.getName());
+        return client;
+      });
+    } catch (Exception e) {
+      logger.error("Unable to authenticate client", e);
+      throw e;
+    }
   }
 
   private Client doProvide(ContainerRequest containerRequest,
