@@ -66,6 +66,16 @@ public class ClientAuthenticator {
     Optional<String> possibleClientName = getClientName(principal);
     Optional<URI> possibleClientSpiffeId = getSpiffeId(principal);
 
+    {
+      String spiffeIdString = possibleClientSpiffeId.isPresent()
+          ? possibleClientSpiffeId.get().toString()
+          : "";
+      logger.info(
+          "Authenticating principal with possible client name %s and possible SPIFFE ID %s",
+          possibleClientName.orElse(""),
+          spiffeIdString);
+    }
+
     Optional<Client> possibleClientFromName = possibleClientName.flatMap((name) -> {
       if (clientAuthConfig.typeConfig().useCommonName()) {
         return clientDAOReadOnly.getClientByName(name);
