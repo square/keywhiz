@@ -174,7 +174,7 @@ public class SecretDAO {
       @Nullable String type,
       @Nullable Map<String, String> generationOptions,
       Object principal) {
-    permissionCheck.checkAllowedOrThrow(principal, Action.ADD);
+    permissionCheck.checkAllowedOrThrow(principal, Action.CREATE);
 
     return createSecret(name, ownerName, encryptedSecret, hmac, creator, metadata, expiry, description, type, generationOptions);
   }

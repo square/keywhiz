@@ -47,6 +47,7 @@ import javax.ws.rs.NotFoundException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 import java.util.Optional;
+import org.mockito.Spy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
@@ -56,6 +57,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.doThrow;
 
 @RunWith(KeywhizTestRunner.class)
 public class SecretDAOTest {
@@ -65,7 +67,7 @@ public class SecretDAOTest {
 
   @Inject private DSLContext jooqContext;
   @Inject private ObjectMapper objectMapper;
-  @Inject @Readwrite private SecretDAO secretDAO;
+  @Spy @Inject @Readwrite private SecretDAO secretDAO;
   @Inject @Readwrite private GroupDAO groupDAO;
   @Inject private RowHmacGenerator rowHmacGenerator;
 
@@ -840,38 +842,6 @@ public class SecretDAOTest {
     assertThat(response).contains(secret2b);
   }
 
-  // Testing that permission checks are called with overloaded methods
-
-  @Test public void createSecretThrowsExceptionWithUnauthorizedPrincipal() {
-    assertThatThrownBy(() -> createSecretWithPrincipal("Unauthorized principal"))
-        .isInstanceOf(RuntimeException.class);
-  }
-
-  @Test public void createOrUpdateSecretThrowsExceptionWithUnauthorizedPrincipal() {
-    assertThatThrownBy(() -> createOrUpdateSecretWithPrincipal("Unauthorized principal"))
-        .isInstanceOf(RuntimeException.class);
-  }
-
-  @Test public void getSecretByNameThrowsExceptionWithUnauthorizedPrincipal() {
-    assertThatThrownBy(() -> secretDAO.getSecretByName(randomName(), "Unauthorized principal"))
-        .isInstanceOf(RuntimeException.class);
-  }
-
-  @Test public void getSecretsThrowsExceptionWithUnauthorizedPrincipal() {
-    assertThatThrownBy(() -> secretDAO.getSecrets(null, null, null,
-        null, null, "Unauthorized principal")).isInstanceOf(RuntimeException.class);
-  }
-
-  @Test public void getSecretsBatchedThrowsExceptionWithUnauthorizedPrincipal() {
-    assertThatThrownBy(() -> secretDAO.getSecretsBatched(0, 0, false,
-        "Unauthorized principal")).isInstanceOf(RuntimeException.class);
-  }
-
-  @Test public void deleteSecretsByNameThrowsExceptionWithUnauthorizedPrincipal() {
-    assertThatThrownBy(() -> secretDAO.deleteSecretsByName(randomName(), "Unauthorized principal"))
-        .isInstanceOf(RuntimeException.class);
-  }
-
   private String createGroup() {
     String name = randomName();
     groupDAO.createGroup(name, "creator", "description", NO_METADATA);
@@ -908,36 +878,6 @@ public class SecretDAOTest {
         "description",
         null,
         null);
-  }
-
-  private long createSecretWithPrincipal(Object principal) {
-    return secretDAO.createSecret(
-        randomName(),
-        randomName(),
-        "encryptedSecret",
-        "hmac",
-        "creator",
-        NO_METADATA,
-        0,
-        "description",
-        null,
-        null,
-        principal);
-  }
-
-  private long createOrUpdateSecretWithPrincipal(Object principal) {
-    return secretDAO.createOrUpdateSecret(
-        randomName(),
-        randomName(),
-        "encryptedSecret",
-        "hmac",
-        "creator",
-        NO_METADATA,
-        0,
-        "description",
-        null,
-        null,
-        principal);
   }
 
   private static String randomName() {
