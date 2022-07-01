@@ -32,6 +32,7 @@ import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
 import keywhiz.service.crypto.RowHmacGenerator;
 import keywhiz.service.exceptions.ConflictException;
+import keywhiz.service.permissions.Action;
 import org.joda.time.DateTime;
 import org.jooq.DSLContext;
 import org.jooq.Table;
@@ -839,6 +840,38 @@ public class SecretDAOTest {
     assertThat(response).contains(secret2b);
   }
 
+  // Testing that permission checks are called with overloaded methods
+
+  @Test public void createSecretThrowsExceptionWithUnauthorizedPrincipal() {
+    assertThatThrownBy(() -> createSecretWithPrincipal("Unauthorized principal"))
+        .isInstanceOf(RuntimeException.class);
+  }
+
+  @Test public void createOrUpdateSecretThrowsExceptionWithUnauthorizedPrincipal() {
+    assertThatThrownBy(() -> createOrUpdateSecretWithPrincipal("Unauthorized principal"))
+        .isInstanceOf(RuntimeException.class);
+  }
+
+  @Test public void getSecretByNameThrowsExceptionWithUnauthorizedPrincipal() {
+    assertThatThrownBy(() -> secretDAO.getSecretByName(randomName(), "Unauthorized principal"))
+        .isInstanceOf(RuntimeException.class);
+  }
+
+  @Test public void getSecretsThrowsExceptionWithUnauthorizedPrincipal() {
+    assertThatThrownBy(() -> secretDAO.getSecrets(null, null, null,
+        null, null, "Unauthorized principal")).isInstanceOf(RuntimeException.class);
+  }
+
+  @Test public void getSecretsBatchedThrowsExceptionWithUnauthorizedPrincipal() {
+    assertThatThrownBy(() -> secretDAO.getSecretsBatched(0, 0, false,
+        "Unauthorized principal")).isInstanceOf(RuntimeException.class);
+  }
+
+  @Test public void deleteSecretsByNameThrowsExceptionWithUnauthorizedPrincipal() {
+    assertThatThrownBy(() -> secretDAO.deleteSecretsByName(randomName(), "Unauthorized principal"))
+        .isInstanceOf(RuntimeException.class);
+  }
+
   private String createGroup() {
     String name = randomName();
     groupDAO.createGroup(name, "creator", "description", NO_METADATA);
@@ -875,6 +908,36 @@ public class SecretDAOTest {
         "description",
         null,
         null);
+  }
+
+  private long createSecretWithPrincipal(Object principal) {
+    return secretDAO.createSecret(
+        randomName(),
+        randomName(),
+        "encryptedSecret",
+        "hmac",
+        "creator",
+        NO_METADATA,
+        0,
+        "description",
+        null,
+        null,
+        principal);
+  }
+
+  private long createOrUpdateSecretWithPrincipal(Object principal) {
+    return secretDAO.createOrUpdateSecret(
+        randomName(),
+        randomName(),
+        "encryptedSecret",
+        "hmac",
+        "creator",
+        NO_METADATA,
+        0,
+        "description",
+        null,
+        null,
+        principal);
   }
 
   private static String randomName() {
