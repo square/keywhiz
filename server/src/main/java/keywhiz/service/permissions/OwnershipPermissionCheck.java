@@ -6,6 +6,8 @@ import java.util.Set;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretSeries;
+import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.service.daos.AclDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +30,17 @@ public class OwnershipPermissionCheck implements PermissionCheck{
   public boolean isAllowed(Object source, String action, Object target) {
     boolean hasPermission = false;
 
-    if (isClient(source) && isSecret(target)) {
+    if (isClient(source)) {
       Set<Group> clientGroups = aclDAO.getGroupsFor((Client) source);
-      String secretOwner = ((Secret) target).getOwner();
+
+      String secretOwner = null;
+      if (target instanceof Secret) {
+        secretOwner = ((Secret) target).getOwner();
+      } else if (target instanceof SecretSeries) {
+        secretOwner = ((SecretSeries) target).owner();
+      } else if (target instanceof SecretSeriesAndContent) {
+        secretOwner = ((SecretSeriesAndContent) target).series().owner();
+      }
 
       for (Group group : clientGroups) {
         if (group.getName().equals(secretOwner)) {
@@ -51,10 +61,6 @@ public class OwnershipPermissionCheck implements PermissionCheck{
 
   private boolean isClient(Object source) {
     return source instanceof Client;
-  }
-
-  private boolean isSecret(Object target) {
-    return target instanceof Secret;
   }
 
   private void emitHistogramMetrics(Boolean isPermitted) {
