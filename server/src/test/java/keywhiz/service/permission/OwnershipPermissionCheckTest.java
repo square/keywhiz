@@ -1,12 +1,16 @@
 package keywhiz.service.permission;
 
 import com.codahale.metrics.MetricRegistry;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Base64;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretContent;
+import keywhiz.api.model.SecretSeries;
+import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.permissions.Action;
@@ -41,6 +45,11 @@ public class OwnershipPermissionCheckTest {
   private static final Secret SECRET_WITHOUT_OWNER = new Secret(1, "secret.without.owner", null, null,
       ENCRYPTED_SECRET, "checksum", NOW, null, NOW, null,
       null, null, null, 0, null, null, null);
+  private static final SecretSeries SECRET_SERIES = SecretSeries.of(0, "secret.series.with.owner", "owner",
+      null, ApiDate.now(), null, ApiDate.now(), null, null, null, null);
+  private static final SecretContent SECRET_CONTENT = SecretContent.of(0, 0, "content", "hmac",
+      ApiDate.now(), null, ApiDate.now(), null, ImmutableMap.of(), 0);
+  private static final SecretSeriesAndContent SECRET_SERIES_AND_CONTENT = SecretSeriesAndContent.of(SECRET_SERIES, SECRET_CONTENT);
 
   private static final Client CLIENT = new Client(0, "client", null, null, null,
       null, null, null, null, null, false, true);
@@ -124,6 +133,26 @@ public class OwnershipPermissionCheckTest {
   }
 
   @Test
+  public void testIsAllowedWhenClientBelongsToSecretSeriesOwnerGroup() {
+    when(aclDAO.getGroupsFor(CLIENT)).thenReturn(ImmutableSet.of(NOT_SECRET_OWNER_GROUP, SECRET_OWNER_GROUP));
+
+    boolean permitted = ownershipPermissionCheck.isAllowed(CLIENT, Action.CREATE, SECRET_SERIES);
+
+    assertThat(permitted).isTrue();
+    checkCorrectMetrics(1);
+  }
+
+  @Test
+  public void testIsAllowedWhenClientBelongsToSecretSeriesAndContentOwnerGroup() {
+    when(aclDAO.getGroupsFor(CLIENT)).thenReturn(ImmutableSet.of(NOT_SECRET_OWNER_GROUP, SECRET_OWNER_GROUP));
+
+    boolean permitted = ownershipPermissionCheck.isAllowed(CLIENT, Action.CREATE, SECRET_SERIES_AND_CONTENT);
+
+    assertThat(permitted).isTrue();
+    checkCorrectMetrics(1);
+  }
+
+  @Test
   public void testCheckAllowedOrThrowWhenSourceIsNotAClient() {
     assertThatThrownBy(() -> ownershipPermissionCheck.checkAllowedOrThrow(USER, Action.CREATE, SECRET_WITH_OWNER)).
         isInstanceOf(RuntimeException.class);
@@ -182,6 +211,24 @@ public class OwnershipPermissionCheckTest {
     when(aclDAO.getGroupsFor(CLIENT)).thenReturn(ImmutableSet.of(NOT_SECRET_OWNER_GROUP, SECRET_OWNER_GROUP));
 
     ownershipPermissionCheck.checkAllowedOrThrow(CLIENT, Action.CREATE, SECRET_WITH_OWNER);
+
+    checkCorrectMetrics(1);
+  }
+
+  @Test
+  public void testCheckAllowedOrThrowWhenClientBelongsToSecretSeriesOwnerGroup() {
+    when(aclDAO.getGroupsFor(CLIENT)).thenReturn(ImmutableSet.of(NOT_SECRET_OWNER_GROUP, SECRET_OWNER_GROUP));
+
+    ownershipPermissionCheck.checkAllowedOrThrow(CLIENT, Action.CREATE, SECRET_SERIES);
+
+    checkCorrectMetrics(1);
+  }
+
+  @Test
+  public void testCheckAllowedOrThrowWhenClientBelongsToSecretSeriesAndContentOwnerGroup() {
+    when(aclDAO.getGroupsFor(CLIENT)).thenReturn(ImmutableSet.of(NOT_SECRET_OWNER_GROUP, SECRET_OWNER_GROUP));
+
+    ownershipPermissionCheck.checkAllowedOrThrow(CLIENT, Action.CREATE, SECRET_SERIES_AND_CONTENT);
 
     checkCorrectMetrics(1);
   }
