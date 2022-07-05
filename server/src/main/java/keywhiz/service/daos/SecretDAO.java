@@ -34,6 +34,8 @@ import keywhiz.service.crypto.ContentEncodingException;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
+import keywhiz.service.permissions.Action;
+import keywhiz.service.permissions.PermissionCheck;
 import org.joda.time.DateTime;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
@@ -71,6 +73,7 @@ public class SecretDAO {
   private final SecretSeriesDAOFactory secretSeriesDAOFactory;
   private final GroupDAO.GroupDAOFactory groupDAOFactory;
   private final ContentCryptographer cryptographer;
+  private final PermissionCheck permissionCheck;
 
   // this is the maximum length of a secret name, so that it will still fit in the 255 char limit
   // of the database field if it is deleted and auto-renamed
@@ -85,12 +88,14 @@ public class SecretDAO {
       SecretContentDAOFactory secretContentDAOFactory,
       SecretSeriesDAOFactory secretSeriesDAOFactory,
       GroupDAO.GroupDAOFactory groupDAOFactory,
-      ContentCryptographer cryptographer) {
+      ContentCryptographer cryptographer,
+      PermissionCheck permissionCheck) {
     this.dslContext = dslContext;
     this.secretContentDAOFactory = secretContentDAOFactory;
     this.secretSeriesDAOFactory = secretSeriesDAOFactory;
     this.groupDAOFactory = groupDAOFactory;
     this.cryptographer = cryptographer;
+    this.permissionCheck = permissionCheck;
   }
 
   @VisibleForTesting
@@ -157,6 +162,23 @@ public class SecretDAO {
     });
   }
 
+  public long createSecret(
+      String name,
+      String ownerName,
+      String encryptedSecret,
+      String hmac,
+      String creator,
+      Map<String, String> metadata,
+      long expiry,
+      String description,
+      @Nullable String type,
+      @Nullable Map<String, String> generationOptions,
+      Object principal) {
+    permissionCheck.checkAllowedOrThrow(principal, Action.CREATE);
+
+    return createSecret(name, ownerName, encryptedSecret, hmac, creator, metadata, expiry, description, type, generationOptions);
+  }
+
   @VisibleForTesting
   public long createOrUpdateSecret(
       String name,
@@ -214,6 +236,29 @@ public class SecretDAO {
 
       return secretId;
     });
+  }
+
+  public long createOrUpdateSecret(
+      String name,
+      String owner,
+      String encryptedSecret,
+      String hmac,
+      String creator,
+      Map<String, String> metadata,
+      long expiry,
+      String description,
+      @Nullable String type,
+      @Nullable Map<String, String> generationOptions,
+      Object principal) {
+    Optional<SecretSeries> maybeSecretSeries = secretSeriesDAOFactory.using(dslContext.configuration())
+        .getSecretSeriesByName(name);
+    if (maybeSecretSeries.isPresent()) {
+      permissionCheck.checkAllowedOrThrow(principal, Action.UPDATE, maybeSecretSeries.get());
+    } else {
+      permissionCheck.checkAllowedOrThrow(principal, Action.CREATE);
+    }
+
+    return createOrUpdateSecret(name, owner, encryptedSecret, hmac, creator, metadata, expiry, description, type, generationOptions);
   }
 
   @VisibleForTesting
@@ -359,6 +404,14 @@ public class SecretDAO {
     return Optional.empty();
   }
 
+  public Optional<SecretSeriesAndContent> getSecretByName(String name, Object principal) {
+    Optional<SecretSeries> maybeSecretSeries = secretSeriesDAOFactory.using(dslContext.configuration())
+        .getSecretSeriesByName(name);
+    permissionCheck.checkAllowedOrThrow(principal, Action.READ, maybeSecretSeries.orElse(null));
+
+    return getSecretByName(name);
+  }
+
   /**
    * @param names of secrets series to look up secrets by.
    * @return Secrets matching input parameters.
@@ -419,6 +472,14 @@ public class SecretDAO {
     });
   }
 
+  public ImmutableList<SecretSeriesAndContent> getSecrets(@Nullable Long expireMaxTime,
+      @Nullable Group group, @Nullable Long expireMinTime, @Nullable String minName,
+      @Nullable Integer limit, Object principal) {
+    permissionCheck.checkAllowedOrThrow(principal, Action.READ);
+
+    return getSecrets(expireMaxTime, group, expireMinTime, minName, limit);
+  }
+
   /**
    * @return A list of id, name
    */
@@ -454,6 +515,13 @@ public class SecretDAO {
 
       return secretsBuilder.build();
     });
+  }
+
+  public ImmutableList<SecretSeriesAndContent> getSecretsBatched(int idx, int num,
+      boolean newestFirst, Object principal) {
+      permissionCheck.checkAllowedOrThrow(principal, Action.READ);
+
+      return getSecretsBatched(idx, num, newestFirst);
   }
 
   /**
@@ -558,6 +626,14 @@ public class SecretDAO {
 
     secretSeriesDAOFactory.using(dslContext.configuration())
         .deleteSecretSeriesByName(name);
+  }
+
+  public void deleteSecretsByName(String name, Object principal) {
+    Optional<SecretSeries> maybeSecretSeries = secretSeriesDAOFactory.using(dslContext.configuration())
+        .getSecretSeriesByName(name);
+    permissionCheck.checkAllowedOrThrow(principal, Action.DELETE, maybeSecretSeries.orElse(null));
+
+    deleteSecretsByName(name);
   }
 
   /**
@@ -668,6 +744,7 @@ public class SecretDAO {
     private final SecretSeriesDAOFactory secretSeriesDAOFactory;
     private final GroupDAO.GroupDAOFactory groupDAOFactory;
     private final ContentCryptographer cryptographer;
+    private final PermissionCheck permissionCheck;
 
     @Inject public SecretDAOFactory(
         DSLContext jooq,
@@ -675,13 +752,15 @@ public class SecretDAO {
         SecretContentDAOFactory secretContentDAOFactory,
         SecretSeriesDAOFactory secretSeriesDAOFactory,
         GroupDAO.GroupDAOFactory groupDAOFactory,
-        ContentCryptographer cryptographer) {
+        ContentCryptographer cryptographer,
+        PermissionCheck permissionCheck) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.secretContentDAOFactory = secretContentDAOFactory;
       this.secretSeriesDAOFactory = secretSeriesDAOFactory;
       this.groupDAOFactory = groupDAOFactory;
       this.cryptographer = cryptographer;
+      this.permissionCheck = permissionCheck;
     }
 
     @Override public SecretDAO readwrite() {
@@ -690,7 +769,8 @@ public class SecretDAO {
           secretContentDAOFactory,
           secretSeriesDAOFactory,
           groupDAOFactory,
-          cryptographer);
+          cryptographer,
+          permissionCheck);
     }
 
     @Override public SecretDAO readonly() {
@@ -699,7 +779,8 @@ public class SecretDAO {
           secretContentDAOFactory,
           secretSeriesDAOFactory,
           groupDAOFactory,
-          cryptographer);
+          cryptographer,
+          permissionCheck);
     }
 
     @Override public SecretDAO using(Configuration configuration) {
@@ -709,7 +790,8 @@ public class SecretDAO {
           secretContentDAOFactory,
           secretSeriesDAOFactory,
           groupDAOFactory,
-          cryptographer);
+          cryptographer,
+          permissionCheck);
     }
   }
 }
