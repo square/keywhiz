@@ -32,7 +32,6 @@ import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.CryptoFixtures;
 import keywhiz.service.crypto.RowHmacGenerator;
 import keywhiz.service.exceptions.ConflictException;
-import keywhiz.service.permissions.Action;
 import org.joda.time.DateTime;
 import org.jooq.DSLContext;
 import org.jooq.Table;
@@ -47,7 +46,6 @@ import javax.ws.rs.NotFoundException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 import java.util.Optional;
-import org.mockito.Spy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
@@ -57,7 +55,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.mockito.Mockito.doThrow;
 
 @RunWith(KeywhizTestRunner.class)
 public class SecretDAOTest {
@@ -67,7 +64,7 @@ public class SecretDAOTest {
 
   @Inject private DSLContext jooqContext;
   @Inject private ObjectMapper objectMapper;
-  @Spy @Inject @Readwrite private SecretDAO secretDAO;
+  @Inject @Readwrite private SecretDAO secretDAO;
   @Inject @Readwrite private GroupDAO groupDAO;
   @Inject private RowHmacGenerator rowHmacGenerator;
 
