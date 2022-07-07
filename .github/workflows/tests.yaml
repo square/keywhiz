@@ -1,0 +1,31 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: maven
+      - name: Fetch dependencies and run quick tests
+        run: mvn install -P container
+      - name: Set up MySQL
+        uses: samin/mysql-action@v1.3
+        with:
+          mysql version: '5.7'
+      - name: Run tests with Maven
+        run:  |
+          export CI_BRANCH=${BRANCH_NAME_OR_REF#refs/heads/}
+          export CI_PULL_REQUEST=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+          mvn test jacoco:report coveralls:report -B -q -DrepoToken=$COVERALLS_SECRET
+        env:
+          CI_NAME: github
+          BRANCH_NAME_OR_REF: ${{ github.head_ref || github.ref }}
+          CI_BUILD_NUMBER: ${{ github.run_id }}
+          CI_BUILD_URL: https://github.com/${{ github.repository }}/commit/${{ github.event.after }}/checks
+          COVERALLS_SECRET: ${{ secrets.GITHUB_TOKEN }}
