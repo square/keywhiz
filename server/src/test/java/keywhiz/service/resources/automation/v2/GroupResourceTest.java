@@ -34,6 +34,7 @@ import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static keywhiz.TestClients.clientRequest;
 import static keywhiz.client.KeywhizClient.JSON;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 public class GroupResourceTest {
   private static final ObjectMapper mapper = KeywhizService.customizeObjectMapper(Jackson.newObjectMapper());
@@ -127,6 +128,27 @@ public class GroupResourceTest {
     assertThat(groupNames.contains("secondGroup"));
   }
 
+  @Test public void ownedSecretsWithGroupsForGroup() throws Exception {
+    // Sample group
+    create(CreateGroupRequestV2.builder().name("groupWithSharedSecrets").description("desc").build());
+    create(CreateGroupRequestV2.builder().name("secondGroup").description("desc").build());
+
+    // Sample secret
+    createSecret("groupWithSharedSecrets", "shared-secret", "groupWithSharedSecrets");
+    assignSecret("secondGroup", "shared-secret");
+
+    Set<SanitizedSecretWithGroups> secrets = ownedSecretsInfoWithGroups("groupWithSharedSecrets");
+
+    SanitizedSecretWithGroups secretWithGroups = secrets.iterator().next();
+    assertEquals("shared-secret", secretWithGroups.secret().name());
+
+    Set<String> groupNames = secretWithGroups.groups()
+        .stream()
+        .map(Group::getName)
+        .collect(Collectors.toUnmodifiableSet());
+    assertEquals(Set.of("groupWithSharedSecrets", "secondGroup"), groupNames);
+  }
+
   @Test public void clientDetailForGroup() throws Exception {
     // Sample group
     create(CreateGroupRequestV2.builder().name("groupWithClients").description("desc").build());
@@ -172,13 +194,17 @@ public class GroupResourceTest {
     return response;
   }
 
-  private Response createSecret(String group, String secret) throws IOException {
+  private Response createSecret(String group, String secret, String owner) throws IOException {
     SecretResourceTest secretResourceTest = new SecretResourceTest();
     secretResourceTest.mutualSslClient = mutualSslClient;
     Response response = secretResourceTest.create(
-        CreateSecretRequestV2.builder().name(secret).content("test").groups(group).build());
+        CreateSecretRequestV2.builder().name(secret).content("test").groups(group).owner(owner).build());
     assertThat(response.code()).isEqualTo(201);
     return response;
+  }
+
+  private Response createSecret(String group, String secret) throws IOException {
+    return createSecret(group, secret, null);
   }
 
   private void assignSecret(String group, String secret) throws IOException {
@@ -210,6 +236,13 @@ public class GroupResourceTest {
 
   Set<SanitizedSecretWithGroups> secretsInfoWithGroups(String group) throws IOException {
     Request get = clientRequest("/automation/v2/groups/" + group + "/secretsandgroups").get().build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<Set<SanitizedSecretWithGroups>>(){});
+  }
+
+  Set<SanitizedSecretWithGroups> ownedSecretsInfoWithGroups(String group) throws IOException {
+    Request get = clientRequest("/automation/v2/groups/" + group + "/ownedsecretsandgroups").get().build();
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
     return mapper.readValue(httpResponse.body().byteStream(), new TypeReference<Set<SanitizedSecretWithGroups>>(){});

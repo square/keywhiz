@@ -225,6 +225,24 @@ public class AclDAO {
     });
   }
 
+  public ImmutableSet<SanitizedSecret> getOwnedSanitizedSecretsFor(Group group) {
+    checkNotNull(group);
+
+    ImmutableSet.Builder<SanitizedSecret> set = ImmutableSet.builder();
+
+    return dslContext.transactionResult(configuration -> {
+      SecretContentDAO secretContentDAO = secretContentDAOFactory.using(configuration);
+
+      for (SecretSeries series : getOwnedSecretSeriesFor(configuration, group)) {
+        SecretContent content = secretContentDAO.getSecretContentById(series.currentVersion().get()).get();
+        SecretSeriesAndContent seriesAndContent = SecretSeriesAndContent.of(series, content);
+        set.add(SanitizedSecret.fromSecretSeriesAndContent(seriesAndContent));
+      }
+
+      return set.build();
+    });
+  }
+
   public Set<Group> getGroupsFor(Secret secret) {
     List<Group> r = dslContext
         .select(GROUPS.fields())
@@ -541,6 +559,17 @@ public class AclDAO {
         .from(SECRETS)
         .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
         .join(GROUPS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
+        .where(GROUPS.NAME.eq(group.getName()).and(SECRETS.CURRENT.isNotNull()))
+        .fetchInto(SECRETS)
+        .map(secretSeriesMapper);
+    return ImmutableSet.copyOf(r);
+  }
+
+  protected ImmutableSet<SecretSeries> getOwnedSecretSeriesFor(Configuration configuration, Group group) {
+    List<SecretSeries> r = DSL.using(configuration)
+        .select(SECRETS.fields())
+        .from(SECRETS)
+        .join(GROUPS).on(GROUPS.ID.eq(SECRETS.OWNER))
         .where(GROUPS.NAME.eq(group.getName()).and(SECRETS.CURRENT.isNotNull()))
         .fetchInto(SECRETS)
         .map(secretSeriesMapper);
