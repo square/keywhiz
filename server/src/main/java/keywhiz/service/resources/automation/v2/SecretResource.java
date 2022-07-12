@@ -46,6 +46,7 @@ import keywhiz.api.model.SanitizedSecretWithGroupsListAndCursor;
 import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretRetrievalCursor;
+import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
@@ -63,6 +64,8 @@ import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
+import keywhiz.service.permissions.Action;
+import keywhiz.service.permissions.PermissionCheck;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,11 +93,12 @@ public class SecretResource {
   private final SecretSeriesDAO secretSeriesDAO;
   private final ContentCryptographer cryptographer;
   private final SecretController secretControllerReadOnly;
+  private final PermissionCheck permissionCheck;
 
   @Inject public SecretResource(SecretController secretController, AclDAOFactory aclDAOFactory,
       GroupDAOFactory groupDAOFactory, SecretDAOFactory secretDAOFactory, AuditLog auditLog,
       SecretSeriesDAOFactory secretSeriesDAOFactory, ContentCryptographer cryptographer,
-      @Readonly SecretController secretControllerReadOnly) {
+      @Readonly SecretController secretControllerReadOnly, PermissionCheck permissionCheck) {
     this.secretController = secretController;
     this.aclDAO = aclDAOFactory.readwrite();
     this.groupDAO = groupDAOFactory.readwrite();
@@ -103,6 +107,7 @@ public class SecretResource {
     this.secretSeriesDAO = secretSeriesDAOFactory.readwrite();
     this.cryptographer = cryptographer;
     this.secretControllerReadOnly = secretControllerReadOnly;
+    this.permissionCheck = permissionCheck;
   }
 
   /**
@@ -118,6 +123,8 @@ public class SecretResource {
   @Consumes(APPLICATION_JSON)
   public Response createSecret(@Auth AutomationClient automationClient,
       @Valid CreateSecretRequestV2 request) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.CREATE);
+
     // allows new version, return version in resulting path
     String name = request.name();
     String user = automationClient.getName();
@@ -135,7 +142,7 @@ public class SecretResource {
 
     Secret secret;
     try {
-      secret = builder.create(automationClient);
+      secret = builder.create();
     } catch (DataAccessException e) {
       logger.info(format("Cannot create secret %s", name), e);
       throw new ConflictException(format("Cannot create secret %s.", name));
@@ -175,13 +182,20 @@ public class SecretResource {
   public Response createOrUpdateSecret(@Auth AutomationClient automationClient,
       @PathParam("name") String name,
       @Valid CreateOrUpdateSecretRequestV2 request) {
+    Optional<SecretSeriesAndContent> maybeSecretSeriesAndContent = secretDAO.getSecretByName(name);
+    if (maybeSecretSeriesAndContent.isPresent()) {
+      permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, maybeSecretSeriesAndContent.get());
+    } else {
+      permissionCheck.checkAllowedOrThrow(automationClient, Action.CREATE);
+    }
+
     SecretBuilder builder = secretController
         .builder(name, request.content(), automationClient.getName(), request.expiry())
         .withDescription(request.description())
         .withMetadata(request.metadata())
         .withType(request.type());
 
-    builder.createOrUpdate(automationClient);
+    builder.createOrUpdate();
 
     Map<String, String> extraInfo = new HashMap<>();
     if (request.description() != null) {
@@ -208,6 +222,8 @@ public class SecretResource {
       @PathParam("newName") String newName) {
     SecretSeriesAndContent secret = secretDAO.getSecretByName(oldName)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, secret);
+
     secretDAO.renameSecretById(secret.series().id(), newName, automationClient.getName());
 
     UriBuilder uriBuilder = UriBuilder.fromResource(SecretResource.class).path(newName);
@@ -228,6 +244,10 @@ public class SecretResource {
   public Response partialUpdateSecret(@Auth AutomationClient automationClient,
       @PathParam("name") String name,
       @Valid PartialUpdateSecretRequestV2 request) {
+    SecretSeries secretSeries = secretSeriesDAO.getSecretSeriesByName(name).orElseThrow(
+        NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, secretSeries);
+
     secretDAO.partialUpdateSecret(name, automationClient.getName(), request);
 
     Map<String, String> extraInfo = new HashMap<>();
@@ -264,16 +284,18 @@ public class SecretResource {
   public Iterable<String> secretListing(@Auth AutomationClient automationClient,
       @QueryParam("idx") Integer idx, @QueryParam("num") Integer num,
       @DefaultValue("true") @QueryParam("newestFirst") boolean newestFirst) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+
     if (idx != null && num != null) {
       if (idx < 0 || num < 0) {
         throw new BadRequestException(
             "Index and num must both be positive when retrieving batched secrets!");
       }
-      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst, automationClient).stream()
+      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst).stream()
           .map(SanitizedSecret::name)
           .collect(toList());
     }
-    return secretControllerReadOnly.getSanitizedSecrets(null, null, automationClient).stream()
+    return secretControllerReadOnly.getSanitizedSecrets(null, null).stream()
         .map(SanitizedSecret::name)
         .collect(toSet());
   }
@@ -296,14 +318,16 @@ public class SecretResource {
   public Iterable<SanitizedSecret> secretListingV2(@Auth AutomationClient automationClient,
       @QueryParam("idx") Integer idx, @QueryParam("num") Integer num,
       @DefaultValue("true") @QueryParam("newestFirst") boolean newestFirst) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+
     if (idx != null && num != null) {
       if (idx < 0 || num < 0) {
         throw new BadRequestException(
             "Index and num must both be positive when retrieving batched secrets!");
       }
-      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst, automationClient);
+      return secretControllerReadOnly.getSecretsBatched(idx, num, newestFirst);
     }
-    return secretControllerReadOnly.getSanitizedSecrets(null, null, automationClient);
+    return secretControllerReadOnly.getSanitizedSecrets(null, null);
   }
 
   /**
@@ -318,6 +342,8 @@ public class SecretResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> secretListingExpiring(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+
     List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, null);
     return secrets.stream()
         .map(SanitizedSecret::name)
@@ -336,6 +362,8 @@ public class SecretResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<SanitizedSecret> secretListingExpiringV2(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+
     List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, null);
     return secrets;
   }
@@ -362,6 +390,8 @@ public class SecretResource {
   @Produces(APPLICATION_JSON)
   public Iterable<SanitizedSecretWithGroups> secretListingExpiringV3(@Auth AutomationClient automationClient,
       @PathParam("time") Long maxTime) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+
     return secretControllerReadOnly.getSanitizedSecretsWithGroups(maxTime);
   }
 
@@ -395,6 +425,8 @@ public class SecretResource {
       @QueryParam("maxTime") Long maxTime,
       @QueryParam("limit") Integer limit,
       @QueryParam("cursor") String cursor) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+
     SecretRetrievalCursor cursorDecoded = null;
     if (cursor != null) {
       cursorDecoded = SecretRetrievalCursor.fromUrlEncodedString(cursor);
@@ -418,6 +450,8 @@ public class SecretResource {
     }
 
     Secret secret = secretOptional.get();
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, secret);
+
     Optional<Instant> existingExpiry = Optional.empty();
     if (secret.getExpiry() > 0) {
       existingExpiry = Optional.of(Instant.ofEpochMilli(secret.getExpiry()*1000));
@@ -494,6 +528,8 @@ public class SecretResource {
     }
     logger.info("backfill-hmac {}: processing secret", name);
 
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, secret.get());
+
     SecretContent secretContent = secret.get().content();
     if (!secretContent.hmac().isEmpty()) {
       return true; // No need to backfill
@@ -516,6 +552,7 @@ public class SecretResource {
   public Iterable<String> secretListingExpiringForGroup(@Auth AutomationClient automationClient,
       @PathParam("time") Long time, @PathParam("name") String name) {
     Group group = groupDAO.getGroup(name).orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, group);
 
     List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, group);
     return secrets.stream()
@@ -539,6 +576,8 @@ public class SecretResource {
       @PathParam("name") String name) {
     SecretSeriesAndContent secret = secretDAO.getSecretByName(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, secret);
+
     return SecretDetailResponseV2.builder()
         .seriesAndContent(secret)
         .build();
@@ -558,8 +597,11 @@ public class SecretResource {
   @Produces(APPLICATION_JSON)
   public SanitizedSecret getSanitizedSecret(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
-    return SanitizedSecret.fromSecretSeriesAndContent(
-        secretDAO.getSecretByName(name).orElseThrow(NotFoundException::new));
+    SecretSeriesAndContent secretSeriesAndContent = secretDAO.getSecretByName(name)
+        .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, secretSeriesAndContent);
+
+    return SanitizedSecret.fromSecretSeriesAndContent(secretSeriesAndContent);
   }
 
   /**
@@ -588,6 +630,7 @@ public class SecretResource {
       if (!secret.isPresent()) {
         missingSecrets.add(secretName);
       } else {
+        permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, secret.get());
         successSecrets.put(secretName, secret.get().getSecret());
       }
     }
@@ -626,6 +669,10 @@ public class SecretResource {
   public Iterable<SecretDetailResponseV2> secretVersions(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @QueryParam("versionIdx") int versionIdx,
       @QueryParam("numVersions") int numVersions) {
+    Secret secret = secretControllerReadOnly.getSecretByName(name)
+        .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, secret);
+
     ImmutableList<SanitizedSecret> versions =
         secretDAO.getSecretVersionsByName(name, versionIdx, numVersions)
             .orElseThrow(NotFoundException::new);
@@ -652,6 +699,10 @@ public class SecretResource {
   @POST
   public Response resetSecretVersion(@Auth AutomationClient automationClient,
       @Valid SetSecretVersionRequestV2 request) {
+    SecretSeries secretSeries = secretSeriesDAO.getSecretSeriesByName(request.name()).orElseThrow(
+        NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, secretSeries);
+
     secretDAO.setCurrentSecretVersionByName(request.name(), request.version(),
         automationClient.getName());
 
@@ -682,6 +733,8 @@ public class SecretResource {
     // TODO: Use latest version instead of non-versioned
     Secret secret = secretControllerReadOnly.getSecretByName(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, secret);
+
     return aclDAO.getGroupsFor(secret).stream()
         .map(Group::getName)
         .collect(toSet());
@@ -706,6 +759,8 @@ public class SecretResource {
     // TODO: Use latest version instead of non-versioned
     Secret secret = secretController.getSecretByName(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, secret);
+
     String user = automationClient.getName();
 
     long secretId = secret.getId();
@@ -745,11 +800,12 @@ public class SecretResource {
   public Response deleteSecretSeries(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     Secret secret = secretController.getSecretByName(name).orElseThrow(() -> new NotFoundException("Secret series not found."));
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.DELETE, secret);
 
     // Get the groups for this secret so they can be restored manually if necessary
     Set<String> groups = aclDAO.getGroupsFor(secret).stream().map(Group::getName).collect(toSet());
 
-    secretDAO.deleteSecretsByName(name, automationClient);
+    secretDAO.deleteSecretsByName(name);
 
     // Record the deletion in the audit log
     Map<String, String> extraInfo = new HashMap<>();

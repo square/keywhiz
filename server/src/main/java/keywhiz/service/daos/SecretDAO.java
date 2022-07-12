@@ -162,23 +162,6 @@ public class SecretDAO {
     });
   }
 
-  public long createSecret(
-      String name,
-      String ownerName,
-      String encryptedSecret,
-      String hmac,
-      String creator,
-      Map<String, String> metadata,
-      long expiry,
-      String description,
-      @Nullable String type,
-      @Nullable Map<String, String> generationOptions,
-      Object principal) {
-    permissionCheck.checkAllowedOrThrow(principal, Action.CREATE);
-
-    return createSecret(name, ownerName, encryptedSecret, hmac, creator, metadata, expiry, description, type, generationOptions);
-  }
-
   @VisibleForTesting
   public long createOrUpdateSecret(
       String name,
@@ -236,29 +219,6 @@ public class SecretDAO {
 
       return secretId;
     });
-  }
-
-  public long createOrUpdateSecret(
-      String name,
-      String owner,
-      String encryptedSecret,
-      String hmac,
-      String creator,
-      Map<String, String> metadata,
-      long expiry,
-      String description,
-      @Nullable String type,
-      @Nullable Map<String, String> generationOptions,
-      Object principal) {
-    Optional<SecretSeries> maybeSecretSeries = secretSeriesDAOFactory.using(dslContext.configuration())
-        .getSecretSeriesByName(name);
-    if (maybeSecretSeries.isPresent()) {
-      permissionCheck.checkAllowedOrThrow(principal, Action.UPDATE, maybeSecretSeries.get());
-    } else {
-      permissionCheck.checkAllowedOrThrow(principal, Action.CREATE);
-    }
-
-    return createOrUpdateSecret(name, owner, encryptedSecret, hmac, creator, metadata, expiry, description, type, generationOptions);
   }
 
   @VisibleForTesting
@@ -404,14 +364,6 @@ public class SecretDAO {
     return Optional.empty();
   }
 
-  public Optional<SecretSeriesAndContent> getSecretByName(String name, Object principal) {
-    Optional<SecretSeries> maybeSecretSeries = secretSeriesDAOFactory.using(dslContext.configuration())
-        .getSecretSeriesByName(name);
-    permissionCheck.checkAllowedOrThrow(principal, Action.READ, maybeSecretSeries.orElse(null));
-
-    return getSecretByName(name);
-  }
-
   /**
    * @param names of secrets series to look up secrets by.
    * @return Secrets matching input parameters.
@@ -472,14 +424,6 @@ public class SecretDAO {
     });
   }
 
-  public ImmutableList<SecretSeriesAndContent> getSecrets(@Nullable Long expireMaxTime,
-      @Nullable Group group, @Nullable Long expireMinTime, @Nullable String minName,
-      @Nullable Integer limit, Object principal) {
-    permissionCheck.checkAllowedOrThrow(principal, Action.READ);
-
-    return getSecrets(expireMaxTime, group, expireMinTime, minName, limit);
-  }
-
   /**
    * @return A list of id, name
    */
@@ -515,13 +459,6 @@ public class SecretDAO {
 
       return secretsBuilder.build();
     });
-  }
-
-  public ImmutableList<SecretSeriesAndContent> getSecretsBatched(int idx, int num,
-      boolean newestFirst, Object principal) {
-      permissionCheck.checkAllowedOrThrow(principal, Action.READ);
-
-      return getSecretsBatched(idx, num, newestFirst);
   }
 
   /**
@@ -626,14 +563,6 @@ public class SecretDAO {
 
     secretSeriesDAOFactory.using(dslContext.configuration())
         .deleteSecretSeriesByName(name);
-  }
-
-  public void deleteSecretsByName(String name, Object principal) {
-    Optional<SecretSeries> maybeSecretSeries = secretSeriesDAOFactory.using(dslContext.configuration())
-        .getSecretSeriesByName(name);
-    permissionCheck.checkAllowedOrThrow(principal, Action.DELETE, maybeSecretSeries.orElse(null));
-
-    deleteSecretsByName(name);
   }
 
   /**
