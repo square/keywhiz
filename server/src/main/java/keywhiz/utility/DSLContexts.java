@@ -21,7 +21,7 @@ import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
-import org.jooq.conf.RenderNameStyle;
+import org.jooq.conf.RenderQuotedNames;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 
@@ -49,6 +49,6 @@ public class DSLContexts {
     return DSL.using(dataSource, dialect,
             new Settings()
                 .withRenderSchema(false)
-                .withRenderNameStyle(RenderNameStyle.AS_IS));
+                .withRenderQuotedNames(RenderQuotedNames.EXPLICIT_DEFAULT_QUOTED));
     }
 }
