@@ -2,6 +2,7 @@ package keywhiz.service.resources.automation.v2;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -15,6 +16,7 @@ import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
 import keywhiz.service.crypto.RowHmacGenerator;
+import keywhiz.service.permissions.PermissionCheck;
 import keywhiz.test.TestDSLContexts;
 import org.jooq.DSLContext;
 import org.junit.Before;
@@ -29,6 +31,8 @@ public class BackfillRowHmacResourceTest {
   private RowHmacGenerator rowHmacGenerator;
   @Mock
   private AuditLog auditLog;
+  @Mock
+  private PermissionCheck permissionCheck;
 
   @Captor
   private ArgumentCaptor<Event> eventCaptor;
@@ -36,6 +40,7 @@ public class BackfillRowHmacResourceTest {
   @Before
   public void before() {
     MockitoAnnotations.initMocks(this);
+    doNothing().when(permissionCheck).checkAllowedOrThrow(any(), any(), any());
   }
 
   @Test
@@ -49,7 +54,7 @@ public class BackfillRowHmacResourceTest {
 
     when(rowHmacGenerator.computeRowHmac(any(), any())).thenReturn("newHmac");
 
-    BackfillRowHmacResource resource = new BackfillRowHmacResource(context, rowHmacGenerator, auditLog);
+    BackfillRowHmacResource resource = new BackfillRowHmacResource(context, rowHmacGenerator, auditLog, permissionCheck);
 
     String clientName = UUID.randomUUID().toString();
     String secretName = UUID.randomUUID().toString();
@@ -73,7 +78,7 @@ public class BackfillRowHmacResourceTest {
 
     DSLContext context = TestDSLContexts.returning(record);
 
-    BackfillRowHmacResource resource = new BackfillRowHmacResource(context, rowHmacGenerator, auditLog);
+    BackfillRowHmacResource resource = new BackfillRowHmacResource(context, rowHmacGenerator, auditLog, permissionCheck);
 
     String clientName = UUID.randomUUID().toString();
     String secretName = UUID.randomUUID().toString();

@@ -27,6 +27,8 @@ import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
 import keywhiz.service.crypto.RowHmacGenerator;
+import keywhiz.service.permissions.Action;
+import keywhiz.service.permissions.PermissionCheck;
 import org.jooq.DSLContext;
 import org.jooq.Result;
 import org.slf4j.Logger;
@@ -51,15 +53,18 @@ public class BackfillRowHmacResource {
   private final DSLContext jooq;
   private final RowHmacGenerator rowHmacGenerator;
   private final AuditLog auditLog;
+  private final PermissionCheck permissionCheck;
 
   @Inject
   public BackfillRowHmacResource(
       DSLContext jooq,
       RowHmacGenerator rowHmacGenerator,
-      AuditLog auditLog) {
+      AuditLog auditLog,
+      PermissionCheck permissionCheck) {
     this.jooq = jooq;
     this.rowHmacGenerator = rowHmacGenerator;
     this.auditLog = auditLog;
+    this.permissionCheck = permissionCheck;
   }
 
   /**
@@ -74,6 +79,8 @@ public class BackfillRowHmacResource {
       @Auth AutomationClient automationClient,
       @PathParam("secretName") String secretName,
       @QueryParam("force") boolean force) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE);
+
     Optional<SecretsRecord> maybeRow = jooq.selectFrom(SECRETS)
         .where(SECRETS.NAME.eq(secretName))
         .fetchOptional();
@@ -119,8 +126,12 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public void backfillSecretsRowHmac(@PathParam("cursor_start") Long cursorStart,
+  public void backfillSecretsRowHmac(
+      @Auth AutomationClient automationClient,
+      @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE);
+
     logger.info("backfill-secrets: processing secrets");
     long cursor;
     if (cursorStart != 0) {
@@ -172,8 +183,12 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public void backfillSecretsContentRowHmac(@PathParam("cursor_start") Long cursorStart,
+  public void backfillSecretsContentRowHmac(
+      @Auth AutomationClient automationClient,
+      @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE);
+
     logger.info("backfill-secrets-content: processing secrets content");
     long cursor;
     if (cursorStart != 0) {
@@ -222,8 +237,12 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public void backfillClientsRowHmac(@PathParam("cursor_start") Long cursorStart,
+  public void backfillClientsRowHmac(
+      @Auth AutomationClient automationClient,
+      @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE);
+
     logger.info("backfill-clients: processing clients");
     long cursor;
     if (cursorStart != 0) {
@@ -272,8 +291,12 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public void backfillMembershipsRowHmac(@PathParam("cursor_start") Long cursorStart,
+  public void backfillMembershipsRowHmac(
+      @Auth AutomationClient automationClient,
+      @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE);
+
     logger.info("backfill-memberships: processing memberships");
     long cursor;
     if (cursorStart != 0) {
@@ -322,8 +345,12 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public void backfillAccessgrantsRowHmac(@PathParam("cursor_start") Long cursorStart,
+  public void backfillAccessgrantsRowHmac(
+      @Auth AutomationClient automationClient,
+      @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE);
+
     logger.info("backfill-accessgrants: processing accessgrants");
     long cursor;
     if (cursorStart != 0) {
