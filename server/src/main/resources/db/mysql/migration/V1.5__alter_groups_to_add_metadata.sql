@@ -1,1 +1,1 @@
-ALTER TABLE groups ADD COLUMN metadata text NOT NULL;
+ALTER TABLE `groups` ADD COLUMN metadata text NOT NULL;
