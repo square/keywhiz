@@ -212,12 +212,12 @@ public class AclDAOTest {
     SanitizedSecret sanitizedSecret1 = SanitizedSecret.fromSecret(secret1);
     SanitizedSecret sanitizedSecret2 = SanitizedSecret.fromSecret(secret2);
 
-    Set<SanitizedSecret> secrets = aclDAO.getOwnedSanitizedSecretsFor(group1);
+    Set<SanitizedSecret> secrets = aclDAO.getSanitizedSecretsFor(group1, true);
     assertEquals(Set.of(sanitizedSecret1, sanitizedSecret2), secrets);
   }
 
   @Test public void getOwnedSanitizedSecretsForGroupWithoutSecrets() {
-    Set<SanitizedSecret> secrets = aclDAO.getOwnedSanitizedSecretsFor(group2);
+    Set<SanitizedSecret> secrets = aclDAO.getSanitizedSecretsFor(group2, true);
     assertThat(secrets).isEmpty();
   }
 

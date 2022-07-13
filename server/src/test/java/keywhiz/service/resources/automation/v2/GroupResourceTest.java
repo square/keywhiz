@@ -130,23 +130,23 @@ public class GroupResourceTest {
 
   @Test public void ownedSecretsWithGroupsForGroup() throws Exception {
     // Sample group
-    create(CreateGroupRequestV2.builder().name("groupWithSharedSecrets").description("desc").build());
-    create(CreateGroupRequestV2.builder().name("secondGroup").description("desc").build());
+    create(CreateGroupRequestV2.builder().name("groupWithSharedSecrets1").description("desc").build());
+    create(CreateGroupRequestV2.builder().name("secondGroup1").description("desc").build());
 
     // Sample secret
-    createSecret("groupWithSharedSecrets", "shared-secret", "groupWithSharedSecrets");
-    assignSecret("secondGroup", "shared-secret");
+    createSecret("groupWithSharedSecrets1", "shared-secret1", "groupWithSharedSecrets1");
+    assignSecret("secondGroup1", "shared-secret1");
 
-    Set<SanitizedSecretWithGroups> secrets = ownedSecretsInfoWithGroups("groupWithSharedSecrets");
+    Set<SanitizedSecretWithGroups> secrets = ownedSecretsInfoWithGroups("groupWithSharedSecrets1");
 
     SanitizedSecretWithGroups secretWithGroups = secrets.iterator().next();
-    assertEquals("shared-secret", secretWithGroups.secret().name());
+    assertEquals("shared-secret1", secretWithGroups.secret().name());
 
     Set<String> groupNames = secretWithGroups.groups()
         .stream()
         .map(Group::getName)
         .collect(Collectors.toUnmodifiableSet());
-    assertEquals(Set.of("groupWithSharedSecrets", "secondGroup"), groupNames);
+    assertEquals(Set.of("groupWithSharedSecrets1", "secondGroup1"), groupNames);
   }
 
   @Test public void clientDetailForGroup() throws Exception {

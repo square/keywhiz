@@ -227,7 +227,7 @@ public class GroupResource {
     Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
 
-    Set<SanitizedSecret> secrets =  aclDAOReadOnly.getOwnedSanitizedSecretsFor(group);
+    Set<SanitizedSecret> secrets = aclDAOReadOnly.getSanitizedSecretsFor(group, true);
 
     Map<Long, List<Group>> groupsForSecrets = aclDAOReadOnly.getGroupsForSecrets(secrets.stream().map(SanitizedSecret::id).collect(
         Collectors.toUnmodifiableSet()));
