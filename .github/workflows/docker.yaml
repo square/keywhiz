@@ -16,7 +16,7 @@ jobs:
         uses: samin/mysql-action@v1.3
         with:
           mysql database: 'keywhizdb_docker'
-          mysql version: '5.7'
+          mysql version: '8.0'
       - name: Build Docker image
         run: |
           # Build Docker container
