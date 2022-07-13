@@ -43,6 +43,8 @@ import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
+import keywhiz.service.permissions.Action;
+import keywhiz.service.permissions.PermissionCheck;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,15 +70,17 @@ public class ClientResource {
   private final ClientDAO clientDAOReadWrite;
   private final GroupDAO groupDAOReadWrite;
   private final AuditLog auditLog;
+  private final PermissionCheck permissionCheck;
 
   @Inject public ClientResource(AclDAOFactory aclDAOFactory, ClientDAOFactory clientDAOFactory,
-      GroupDAOFactory groupDAOFactory, AuditLog auditLog) {
+      GroupDAOFactory groupDAOFactory, AuditLog auditLog, PermissionCheck permissionCheck) {
     this.aclDAOReadOnly = aclDAOFactory.readonly();
     this.aclDAOReadWrite = aclDAOFactory.readwrite();
     this.clientDAOReadOnly = clientDAOFactory.readonly();
     this.clientDAOReadWrite = clientDAOFactory.readwrite();
     this.groupDAOReadWrite = groupDAOFactory.readwrite();
     this.auditLog = auditLog;
+    this.permissionCheck = permissionCheck;
   }
 
   /**
@@ -94,6 +98,8 @@ public class ClientResource {
   @Consumes(APPLICATION_JSON)
   public Response createClient(@Auth AutomationClient automationClient,
       @Valid CreateClientRequestV2 request) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.CREATE);
+
     return tagErrors(() -> doCreateClient(automationClient, request));
   }
 
@@ -140,6 +146,8 @@ public class ClientResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientListing(@Auth AutomationClient automationClient) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+
     return clientDAOReadOnly.getClients().stream()
         .map(Client::getName)
         .collect(toSet());
@@ -163,6 +171,7 @@ public class ClientResource {
       @PathParam("name") String name) {
     Client client = clientDAOReadOnly.getClientByName(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, client);
 
     return ClientDetailResponseV2.fromClient(client);
   }
@@ -185,6 +194,8 @@ public class ClientResource {
       @PathParam("name") String name) {
     Client client = clientDAOReadOnly.getClientByName(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, client);
+
     return aclDAOReadOnly.getGroupsFor(client).stream()
         .map(Group::getName)
         .collect(toSet());
@@ -209,6 +220,8 @@ public class ClientResource {
       @PathParam("name") String name, @Valid ModifyGroupsRequestV2 request) {
     Client client = clientDAOReadWrite.getClientByName(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, client);
+
     String user = automationClient.getName();
 
     long clientId = client.getId();
@@ -254,6 +267,8 @@ public class ClientResource {
       @PathParam("name") String name) {
     Client client = clientDAOReadOnly.getClientByName(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, client);
+
     return aclDAOReadOnly.getSanitizedSecretsFor(client).stream()
         .map(SanitizedSecret::name)
         .collect(toSet());
@@ -276,6 +291,7 @@ public class ClientResource {
       @PathParam("name") String name) {
     Client client = clientDAOReadWrite.getClientByName(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.DELETE, client);
 
     // Group memberships are deleted automatically by DB cascading.
     clientDAOReadWrite.deleteClient(client);
@@ -305,6 +321,8 @@ public class ClientResource {
       @PathParam("name") String currentName, @Valid ModifyClientRequestV2 request) {
     Client client = clientDAOReadWrite.getClientByName(currentName)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, client);
+
     String newName = request.name();
 
     // TODO: implement change client (name, updatedAt, updatedBy)
