@@ -28,6 +28,8 @@ import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.daos.SecretController;
+import keywhiz.service.permissions.Action;
+import keywhiz.service.permissions.PermissionCheck;
 import org.bouncycastle.openpgp.PGPException;
 import org.c02e.jpgpj.Encryptor;
 import org.c02e.jpgpj.FileMetadata;
@@ -60,6 +62,7 @@ public class BackupResource {
   private final ObjectMapper objectMapper;
   private final KeywhizConfig config;
   private final AuditLog auditLog;
+  private final PermissionCheck permissionCheck;
 
   @Inject
   public BackupResource(
@@ -67,12 +70,14 @@ public class BackupResource {
       @Readonly SecretController secretController,
       ObjectMapper objectMapper,
       KeywhizConfig config,
-      AuditLog auditLog) {
+      AuditLog auditLog,
+      PermissionCheck permissionCheck) {
     this.groupDAO = groupDAOFactory.readonly();
     this.secretController = secretController;
     this.objectMapper = objectMapper;
     this.config = config;
     this.auditLog = auditLog;
+    this.permissionCheck = permissionCheck;
   }
 
   /**
@@ -100,6 +105,7 @@ public class BackupResource {
     }
 
     Group group = groupOptional.get();
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, group);
 
     // SecretDeliveryResponse is the same data a client receives when requesting a secret,
     // so it should have all the relevant information we need (including content, checksum).
