@@ -39,6 +39,8 @@ import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
+import keywhiz.service.permissions.Action;
+import keywhiz.service.permissions.PermissionCheck;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,12 +64,15 @@ public class GroupResource {
   private final GroupDAO groupDAOReadOnly;
   private final GroupDAO groupDAOReadWrite;
   private final AuditLog auditLog;
+  private final PermissionCheck permissionCheck;
 
-  @Inject public GroupResource(AclDAOFactory aclDAOFactory, GroupDAOFactory groupDAOFactory, AuditLog auditLog) {
+  @Inject public GroupResource(AclDAOFactory aclDAOFactory, GroupDAOFactory groupDAOFactory,
+      AuditLog auditLog, PermissionCheck permissionCheck) {
     this.aclDAOReadOnly = aclDAOFactory.readonly();
     this.groupDAOReadOnly = groupDAOFactory.readonly();
     this.groupDAOReadWrite = groupDAOFactory.readwrite();
     this.auditLog = auditLog;
+    this.permissionCheck = permissionCheck;
   }
 
   /**
@@ -83,6 +88,8 @@ public class GroupResource {
   @Consumes(APPLICATION_JSON)
   public Response createGroup(@Auth AutomationClient automationClient,
       @Valid CreateGroupRequestV2 request) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.CREATE);
+
     return tagErrors(() -> doCreateGroup(automationClient, request));
   }
 
@@ -120,6 +127,8 @@ public class GroupResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> groupListing(@Auth AutomationClient automationClient) {
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+
     return groupDAOReadOnly.getGroups().stream()
         .map(Group::getName)
         .collect(toSet());
@@ -141,6 +150,7 @@ public class GroupResource {
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, group);
 
     Set<String> secrets = aclDAOReadOnly.getSecretSeriesFor(group).stream()
         .map(SecretSeries::name)
@@ -173,6 +183,7 @@ public class GroupResource {
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, group);
 
     return aclDAOReadOnly.getSanitizedSecretsFor(group);
   }
@@ -194,6 +205,7 @@ public class GroupResource {
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, group);
 
     Set<SanitizedSecret> secrets =  aclDAOReadOnly.getSanitizedSecretsFor(group);
 
@@ -226,6 +238,7 @@ public class GroupResource {
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, group);
 
     Set<SanitizedSecret> secrets = aclDAOReadOnly.getSanitizedSecretsFor(group, true);
 
@@ -257,6 +270,7 @@ public class GroupResource {
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, group);
 
     return aclDAOReadOnly.getClientsFor(group);
   }
@@ -276,6 +290,7 @@ public class GroupResource {
       @PathParam("name") String name) {
     Group group = groupDAOReadWrite.getGroup(name)
         .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.DELETE, group);
 
     // Group memberships are deleted automatically by DB cascading.
     groupDAOReadWrite.deleteGroup(group);
