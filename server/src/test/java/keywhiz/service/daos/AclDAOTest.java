@@ -48,6 +48,7 @@ import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(KeywhizTestRunner.class)
 public class AclDAOTest {
@@ -90,8 +91,8 @@ public class AclDAOTest {
     group3 = groupDAO.getGroupById(id).get();
 
     SecretFixtures secretFixtures = SecretFixtures.using(secretDAOFactory.readwrite());
-    secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==");
-    secret2 = secretFixtures.createSecret("secret2", "c2VjcmV0Mg==");
+    secret1 = secretFixtures.createSecret("secret1", "c2VjcmV0MQ==", "group1");
+    secret2 = secretFixtures.createSecret("secret2", "c2VjcmV0Mg==", "group1");
   }
 
   @Test public void listingRenamedSecretDoesNotFailHmacCheck() {
@@ -205,6 +206,19 @@ public class AclDAOTest {
         assertThat(secret).isEqualToIgnoringGivenFields(sanitizedSecret2, "id", "version");
       }
     }
+  }
+
+  @Test public void getOwnedSanitizedSecretsForGroupWithSecrets() {
+    SanitizedSecret sanitizedSecret1 = SanitizedSecret.fromSecret(secret1);
+    SanitizedSecret sanitizedSecret2 = SanitizedSecret.fromSecret(secret2);
+
+    Set<SanitizedSecret> secrets = aclDAO.getSanitizedSecretsFor(group1, true);
+    assertEquals(Set.of(sanitizedSecret1, sanitizedSecret2), secrets);
+  }
+
+  @Test public void getOwnedSanitizedSecretsForGroupWithoutSecrets() {
+    Set<SanitizedSecret> secrets = aclDAO.getSanitizedSecretsFor(group2, true);
+    assertThat(secrets).isEmpty();
   }
 
   @Test public void getGroupsForSecret() {

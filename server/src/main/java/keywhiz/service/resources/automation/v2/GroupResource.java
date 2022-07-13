@@ -210,6 +210,38 @@ public class GroupResource {
   }
 
   /**
+   * Retrieve metadata for owned secrets of a particular group, including all
+   * groups linked to each secret.
+   *
+   * @param name Group name
+   *
+   * responseMessage 200 Group information retrieved
+   * responseMessage 404 Group not found
+   */
+  @Timed @ExceptionMetered
+  @GET
+  @Path("{name}/ownedsecretsandgroups")
+  @Produces(APPLICATION_JSON)
+  public Set<SanitizedSecretWithGroups> ownedSecretsWithGroupsForGroup(@Auth AutomationClient automationClient,
+      @PathParam("name") String name) {
+    Group group = groupDAOReadOnly.getGroup(name)
+        .orElseThrow(NotFoundException::new);
+
+    Set<SanitizedSecret> secrets = aclDAOReadOnly.getSanitizedSecretsFor(group, true);
+
+    Map<Long, List<Group>> groupsForSecrets = aclDAOReadOnly.getGroupsForSecrets(secrets.stream().map(SanitizedSecret::id).collect(
+        Collectors.toUnmodifiableSet()));
+
+    return secrets.stream().map(s -> {
+      List<Group> groups = groupsForSecrets.get(s.id());
+      if (groups == null) {
+        groups = ImmutableList.of();
+      }
+      return SanitizedSecretWithGroups.of(s, groups);
+    }).collect(Collectors.toUnmodifiableSet());
+  }
+
+  /**
    * Retrieve metadata for clients in a particular group.
    *
    * @param name Group name
