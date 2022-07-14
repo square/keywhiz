@@ -79,8 +79,6 @@ public class BackfillRowHmacResource {
       @Auth AutomationClient automationClient,
       @PathParam("secretName") String secretName,
       @QueryParam("force") boolean force) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE);
-
     Optional<SecretsRecord> maybeRow = jooq.selectFrom(SECRETS)
         .where(SECRETS.NAME.eq(secretName))
         .fetchOptional();
@@ -90,6 +88,8 @@ public class BackfillRowHmacResource {
     }
 
     SecretsRecord row = maybeRow.get();
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, row);
+
     String oldHmac = row.getRowHmac();
 
     if (oldHmac != null && !force) {
@@ -130,8 +130,6 @@ public class BackfillRowHmacResource {
       @Auth AutomationClient automationClient,
       @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE);
-
     logger.info("backfill-secrets: processing secrets");
     long cursor;
     if (cursorStart != 0) {
@@ -155,6 +153,8 @@ public class BackfillRowHmacResource {
       }
 
       for (var row : rows) {
+        permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, row);
+
         cursor = row.getId();
         if (!row.getRowHmac().isEmpty()) {
           continue;
@@ -187,8 +187,6 @@ public class BackfillRowHmacResource {
       @Auth AutomationClient automationClient,
       @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE);
-
     logger.info("backfill-secrets-content: processing secrets content");
     long cursor;
     if (cursorStart != 0) {
@@ -212,6 +210,8 @@ public class BackfillRowHmacResource {
       }
 
       for (var row : rows) {
+        permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, row);
+
         cursor = row.getId();
 
         String rowHmac = rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
@@ -241,8 +241,6 @@ public class BackfillRowHmacResource {
       @Auth AutomationClient automationClient,
       @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE);
-
     logger.info("backfill-clients: processing clients");
     long cursor;
     if (cursorStart != 0) {
@@ -266,6 +264,8 @@ public class BackfillRowHmacResource {
       }
 
       for (var row : rows) {
+        permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, row);
+
         cursor = row.getId();
 
         String rowHmac = rowHmacGenerator.computeRowHmac(CLIENTS.getName(),
@@ -295,8 +295,6 @@ public class BackfillRowHmacResource {
       @Auth AutomationClient automationClient,
       @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE);
-
     logger.info("backfill-memberships: processing memberships");
     long cursor;
     if (cursorStart != 0) {
@@ -320,6 +318,8 @@ public class BackfillRowHmacResource {
       }
 
       for (var row : rows) {
+        permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, row);
+
         cursor = row.getId();
 
         String rowHmac = rowHmacGenerator.computeRowHmac(MEMBERSHIPS.getName(),
@@ -349,8 +349,6 @@ public class BackfillRowHmacResource {
       @Auth AutomationClient automationClient,
       @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE);
-
     logger.info("backfill-accessgrants: processing accessgrants");
     long cursor;
     if (cursorStart != 0) {
@@ -374,6 +372,8 @@ public class BackfillRowHmacResource {
       }
 
       for (var row : rows) {
+        permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, row);
+
         cursor = row.getId();
 
         String rowHmac = rowHmacGenerator.computeRowHmac(ACCESSGRANTS.getName(),
