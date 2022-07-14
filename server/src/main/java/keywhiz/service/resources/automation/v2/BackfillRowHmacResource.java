@@ -27,6 +27,8 @@ import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
 import keywhiz.service.crypto.RowHmacGenerator;
+import keywhiz.service.permissions.Action;
+import keywhiz.service.permissions.PermissionCheck;
 import org.jooq.DSLContext;
 import org.jooq.Result;
 import org.slf4j.Logger;
@@ -51,15 +53,18 @@ public class BackfillRowHmacResource {
   private final DSLContext jooq;
   private final RowHmacGenerator rowHmacGenerator;
   private final AuditLog auditLog;
+  private final PermissionCheck permissionCheck;
 
   @Inject
   public BackfillRowHmacResource(
       DSLContext jooq,
       RowHmacGenerator rowHmacGenerator,
-      AuditLog auditLog) {
+      AuditLog auditLog,
+      PermissionCheck permissionCheck) {
     this.jooq = jooq;
     this.rowHmacGenerator = rowHmacGenerator;
     this.auditLog = auditLog;
+    this.permissionCheck = permissionCheck;
   }
 
   /**
@@ -83,6 +88,8 @@ public class BackfillRowHmacResource {
     }
 
     SecretsRecord row = maybeRow.get();
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, row);
+
     String oldHmac = row.getRowHmac();
 
     if (oldHmac != null && !force) {
@@ -119,7 +126,9 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public void backfillSecretsRowHmac(@PathParam("cursor_start") Long cursorStart,
+  public void backfillSecretsRowHmac(
+      @Auth AutomationClient automationClient,
+      @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
     logger.info("backfill-secrets: processing secrets");
     long cursor;
@@ -144,6 +153,8 @@ public class BackfillRowHmacResource {
       }
 
       for (var row : rows) {
+        permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, row);
+
         cursor = row.getId();
         if (!row.getRowHmac().isEmpty()) {
           continue;
@@ -172,7 +183,9 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public void backfillSecretsContentRowHmac(@PathParam("cursor_start") Long cursorStart,
+  public void backfillSecretsContentRowHmac(
+      @Auth AutomationClient automationClient,
+      @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
     logger.info("backfill-secrets-content: processing secrets content");
     long cursor;
@@ -197,6 +210,8 @@ public class BackfillRowHmacResource {
       }
 
       for (var row : rows) {
+        permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, row);
+
         cursor = row.getId();
 
         String rowHmac = rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
@@ -222,7 +237,9 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public void backfillClientsRowHmac(@PathParam("cursor_start") Long cursorStart,
+  public void backfillClientsRowHmac(
+      @Auth AutomationClient automationClient,
+      @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
     logger.info("backfill-clients: processing clients");
     long cursor;
@@ -247,6 +264,8 @@ public class BackfillRowHmacResource {
       }
 
       for (var row : rows) {
+        permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, row);
+
         cursor = row.getId();
 
         String rowHmac = rowHmacGenerator.computeRowHmac(CLIENTS.getName(),
@@ -272,7 +291,9 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public void backfillMembershipsRowHmac(@PathParam("cursor_start") Long cursorStart,
+  public void backfillMembershipsRowHmac(
+      @Auth AutomationClient automationClient,
+      @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
     logger.info("backfill-memberships: processing memberships");
     long cursor;
@@ -297,6 +318,8 @@ public class BackfillRowHmacResource {
       }
 
       for (var row : rows) {
+        permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, row);
+
         cursor = row.getId();
 
         String rowHmac = rowHmacGenerator.computeRowHmac(MEMBERSHIPS.getName(),
@@ -322,7 +345,9 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  public void backfillAccessgrantsRowHmac(@PathParam("cursor_start") Long cursorStart,
+  public void backfillAccessgrantsRowHmac(
+      @Auth AutomationClient automationClient,
+      @PathParam("cursor_start") Long cursorStart,
       @PathParam("max_rows") Long maxRows) {
     logger.info("backfill-accessgrants: processing accessgrants");
     long cursor;
@@ -347,6 +372,8 @@ public class BackfillRowHmacResource {
       }
 
       for (var row : rows) {
+        permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, row);
+
         cursor = row.getId();
 
         String rowHmac = rowHmacGenerator.computeRowHmac(ACCESSGRANTS.getName(),
