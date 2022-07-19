@@ -11,8 +11,11 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import org.junit.Test;
 
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+
 
 public class KeywhizConfigTest {
   private static final String PROPERTY_PREFIX = "dw";
@@ -46,6 +49,27 @@ public class KeywhizConfigTest {
   public void missingMaximumSecretLengthIsNull() {
     KeywhizConfig config = loadConfig("without-secret-size-limit.yaml");
     assertNull(config.getMaximumSecretSizeInBytesInclusive());
+  }
+
+  @Test
+  public void parseMissingNewSecretOwnershipStrategyDefaultsToNone() {
+    KeywhizConfig config = loadConfig("new-secret-ownership-strategy-missing.yaml");
+    assertThat(config.getNewSecretOwnershipStrategy()).isEqualTo(
+        KeywhizConfig.NewSecretOwnershipStrategy.NONE);
+  }
+
+  @Test
+  public void parseNewSecretOwnershipStrategyNone() {
+    KeywhizConfig config = loadConfig("new-secret-ownership-strategy-none.yaml");
+    assertThat(config.getNewSecretOwnershipStrategy()).isEqualTo(
+        KeywhizConfig.NewSecretOwnershipStrategy.NONE);
+  }
+
+  @Test
+  public void parsNewSecretOwnershipStrategyInfer() {
+    KeywhizConfig config = loadConfig("new-secret-ownership-strategy-infer.yaml");
+    assertThat(config.getNewSecretOwnershipStrategy()).isEqualTo(
+        KeywhizConfig.NewSecretOwnershipStrategy.INFER_FROM_CLIENT);
   }
 
   private static KeywhizConfig loadConfig(String resource) {
