@@ -227,6 +227,38 @@ public class SecretResourceTest {
     assertThat(location.getPath()).isEqualTo("/automation/v2/secrets/secret3");
   }
 
+  @Test public void createOrUpdateSecretUpdateOwner() throws Exception {
+    String secretName = UUID.randomUUID().toString();
+    String ownerName = UUID.randomUUID().toString();
+
+    assertEquals(201, createGroup(ownerName).code());
+
+    CreateSecretRequestV2 createRequest = CreateSecretRequestV2.builder()
+        .name(secretName)
+        .owner(ownerName)
+        .content(encode("foo"))
+        .build();
+    secretResourceTestHelper.create(createRequest);
+
+    SecretDetailResponseV2 originalDetails = secretResourceTestHelper.lookup(secretName);
+    assertEquals(ownerName, originalDetails.owner());
+
+    String updatedOwnerName = UUID.randomUUID().toString();
+    assertEquals(201, createGroup(updatedOwnerName).code());
+
+    CreateOrUpdateSecretRequestV2 updateRequest = CreateOrUpdateSecretRequestV2.builder()
+        .content(encode("bar"))
+        .description(UUID.randomUUID().toString())
+        .owner(updatedOwnerName)
+        .build();
+
+    assertEquals(201, secretResourceTestHelper.createOrUpdate(updateRequest, secretName).code());
+
+    SecretDetailResponseV2 updatedDetails = secretResourceTestHelper.lookup(secretName);
+    assertNotNull("Updated secret's owner was null", updatedDetails.owner());
+    assertEquals(updatedOwnerName, updatedDetails.owner());
+  }
+
   //---------------------------------------------------------------------------------------
 
   @Ignore

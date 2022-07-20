@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -41,7 +40,6 @@ import keywhiz.api.automation.v2.SecretContentsResponseV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.AutomationClient;
-import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SanitizedSecretWithGroups;
@@ -134,21 +132,7 @@ public class SecretResource {
     String name = request.name();
     String user = automationClient.getName();
 
-    String secretOwner = request.owner();
-    if (secretOwnerNotProvided(secretOwner) && shouldInferSecretOwnerUponCreation()) {
-      Set<Group> clientGroups = aclDAO.getGroupsFor(automationClient);
-      if (clientGroups.size() == 0) {
-        logger.warn(String.format("Client %s does not belong to any group.", automationClient));
-      } else if (clientGroups.size() == 1) {
-        Group clientGroup = clientGroups.stream().findFirst().get();
-        secretOwner = clientGroup.getName();
-      } else {
-        String groups = clientGroups.stream().map(group -> group.getName()).collect(Collectors.joining(","));
-        logger.warn(String.format("Client %s belongs to more than one group: %s",
-            automationClient,
-            groups));
-      }
-    }
+    String secretOwner = getSecretOwnerForSecretCreation(request.owner(), automationClient);
 
     SecretBuilder builder = secretController
         .builder(
@@ -204,17 +188,20 @@ public class SecretResource {
       @PathParam("name") String name,
       @Valid CreateOrUpdateSecretRequestV2 request) {
     Optional<SecretSeriesAndContent> maybeSecretSeriesAndContent = secretDAO.getSecretByName(name);
+    String secretOwner = request.owner();
     if (maybeSecretSeriesAndContent.isPresent()) {
       permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, maybeSecretSeriesAndContent.get());
     } else {
       permissionCheck.checkAllowedOrThrow(automationClient, Action.CREATE);
+      secretOwner = getSecretOwnerForSecretCreation(secretOwner, automationClient);
     }
 
     SecretBuilder builder = secretController
         .builder(name, request.content(), automationClient.getName(), request.expiry())
         .withDescription(request.description())
         .withMetadata(request.metadata())
-        .withType(request.type());
+        .withType(request.type())
+        .withOwnerName(secretOwner);
 
     builder.createOrUpdate();
 
@@ -848,5 +835,28 @@ public class SecretResource {
 
   private boolean shouldInferSecretOwnerUponCreation() {
     return config.getNewSecretOwnershipStrategy() == KeywhizConfig.NewSecretOwnershipStrategy.INFER_FROM_CLIENT;
+  }
+
+  private String findClientGroup(AutomationClient automationClient) {
+      Set<Group> clientGroups = aclDAO.getGroupsFor(automationClient);
+      if (clientGroups.size() == 0) {
+        logger.warn(String.format("Client %s does not belong to any group.", automationClient));
+      } else if (clientGroups.size() == 1) {
+        Group clientGroup = clientGroups.stream().findFirst().get();
+        return clientGroup.getName();
+      } else {
+        String groups = new ArrayList<>(clientGroups).toString();
+        logger.warn(String.format("Client %s belongs to more than one group: %s",
+            automationClient,
+            groups));
+      }
+      return null;
+  }
+
+  private String getSecretOwnerForSecretCreation(String secretOwner, AutomationClient automationClient) {
+    if (secretOwnerNotProvided(secretOwner) && shouldInferSecretOwnerUponCreation()) {
+      return findClientGroup(automationClient);
+    }
+    return secretOwner;
   }
 }
