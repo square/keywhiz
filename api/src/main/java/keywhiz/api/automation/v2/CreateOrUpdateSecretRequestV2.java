@@ -32,6 +32,7 @@ import keywhiz.api.validation.ValidBase64;
     public abstract Builder metadata(ImmutableMap<String, String> metadata);
     public abstract Builder type(String type);
     public abstract Builder expiry(long expiry);
+    public abstract Builder owner(String owner);
 
     /**
      * @throws IllegalArgumentException if builder data is invalid.
@@ -54,13 +55,15 @@ import keywhiz.api.validation.ValidBase64;
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("metadata") @Nullable Map<String, String> metadata,
       @JsonProperty("expiry") long expiry,
-      @JsonProperty("type") @Nullable String type) {
+      @JsonProperty("type") @Nullable String type,
+      @JsonProperty("owner") @Nullable String owner) {
     return builder()
         .content(content)
         .description(Strings.nullToEmpty(description))
         .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
         .expiry(expiry)
         .type(Strings.nullToEmpty(type))
+        .owner(owner)
         .build();
   }
 
@@ -69,6 +72,7 @@ import keywhiz.api.validation.ValidBase64;
   @JsonProperty("metadata") public abstract ImmutableMap<String, String> metadata();
   @JsonProperty("expiry") public abstract long expiry();
   @JsonProperty("type") public abstract String type();
+  @JsonProperty("owner") @Nullable public abstract String owner();
 
   @Override public final String toString() {
     return MoreObjects.toStringHelper(this)
@@ -77,6 +81,7 @@ import keywhiz.api.validation.ValidBase64;
         .add("metadata", metadata())
         .add("expiry", expiry())
         .add("type", type())
+        .add("owner", owner())
         .omitNullValues()
         .toString();
   }

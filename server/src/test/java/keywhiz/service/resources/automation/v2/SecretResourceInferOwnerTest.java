@@ -9,6 +9,7 @@ import keywhiz.IntegrationTestRule;
 import keywhiz.KeywhizService;
 import keywhiz.TestClients;
 import keywhiz.api.automation.v2.CreateGroupRequestV2;
+import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
@@ -59,8 +60,7 @@ public class SecretResourceInferOwnerTest {
     Response response = secretResourceTestHelper.create(request);
     assertThat(response.code()).isEqualTo(RESPONSE_CODE_CREATED);
 
-    SecretDetailResponseV2 details = secretResourceTestHelper.lookup(secretName
-    );
+    SecretDetailResponseV2 details = secretResourceTestHelper.lookup(secretName);
     assertThat(details.name()).isEqualTo(secretName);
     assertThat(details.owner()).isEqualTo(AUTOMATION_CLIENT_GROUP_NAME);
   }
@@ -119,8 +119,69 @@ public class SecretResourceInferOwnerTest {
     Response response = secretResourceTestHelper.create(request);
     assertThat(response.code()).isEqualTo(RESPONSE_CODE_CREATED);
 
-    SecretDetailResponseV2 details = secretResourceTestHelper.lookup(secretName
-    );
+    SecretDetailResponseV2 details = secretResourceTestHelper.lookup(secretName);
+    assertThat(details.name()).isEqualTo(secretName);
+    assertThat(details.owner()).isEqualTo(SECRET_OWNER);
+  }
+
+  @Test
+  public void testCreateOrUpdateWithNullOwnerName() throws IOException {
+    String secretName = SECRET_NAME_PREFIX + randomString();
+
+    CreateOrUpdateSecretRequestV2 request = CreateOrUpdateSecretRequestV2.builder()
+        .content(encode(SECRET_CONTENT))
+        .build();
+
+    Response response = secretResourceTestHelper.createOrUpdate(request, secretName);
+    assertThat(response.code()).isEqualTo(RESPONSE_CODE_CREATED);
+
+    SecretDetailResponseV2 details = secretResourceTestHelper.lookup(secretName);
+    assertThat(details.name()).isEqualTo(secretName);
+    assertThat(details.owner()).isEqualTo(AUTOMATION_CLIENT_GROUP_NAME);
+  }
+
+  @Test
+  public void testCreateOrUpdateSecretWithOwner() throws IOException {
+    String secretName = SECRET_NAME_PREFIX + randomString();
+
+    assertThat(createGroup(SECRET_OWNER).code()).isEqualTo(RESPONSE_CODE_CREATED);
+
+    CreateOrUpdateSecretRequestV2 request = CreateOrUpdateSecretRequestV2.builder()
+        .owner(SECRET_OWNER)
+        .content(encode(SECRET_CONTENT))
+        .build();
+
+    Response response = secretResourceTestHelper.createOrUpdate(request, secretName);
+    assertThat(response.code()).isEqualTo(RESPONSE_CODE_CREATED);
+
+    SecretDetailResponseV2 details = secretResourceTestHelper.lookup(secretName);
+    assertThat(details.name()).isEqualTo(secretName);
+    assertThat(details.owner()).isEqualTo(SECRET_OWNER);
+  }
+
+  @Test
+  public void testCreateOrUpdateSecretPreservesOriginalOwner() throws IOException {
+    String secretName = SECRET_NAME_PREFIX + randomString();
+
+    assertThat(createGroup(SECRET_OWNER).code()).isEqualTo(RESPONSE_CODE_CREATED);
+
+    CreateSecretRequestV2 request = CreateSecretRequestV2.builder()
+        .name(secretName)
+        .owner(SECRET_OWNER)
+        .content(encode(SECRET_CONTENT))
+        .build();
+
+    Response createSecretResponse = secretResourceTestHelper.create(request);
+    assertThat(createSecretResponse.code()).isEqualTo(RESPONSE_CODE_CREATED);
+
+    CreateOrUpdateSecretRequestV2 createOrUpdateRequest = CreateOrUpdateSecretRequestV2.builder()
+        .content(encode(SECRET_CONTENT))
+        .build();
+
+    Response createorUpdateSecretResponse = secretResourceTestHelper.createOrUpdate(createOrUpdateRequest, secretName);
+    assertThat(createorUpdateSecretResponse.code()).isEqualTo(RESPONSE_CODE_CREATED);
+
+    SecretDetailResponseV2 details = secretResourceTestHelper.lookup(secretName);
     assertThat(details.name()).isEqualTo(secretName);
     assertThat(details.owner()).isEqualTo(SECRET_OWNER);
   }
