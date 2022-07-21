@@ -17,7 +17,7 @@ jobs:
       - name: Set up MySQL
         uses: samin/mysql-action@v1.3
         with:
-          mysql version: '5.7'
+          mysql version: '8.0'
       - name: Run tests with Maven
         run:  |
           export CI_BRANCH=${BRANCH_NAME_OR_REF#refs/heads/}
