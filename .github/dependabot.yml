@@ -61,18 +61,19 @@ updates:
   - dependency-name: mysql:mysql-connector-java
     versions:
     - 8.0.23
+  # jOOQ 3.17 requires Java 17
   - dependency-name: org.jooq:jooq-codegen-maven
     versions:
-    - 3.14.6
+    - ">= 3.17"
   - dependency-name: org.jooq:jooq-codegen
     versions:
-    - 3.14.6
+    - ">= 3.17"
   - dependency-name: org.jooq:jooq-meta
     versions:
-    - 3.14.6
+    - ">= 3.17"
   - dependency-name: org.jooq:jooq
     versions:
-    - 3.14.6
+    - ">= 3.17"
   - dependency-name: org.bouncycastle:bcprov-jdk15on
     versions:
     - "1.68"
