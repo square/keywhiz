@@ -1,7 +1,9 @@
 package keywhiz.service.permissions;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,9 +11,14 @@ public class AnyPermissionCheck implements PermissionCheck {
 
   private static final Logger logger = LoggerFactory.getLogger(AnyPermissionCheck.class);
 
-  private List<PermissionCheck> subordinateChecks;
+  private static final String SUCCESS_METRIC_NAME = MetricRegistry.name(AnyPermissionCheck.class, "success", "histogram");
+  private static final String FAILURE_METRIC_NAME = MetricRegistry.name(AnyPermissionCheck.class, "failure", "histogram");
 
-  public AnyPermissionCheck(List<PermissionCheck> subordinateChecks) {
+  private final List<PermissionCheck> subordinateChecks;
+  private final MetricRegistry metricRegistry;
+
+  public AnyPermissionCheck(MetricRegistry metricRegistry, List<PermissionCheck> subordinateChecks) {
+    this.metricRegistry = metricRegistry;
     this.subordinateChecks = ImmutableList.copyOf(subordinateChecks);
   }
 
@@ -29,6 +36,16 @@ public class AnyPermissionCheck implements PermissionCheck {
         String.format("isAllowed Actor: %s, Action: %s, Target: %s, Result: %s", source, action, target,
             hasPermission));
 
+    emitHistogramMetrics(hasPermission);
+
     return hasPermission;
+  }
+
+  private void emitHistogramMetrics(Boolean isPermitted) {
+    int hasPermissionSuccessMetricInt = isPermitted ? 1 : 0;
+    metricRegistry.histogram(SUCCESS_METRIC_NAME).update(hasPermissionSuccessMetricInt);
+
+    int hasPermissionFailureMetricInt = isPermitted ? 0 : 1;
+    metricRegistry.histogram(FAILURE_METRIC_NAME).update(hasPermissionFailureMetricInt);
   }
 }

@@ -1,10 +1,12 @@
 package keywhiz.service.permission;
 
+import com.codahale.metrics.MetricRegistry;
 import java.util.Collections;
 import java.util.List;
 import keywhiz.service.permissions.Action;
 import keywhiz.service.permissions.AnyPermissionCheck;
 import keywhiz.service.permissions.PermissionCheck;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -26,40 +28,47 @@ public class AnyPermissionCheckTest {
   private static Object source;
   private static Object target;
 
+  private MetricRegistry metricRegistry;
+
+  @Before
+  public void setUp() {
+    metricRegistry = new MetricRegistry();
+  }
+
   @Test public void isAllowedReturnsFalseWithEmptyCheckList() {
-    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(Collections.emptyList());
+    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(metricRegistry, Collections.emptyList());
 
     assertFalse(anyPermissionCheck.isAllowed(source, Action.ADD, target));
   }
 
   @Test public void isAllowedReturnsFalseWhenAllDelegatesReturnFalse() {
-    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(createDelegatesList(false, false));
+    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(metricRegistry, createDelegatesList(false, false));
 
     assertFalse(anyPermissionCheck.isAllowed(source, Action.ADD, target));
   }
 
   @Test public void isAllowedReturnsTrueWhenOneDelegateReturnsTrue() {
-    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(createDelegatesList(true, false));
+    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(metricRegistry, createDelegatesList(true, false));
 
     assertTrue(anyPermissionCheck.isAllowed(source, Action.ADD, target));
   }
 
   @Test public void checkAllowedOrThrowThrowsExceptionWithEmptyCheckList() {
-    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(Collections.emptyList());
+    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(metricRegistry, Collections.emptyList());
 
     assertThatThrownBy(() -> anyPermissionCheck.checkAllowedOrThrow(source, Action.ADD, target))
         .isInstanceOf(RuntimeException.class);
   }
 
   @Test public void checkAllowedOrThrowThrowsExceptionWhenAllDelegatesReturnFalse() {
-    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(createDelegatesList(false, false));
+    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(metricRegistry, createDelegatesList(false, false));
 
     assertThatThrownBy(() -> anyPermissionCheck.checkAllowedOrThrow(source, Action.ADD, target))
         .isInstanceOf(RuntimeException.class);
   }
 
   @Test public void checkAllowedOrThrowReturnsVoidWhenOneDelegateReturnsTrue() {
-    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(createDelegatesList(true, false));
+    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(metricRegistry, createDelegatesList(true, false));
 
     anyPermissionCheck.checkAllowedOrThrow(source, Action.ADD, target);
   }
