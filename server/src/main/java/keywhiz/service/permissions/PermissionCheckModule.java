@@ -14,7 +14,7 @@ public class PermissionCheckModule extends AbstractModule {
   public PermissionCheck createPermissionCheck(MetricRegistry metricRegistry,
       AutomationClientPermissionCheck automationClientCheck,
       OwnershipPermissionCheck ownershipCheck) {
-    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(List.of(ownershipCheck, automationClientCheck));
-    return new AlwaysAllowDelegatingPermissionCheck(metricRegistry, anyPermissionCheck);
+    PermissionCheck anyPermissionCheck = new AnyPermissionCheck(metricRegistry, List.of(ownershipCheck, automationClientCheck));
+    return anyPermissionCheck;
   }
 }
