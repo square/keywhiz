@@ -1,9 +1,7 @@
-package keywhiz.service.permission;
+package keywhiz.service.permissions;
 
 import com.codahale.metrics.MetricRegistry;
 import java.util.Objects;
-import keywhiz.service.permissions.Action;
-import keywhiz.service.permissions.AlwaysFailPermissionCheck;
 import org.junit.Before;
 import org.junit.Test;
 

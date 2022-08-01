@@ -1,7 +1,6 @@
-package keywhiz.service.permission;
+package keywhiz.service.permissions;
 
 import javax.inject.Inject;
-import keywhiz.service.permissions.PermissionCheck;
 import org.junit.Test;
 
 import static keywhiz.test.KeywhizTests.createInjector;
