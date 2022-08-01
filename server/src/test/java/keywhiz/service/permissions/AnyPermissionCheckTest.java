@@ -1,11 +1,8 @@
-package keywhiz.service.permission;
+package keywhiz.service.permissions;
 
 import com.codahale.metrics.MetricRegistry;
 import java.util.Collections;
 import java.util.List;
-import keywhiz.service.permissions.Action;
-import keywhiz.service.permissions.AnyPermissionCheck;
-import keywhiz.service.permissions.PermissionCheck;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

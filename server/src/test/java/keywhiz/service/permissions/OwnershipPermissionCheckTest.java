@@ -1,4 +1,4 @@
-package keywhiz.service.permission;
+package keywhiz.service.permissions;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
@@ -13,8 +13,6 @@ import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.auth.User;
 import keywhiz.service.daos.AclDAO;
-import keywhiz.service.permissions.Action;
-import keywhiz.service.permissions.OwnershipPermissionCheck;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
