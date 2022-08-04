@@ -126,7 +126,7 @@ public class SecretResource {
   @Consumes(APPLICATION_JSON)
   public Response createSecret(@Auth AutomationClient automationClient,
       @Valid CreateSecretRequestV2 request) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.CREATE);
+    permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.CREATE, Secret.class);
 
     // allows new version, return version in resulting path
     String name = request.name();
@@ -192,7 +192,7 @@ public class SecretResource {
     if (maybeSecretSeriesAndContent.isPresent()) {
       permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, maybeSecretSeriesAndContent.get());
     } else {
-      permissionCheck.checkAllowedOrThrow(automationClient, Action.CREATE);
+      permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.CREATE, Secret.class);
       secretOwner = getSecretOwnerForSecretCreation(secretOwner, automationClient);
     }
 
@@ -292,7 +292,7 @@ public class SecretResource {
   public Iterable<String> secretListing(@Auth AutomationClient automationClient,
       @QueryParam("idx") Integer idx, @QueryParam("num") Integer num,
       @DefaultValue("true") @QueryParam("newestFirst") boolean newestFirst) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+    permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, Secret.class);
 
     if (idx != null && num != null) {
       if (idx < 0 || num < 0) {
@@ -326,7 +326,7 @@ public class SecretResource {
   public Iterable<SanitizedSecret> secretListingV2(@Auth AutomationClient automationClient,
       @QueryParam("idx") Integer idx, @QueryParam("num") Integer num,
       @DefaultValue("true") @QueryParam("newestFirst") boolean newestFirst) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+    permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, SanitizedSecret.class);
 
     if (idx != null && num != null) {
       if (idx < 0 || num < 0) {
@@ -350,7 +350,7 @@ public class SecretResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> secretListingExpiring(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+    permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, Secret.class);
 
     List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, null);
     return secrets.stream()
@@ -370,7 +370,7 @@ public class SecretResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<SanitizedSecret> secretListingExpiringV2(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+    permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, SanitizedSecret.class);
 
     List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, null);
     return secrets;
@@ -398,7 +398,7 @@ public class SecretResource {
   @Produces(APPLICATION_JSON)
   public Iterable<SanitizedSecretWithGroups> secretListingExpiringV3(@Auth AutomationClient automationClient,
       @PathParam("time") Long maxTime) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+    permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, SanitizedSecretWithGroups.class);
 
     return secretControllerReadOnly.getSanitizedSecretsWithGroups(maxTime);
   }
@@ -433,7 +433,7 @@ public class SecretResource {
       @QueryParam("maxTime") Long maxTime,
       @QueryParam("limit") Integer limit,
       @QueryParam("cursor") String cursor) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+    permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, SanitizedSecretWithGroupsListAndCursor.class);
 
     SecretRetrievalCursor cursorDecoded = null;
     if (cursor != null) {

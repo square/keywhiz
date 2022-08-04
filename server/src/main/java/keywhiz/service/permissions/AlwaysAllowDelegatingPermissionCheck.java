@@ -20,6 +20,7 @@ public class AlwaysAllowDelegatingPermissionCheck implements PermissionCheck {
     this.metricRegistry = metricRegistry;
   }
 
+  @Override
   public boolean isAllowed(Object source, String action, Object target) {
     boolean hasPermission = delegate.isAllowed(source, action, target);
 
@@ -33,13 +34,40 @@ public class AlwaysAllowDelegatingPermissionCheck implements PermissionCheck {
   }
 
   @Override
+  public boolean isAllowedForTargetType(Object source, String action, Class<?> targetType) {
+    boolean hasPermission = delegate.isAllowedForTargetType(source, action, targetType);
+
+    emitHistogramMetrics(hasPermission);
+
+    logger.info(
+        String.format("isAllowedByType Actor: %s, Action: %s, Target type: %s, Result: %s", source, action, targetType,
+            hasPermission));
+
+    return true;
+  }
+
+  @Override
   public void checkAllowedOrThrow(Object source, String action, Object target) {
     Boolean isPermitted;
     try {
       delegate.checkAllowedOrThrow(source, action, target);
       isPermitted = true;
     } catch (RuntimeException e) {
-      logger.error(String.format("checkAllowedOrThrow Actor: %s, Action: %s, Target: %s throws exception", source, action, target),e);
+      logger.error(String.format("checkAllowedOrThrow Actor: %s, Action: %s, Target: %s throws exception", source, action, target), e);
+      isPermitted = false;
+    }
+
+    emitHistogramMetrics(isPermitted);
+  }
+
+  @Override
+  public void checkAllowedForTargetTypeOrThrow(Object source, String action, Class<?> targetType) {
+    Boolean isPermitted;
+    try {
+      delegate.checkAllowedForTargetTypeOrThrow(source, action, targetType);
+      isPermitted = true;
+    } catch (RuntimeException e) {
+      logger.error(String.format("checkAllowedByTypeOrThrow Actor: %s, Action: %s, Target type: %s throws exception", source, action, targetType), e);
       isPermitted = false;
     }
 

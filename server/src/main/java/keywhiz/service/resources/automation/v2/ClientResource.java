@@ -98,7 +98,7 @@ public class ClientResource {
   @Consumes(APPLICATION_JSON)
   public Response createClient(@Auth AutomationClient automationClient,
       @Valid CreateClientRequestV2 request) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.CREATE);
+    permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.CREATE, Client.class);
 
     return tagErrors(() -> doCreateClient(automationClient, request));
   }
@@ -146,7 +146,7 @@ public class ClientResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> clientListing(@Auth AutomationClient automationClient) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+    permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, Client.class);
 
     return clientDAOReadOnly.getClients().stream()
         .map(Client::getName)

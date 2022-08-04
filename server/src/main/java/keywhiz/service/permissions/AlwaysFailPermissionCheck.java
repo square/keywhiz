@@ -9,4 +9,6 @@ public class AlwaysFailPermissionCheck implements PermissionCheck {
   public boolean isAllowed(Object source, String action, Object target) {
     return false;
   }
+
+  public boolean isAllowedForTargetType(Object source, String action, Class<?> targetType) { return false; }
 }

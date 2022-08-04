@@ -59,7 +59,19 @@ public class OwnershipPermissionCheck implements PermissionCheck{
     return hasPermission;
   }
 
-  private boolean isClient(Object source) {
+  public boolean isAllowedForTargetType(Object source, String action, Class<?> targetType) {
+    boolean hasPermission = false;
+
+    emitHistogramMetrics(hasPermission);
+
+    logger.info(
+        String.format("isAllowedByType Actor: %s, Action: %s, Target type: %s, Result: %s", source, action, targetType,
+            hasPermission));
+
+    return hasPermission;
+  }
+
+  private static boolean isClient(Object source) {
     return source instanceof Client;
   }
 

@@ -45,12 +45,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static keywhiz.Tracing.setTag;
 import static keywhiz.Tracing.tagErrors;
-import static keywhiz.api.model.SanitizedSecretWithGroups.fromSecretSeriesAndContentAndGroups;
 
 /**
  * parentEndpointName automation/v2-group-management
@@ -88,7 +86,7 @@ public class GroupResource {
   @Consumes(APPLICATION_JSON)
   public Response createGroup(@Auth AutomationClient automationClient,
       @Valid CreateGroupRequestV2 request) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.CREATE);
+    permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.CREATE, Group.class);
 
     return tagErrors(() -> doCreateGroup(automationClient, request));
   }
@@ -127,7 +125,7 @@ public class GroupResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> groupListing(@Auth AutomationClient automationClient) {
-    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ);
+    permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, Group.class);
 
     return groupDAOReadOnly.getGroups().stream()
         .map(Group::getName)

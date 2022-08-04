@@ -3,7 +3,6 @@ package keywhiz.service.permissions;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
-import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +33,25 @@ public class AnyPermissionCheck implements PermissionCheck {
 
     logger.info(
         String.format("isAllowed Actor: %s, Action: %s, Target: %s, Result: %s", source, action, target,
+            hasPermission));
+
+    emitHistogramMetrics(hasPermission);
+
+    return hasPermission;
+  }
+
+  public boolean isAllowedForTargetType(Object source, String action, Class<?> targetType) {
+    boolean hasPermission = false;
+
+    for (PermissionCheck subordinateCheck : subordinateChecks) {
+      if (subordinateCheck.isAllowedForTargetType(source, action, targetType)) {
+        hasPermission = true;
+        break;
+      }
+    }
+
+    logger.info(
+        String.format("isAllowedByType Actor: %s, Action: %s, Target type: %s, Result: %s", source, action, targetType,
             hasPermission));
 
     emitHistogramMetrics(hasPermission);
