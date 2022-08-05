@@ -22,8 +22,8 @@ public class AnyPermissionCheckTest {
   @Mock private PermissionCheck delegate1;
   @Mock private PermissionCheck delegate2;
 
-  private static Object source;
-  private static Object target;
+  private static Object source = new Object();
+  private static Object target = new Object();
 
   private MetricRegistry metricRegistry;
 

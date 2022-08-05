@@ -1,7 +1,6 @@
 package keywhiz.service.permissions;
 
 import com.codahale.metrics.MetricRegistry;
-import java.util.Objects;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,8 +23,8 @@ public class AlwaysAllowDelegatingPermissionCheckTest {
   private MetricRegistry metricRegistry;
   private AlwaysAllowDelegatingPermissionCheck alwaysAllow;
 
-  private static Objects target;
-  private static Objects principal;
+  private static Object target = new Object();
+  private static Object principal = new Object();
 
   private static final String ISALLOWED_SUCCESS_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.success.histogram";
   private static final String ISALLOWED_FAILURE_METRIC_NAME = "keywhiz.service.permissions.AlwaysAllowDelegatingPermissionCheck.failure.histogram";
@@ -66,7 +65,7 @@ public class AlwaysAllowDelegatingPermissionCheckTest {
     assertThat(metricRegistry.histogram(ISALLOWED_FAILURE_METRIC_NAME).getSnapshot().getMean()).isEqualTo(1);
   }
 
-  @Test public void CheckAllowedOrThrowReturnsVoidWhenDelegateReturnsVoid() {
+  @Test public void checkAllowedOrThrowReturnsVoidWhenDelegateReturnsVoid() {
     doNothing().when(delegate).checkAllowedOrThrow(any(), any(), any());
 
     alwaysAllow.checkAllowedOrThrow(principal, Action.ADD, target);
@@ -78,7 +77,7 @@ public class AlwaysAllowDelegatingPermissionCheckTest {
     assertThat(metricRegistry.histogram(CHECKALLOWEDORTHROW_EXCEPTION_METRIC_NAME).getSnapshot().getMean()).isEqualTo(0);
   }
 
-  @Test public void CheckAllowedOrThrowReturnsVoidWhenDelegateThrowException() {
+  @Test public void checkAllowedOrThrowReturnsVoidWhenDelegateThrowException() {
     doThrow(RuntimeException.class).when(delegate).checkAllowedOrThrow(any(), any(), any());
 
     alwaysAllow.checkAllowedOrThrow(principal, Action.ADD, target);
