@@ -87,7 +87,7 @@ public class Client {
       @JsonProperty("enabled") boolean enabled,
       @JsonProperty("automationAllowed") boolean automationAllowed) {
     this.id = id;
-    this.name = checkNotNull(name);
+    this.name = checkNotNull(name, "Client name must not be null");
     this.description = nullToEmpty(description);
     this.createdAt = createdAt;
     this.createdBy = nullToEmpty(createdBy);

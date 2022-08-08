@@ -64,7 +64,7 @@ public class Group {
       @JsonProperty("updatedBy") @Nullable String updatedBy,
       @JsonProperty("metadata") @Nullable ImmutableMap<String, String> metadata) {
     this.id = id;
-    this.name = checkNotNull(name);
+    this.name = checkNotNull(name, "Group name must not be null");
     this.description = nullToEmpty(description);
     this.createdAt = createdAt;
     this.createdBy = nullToEmpty(createdBy);
