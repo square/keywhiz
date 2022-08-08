@@ -31,6 +31,11 @@ public class AllowClientSecretCreationPermissionCheckTest {
   }
 
   @Test
+  public void doesNotAllowClientsToDeleteSecrets() {
+    assertFalse(permissionCheck.isAllowedForTargetType(newClient(), Action.DELETE, Secret.class));
+  }
+
+  @Test
   public void doesNotAllowClientsToCreateOtherResources() {
     for (Class<?> clazz : Arrays.asList(AutomationClient.class, Client.class, Group.class)) {
       assertFalse(permissionCheck.isAllowedForTargetType(newClient(), Action.CREATE, clazz));

@@ -13,6 +13,7 @@ public class AllowClientSecretCreationPermissionCheck implements PermissionCheck
   public boolean isAllowedForTargetType(Object source, String action, Class<?> targetType) {
     return
         Client.class.isAssignableFrom(source.getClass()) &&
+        Action.CREATE.equals(action) &&
         Secret.class.isAssignableFrom(targetType);
   }
 }
