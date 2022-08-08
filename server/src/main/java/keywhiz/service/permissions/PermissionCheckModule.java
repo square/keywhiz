@@ -20,8 +20,8 @@ public class PermissionCheckModule extends AbstractModule {
 
     List<PermissionCheck> permissionChecks = List.of(
         ownershipCheck,
-        automationClientCheck,
-        clientSecretCreationCheck
+        clientSecretCreationCheck,
+        automationClientCheck
     );
 
     PermissionCheck anyPermissionCheck = new AnyPermissionCheck(metricRegistry, permissionChecks);
