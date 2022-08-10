@@ -1,5 +1,6 @@
 package keywhiz.service.permissions;
 
+import com.codahale.metrics.MetricRegistry;
 import java.util.Arrays;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
@@ -17,7 +18,7 @@ public class AllowClientSecretCreationPermissionCheckTest {
 
   @Before
   public void before() {
-    permissionCheck = new AllowClientSecretCreationPermissionCheck();
+    permissionCheck = new AllowClientSecretCreationPermissionCheck(new MetricRegistry());
   }
 
   @Test

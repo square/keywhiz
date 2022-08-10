@@ -6,12 +6,6 @@ import com.google.inject.Provides;
 import java.util.List;
 
 public class PermissionCheckModule extends AbstractModule {
-
-  @Override
-  protected void configure() {
-    bindToDefaultConstructor(AllowClientSecretCreationPermissionCheck.class);
-  }
-
   @Provides
   public PermissionCheck createPermissionCheck(MetricRegistry metricRegistry,
       AutomationClientPermissionCheck automationClientCheck,
@@ -26,13 +20,5 @@ public class PermissionCheckModule extends AbstractModule {
 
     PermissionCheck anyPermissionCheck = new AnyPermissionCheck(metricRegistry, permissionChecks);
     return anyPermissionCheck;
-  }
-
-  private <T> void bindToDefaultConstructor(Class<T> clazz) {
-    try {
-      bind(clazz).toConstructor(clazz.getConstructor());
-    } catch (NoSuchMethodException e) {
-      throw new RuntimeException(e);
-    }
   }
 }
