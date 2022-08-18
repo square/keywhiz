@@ -14,6 +14,7 @@ import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Iterator;
 import javax.annotation.Nullable;
+import keywhiz.log.LogArguments;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
@@ -32,6 +33,7 @@ public final class ExpirationExtractor {
 
   private ExpirationExtractor() {}
 
+  @LogArguments
   @Nullable public static Instant expirationFromKeystore(String type, String password, byte[] content) {
     KeyStore ks;
     try {
@@ -78,6 +80,7 @@ public final class ExpirationExtractor {
     return earliest;
   }
 
+  @LogArguments
   @Nullable public static Instant expirationFromOpenPGP(byte[] content) {
     JcaPGPPublicKeyRingCollection collection;
     try {
@@ -120,6 +123,7 @@ public final class ExpirationExtractor {
     return earliest;
   }
 
+  @LogArguments
   @Nullable public static Instant expirationFromEncodedCertificateChain(byte[] content) {
     PemReader reader = new PemReader(new InputStreamReader(new ByteArrayInputStream(content), UTF_8));
 
@@ -151,6 +155,7 @@ public final class ExpirationExtractor {
     return earliest;
   }
 
+  @LogArguments
   @Nullable public static Instant expirationFromRawCertificate(byte[] content) {
     CertificateFactory cf;
     try {

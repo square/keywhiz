@@ -405,6 +405,9 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.10.1</version>
         <configuration>
+          <compilerArgs>
+            <arg>-parameters</arg>
+          </compilerArgs>
           <source>${java.version}</source>
           <target>${java.version}</target>
         </configuration>
@@ -505,6 +508,9 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.10.1</version>
           <configuration>
+            <compilerArgs>
+              <arg>-parameters</arg>
+            </compilerArgs>
             <source>${java.version}</source>
             <target>${java.version}</target>
           </configuration>

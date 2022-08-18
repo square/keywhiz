@@ -36,6 +36,7 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
+import keywhiz.log.LogArguments;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.ClientDAO;
@@ -96,6 +97,7 @@ public class ClientResource {
   @Timed @ExceptionMetered
   @POST
   @Consumes(APPLICATION_JSON)
+  @LogArguments
   public Response createClient(@Auth AutomationClient automationClient,
       @Valid CreateClientRequestV2 request) {
     permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.CREATE, Client.class);
@@ -145,6 +147,7 @@ public class ClientResource {
   @Timed @ExceptionMetered
   @GET
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<String> clientListing(@Auth AutomationClient automationClient) {
     permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, Client.class);
 
@@ -167,6 +170,7 @@ public class ClientResource {
   @GET
   @Path("{name}")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public ClientDetailResponseV2 clientInfo(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     Client client = clientDAOReadOnly.getClientByName(name)
@@ -190,6 +194,7 @@ public class ClientResource {
   @GET
   @Path("{name}/groups")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<String> clientGroupsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     Client client = clientDAOReadOnly.getClientByName(name)
@@ -216,6 +221,7 @@ public class ClientResource {
   @PUT
   @Path("{name}/groups")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<String> modifyClientGroups(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @Valid ModifyGroupsRequestV2 request) {
     Client client = clientDAOReadWrite.getClientByName(name)
@@ -263,6 +269,7 @@ public class ClientResource {
   @GET
   @Path("{name}/secrets")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<String> clientSecretsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     Client client = clientDAOReadOnly.getClientByName(name)
@@ -287,6 +294,7 @@ public class ClientResource {
   @Timed @ExceptionMetered
   @DELETE
   @Path("{name}")
+  @LogArguments
   public Response deleteClient(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     Client client = clientDAOReadWrite.getClientByName(name)
@@ -317,6 +325,7 @@ public class ClientResource {
   @Path("{name}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public ClientDetailResponseV2 modifyClient(@Auth AutomationClient automationClient,
       @PathParam("name") String currentName, @Valid ModifyClientRequestV2 request) {
     Client client = clientDAOReadWrite.getClientByName(currentName)

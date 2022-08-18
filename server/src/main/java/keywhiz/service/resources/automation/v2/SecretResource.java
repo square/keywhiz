@@ -52,6 +52,7 @@ import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
+import keywhiz.log.LogArguments;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.daos.AclDAO;
@@ -124,6 +125,7 @@ public class SecretResource {
   @Timed @ExceptionMetered
   @POST
   @Consumes(APPLICATION_JSON)
+  @LogArguments
   public Response createSecret(@Auth AutomationClient automationClient,
       @Valid CreateSecretRequestV2 request) {
     permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.CREATE, Secret.class);
@@ -184,6 +186,7 @@ public class SecretResource {
   @Path("{name}")
   @POST
   @Consumes(APPLICATION_JSON)
+  @LogArguments
   public Response createOrUpdateSecret(@Auth AutomationClient automationClient,
       @PathParam("name") String name,
       @Valid CreateOrUpdateSecretRequestV2 request) {
@@ -224,6 +227,7 @@ public class SecretResource {
   @Path("{oldName}/rename/{newName}")
   @POST
   @Consumes(APPLICATION_JSON)
+  @LogArguments
   public Response renameSecret(
       @Auth AutomationClient automationClient,
       @PathParam("oldName") String oldName,
@@ -249,6 +253,7 @@ public class SecretResource {
   @Path("{name}/partialupdate")
   @POST
   @Consumes(APPLICATION_JSON)
+  @LogArguments
   public Response partialUpdateSecret(@Auth AutomationClient automationClient,
       @PathParam("name") String name,
       @Valid PartialUpdateSecretRequestV2 request) {
@@ -289,6 +294,7 @@ public class SecretResource {
   @Timed @ExceptionMetered
   @GET
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<String> secretListing(@Auth AutomationClient automationClient,
       @QueryParam("idx") Integer idx, @QueryParam("num") Integer num,
       @DefaultValue("true") @QueryParam("newestFirst") boolean newestFirst) {
@@ -323,6 +329,7 @@ public class SecretResource {
   @Path("/v2")
   @GET
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<SanitizedSecret> secretListingV2(@Auth AutomationClient automationClient,
       @QueryParam("idx") Integer idx, @QueryParam("num") Integer num,
       @DefaultValue("true") @QueryParam("newestFirst") boolean newestFirst) {
@@ -349,6 +356,7 @@ public class SecretResource {
   @Path("expiring/{time}")
   @GET
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<String> secretListingExpiring(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
     permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, Secret.class);
 
@@ -369,6 +377,7 @@ public class SecretResource {
   @Path("expiring/v2/{time}")
   @GET
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<SanitizedSecret> secretListingExpiringV2(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
     permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, SanitizedSecret.class);
 
@@ -396,6 +405,7 @@ public class SecretResource {
   @Path("expiring/v3/{time}")
   @GET
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<SanitizedSecretWithGroups> secretListingExpiringV3(@Auth AutomationClient automationClient,
       @PathParam("time") Long maxTime) {
     permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, SanitizedSecretWithGroups.class);
@@ -427,6 +437,7 @@ public class SecretResource {
   @Path("expiring/v4")
   @GET
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public SanitizedSecretWithGroupsListAndCursor secretListingExpiringV4(
       @Auth AutomationClient automationClient,
       @QueryParam("minTime")  Long minTime,
@@ -451,6 +462,7 @@ public class SecretResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public boolean backfillExpiration(@Auth AutomationClient automationClient, @PathParam("name") String name, List<String> passwords) {
     Optional<Secret> secretOptional = secretController.getSecretByName(name);
     if (!secretOptional.isPresent()) {
@@ -528,6 +540,7 @@ public class SecretResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public boolean backfillHmac(@Auth AutomationClient automationClient, @PathParam("name") String name) {
     Optional<SecretSeriesAndContent> secret = secretDAO.getSecretByName(name);
 
@@ -557,6 +570,7 @@ public class SecretResource {
   @Path("expiring/{time}/{name}")
   @GET
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<String> secretListingExpiringForGroup(@Auth AutomationClient automationClient,
       @PathParam("time") Long time, @PathParam("name") String name) {
     Group group = groupDAO.getGroup(name).orElseThrow(NotFoundException::new);
@@ -580,6 +594,7 @@ public class SecretResource {
   @GET
   @Path("{name}")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public SecretDetailResponseV2 secretInfo(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     SecretSeriesAndContent secret = secretDAO.getSecretByName(name)
@@ -603,6 +618,7 @@ public class SecretResource {
   @GET
   @Path("{name}/sanitized")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public SanitizedSecret getSanitizedSecret(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     SecretSeriesAndContent secretSeriesAndContent = secretDAO.getSecretByName(name)
@@ -625,6 +641,7 @@ public class SecretResource {
   @POST
   @Path("request/contents")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public SecretContentsResponseV2 secretContents(@Auth AutomationClient automationClient,
       @Valid SecretContentsRequestV2 request) {
     HashMap<String, String> successSecrets = new HashMap<>();
@@ -674,6 +691,7 @@ public class SecretResource {
   @GET
   @Path("{name}/versions")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<SecretDetailResponseV2> secretVersions(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @QueryParam("versionIdx") int versionIdx,
       @QueryParam("numVersions") int numVersions) {
@@ -705,6 +723,7 @@ public class SecretResource {
   @Timed @ExceptionMetered
   @Path("{name}/setversion")
   @POST
+  @LogArguments
   public Response resetSecretVersion(@Auth AutomationClient automationClient,
       @Valid SetSecretVersionRequestV2 request) {
     SecretSeries secretSeries = secretSeriesDAO.getSecretSeriesByName(request.name()).orElseThrow(
@@ -736,6 +755,7 @@ public class SecretResource {
   @GET
   @Path("{name}/groups")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<String> secretGroupsListing(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     // TODO: Use latest version instead of non-versioned
@@ -762,6 +782,7 @@ public class SecretResource {
   @Path("{name}/groups")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<String> modifySecretGroups(@Auth AutomationClient automationClient,
       @PathParam("name") String name, @Valid ModifyGroupsRequestV2 request) {
     // TODO: Use latest version instead of non-versioned
@@ -805,6 +826,7 @@ public class SecretResource {
   @Timed @ExceptionMetered
   @DELETE
   @Path("{name}")
+  @LogArguments
   public Response deleteSecretSeries(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     Secret secret = secretController.getSecretByName(name).orElseThrow(() -> new NotFoundException("Secret series not found."));

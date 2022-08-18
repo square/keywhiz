@@ -34,6 +34,7 @@ import keywhiz.api.model.SecretSeries;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
+import keywhiz.log.LogArguments;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.GroupDAO;
@@ -84,6 +85,7 @@ public class GroupResource {
   @Timed @ExceptionMetered
   @POST
   @Consumes(APPLICATION_JSON)
+  @LogArguments
   public Response createGroup(@Auth AutomationClient automationClient,
       @Valid CreateGroupRequestV2 request) {
     permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.CREATE, Group.class);
@@ -124,6 +126,7 @@ public class GroupResource {
   @Timed @ExceptionMetered
   @GET
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Iterable<String> groupListing(@Auth AutomationClient automationClient) {
     permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, Group.class);
 
@@ -144,6 +147,7 @@ public class GroupResource {
   @GET
   @Path("{name}")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public GroupDetailResponseV2 groupInfo(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
@@ -177,6 +181,7 @@ public class GroupResource {
   @GET
   @Path("{name}/secrets")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Set<SanitizedSecret> secretsForGroup(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
@@ -199,6 +204,7 @@ public class GroupResource {
   @GET
   @Path("{name}/secretsandgroups")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Set<SanitizedSecretWithGroups> secretsWithGroupsForGroup(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
@@ -232,6 +238,7 @@ public class GroupResource {
   @GET
   @Path("{name}/ownedsecretsandgroups")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Set<SanitizedSecretWithGroups> ownedSecretsWithGroupsForGroup(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
@@ -264,6 +271,7 @@ public class GroupResource {
   @GET
   @Path("{name}/clients")
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public Set<Client> clientDetailForGroup(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
@@ -284,6 +292,7 @@ public class GroupResource {
   @Timed @ExceptionMetered
   @DELETE
   @Path("{name}")
+  @LogArguments
   public Response deleteGroup(@Auth AutomationClient automationClient,
       @PathParam("name") String name) {
     Group group = groupDAOReadWrite.getGroup(name)
