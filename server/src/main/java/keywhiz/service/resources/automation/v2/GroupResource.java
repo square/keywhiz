@@ -86,7 +86,11 @@ public class GroupResource {
   @Consumes(APPLICATION_JSON)
   public Response createGroup(@Auth AutomationClient automationClient,
       @Valid CreateGroupRequestV2 request) {
+    logger.info(loggingString(automationClient.toString(), "createGroup", request.toString()));
+
     permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.CREATE, Group.class);
+
+    logger.info(loggingString(automationClient.toString(), "createGroup", request.toString()));
 
     return tagErrors(() -> doCreateGroup(automationClient, request));
   }
@@ -125,7 +129,10 @@ public class GroupResource {
   @GET
   @Produces(APPLICATION_JSON)
   public Iterable<String> groupListing(@Auth AutomationClient automationClient) {
+    logger.info(loggingString(automationClient.toString(), "groupListing", null));
+
     permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, Group.class);
+
 
     return groupDAOReadOnly.getGroups().stream()
         .map(Group::getName)
@@ -148,6 +155,9 @@ public class GroupResource {
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
+
+    logger.info(loggingString(automationClient.toString(), "groupInfo", name));
+
     permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, group);
 
     Set<String> secrets = aclDAOReadOnly.getSecretSeriesFor(group).stream()
@@ -181,6 +191,9 @@ public class GroupResource {
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
+
+    logger.info(loggingString(automationClient.toString(), "secretsForGroup", name));
+
     permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, group);
 
     return aclDAOReadOnly.getSanitizedSecretsFor(group);
@@ -203,6 +216,9 @@ public class GroupResource {
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
+
+    logger.info(loggingString(automationClient.toString(), "secretsWithGroupsForGroup", name));
+
     permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, group);
 
     Set<SanitizedSecret> secrets =  aclDAOReadOnly.getSanitizedSecretsFor(group);
@@ -236,6 +252,9 @@ public class GroupResource {
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
+
+    logger.info(loggingString(automationClient.toString(), "ownedSecretsWithGroupsForGroup", name));
+
     permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, group);
 
     Set<SanitizedSecret> secrets = aclDAOReadOnly.getSanitizedSecretsFor(group, true);
@@ -268,6 +287,9 @@ public class GroupResource {
       @PathParam("name") String name) {
     Group group = groupDAOReadOnly.getGroup(name)
         .orElseThrow(NotFoundException::new);
+
+    logger.info(loggingString(automationClient.toString(), "clientDetailForGroup", name));
+
     permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, group);
 
     return aclDAOReadOnly.getClientsFor(group);
@@ -288,11 +310,21 @@ public class GroupResource {
       @PathParam("name") String name) {
     Group group = groupDAOReadWrite.getGroup(name)
         .orElseThrow(NotFoundException::new);
+
+    logger.info(loggingString(automationClient.toString(), "deleteGroup", name));
+
     permissionCheck.checkAllowedOrThrow(automationClient, Action.DELETE, group);
 
     // Group memberships are deleted automatically by DB cascading.
     groupDAOReadWrite.deleteGroup(group);
     auditLog.recordEvent(new Event(Instant.now(), EventTag.GROUP_DELETE, automationClient.getName(), group.getName()));
     return Response.noContent().build();
+  }
+
+  private String loggingString(String caller, String function, String functionArguments) {
+    String loggingInfo = String.format("Caller: %s, Function: %s, Additional Arguments: %s",
+        caller, function, functionArguments);
+
+    return loggingInfo;
   }
 }
