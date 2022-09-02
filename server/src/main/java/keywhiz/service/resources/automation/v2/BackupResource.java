@@ -24,6 +24,7 @@ import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Group;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
+import keywhiz.log.LogArguments;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.daos.GroupDAO;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
@@ -91,6 +92,7 @@ public class BackupResource {
   @Timed @ExceptionMetered
   @GET @Path("{key}/group/{group}")
   @Produces(APPLICATION_OCTET_STREAM)
+  @LogArguments
   public byte[] backup(
       @Auth AutomationClient automationClient,
       @PathParam("group") String name,

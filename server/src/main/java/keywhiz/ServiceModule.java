@@ -46,6 +46,7 @@ import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
 import keywhiz.service.filters.SecurityHeadersFilter;
 import keywhiz.service.permissions.PermissionCheckModule;
 import keywhiz.service.resources.admin.SessionMeResource;
+import keywhiz.log.LogArgumentsModule;
 import keywhiz.utility.DSLContexts;
 import org.jooq.DSLContext;
 import org.jooq.impl.DefaultTransactionProvider;
@@ -78,6 +79,7 @@ public class ServiceModule extends AbstractModule {
     install(new DaoModule());
     install(new StrictGuiceModule());
     install(new PermissionCheckModule());
+    install(new LogArgumentsModule());
   }
 
   // AuditLog

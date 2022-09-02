@@ -26,6 +26,7 @@ import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
+import keywhiz.log.LogArguments;
 import keywhiz.service.crypto.RowHmacGenerator;
 import keywhiz.service.permissions.Action;
 import keywhiz.service.permissions.PermissionCheck;
@@ -75,6 +76,7 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public void backfillSecretRowHmacByName(
       @Auth AutomationClient automationClient,
       @PathParam("secretName") String secretName,
@@ -126,6 +128,7 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public void backfillSecretsRowHmac(
       @Auth AutomationClient automationClient,
       @PathParam("cursor_start") Long cursorStart,
@@ -183,6 +186,7 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public void backfillSecretsContentRowHmac(
       @Auth AutomationClient automationClient,
       @PathParam("cursor_start") Long cursorStart,
@@ -237,6 +241,7 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public void backfillClientsRowHmac(
       @Auth AutomationClient automationClient,
       @PathParam("cursor_start") Long cursorStart,
@@ -291,6 +296,7 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public void backfillMembershipsRowHmac(
       @Auth AutomationClient automationClient,
       @PathParam("cursor_start") Long cursorStart,
@@ -345,6 +351,7 @@ public class BackfillRowHmacResource {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
+  @LogArguments
   public void backfillAccessgrantsRowHmac(
       @Auth AutomationClient automationClient,
       @PathParam("cursor_start") Long cursorStart,
