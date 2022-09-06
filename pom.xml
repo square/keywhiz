@@ -41,7 +41,7 @@
     <!-- 1.2.0-1 is the last version of dropwizard-raven JAR. The development continues under dropwizard-sentry -->
     <dropwizard-raven.version>1.2.0-1</dropwizard-raven.version>
     <guice.version>4.2.3</guice.version>
-    <jackson.version>2.13.3</jackson.version>
+    <jackson.version>2.13.4</jackson.version>
     <jackson.databind.version>2.13.4</jackson.databind.version>
     <!-- Updating the Jooq version requires manually regenerating the database model code via model/regenerate.sh -->
     <jooq.version>3.16.8</jooq.version>
