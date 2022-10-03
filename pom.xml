@@ -105,7 +105,7 @@
       <dependency>
         <groupId>org.glassfish.jaxb</groupId>
         <artifactId>jaxb-jxc</artifactId>
-        <version>4.0.0</version>
+        <version>4.0.1</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.logback</groupId>
