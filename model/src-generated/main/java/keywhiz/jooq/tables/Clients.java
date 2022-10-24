@@ -7,6 +7,7 @@ package keywhiz.jooq.tables;
 import java.util.Arrays;
 import java.util.List;
 
+import keywhiz.jooq.Indexes;
 import keywhiz.jooq.Keys;
 import keywhiz.jooq.KeywhizdbTest;
 import keywhiz.jooq.tables.records.ClientsRecord;
@@ -15,9 +16,10 @@ import keywhiz.model.TinyIntConverter;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row13;
+import org.jooq.Row14;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -114,6 +116,11 @@ public class Clients extends TableImpl<ClientsRecord> {
      */
     public final TableField<ClientsRecord, String> SPIFFE_ID = createField(DSL.name("spiffe_id"), SQLDataType.VARCHAR(2048), this, "");
 
+    /**
+     * The column <code>keywhizdb_test.clients.owner</code>.
+     */
+    public final TableField<ClientsRecord, Long> OWNER = createField(DSL.name("owner"), SQLDataType.BIGINT, this, "");
+
     private Clients(Name alias, Table<ClientsRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -150,6 +157,11 @@ public class Clients extends TableImpl<ClientsRecord> {
     @Override
     public Schema getSchema() {
         return aliased() ? null : KeywhizdbTest.KEYWHIZDB_TEST;
+    }
+
+    @Override
+    public List<Index> getIndexes() {
+        return Arrays.asList(Indexes.CLIENTS_OWNER_IDX);
     }
 
     @Override
@@ -194,11 +206,11 @@ public class Clients extends TableImpl<ClientsRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row13 type methods
+    // Row14 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row13<Long, String, Long, Long, String, String, String, Boolean, Boolean, Long, Long, String, String> fieldsRow() {
-        return (Row13) super.fieldsRow();
+    public Row14<Long, String, Long, Long, String, String, String, Boolean, Boolean, Long, Long, String, String, Long> fieldsRow() {
+        return (Row14) super.fieldsRow();
     }
 }
