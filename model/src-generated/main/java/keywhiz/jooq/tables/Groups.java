@@ -7,6 +7,7 @@ package keywhiz.jooq.tables;
 import java.util.Arrays;
 import java.util.List;
 
+import keywhiz.jooq.Indexes;
 import keywhiz.jooq.Keys;
 import keywhiz.jooq.KeywhizdbTest;
 import keywhiz.jooq.tables.records.GroupsRecord;
@@ -14,9 +15,10 @@ import keywhiz.jooq.tables.records.GroupsRecord;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row8;
+import org.jooq.Row9;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -88,6 +90,11 @@ public class Groups extends TableImpl<GroupsRecord> {
      */
     public final TableField<GroupsRecord, String> METADATA = createField(DSL.name("metadata"), SQLDataType.CLOB.nullable(false), this, "");
 
+    /**
+     * The column <code>keywhizdb_test.groups.owner</code>.
+     */
+    public final TableField<GroupsRecord, Long> OWNER = createField(DSL.name("owner"), SQLDataType.BIGINT, this, "");
+
     private Groups(Name alias, Table<GroupsRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -124,6 +131,11 @@ public class Groups extends TableImpl<GroupsRecord> {
     @Override
     public Schema getSchema() {
         return aliased() ? null : KeywhizdbTest.KEYWHIZDB_TEST;
+    }
+
+    @Override
+    public List<Index> getIndexes() {
+        return Arrays.asList(Indexes.GROUPS_OWNER_IDX);
     }
 
     @Override
@@ -168,11 +180,11 @@ public class Groups extends TableImpl<GroupsRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row8 type methods
+    // Row9 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<Long, String, Long, Long, String, String, String, String> fieldsRow() {
-        return (Row8) super.fieldsRow();
+    public Row9<Long, String, Long, Long, String, String, String, String, Long> fieldsRow() {
+        return (Row9) super.fieldsRow();
     }
 }
