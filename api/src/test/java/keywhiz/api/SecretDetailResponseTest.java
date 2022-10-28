@@ -47,7 +47,8 @@ public class SecretDetailResponseTest {
                 "keywhizAdmin",
                 ApiDate.parse("2013-03-28T21:29:27.465Z"),
                 "keywhizAdmin",
-                ImmutableMap.of("app", "keywhiz"))
+                ImmutableMap.of("app", "keywhiz"),
+                null)
         ),
         ImmutableList.of());
 
@@ -74,7 +75,8 @@ public class SecretDetailResponseTest {
                 "keywhizAdmin",
                 ApiDate.parse("2013-03-28T21:29:27.465Z"),
                 "keywhizAdmin",
-                ImmutableMap.of("app", "keywhiz"))
+                ImmutableMap.of("app", "keywhiz"),
+                null)
         ),
         ImmutableList.of());
 
@@ -101,7 +103,8 @@ public class SecretDetailResponseTest {
                 "keywhizAdmin",
                 ApiDate.parse("2013-03-28T21:29:27.465Z"),
                 "keywhizAdmin",
-                ImmutableMap.of("app", "keywhiz"))
+                ImmutableMap.of("app", "keywhiz"),
+                null)
         ),
         ImmutableList.of());
 

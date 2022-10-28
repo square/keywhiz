@@ -20,10 +20,23 @@ import javax.annotation.Nullable;
 
 /** Special type of {@link Client} with elevated, automation privileges. */
 public class AutomationClient extends Client {
+  private static final boolean AUTOMATION_ALLOWED_YES = true;
+
   private AutomationClient(Client client) {
-    super(client.getId(), client.getName(), client.getDescription(), client.getSpiffeId(),
-        client.getCreatedAt(), client.getCreatedBy(), client.getUpdatedAt(), client.getUpdatedBy(), client.getLastSeen(),
-        client.getExpiration(), client.isEnabled(), true
+    super(
+        client.getId(),
+        client.getName(),
+        client.getDescription(),
+        client.getSpiffeId(),
+        client.getCreatedAt(),
+        client.getCreatedBy(),
+        client.getUpdatedAt(),
+        client.getUpdatedBy(),
+        client.getLastSeen(),
+        client.getExpiration(),
+        client.isEnabled(),
+        client.getOwner(),
+        AUTOMATION_ALLOWED_YES
     );
   }
 

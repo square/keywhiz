@@ -25,8 +25,14 @@ import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CreateGroupRequestTest {
+  private static final String NO_OWNER = null;
+
   private CreateGroupRequest createGroupRequest =
-      new CreateGroupRequest("groupName", "groupDesc", ImmutableMap.of("app", "groupApp"));
+      new CreateGroupRequest(
+          "groupName",
+          "groupDesc",
+          ImmutableMap.of("app", "groupApp"),
+          "owner");
 
   @Test public void roundTripSerialization() throws Exception {
     assertThat(fromJson(asJson(createGroupRequest), CreateGroupRequest.class))
@@ -37,5 +43,18 @@ public class CreateGroupRequestTest {
     assertThat(fromJson(
         jsonFixture("fixtures/createGroupRequest.json"), CreateGroupRequest.class))
         .isEqualTo(createGroupRequest);
+  }
+
+  @Test public void deserializesOriginalVersion() throws Exception {
+    CreateGroupRequest originalVersion =
+        new CreateGroupRequest(
+            "groupName",
+            "groupDesc",
+            ImmutableMap.of("app", "groupApp"),
+            NO_OWNER);
+
+    assertThat(fromJson(
+        jsonFixture("fixtures/createGroupRequestOriginalVersion.json"), CreateGroupRequest.class))
+        .isEqualTo(originalVersion);
   }
 }

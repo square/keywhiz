@@ -7,7 +7,6 @@
   "createdBy" : "creator-user",
   "updatedBy" : "updater-user",
   "metadata" : {"app" : "keywhiz"},
-  "owner" : "owner",
   "secrets" : [],
   "clients" : []
 }

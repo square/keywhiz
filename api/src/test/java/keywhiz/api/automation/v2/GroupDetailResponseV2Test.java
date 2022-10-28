@@ -37,6 +37,7 @@ public class GroupDetailResponseV2Test {
       .secrets(ImmutableSet.of("secret1", "secret2"))
       .clients(ImmutableSet.of("client1", "client2"))
       .metadata(ImmutableMap.of("app", "keywhiz"))
+      .owner("owner")
       .build();
 
   @Test public void roundTripSerialization() throws Exception {
@@ -47,5 +48,22 @@ public class GroupDetailResponseV2Test {
   @Test public void deserializesCorrectly() throws Exception {
     assertThat(fromJson(jsonFixture("fixtures/v2/groupDetailResponse.json"),
         GroupDetailResponseV2.class)).isEqualTo(groupDetailResponse);
+  }
+
+  @Test public void deserializesOriginalVersion() throws Exception {
+    GroupDetailResponseV2 originalVersion = GroupDetailResponseV2.builder()
+        .name("group-name")
+        .description("group-description")
+        .createdAtSeconds(OffsetDateTime.parse("2012-08-01T13:15:30Z").toEpochSecond())
+        .updatedAtSeconds(OffsetDateTime.parse("2012-09-10T03:15:30Z").toEpochSecond())
+        .createdBy("creator-user")
+        .updatedBy("updater-user")
+        .secrets(ImmutableSet.of("secret1", "secret2"))
+        .clients(ImmutableSet.of("client1", "client2"))
+        .metadata(ImmutableMap.of("app", "keywhiz"))
+        .build();
+
+    assertThat(fromJson(jsonFixture("fixtures/v2/groupDetailResponseOriginalVersion.json"),
+        GroupDetailResponseV2.class)).isEqualTo(originalVersion);
   }
 }

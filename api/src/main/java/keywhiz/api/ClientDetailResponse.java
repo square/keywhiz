@@ -52,6 +52,9 @@ public class ClientDetailResponse {
   @JsonProperty
   public final ApiDate lastSeen;
 
+  @JsonProperty
+  public final String owner;
+
   /**
    * List of secrets the group has access to. The secrets do not contain content.
    */
@@ -70,6 +73,7 @@ public class ClientDetailResponse {
       @JsonProperty("createdBy") String createdBy,
       @JsonProperty("updatedBy") String updatedBy,
       @JsonProperty("lastSeen") @Nullable ApiDate lastSeen,
+      @JsonProperty("owner") @Nullable String owner,
       @JsonProperty("groups") ImmutableList<Group> groups,
       @JsonProperty("secrets") ImmutableList<SanitizedSecret> secrets) {
     this.id = id;
@@ -81,6 +85,7 @@ public class ClientDetailResponse {
     this.createdBy = createdBy;
     this.updatedBy = updatedBy;
     this.lastSeen = lastSeen;
+    this.owner = owner;
     this.groups = groups;
     this.secrets = secrets;
   }
@@ -96,13 +101,25 @@ public class ClientDetailResponse {
         client.getCreatedBy(),
         client.getUpdatedBy(),
         client.getLastSeen(),
+        client.getOwner(),
         groups,
         secrets);
   }
 
   public int hashCode() {
-    return Objects.hashCode(id, name, description, spiffeId, creationDate, updateDate, createdBy,
-        updatedBy, lastSeen, groups, secrets);
+    return Objects.hashCode(
+        id,
+        name,
+        description,
+        spiffeId,
+        creationDate,
+        updateDate,
+        createdBy,
+        updatedBy,
+        lastSeen,
+        owner,
+        groups,
+        secrets);
   }
 
   @Override
@@ -118,6 +135,7 @@ public class ClientDetailResponse {
           Objects.equal(this.createdBy, that.createdBy) &&
           Objects.equal(this.updatedBy, that.updatedBy) &&
           Objects.equal(this.lastSeen, that.lastSeen) &&
+          Objects.equal(this.owner, that.owner) &&
           Objects.equal(this.groups, that.groups) &&
           Objects.equal(this.secrets, that.secrets);
     }

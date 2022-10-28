@@ -15,6 +15,7 @@
  */
 package keywhiz.api.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
@@ -30,6 +31,8 @@ import static com.google.common.base.Strings.nullToEmpty;
  * access grants.
  */
 public class Group {
+  private static final String NO_OWNER =  null;
+
   @JsonProperty
   private final long id;
 
@@ -55,6 +58,10 @@ public class Group {
   @JsonProperty
   private final ImmutableMap<String, String> metadata;
 
+  @JsonProperty
+  private final String owner;
+
+  @JsonCreator
   public Group(@JsonProperty("id") long id,
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
@@ -62,7 +69,8 @@ public class Group {
       @JsonProperty("createdBy") @Nullable String createdBy,
       @JsonProperty("updatedAt") ApiDate updatedAt,
       @JsonProperty("updatedBy") @Nullable String updatedBy,
-      @JsonProperty("metadata") @Nullable ImmutableMap<String, String> metadata) {
+      @JsonProperty("metadata") @Nullable ImmutableMap<String, String> metadata,
+      @JsonProperty("owner") @Nullable String owner) {
     this.id = id;
     this.name = checkNotNull(name, "Group name must not be null");
     this.description = nullToEmpty(description);
@@ -71,6 +79,27 @@ public class Group {
     this.updatedAt = updatedAt;
     this.updatedBy = nullToEmpty(updatedBy);
     this.metadata = ImmutableMap.copyOf(metadata == null ? ImmutableMap.of() : metadata);
+    this.owner = owner;
+  }
+
+  public Group(long id,
+      String name,
+      String description,
+      ApiDate createdAt,
+      String createdBy,
+      ApiDate updatedAt,
+      String updatedBy,
+      ImmutableMap<String, String> metadata) {
+    this(
+        id,
+        name,
+        description,
+        createdAt,
+        createdBy,
+        updatedAt,
+        updatedBy,
+        metadata,
+        NO_OWNER);
   }
 
   public long getId() {
@@ -99,7 +128,9 @@ public class Group {
     return updatedBy;
   }
 
-  public ImmutableMap<String, String> getMetadata() {return metadata; }
+  public ImmutableMap<String, String> getMetadata() { return metadata; }
+
+  public String getOwner() { return owner; }
 
   @Override
   public boolean equals(Object o) {
@@ -112,7 +143,8 @@ public class Group {
           Objects.equal(this.createdBy, that.createdBy) &&
           Objects.equal(this.updatedAt, that.updatedAt) &&
           Objects.equal(this.updatedBy, that.updatedBy) &&
-          Objects.equal(this.metadata, that.metadata)) {
+          Objects.equal(this.metadata, that.metadata) &&
+          Objects.equal(this.owner, that.owner)) {
         return true;
       }
     }
@@ -120,7 +152,16 @@ public class Group {
   }
 
   @Override public int hashCode() {
-    return Objects.hashCode(id, name, description, createdAt, createdBy, updatedAt, updatedBy, metadata);
+    return Objects.hashCode(
+        id,
+        name,
+        description,
+        createdAt,
+        createdBy,
+        updatedAt,
+        updatedBy,
+        metadata,
+        owner);
   }
 
   @Override
@@ -134,6 +175,7 @@ public class Group {
         .add("updatedAt", updatedAt)
         .add("updatedBy", updatedBy)
         .add("metadata", metadata)
+        .add("owner", owner)
         .toString();
   }
 }

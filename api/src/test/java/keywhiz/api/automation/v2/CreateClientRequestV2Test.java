@@ -28,6 +28,7 @@ public class CreateClientRequestV2Test {
       .name("client-name")
       .description("client-description")
       .groups("client-group1", "client-group2")
+      .owner("owner")
       .build();
 
   @Test public void roundTripSerialization() throws Exception {
@@ -41,10 +42,30 @@ public class CreateClientRequestV2Test {
         .isEqualTo(createClientRequest);
   }
 
+  @Test public void deserializesOriginalVersion() throws Exception {
+    CreateClientRequestV2 originalVersion = CreateClientRequestV2.builder()
+        .name("client-name")
+        .description("client-description")
+        .groups("client-group1", "client-group2")
+        .build();
+
+    assertThat(fromJson(
+        jsonFixture("fixtures/v2/createClientRequestOriginalVersion.json"), CreateClientRequestV2.class))
+        .isEqualTo(originalVersion);
+  }
+
   @Test(expected = IllegalStateException.class)
   public void emptyNameFailsValidation() {
     CreateClientRequestV2.builder()
         .name("")
+        .build();
+  }
+
+  @Test
+  public void builderAllowsNullOwner() {
+    CreateClientRequestV2.builder()
+        .name("foo")
+        .owner(null)
         .build();
   }
 }

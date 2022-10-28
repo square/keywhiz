@@ -35,25 +35,38 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.eclipse.jetty.http.HttpStatus.Code.UNPROCESSABLE_ENTITY;
 
 public class CreateClientRequestTest {
+  private static final String NO_OWNER = null;
+
   @ClassRule public static final ResourceTestRule resources = ResourceTestRule.builder()
       .addResource(new Resource())
       .build();
 
+  private final CreateClientRequest createClientRequest = new CreateClientRequest(
+      "client-name",
+      "owner");
+
   @Test public void roundTripSerialization() throws Exception {
-    CreateClientRequest createClientRequest = new CreateClientRequest("client-name");
     assertThat(fromJson(asJson(createClientRequest), CreateClientRequest.class))
         .isEqualTo(createClientRequest);
   }
 
   @Test public void deserializesCorrectly() throws Exception {
-    CreateClientRequest createClientRequest = new CreateClientRequest("client-name");
     assertThat(fromJson(
         jsonFixture("fixtures/createClientRequest.json"), CreateClientRequest.class))
         .isEqualTo(createClientRequest);
   }
 
+  @Test public void deserializesOriginalVersion() throws Exception {
+    CreateClientRequest originalVersion = new CreateClientRequest(
+        "client-name",
+        NO_OWNER);
+    assertThat(
+        fromJson(jsonFixture("fixtures/createClientRequestOriginalVersion.json"), CreateClientRequest.class))
+        .isEqualTo(originalVersion);
+  }
+
   @Test public void emptyNameFailsValidation() {
-    CreateClientRequest createClientRequest = new CreateClientRequest("");
+    CreateClientRequest createClientRequest = new CreateClientRequest("", NO_OWNER);
     Response response = resources.client().target("/").request()
         .post(entity(createClientRequest, "application/json"));
 

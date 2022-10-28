@@ -26,6 +26,8 @@ import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GroupTest {
+  private static final String NO_OWNER = null;
+
   private Group group = new Group(330,
       "someGroup",
       "groupDesc",
@@ -33,13 +35,27 @@ public class GroupTest {
       "keywhizAdmin",
       ApiDate.parse("2013-03-28T21:29:27.465Z"),
       "keywhizAdmin",
-      ImmutableMap.of("app", "keywhiz"));
+      ImmutableMap.of("app", "keywhiz"),
+      "owner");
 
   @Test public void roundTripSerialization() throws Exception {
     assertThat(fromJson(asJson(group), Group.class)).isEqualTo(group);
   }
 
   @Test public void deserializesCorrectly() throws Exception {
-    assertThat(fromJson(jsonFixture("fixtures/group.json"), Group.class)).isEqualTo(group);
+    assertThat(fromJson(jsonFixture("fixtures/model/group.json"), Group.class)).isEqualTo(group);
+  }
+
+  @Test public void deserializesOriginalVersion() throws Exception {
+    Group originalVersion = new Group(330,
+        "someGroup",
+        "groupDesc",
+        ApiDate.parse("2013-03-28T21:29:27.465Z"),
+        "keywhizAdmin",
+        ApiDate.parse("2013-03-28T21:29:27.465Z"),
+        "keywhizAdmin",
+        ImmutableMap.of("app", "keywhiz"),
+        NO_OWNER);
+    assertThat(fromJson(jsonFixture("fixtures/model/groupOriginalVersion.json"), Group.class)).isEqualTo(originalVersion);
   }
 }

@@ -25,6 +25,8 @@ import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ClientTest {
+  private static final String NO_OWNER = null;
+
   private Client client = new Client(200,
       "someClient",
       "clientDesc",
@@ -36,6 +38,7 @@ public class ClientTest {
       null,
       null,
       true,
+      "owner",
       false
   );
 
@@ -44,6 +47,27 @@ public class ClientTest {
   }
 
   @Test public void deserializesCorrectly() throws Exception {
-    assertThat(fromJson(jsonFixture("fixtures/client.json"), Client.class)).isEqualTo(client);
+    assertThat(fromJson(jsonFixture("fixtures/model/client.json"), Client.class)).isEqualTo(client);
+  }
+
+  @Test public void deserializesOriginalVersion() throws Exception {
+    Client originalVersion = new Client(200,
+        "someClient",
+        "clientDesc",
+        null,
+        ApiDate.parse("2013-03-28T21:29:27.465Z"),
+        "keywhizAdmin",
+        ApiDate.parse("2013-03-28T21:29:27.465Z"),
+        "keywhizAdmin",
+        null,
+        null,
+        true,
+        NO_OWNER,
+        false
+    );
+
+    assertThat(
+        fromJson(jsonFixture("fixtures/model/clientOriginalVersion.json"), Client.class))
+        .isEqualTo(originalVersion);
   }
 }

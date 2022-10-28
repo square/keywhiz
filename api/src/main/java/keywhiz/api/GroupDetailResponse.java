@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import javax.annotation.Nullable;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -51,6 +52,9 @@ public class GroupDetailResponse {
   private final ImmutableMap<String, String> metadata;
 
   @JsonProperty
+  private final String owner;
+
+  @JsonProperty
   private final ImmutableList<SanitizedSecret> secrets;
 
   @JsonProperty
@@ -64,6 +68,7 @@ public class GroupDetailResponse {
       @JsonProperty("createdBy") String createdBy,
       @JsonProperty("updatedBy") String updatedBy,
       @JsonProperty("metadata") ImmutableMap<String, String> metadata,
+      @JsonProperty("owner") @Nullable String owner,
       @JsonProperty("secrets") ImmutableList<SanitizedSecret> secrets,
       @JsonProperty("clients") ImmutableList<Client> clients) {
     this.id = id;
@@ -74,6 +79,7 @@ public class GroupDetailResponse {
     this.createdBy = createdBy;
     this.updatedBy = updatedBy;
     this.metadata = metadata;
+    this.owner = owner;
     this.secrets = secrets;
     this.clients = clients;
   }
@@ -88,6 +94,7 @@ public class GroupDetailResponse {
         group.getCreatedBy(),
         group.getUpdatedBy(),
         group.getMetadata(),
+        group.getOwner(),
         secrets,
         clients);
   }
@@ -124,6 +131,8 @@ public class GroupDetailResponse {
     return metadata;
   }
 
+  public String getOwner() { return owner; }
+
   /**
    * @return List of secrets the group has access to. The secrets do not contain content.
    */
@@ -137,8 +146,18 @@ public class GroupDetailResponse {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, name, description, creationDate, updateDate, createdBy, updatedBy,
-        metadata, secrets, clients);
+    return Objects.hashCode(
+        id,
+        name,
+        description,
+        creationDate,
+        updateDate,
+        createdBy,
+        updatedBy,
+        metadata,
+        owner,
+        secrets,
+        clients);
   }
 
   @Override
@@ -153,6 +172,7 @@ public class GroupDetailResponse {
           Objects.equal(this.createdBy, that.createdBy) &&
           Objects.equal(this.updatedBy, that.updatedBy) &&
           Objects.equal(this.metadata, that.metadata) &&
+          Objects.equal(this.owner, that.owner) &&
           Objects.equal(this.secrets, that.secrets) &&
           Objects.equal(this.clients, that.clients);
     }
