@@ -25,6 +25,8 @@ import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ClientDetailResponseTest {
+  private static final String NO_OWNER = null;
+
   private ClientDetailResponse clientDetailResponse = new ClientDetailResponse(
       9875,
       "Client Name",
@@ -35,6 +37,7 @@ public class ClientDetailResponseTest {
       "creator-user",
       "updater-user",
       ApiDate.parse("2012-09-10T03:15:30.001Z"),
+      "owner",
       ImmutableList.of(),
       ImmutableList.of());
 
@@ -48,6 +51,25 @@ public class ClientDetailResponseTest {
         ClientDetailResponse.class)).isEqualTo(clientDetailResponse);
   }
 
+  @Test public void deserializesOriginalVersion() throws Exception {
+    ClientDetailResponse originalVersion = new ClientDetailResponse(
+        9875,
+        "Client Name",
+        "Client Description",
+        "spiffe//example.org/client-name",
+        ApiDate.parse("2012-08-01T13:15:30.001Z"),
+        ApiDate.parse("2012-09-10T03:15:30.001Z"),
+        "creator-user",
+        "updater-user",
+        ApiDate.parse("2012-09-10T03:15:30.001Z"),
+        NO_OWNER,
+        ImmutableList.of(),
+        ImmutableList.of());
+
+    assertThat(fromJson(jsonFixture("fixtures/clientDetailResponseOriginalVersion.json"),
+        ClientDetailResponse.class)).isEqualTo(originalVersion);
+  }
+
   @Test public void handlesNullLastSeenCorrectly() throws Exception {
     ClientDetailResponse clientDetailResponse = new ClientDetailResponse(
         9875,
@@ -59,6 +81,7 @@ public class ClientDetailResponseTest {
         "creator-user",
         "updater-user",
         null,
+        NO_OWNER,
         ImmutableList.of(),
         ImmutableList.of());
 

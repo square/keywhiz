@@ -35,27 +35,39 @@ public class CreateGroupRequest {
   @JsonProperty
   public final ImmutableMap<String, String> metadata;
 
+  @Nullable
+  @JsonProperty
+  public final String owner;
+
   public CreateGroupRequest(@JsonProperty("name") String name,
       @Nullable @JsonProperty("description") String description,
-      @Nullable @JsonProperty("metadata") ImmutableMap<String, String> metadata) {
+      @Nullable @JsonProperty("metadata") ImmutableMap<String, String> metadata,
+      @Nullable @JsonProperty("owner") String owner) {
     this.name = name;
     this.description = description;
     this.metadata = metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata);
+    this.owner = owner;
   }
 
   @Override public int hashCode() {
-    return Objects.hashCode(name, description, metadata);
+    return Objects.hashCode(
+        name,
+        description,
+        metadata,
+        owner);
   }
 
   @Override public boolean equals(Object o) {
-    if (this == o) return true;
+    if (this == o) {
+      return true;
+    }
     if (o instanceof CreateGroupRequest) {
       CreateGroupRequest that = (CreateGroupRequest) o;
-      if (Objects.equal(this.name, that.name) &&
+      return
+          Objects.equal(this.name, that.name) &&
           Objects.equal(this.description, that.description) &&
-          Objects.equal(this.metadata, that.metadata)) {
-        return true;
-      }
+          Objects.equal(this.metadata, that.metadata) &&
+          Objects.equal(this.owner, that.owner);
     }
     return false;
   }

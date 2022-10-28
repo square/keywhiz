@@ -1,0 +1,11 @@
+{
+  "id" : 330,
+  "name" : "someGroup",
+  "description" : "groupDesc",
+  "createdAt" : "2013-03-28T21:29:27.000Z",
+  "createdBy" : "keywhizAdmin",
+  "updatedAt" : "2013-03-28T21:29:27.000Z",
+  "updatedBy" : "keywhizAdmin",
+  "metadata" : {"app" : "keywhiz"},
+  "owner" : "owner"
+}

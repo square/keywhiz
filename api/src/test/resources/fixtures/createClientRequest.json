@@ -1,3 +1,4 @@
 {
-  "name" : "client-name"
+  "name" : "client-name",
+  "owner" : "owner"
 }

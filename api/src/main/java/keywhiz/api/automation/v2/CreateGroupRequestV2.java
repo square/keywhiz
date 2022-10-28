@@ -21,6 +21,8 @@ import static com.google.common.base.Strings.nullToEmpty;
     public abstract Builder name(String name);
     public abstract Builder description(String description);
     public abstract Builder metadata(ImmutableMap<String, String> metadata);
+    public abstract Builder owner(String owner);
+
     abstract CreateGroupRequestV2 autoBuild();
 
     public CreateGroupRequestV2 build() {
@@ -39,15 +41,18 @@ import static com.google.common.base.Strings.nullToEmpty;
   @JsonCreator public static CreateGroupRequestV2 fromParts(
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
-      @JsonProperty("metadata") @Nullable ImmutableMap<String, String> metadata) {
+      @JsonProperty("metadata") @Nullable ImmutableMap<String, String> metadata,
+      @JsonProperty("owner") @Nullable String owner) {
     return builder()
         .name(name)
         .description(nullToEmpty(description))
         .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
+        .owner(owner)
         .build();
   }
 
   @JsonProperty("name") public abstract String name();
   @JsonProperty("description") public abstract String description();
   @JsonProperty("metadata") public abstract ImmutableMap<String, String> metadata();
+  @JsonProperty("owner") @Nullable public abstract String owner();
 }

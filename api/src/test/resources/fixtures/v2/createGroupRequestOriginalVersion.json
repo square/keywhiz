@@ -1,6 +1,5 @@
 {
   "name" : "group-name",
   "description" : "group-description",
-  "metadata" : {"app" : "group-app"},
-  "owner" : "owner"
+  "metadata" : {"app" : "group-app"}
 }

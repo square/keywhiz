@@ -29,6 +29,7 @@ public class CreateGroupRequestV2Test {
       .name("group-name")
       .description("group-description")
       .metadata(ImmutableMap.of("app", "group-app"))
+      .owner("owner")
       .build();
 
   @Test public void roundTripSerialization() throws Exception {
@@ -42,10 +43,29 @@ public class CreateGroupRequestV2Test {
         .isEqualTo(createGroupRequest);
   }
 
+  @Test public void deserializesOriginalVersion() throws Exception {
+    CreateGroupRequestV2 originalVersion = CreateGroupRequestV2.builder()
+        .name("group-name")
+        .description("group-description")
+        .metadata(ImmutableMap.of("app", "group-app"))
+        .build();
+
+    assertThat(fromJson(
+        jsonFixture("fixtures/v2/createGroupRequestOriginalVersion.json"), CreateGroupRequestV2.class))
+        .isEqualTo(originalVersion);
+  }
+
   @Test(expected = IllegalStateException.class)
   public void emptyNameFailsValidation() {
     CreateGroupRequestV2.builder()
         .name("")
+        .build();
+  }
+
+  @Test public void builderAllowsNullOwner() {
+    CreateGroupRequestV2.builder()
+        .name("name")
+        .owner(null)
         .build();
   }
 }

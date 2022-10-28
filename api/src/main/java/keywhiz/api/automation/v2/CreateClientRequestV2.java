@@ -30,6 +30,8 @@ import static com.google.common.base.Strings.nullToEmpty;
     public abstract Builder name(String name);
     public abstract Builder description(String description);
     public abstract Builder spiffeId(String spiffeId);
+    public abstract Builder owner(String owner);
+
     abstract CreateClientRequestV2 autoBuild();
 
     public Builder groups(String... groups) {
@@ -53,12 +55,14 @@ import static com.google.common.base.Strings.nullToEmpty;
       @JsonProperty("name") String name,
       @JsonProperty("groups") @Nullable Iterable<String> groups,
       @JsonProperty("description") @Nullable String description,
-      @JsonProperty("spiffeId") @Nullable String spiffeId) {
+      @JsonProperty("spiffeId") @Nullable String spiffeId,
+      @JsonProperty("owner") @Nullable String owner) {
     return builder()
         .name(name)
         .groups(groups == null ? ImmutableSet.of() : ImmutableSet.copyOf(groups))
         .description(nullToEmpty(description))
         .spiffeId(nullToEmpty(spiffeId))
+        .owner(owner)
         .build();
   }
 
@@ -66,4 +70,5 @@ import static com.google.common.base.Strings.nullToEmpty;
   @JsonProperty("groups") public abstract ImmutableSet<String> groups();
   @JsonProperty("description") public abstract String description();
   @JsonProperty("spiffeId") public abstract String spiffeId();
+  @JsonProperty("owner") @Nullable public abstract String owner();
 }

@@ -26,6 +26,8 @@ import static keywhiz.testing.JsonHelpers.jsonFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GroupDetailResponseTest {
+  private static final String NO_OWNER = null;
+
   private GroupDetailResponse groupDetailResponse = new GroupDetailResponse(
       234,
       "group-name",
@@ -35,6 +37,7 @@ public class GroupDetailResponseTest {
       "creator-user",
       "updater-user",
       ImmutableMap.of("app", "keywhiz"),
+      "owner",
       ImmutableList.of(),
       ImmutableList.of());
 
@@ -46,5 +49,23 @@ public class GroupDetailResponseTest {
   @Test public void deserializesCorrectly() throws Exception {
     assertThat(fromJson(jsonFixture("fixtures/groupDetailResponse.json"),
         GroupDetailResponse.class)).isEqualTo(groupDetailResponse);
+  }
+
+  @Test public void deserializesOriginalVersion() throws Exception {
+    GroupDetailResponse originalVersion = new GroupDetailResponse(
+        234,
+        "group-name",
+        "",
+        ApiDate.parse("2012-08-01T13:15:30.000Z"),
+        ApiDate.parse("2012-09-10T03:15:30.000Z"),
+        "creator-user",
+        "updater-user",
+        ImmutableMap.of("app", "keywhiz"),
+        NO_OWNER,
+        ImmutableList.of(),
+        ImmutableList.of());
+
+    assertThat(fromJson(jsonFixture("fixtures/groupDetailResponseOriginalVersion.json"),
+        GroupDetailResponse.class)).isEqualTo(originalVersion);
   }
 }

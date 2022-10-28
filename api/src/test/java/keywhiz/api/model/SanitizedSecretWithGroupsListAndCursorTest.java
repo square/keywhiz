@@ -42,11 +42,12 @@ public class SanitizedSecretWithGroupsListAndCursorTest {
                         "keywhizAdmin",
                         ApiDate.parse("2013-03-28T21:42:42.000Z"),
                         "keywhizAdmin",
-                        ImmutableMap.of("owner", "the king")),
+                        ImmutableMap.of("owner", "the king"),
+                        null),
                     new Group(100, "group2", "test-group-1",
                         ApiDate.parse("2013-03-28T21:42:42.000Z"),
                         null,
-                        ApiDate.parse("2013-03-28T21:42:42.000Z"), null, null))
+                        ApiDate.parse("2013-03-28T21:42:42.000Z"), null, null, null))
 
             )),
         SecretRetrievalCursor.toString(SecretRetrievalCursor.of("test-secret-2", 1234567)));

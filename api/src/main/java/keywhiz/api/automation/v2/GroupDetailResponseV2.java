@@ -27,6 +27,7 @@ import keywhiz.api.model.Group;
     abstract Builder secrets(ImmutableSet<String> secrets);
     abstract Builder clients(ImmutableSet<String> clients);
     abstract Builder metadata(ImmutableMap<String, String> metadata);
+    abstract Builder owner(String owner);
 
     public Builder group(Group group) {
       return this
@@ -36,7 +37,8 @@ import keywhiz.api.model.Group;
           .updatedAtSeconds(group.getUpdatedAt().toEpochSecond())
           .createdBy(group.getCreatedBy())
           .updatedBy(group.getUpdatedBy())
-          .metadata(group.getMetadata());
+          .metadata(group.getMetadata())
+          .owner(group.getOwner());
     }
 
     public Builder secrets(Iterable<String> secrets) {
@@ -63,7 +65,8 @@ import keywhiz.api.model.Group;
       @JsonProperty("updatedBy") String updatedBy,
       @JsonProperty("secrets") Iterable<String> secrets,
       @JsonProperty("clients") Iterable<String> clients,
-      @JsonProperty("metadata") @Nullable Map<String, String> metadata) {
+      @JsonProperty("metadata") @Nullable Map<String, String> metadata,
+      @JsonProperty("owner") @Nullable String owner) {
     return builder()
         .name(name)
         .description(description)
@@ -74,6 +77,7 @@ import keywhiz.api.model.Group;
         .secrets(secrets)
         .clients(clients)
         .metadata(metadata == null ? ImmutableMap.of() : ImmutableMap.copyOf(metadata))
+        .owner(owner)
         .build();
   }
 
@@ -86,4 +90,5 @@ import keywhiz.api.model.Group;
   @JsonProperty("secrets") public abstract ImmutableSet<String> secrets();
   @JsonProperty("clients") public abstract ImmutableSet<String> clients();
   @JsonProperty("metadata") public abstract ImmutableMap<String, String> metadata();
+  @JsonProperty("owner") @Nullable public abstract String owner();
 }

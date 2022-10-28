@@ -55,6 +55,9 @@ public class Group {
   @JsonProperty
   private final ImmutableMap<String, String> metadata;
 
+  @JsonProperty
+  private final String owner;
+
   public Group(@JsonProperty("id") long id,
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
@@ -62,7 +65,8 @@ public class Group {
       @JsonProperty("createdBy") @Nullable String createdBy,
       @JsonProperty("updatedAt") ApiDate updatedAt,
       @JsonProperty("updatedBy") @Nullable String updatedBy,
-      @JsonProperty("metadata") @Nullable ImmutableMap<String, String> metadata) {
+      @JsonProperty("metadata") @Nullable ImmutableMap<String, String> metadata,
+      @JsonProperty("owner") @Nullable String owner) {
     this.id = id;
     this.name = checkNotNull(name, "Group name must not be null");
     this.description = nullToEmpty(description);
@@ -71,6 +75,7 @@ public class Group {
     this.updatedAt = updatedAt;
     this.updatedBy = nullToEmpty(updatedBy);
     this.metadata = ImmutableMap.copyOf(metadata == null ? ImmutableMap.of() : metadata);
+    this.owner = owner;
   }
 
   public long getId() {
@@ -99,7 +104,9 @@ public class Group {
     return updatedBy;
   }
 
-  public ImmutableMap<String, String> getMetadata() {return metadata; }
+  public ImmutableMap<String, String> getMetadata() { return metadata; }
+
+  public String getOwner() { return owner; }
 
   @Override
   public boolean equals(Object o) {
@@ -112,7 +119,8 @@ public class Group {
           Objects.equal(this.createdBy, that.createdBy) &&
           Objects.equal(this.updatedAt, that.updatedAt) &&
           Objects.equal(this.updatedBy, that.updatedBy) &&
-          Objects.equal(this.metadata, that.metadata)) {
+          Objects.equal(this.metadata, that.metadata) &&
+          Objects.equal(this.owner, that.owner)) {
         return true;
       }
     }
@@ -120,7 +128,16 @@ public class Group {
   }
 
   @Override public int hashCode() {
-    return Objects.hashCode(id, name, description, createdAt, createdBy, updatedAt, updatedBy, metadata);
+    return Objects.hashCode(
+        id,
+        name,
+        description,
+        createdAt,
+        createdBy,
+        updatedAt,
+        updatedBy,
+        metadata,
+        owner);
   }
 
   @Override
@@ -134,6 +151,7 @@ public class Group {
         .add("updatedAt", updatedAt)
         .add("updatedBy", updatedBy)
         .add("metadata", metadata)
+        .add("owner", owner)
         .toString();
   }
 }

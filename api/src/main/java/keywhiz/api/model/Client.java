@@ -68,6 +68,9 @@ public class Client {
   @JsonProperty
   private final boolean enabled;
 
+  @JsonProperty
+  private final String owner;
+
   /**
    * True if client is enabled to do automationAllowed tasks.
    */
@@ -85,21 +88,21 @@ public class Client {
       @JsonProperty("lastSeen") @Nullable ApiDate lastSeen,
       @JsonProperty("expiration") @Nullable ApiDate expiration,
       @JsonProperty("enabled") boolean enabled,
+      @JsonProperty("owner") @Nullable String owner,
       @JsonProperty("automationAllowed") boolean automationAllowed) {
     this.id = id;
     this.name = checkNotNull(name, "Client name must not be null");
     this.description = nullToEmpty(description);
+    this.spiffeId = spiffeId;
     this.createdAt = createdAt;
     this.createdBy = nullToEmpty(createdBy);
     this.updatedAt = updatedAt;
     this.updatedBy = nullToEmpty(updatedBy);
     this.lastSeen = cleanTimestamp(lastSeen);
     this.expiration = cleanTimestamp(expiration);
-
     this.enabled = enabled;
+    this.owner = owner;
     this.automationAllowed = automationAllowed;
-
-    this.spiffeId = spiffeId;
   }
 
   private static ApiDate cleanTimestamp(ApiDate instant) {
@@ -119,6 +122,10 @@ public class Client {
 
   public String getDescription() {
     return description;
+  }
+
+  public String getSpiffeId() {
+    return spiffeId;
   }
 
   public ApiDate getCreatedAt() {
@@ -149,12 +156,10 @@ public class Client {
     return enabled;
   }
 
+  public String getOwner() { return owner; }
+
   public boolean isAutomationAllowed() {
     return automationAllowed;
-  }
-
-  public String getSpiffeId() {
-    return spiffeId;
   }
 
   @Override
@@ -172,7 +177,9 @@ public class Client {
           Objects.equal(this.lastSeen, that.lastSeen) &&
           Objects.equal(this.expiration, that.expiration) &&
           this.enabled == that.enabled &&
-          this.automationAllowed == that.automationAllowed) {
+          Objects.equal(this.owner, that.owner) &&
+          this.automationAllowed == that.automationAllowed
+      ) {
         return true;
       }
     }
@@ -182,8 +189,20 @@ public class Client {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, name, description, spiffeId, createdAt, createdBy, updatedAt, updatedBy,
-        lastSeen, expiration, enabled, automationAllowed);
+    return Objects.hashCode(
+        id,
+        name,
+        description,
+        spiffeId,
+        createdAt,
+        createdBy,
+        updatedAt,
+        updatedBy,
+        lastSeen,
+        expiration,
+        enabled,
+        owner,
+        automationAllowed);
   }
 
   @Override
@@ -200,6 +219,7 @@ public class Client {
         .add("lastSeen", lastSeen)
         .add("expiration", expiration)
         .add("enabled", enabled)
+        .add("owner", owner)
         .add("automationAllowed", automationAllowed)
         .toString();
   }
