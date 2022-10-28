@@ -16,6 +16,7 @@
 
 package keywhiz.api.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
@@ -29,6 +30,8 @@ import static com.google.common.base.Strings.nullToEmpty;
  * Clients table entry for a client-cert authenticated client.
  */
 public class Client {
+  private static final String NO_OWNER = null;
+
   @JsonProperty
   private final long id;
 
@@ -77,6 +80,7 @@ public class Client {
   @JsonProperty
   private final boolean automationAllowed;
 
+  @JsonCreator
   public Client(@JsonProperty("id") long id,
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
@@ -103,6 +107,35 @@ public class Client {
     this.enabled = enabled;
     this.owner = owner;
     this.automationAllowed = automationAllowed;
+  }
+
+  public Client(
+      long id,
+      String name,
+      String description,
+      String spiffeId,
+      ApiDate createdAt,
+      String createdBy,
+      ApiDate updatedAt,
+      String updatedBy,
+      ApiDate lastSeen,
+      ApiDate expiration,
+      boolean enabled,
+      boolean automationAllowed) {
+    this(
+        id,
+        name,
+        description,
+        spiffeId,
+        createdAt,
+        createdBy,
+        updatedAt,
+        updatedBy,
+        lastSeen,
+        expiration,
+        enabled,
+        NO_OWNER,
+        automationAllowed);
   }
 
   private static ApiDate cleanTimestamp(ApiDate instant) {
