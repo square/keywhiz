@@ -16,12 +16,15 @@
 
 package keywhiz.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import javax.annotation.Nullable;
 import org.hibernate.validator.constraints.NotBlank;
 
 public class CreateClientRequest {
+  private static final String NO_OWNER = null;
+
   @NotBlank
   @JsonProperty
   public String name;
@@ -30,11 +33,16 @@ public class CreateClientRequest {
   @JsonProperty
   public String owner;
 
+  @JsonCreator
   public CreateClientRequest(
       @JsonProperty("name") String name,
       @JsonProperty("owner") String owner) {
     this.name = name;
     this.owner = owner;
+  }
+
+  public CreateClientRequest(String name) {
+    this(name, NO_OWNER);
   }
 
   @Override public int hashCode() {
