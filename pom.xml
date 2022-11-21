@@ -48,7 +48,7 @@
     <powermock.version>2.0.9</powermock.version>
     <slf4j.version>1.7.36</slf4j.version>
     <mysql.version>8.0.30</mysql.version>
-    <logback.version>1.2.11</logback.version>
+    <logback.version>1.4.5</logback.version>
 
     <custom.build.directory>target</custom.build.directory>
   </properties>
