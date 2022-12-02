@@ -22,17 +22,17 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.time.OffsetDateTime;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import keywhiz.api.model.Group;
+import keywhiz.jooq.tables.Groups;
 import keywhiz.jooq.tables.records.GroupsRecord;
 import keywhiz.service.config.Readonly;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
 
@@ -44,6 +44,8 @@ import static keywhiz.jooq.tables.Secrets.SECRETS;
 
 public class GroupDAO {
   private static final Long NO_OWNER = null;
+
+  private static final Groups GROUP_OWNERS = GROUPS.as("owners");
 
   private final DSLContext dslContext;
   private final GroupMapper groupMapper;
@@ -127,48 +129,61 @@ public class GroupDAO {
   }
 
   public Optional<Group> getGroup(String name) {
-    GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.NAME.eq(name));
-    return Optional.ofNullable(toGroup(r));
+    Record record = dslContext
+        .select(GROUPS.fields())
+        .select(GROUP_OWNERS.NAME)
+        .from(GROUPS)
+        .leftJoin(GROUP_OWNERS)
+        .on(GROUPS.OWNER.eq(GROUP_OWNERS.ID))
+        .where(GROUPS.NAME.eq(name))
+        .fetchOne();
+
+    return Optional.ofNullable(recordToGroup(record));
   }
 
   public Optional<Group> getGroupById(long id) {
-    GroupsRecord r = dslContext.fetchOne(GROUPS, GROUPS.ID.eq(id));
-    return Optional.ofNullable(toGroup(r));
+    Record record = dslContext
+        .select(GROUPS.fields())
+        .select(GROUP_OWNERS.NAME)
+        .from(GROUPS)
+        .leftJoin(GROUP_OWNERS)
+        .on(GROUPS.OWNER.eq(GROUP_OWNERS.ID))
+        .where(GROUPS.ID.eq(id))
+        .fetchOne();
+
+    return Optional.ofNullable(recordToGroup(record));
   }
 
-  public ImmutableSet<Group> getGroups() {
-    Result<GroupsRecord> records = dslContext.selectFrom(GROUPS).fetch();
-
-    Map<Long, Group> groupsById = records.stream()
-        .map(groupMapper::map)
-        .collect(Collectors.toMap(Group::getId, Function.identity()));
-
-    for (GroupsRecord record : records) {
-      if (record.getOwner() != null) {
-        Group group = groupsById.get(record.getId());
-        Group owner = groupsById.get(record.getOwner());
-        group.setOwner(owner.getName());
-      }
-    }
-
-    return ImmutableSet.copyOf(groupsById.values());
-  }
-
-  private Group toGroup(GroupsRecord record) {
+  private Group recordToGroup(Record record) {
     if (record == null) {
       return null;
     }
 
-    Group group = groupMapper.map(record);
+    GroupsRecord groupRecord = record.into(GROUPS);
+    GroupsRecord ownerRecord = record.into(GROUP_OWNERS);
 
-    if (record.getOwner() != null) {
-      GroupsRecord ownerRecord = dslContext.fetchOne(GROUPS, GROUPS.ID.eq(record.getOwner()));
-      if (ownerRecord != null) {
-        group.setOwner(ownerRecord.getName());
-      }
+    Group group = groupMapper.map(groupRecord);
+    if (ownerRecord != null) {
+      group.setOwner(ownerRecord.getName());
     }
 
     return group;
+  }
+
+  public ImmutableSet<Group> getGroups() {
+    Result<Record> results = dslContext
+        .select(GROUPS.fields())
+        .select(GROUP_OWNERS.NAME)
+        .from(GROUPS)
+        .leftJoin(GROUP_OWNERS)
+        .on(GROUPS.OWNER.eq(GROUP_OWNERS.ID))
+        .fetch();
+
+    Set<Group> groups = results.stream()
+        .map(this::recordToGroup)
+        .collect(Collectors.toSet());
+
+    return ImmutableSet.copyOf(groups);
   }
 
   public static class GroupDAOFactory implements DAOFactory<GroupDAO> {
