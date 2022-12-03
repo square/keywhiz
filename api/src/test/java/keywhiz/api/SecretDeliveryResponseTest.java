@@ -145,11 +145,13 @@ public class SecretDeliveryResponseTest {
     assertThatThrownBy(() ->
         fromJson(jsonFixture("fixtures/secretDeliveryResponseWithMetadata.json"),
             SecretDeliveryResponse.class))
+        .cause()
         .isInstanceOf(UnrecognizedPropertyException.class)
         .hasMessageContaining("Unrecognized field \"mode\"");
 
     assertThatThrownBy(() -> fromJson(asJson(secretDeliveryResponseWithMetadata),
         SecretDeliveryResponse.class))
+        .cause()
         .isInstanceOf(UnrecognizedPropertyException.class)
         .hasMessageContaining("Unrecognized field \"mode\"");
   }

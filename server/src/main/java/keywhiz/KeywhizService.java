@@ -62,6 +62,7 @@ import keywhiz.service.resources.automation.AutomationSecretAccessResource;
 import keywhiz.service.resources.automation.AutomationSecretResource;
 import keywhiz.service.resources.automation.v2.BackfillRowHmacResource;
 import keywhiz.service.resources.automation.v2.BackupResource;
+import keywhiz.service.resources.automation.v2.BatchResource;
 import keywhiz.service.resources.automation.v2.ClientResource;
 import keywhiz.service.resources.automation.v2.GroupResource;
 import keywhiz.service.resources.automation.v2.SecretResource;
@@ -145,6 +146,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
 
     logger.debug("Registering resources");
     jersey.register(injector.getInstance(BackfillRowHmacResource.class));
+    jersey.register(injector.getInstance(BatchResource.class));
     jersey.register(injector.getInstance(ClientResource.class));
     jersey.register(injector.getInstance(ClientsResource.class));
     jersey.register(injector.getInstance(GroupResource.class));
