@@ -16,6 +16,8 @@
 
 package keywhiz.api.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
@@ -34,18 +36,18 @@ import static com.google.common.base.Strings.nullToEmpty;
  */
 @AutoValue
 public abstract class SecretSeries {
-  public static SecretSeries of(
-      long id,
-      String name,
-      String owner,
-      @Nullable String description,
-      ApiDate createdAt,
-      @Nullable String createdBy,
-      ApiDate updatedAt,
-      @Nullable String updatedBy,
-      @Nullable String type,
-      @Nullable Map<String, String> generationOptions,
-      @Nullable Long currentVersion) {
+  @JsonCreator public static SecretSeries of(
+      @JsonProperty("id") long id,
+      @JsonProperty("name") String name,
+      @JsonProperty("owner") String owner,
+      @JsonProperty("description") @Nullable String description,
+      @JsonProperty("createdAt") ApiDate createdAt,
+      @JsonProperty("createdBy") @Nullable String createdBy,
+      @JsonProperty("updatedAt") ApiDate updatedAt,
+      @JsonProperty("updatedBy") @Nullable String updatedBy,
+      @JsonProperty("type") @Nullable String type,
+      @JsonProperty("generationOptions") @Nullable Map<String, String> generationOptions,
+      @JsonProperty("currentVersion") @Nullable Long currentVersion) {
 
     ImmutableMap<String, String> options = (generationOptions == null) ?
         ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
@@ -65,17 +67,17 @@ public abstract class SecretSeries {
         .build();
   }
 
-  public abstract long id();
-  public abstract String name();
-  @Nullable public abstract String owner();
-  public abstract String description();
-  public abstract ApiDate createdAt();
-  public abstract String createdBy();
-  public abstract ApiDate updatedAt();
-  public abstract String updatedBy();
-  public abstract Optional<String> type();
-  public abstract ImmutableMap<String, String> generationOptions();
-  public abstract Optional<Long> currentVersion();
+  @JsonProperty("id") public abstract long id();
+  @JsonProperty("name") public abstract String name();
+  @JsonProperty("owner") @Nullable public abstract String owner();
+  @JsonProperty("description") public abstract String description();
+  @JsonProperty("createdAt") public abstract ApiDate createdAt();
+  @JsonProperty("createdBy") public abstract String createdBy();
+  @JsonProperty("updatedAt") public abstract ApiDate updatedAt();
+  @JsonProperty("updatedBy") public abstract String updatedBy();
+  @JsonProperty("type") public abstract Optional<String> type();
+  @JsonProperty("generationOptions") public abstract ImmutableMap<String, String> generationOptions();
+  @JsonProperty("currentVersion") public abstract Optional<Long> currentVersion();
 
   public static Builder builder() {
     return new AutoValue_SecretSeries.Builder();

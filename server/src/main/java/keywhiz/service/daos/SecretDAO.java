@@ -34,7 +34,6 @@ import keywhiz.service.crypto.ContentEncodingException;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
-import keywhiz.service.permissions.Action;
 import keywhiz.service.permissions.PermissionCheck;
 import org.joda.time.DateTime;
 import org.jooq.Configuration;
@@ -559,10 +558,24 @@ public class SecretDAO {
    * @param name of secret series to delete.
    */
   public void deleteSecretsByName(String name) {
+    deleteSecretsByName(name, SecretDeletionMode.SOFT);
+  }
+
+  public void deleteSecretsByName(String name, SecretDeletionMode mode) {
     checkArgument(!name.isEmpty());
 
-    secretSeriesDAOFactory.using(dslContext.configuration())
-        .deleteSecretSeriesByName(name);
+    switch(mode) {
+      case HARD:
+        secretSeriesDAOFactory.using(dslContext.configuration())
+            .hardDeleteSecretSeriesByName(name);
+        break;
+      case SOFT:
+        secretSeriesDAOFactory.using(dslContext.configuration())
+            .softDeleteSecretSeriesByName(name);
+        break;
+      default:
+        throw new IllegalArgumentException(String.format("Unknown secret deletion mode: %s", mode));
+    }
   }
 
   /**
