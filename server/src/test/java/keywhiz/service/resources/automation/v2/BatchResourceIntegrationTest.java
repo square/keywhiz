@@ -6,7 +6,7 @@ import java.util.UUID;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
-import keywhiz.api.automation.v2.BatchCreateOrUpdateSecretRequestV2;
+import keywhiz.api.automation.v2.BatchCreateOrUpdateSecretsRequestV2;
 import keywhiz.api.automation.v2.BatchMode;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretInfoV2;
 import keywhiz.api.model.AutomationClient;
@@ -80,7 +80,7 @@ public class BatchResourceIntegrationTest {
     CreateOrUpdateSecretInfoV2 secret1 = secret1Valid ? validNewSecret() : invalidNewSecret();
     CreateOrUpdateSecretInfoV2 secret2 = secret2Valid ? validNewSecret() : invalidNewSecret();
 
-    BatchCreateOrUpdateSecretRequestV2 request = BatchCreateOrUpdateSecretRequestV2.builder()
+    BatchCreateOrUpdateSecretsRequestV2 request = BatchCreateOrUpdateSecretsRequestV2.builder()
         .batchMode(batchMode)
         .secrets(secret1, secret2)
         .build();

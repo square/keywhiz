@@ -2,7 +2,7 @@ package keywhiz.service.resources.automation.v2;
 
 import keywhiz.KeywhizConfig;
 import keywhiz.api.ApiDate;
-import keywhiz.api.automation.v2.BatchCreateOrUpdateSecretRequestV2;
+import keywhiz.api.automation.v2.BatchCreateOrUpdateSecretsRequestV2;
 import keywhiz.api.model.AutomationClient;
 import keywhiz.api.model.Client;
 import keywhiz.log.AuditLog;
@@ -53,7 +53,7 @@ public class BatchResourceTest {
 
   @Test
   public void rejectsUnknownBatchMode() {
-    BatchCreateOrUpdateSecretRequestV2 request = BatchCreateOrUpdateSecretRequestV2.builder()
+    BatchCreateOrUpdateSecretsRequestV2 request = BatchCreateOrUpdateSecretsRequestV2.builder()
         .batchMode("foo")
         .secrets()
         .build();

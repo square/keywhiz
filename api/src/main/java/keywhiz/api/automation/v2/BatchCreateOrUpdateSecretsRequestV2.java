@@ -7,11 +7,11 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 
-@AutoValue public abstract class BatchCreateOrUpdateSecretRequestV2 {
-  BatchCreateOrUpdateSecretRequestV2() {}
+@AutoValue public abstract class BatchCreateOrUpdateSecretsRequestV2 {
+  BatchCreateOrUpdateSecretsRequestV2() {}
 
-  public static BatchCreateOrUpdateSecretRequestV2.Builder builder() {
-    return new AutoValue_BatchCreateOrUpdateSecretRequestV2.Builder();
+  public static BatchCreateOrUpdateSecretsRequestV2.Builder builder() {
+    return new AutoValue_BatchCreateOrUpdateSecretsRequestV2.Builder();
   }
 
   @AutoValue.Builder public abstract static class Builder {
@@ -22,10 +22,10 @@ import java.util.List;
     }
 
     public abstract Builder batchMode(String batchMode);
-    public abstract BatchCreateOrUpdateSecretRequestV2 build();
+    public abstract BatchCreateOrUpdateSecretsRequestV2 build();
   }
 
-  @JsonCreator public static BatchCreateOrUpdateSecretRequestV2 fromParts(
+  @JsonCreator public static BatchCreateOrUpdateSecretsRequestV2 fromParts(
       @JsonProperty("secrets") List<CreateOrUpdateSecretInfoV2> secrets,
       @JsonProperty("batchMode") String batchMode) {
     return builder()

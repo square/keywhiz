@@ -16,7 +16,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import keywhiz.KeywhizConfig;
-import keywhiz.api.automation.v2.BatchCreateOrUpdateSecretRequestV2;
+import keywhiz.api.automation.v2.BatchCreateOrUpdateSecretsRequestV2;
+import keywhiz.api.automation.v2.BatchCreateOrUpdateSecretsResponseV2;
 import keywhiz.api.automation.v2.BatchMode;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretInfoV2;
 import keywhiz.api.model.AutomationClient;
@@ -73,9 +74,9 @@ public class BatchResource {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @LogArguments
-  public void batchCreateOrUpdateSecrets(
+  public BatchCreateOrUpdateSecretsResponseV2 batchCreateOrUpdateSecrets(
       @Auth AutomationClient automationClient,
-      @Valid BatchCreateOrUpdateSecretRequestV2 request) {
+      @Valid BatchCreateOrUpdateSecretsRequestV2 request) {
     permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.CREATE, Secret.class);
 
     switch (request.batchMode()) {
@@ -111,6 +112,9 @@ public class BatchResource {
         throw new IllegalArgumentException(
             String.format("Unknown batch mode: %s", request.batchMode()));
     }
+
+    return BatchCreateOrUpdateSecretsResponseV2.builder()
+        .build();
   }
 
   private void createOrUpdateSecret(

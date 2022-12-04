@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.dropwizard.jackson.AnnotationSensitivePropertyNamingStrategy;
@@ -110,6 +111,7 @@ public class JsonHelpers {
     mapper.setPropertyNamingStrategy(new AnnotationSensitivePropertyNamingStrategy());
     mapper.setSubtypeResolver(new DiscoverableSubtypeResolver());
     mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     return mapper;
   }
 }
