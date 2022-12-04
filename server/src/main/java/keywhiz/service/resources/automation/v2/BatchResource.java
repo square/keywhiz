@@ -86,8 +86,31 @@ public class BatchResource {
             createOrUpdateSecret(dslContext, automationClient, secret);
           }
         });
+        break;
+      case BatchMode.BEST_EFFORT:
+        for (CreateOrUpdateSecretInfoV2 secret : request.secrets()) {
+          try {
+            jooq.transaction(configuration -> {
+                DSLContext dslContext = DSL.using(configuration);
+                createOrUpdateSecret(dslContext, automationClient, secret);
+            });
+          } catch (Exception e) {
+            logger.error(String.format("Failed to create or update secret: %s", secret), e);
+          }
+        }
+        break;
+      case BatchMode.FAIL_FAST:
+        for (CreateOrUpdateSecretInfoV2 secret : request.secrets()) {
+          jooq.transaction(configuration -> {
+            DSLContext dslContext = DSL.using(configuration);
+            createOrUpdateSecret(dslContext, automationClient, secret);
+          });
+        }
+        break;
+      default:
+        throw new IllegalArgumentException(
+            String.format("Unknown batch mode: %s", request.batchMode()));
     }
-
   }
 
   private void createOrUpdateSecret(
@@ -125,7 +148,13 @@ public class BatchResource {
       extraInfo.put("metadata", secret.metadata().toString());
     }
     extraInfo.put("expiry", Long.toString(secret.expiry()));
-    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_CREATEORUPDATE, automationClient.getName(), secret.name(), extraInfo));
+    auditLog.recordEvent(
+        new Event(
+            Instant.now(),
+            EventTag.SECRET_CREATEORUPDATE,
+            automationClient.getName(),
+            secret.name(),
+            extraInfo));
   }
 
   private String getSecretOwnerForSecretCreation(DSLContext dslContext, String secretOwner, AutomationClient automationClient) {
