@@ -861,6 +861,7 @@ public class SecretResource {
     Map<String, String> extraInfo = new HashMap<>();
     extraInfo.put("groups", groups.toString());
     extraInfo.put("current version", secret.getVersion().toString());
+    extraInfo.put("deletion mode", mode.toString());
     auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_DELETE, automationClient.getName(), name, extraInfo));
     return Response.noContent().build();
   }
