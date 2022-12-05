@@ -216,17 +216,14 @@ public class ClientDAO {
   }
 
   public ImmutableSet<Client> getClients() {
-    Result<Record> results = dslContext
+    List<Client> clients = dslContext
         .select(CLIENTS.fields())
         .select(CLIENT_OWNERS.NAME)
         .from(CLIENTS)
         .leftJoin(CLIENT_OWNERS)
         .on(CLIENTS.OWNER.eq(CLIENT_OWNERS.ID))
-        .fetch();
-
-    Set<Client> clients = results.stream()
-        .map(this::recordToClient)
-        .collect(Collectors.toSet());
+        .fetch()
+        .map(this::recordToClient);
 
     return ImmutableSet.copyOf(clients);
   }
