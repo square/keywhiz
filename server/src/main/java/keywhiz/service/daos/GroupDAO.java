@@ -37,6 +37,7 @@ import org.jooq.Result;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static keywhiz.jooq.Tables.CLIENTS;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
@@ -124,6 +125,11 @@ public class GroupDAO {
           .update(GROUPS)
           .set(GROUPS.OWNER, (Long) null)
           .where(GROUPS.OWNER.eq(group.getId()))
+          .execute();
+      DSL.using(configuration)
+          .update(CLIENTS)
+          .set(CLIENTS.OWNER, (Long) null)
+          .where(CLIENTS.OWNER.eq(group.getId()))
           .execute();
     });
   }
