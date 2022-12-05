@@ -68,10 +68,10 @@ public class ClientDAO {
   }
 
   public long createClient(
-    String name,
-    String user,
-    String description,
-    @Nullable URI spiffeId) {
+      String name,
+      String user,
+      String description,
+      @Nullable URI spiffeId) {
     return createClient(
         name,
         user,
