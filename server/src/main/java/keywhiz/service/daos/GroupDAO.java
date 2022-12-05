@@ -30,6 +30,7 @@ import keywhiz.api.model.Group;
 import keywhiz.jooq.tables.Groups;
 import keywhiz.jooq.tables.records.GroupsRecord;
 import keywhiz.service.config.Readonly;
+import org.jooq.Condition;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Record;
@@ -135,26 +136,21 @@ public class GroupDAO {
   }
 
   public Optional<Group> getGroup(String name) {
-    Record record = dslContext
-        .select(GROUPS.fields())
-        .select(GROUP_OWNERS.NAME)
-        .from(GROUPS)
-        .leftJoin(GROUP_OWNERS)
-        .on(GROUPS.OWNER.eq(GROUP_OWNERS.ID))
-        .where(GROUPS.NAME.eq(name))
-        .fetchOne();
-
-    return Optional.ofNullable(recordToGroup(record));
+    return getGroup(GROUPS.NAME.eq(name));
   }
 
   public Optional<Group> getGroupById(long id) {
+    return getGroup(GROUPS.ID.eq(id));
+  }
+
+  private Optional<Group> getGroup(Condition condition) {
     Record record = dslContext
         .select(GROUPS.fields())
-        .select(GROUP_OWNERS.NAME)
+        .select(GROUP_OWNERS.ID, GROUP_OWNERS.NAME)
         .from(GROUPS)
         .leftJoin(GROUP_OWNERS)
         .on(GROUPS.OWNER.eq(GROUP_OWNERS.ID))
-        .where(GROUPS.ID.eq(id))
+        .where(condition)
         .fetchOne();
 
     return Optional.ofNullable(recordToGroup(record));
@@ -167,6 +163,15 @@ public class GroupDAO {
 
     GroupsRecord groupRecord = record.into(GROUPS);
     GroupsRecord ownerRecord = record.into(GROUP_OWNERS);
+
+    boolean danglingOwner = groupRecord.getOwner() != null && ownerRecord.getId() == null;
+    if (danglingOwner) {
+      throw new IllegalStateException(
+          String.format(
+              "Owner %s for group %s is missing.",
+              groupRecord.getOwner(),
+              groupRecord.getName()));
+    }
 
     Group group = groupMapper.map(groupRecord);
     if (ownerRecord != null) {

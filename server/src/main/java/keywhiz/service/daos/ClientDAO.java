@@ -180,7 +180,7 @@ public class ClientDAO {
   private Optional<Client> getClient(Condition condition) {
     Record record = dslContext
         .select(CLIENTS.fields())
-        .select(CLIENT_OWNERS.NAME)
+        .select(CLIENT_OWNERS.ID, CLIENT_OWNERS.NAME)
         .from(CLIENTS)
         .leftJoin(CLIENT_OWNERS)
         .on(CLIENTS.OWNER.eq(CLIENT_OWNERS.ID))
@@ -197,6 +197,15 @@ public class ClientDAO {
 
     ClientsRecord clientRecord = record.into(CLIENTS);
     GroupsRecord ownerRecord = record.into(CLIENT_OWNERS);
+
+    boolean danglingOwner = clientRecord.getOwner() != null && ownerRecord.getId() == null;
+    if (danglingOwner) {
+      throw new IllegalStateException(
+          String.format(
+              "Owner %s for client %s is missing.",
+              clientRecord.getOwner(),
+              clientRecord.getName()));
+    }
 
     Client client = clientMapper.map(clientRecord);
     if (ownerRecord != null) {
