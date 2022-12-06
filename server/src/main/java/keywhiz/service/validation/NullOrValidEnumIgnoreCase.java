@@ -12,7 +12,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Constraint(validatedBy = NullOrValidEnumIgnoreCaseValidator.class)
 public @interface NullOrValidEnumIgnoreCase {
-  String message() default "keywhiz.service.validation.NullOrValidIgnoreCase.message";
+  String message() default "keywhiz.service.validation.NullOrValidEnumIgnoreCase.message";
 
   Class<?>[] groups() default {};
 
