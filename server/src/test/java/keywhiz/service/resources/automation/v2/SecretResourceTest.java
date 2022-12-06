@@ -30,6 +30,7 @@ import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SanitizedSecretWithGroups;
 import keywhiz.api.model.SanitizedSecretWithGroupsListAndCursor;
+import keywhiz.api.model.SecretDeletionMode;
 import keywhiz.api.model.SecretRetrievalCursor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -492,6 +493,37 @@ public class SecretResourceTest {
   //---------------------------------------------------------------------------------------
   // deleteSecretSeries
   //---------------------------------------------------------------------------------------
+
+  @Test public void deleteSecretSeries_invalidDeletionModeReturns400() {
+    String secretName = createRandomSecret();
+    String invalidDeletionMode = "foo";
+    Response response = secretResourceTestHelper.deleteSeries(secretName, invalidDeletionMode);
+    assertEquals(400, response.code());
+  }
+
+  @Test public void deleteSecretSeries_noDeletionModeDefaultsToSoftDeletion() {
+    String secretName = createRandomSecret();
+    secretResourceTestHelper.deleteSeries(secretName);
+
+    assertThat(secretResourceTestHelper.getSecret(secretName)).isNotPresent();
+    assertThat(secretResourceTestHelper.getDeletedSecrets(secretName)).isNotEmpty();
+  }
+
+  @Test public void deleteSecretSeries_hardDeletionDeletesSecret() {
+    String secretName = createRandomSecret();
+    secretResourceTestHelper.deleteSeries(secretName, SecretDeletionMode.HARD);
+
+    assertThat(secretResourceTestHelper.getSecret(secretName)).isNotPresent();
+    assertThat(secretResourceTestHelper.getDeletedSecrets(secretName)).isEmpty();
+  }
+
+  @Test public void deleteSecretSeries_softDeletionDoesNotDeleteSecret() {
+    String secretName = createRandomSecret();
+    secretResourceTestHelper.deleteSeries(secretName, SecretDeletionMode.SOFT);
+
+    assertThat(secretResourceTestHelper.getSecret(secretName)).isNotPresent();
+    assertThat(secretResourceTestHelper.getDeletedSecrets(secretName)).isNotEmpty();
+  }
 
   @Test public void deleteSecretSeries_notFound() throws Exception {
     assertThat(secretResourceTestHelper.deleteSeries("non-existent").code()).isEqualTo(404);
@@ -1124,12 +1156,18 @@ public class SecretResourceTest {
     return httpResponse;
   }
 
-  private void createSecret(String secretName) throws IOException {
+  private void createSecret(String secretName) {
     CreateSecretRequestV2 request = CreateSecretRequestV2.builder()
         .name(secretName)
         .content(encode("foo"))
         .build();
    secretResourceTestHelper.create(request);
+  }
+
+  private String createRandomSecret() {
+    String secretName = UUID.randomUUID().toString();
+    createSecret(secretName);
+    return secretName;
   }
 
   private static String encode(String s) {

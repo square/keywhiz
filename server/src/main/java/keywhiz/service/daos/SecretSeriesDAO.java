@@ -321,57 +321,97 @@ public class SecretSeriesDAO {
     return ImmutableList.copyOf(r);
   }
 
-  public void deleteSecretSeriesByName(String name) {
-    long now = OffsetDateTime.now().toEpochSecond();
+  public void hardDeleteSecretSeriesByName(String name) {
+    dslContext.transaction(configuration -> {
+      DSLContext dslContext = DSL.using(configuration);
+
+      SecretsRecord record = dslContext.select()
+          .from(SECRETS)
+          .where(SECRETS.NAME.eq(name))
+          .forUpdate()
+          .fetchOneInto(SECRETS);
+
+      hardDeleteSecretSeries(dslContext, record);
+    });
+  }
+
+  public void hardDeleteSecretSeriesById(Long id) {
+    dslContext.transaction(configuration -> {
+      DSLContext dslContext = DSL.using(configuration);
+
+      SecretsRecord record = dslContext.select()
+          .from(SECRETS)
+          .where(SECRETS.ID.eq(id))
+          .forUpdate()
+          .fetchOneInto(SECRETS);
+
+      hardDeleteSecretSeries(dslContext, record);
+    });
+  }
+
+  private static void hardDeleteSecretSeries(DSLContext dslContext, SecretsRecord record) {
+    if (record == null) {
+      return;
+    }
+
+    dslContext.deleteFrom(SECRETS_CONTENT)
+        .where(SECRETS_CONTENT.SECRETID.eq(record.getId()))
+        .execute();
+    dslContext.deleteFrom(SECRETS)
+        .where(SECRETS.ID.eq(record.getId()))
+        .execute();
+    dslContext.deleteFrom(ACCESSGRANTS)
+        .where(ACCESSGRANTS.SECRETID.eq(record.getId()))
+        .execute();
+  }
+
+  public void softDeleteSecretSeriesByName(String name) {
     dslContext.transaction(configuration -> {
       // find the record and lock it until this transaction is complete
-      SecretsRecord r = DSL.using(configuration)
+      SecretsRecord record = DSL.using(configuration)
           .select()
           .from(SECRETS)
           .where(SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()))
           .forUpdate()
           .fetchOneInto(SECRETS);
-      if (r != null) {
-        DSL.using(configuration)
-            .update(SECRETS)
-            .set(SECRETS.NAME, transformNameForDeletion(name))
-            .set(SECRETS.CURRENT, (Long) null)
-            .set(SECRETS.UPDATEDAT, now)
-            .where(SECRETS.ID.eq(r.getId()))
-            .execute();
 
-        DSL.using(configuration)
-            .delete(ACCESSGRANTS)
-            .where(ACCESSGRANTS.SECRETID.eq(r.getId()))
-            .execute();
-      }
+      softDeleteSecretSeries(DSL.using(configuration), record);
     });
   }
 
-  public void deleteSecretSeriesById(long id) {
-    long now = OffsetDateTime.now().toEpochSecond();
+  public void softDeleteSecretSeriesById(long id) {
     dslContext.transaction(configuration -> {
       // find the record and lock it until this transaction is complete
-      SecretsRecord r = DSL.using(configuration)
+      SecretsRecord record = DSL.using(configuration)
           .select()
           .from(SECRETS)
           .where(SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNotNull()))
           .forUpdate()
           .fetchOneInto(SECRETS);
-      if (r != null) {
-        DSL.using(configuration)
-            .update(SECRETS)
-            .set(SECRETS.NAME, transformNameForDeletion(r.getName()))
-            .set(SECRETS.CURRENT, (Long) null)
-            .set(SECRETS.UPDATEDAT, now)
-            .where(SECRETS.ID.eq(id))
-            .execute();
-        DSL.using(configuration)
-            .delete(ACCESSGRANTS)
-            .where(ACCESSGRANTS.SECRETID.eq(id))
-            .execute();
-      }
+
+      softDeleteSecretSeries(DSL.using(configuration), record);
     });
+  }
+
+  private static void softDeleteSecretSeries(DSLContext dslContext, SecretsRecord record) {
+    if (record == null) {
+      return;
+    }
+
+    long now = OffsetDateTime.now().toEpochSecond();
+
+    dslContext
+        .update(SECRETS)
+        .set(SECRETS.NAME, transformNameForDeletion(record.getName()))
+        .set(SECRETS.CURRENT, (Long) null)
+        .set(SECRETS.UPDATEDAT, now)
+        .where(SECRETS.ID.eq(record.getId()))
+        .execute();
+
+    dslContext
+        .delete(ACCESSGRANTS)
+        .where(ACCESSGRANTS.SECRETID.eq(record.getId()))
+        .execute();
   }
 
   public void renameSecretSeriesById(long secretId, String name, String creator, long now) {
@@ -472,9 +512,9 @@ public class SecretSeriesDAO {
 
   // create a new name for the deleted secret, so that deleted secret names can be reused, while
   // still having a unique constraint on the name field in the DB
-  private String transformNameForDeletion(String name) {
+  private static String transformNameForDeletion(String name) {
     long now = OffsetDateTime.now().toEpochSecond();
-    return String.format(".%s.deleted.%d.%s", name, now, UUID.randomUUID().toString());
+    return String.format(".%s.deleted.%d.%s", name, now, UUID.randomUUID());
   }
 
   private String computeRowHmac(long secretSeriesId, String secretSeriesName) {

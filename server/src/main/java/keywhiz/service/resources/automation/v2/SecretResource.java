@@ -63,11 +63,13 @@ import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretController.SecretBuilder;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
+import keywhiz.service.daos.SecretDeletionMode;
 import keywhiz.service.daos.SecretSeriesDAO;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
 import keywhiz.service.permissions.Action;
 import keywhiz.service.permissions.PermissionCheck;
+import keywhiz.service.validation.NullOrValidEnumIgnoreCase;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -815,6 +817,17 @@ public class SecretResource {
         .collect(toSet());
   }
 
+  @Timed
+  @ExceptionMetered
+  @GET
+  @Path("/deleted/{name}")
+  @LogArguments
+  public List<SecretSeries> getDeletedSecretSeriesByName(
+    @Auth AutomationClient automationClient,
+    @PathParam("name") String name) {
+    return secretDAO.getSecretsWithDeletedName(name);
+  }
+
   /**
    * Delete a secret series
    *
@@ -827,20 +840,28 @@ public class SecretResource {
   @DELETE
   @Path("{name}")
   @LogArguments
-  public Response deleteSecretSeries(@Auth AutomationClient automationClient,
-      @PathParam("name") String name) {
+  public Response deleteSecretSeries(
+      @Auth AutomationClient automationClient,
+      @PathParam("name") String name,
+      @QueryParam("deletionMode") @NullOrValidEnumIgnoreCase(SecretDeletionMode.class) String deletionMode) {
+
+    SecretDeletionMode mode = (deletionMode == null)
+        ? SecretDeletionMode.SOFT
+        : SecretDeletionMode.valueOfIgnoreCase(deletionMode);
+
     Secret secret = secretController.getSecretByName(name).orElseThrow(() -> new NotFoundException("Secret series not found."));
     permissionCheck.checkAllowedOrThrow(automationClient, Action.DELETE, secret);
 
     // Get the groups for this secret so they can be restored manually if necessary
     Set<String> groups = aclDAO.getGroupsFor(secret).stream().map(Group::getName).collect(toSet());
 
-    secretDAO.deleteSecretsByName(name);
+    secretDAO.deleteSecretsByName(name, mode);
 
     // Record the deletion in the audit log
     Map<String, String> extraInfo = new HashMap<>();
     extraInfo.put("groups", groups.toString());
     extraInfo.put("current version", secret.getVersion().toString());
+    extraInfo.put("deletion mode", mode.toString());
     auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_DELETE, automationClient.getName(), name, extraInfo));
     return Response.noContent().build();
   }
