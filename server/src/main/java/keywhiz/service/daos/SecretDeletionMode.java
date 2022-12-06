@@ -12,7 +12,7 @@ public enum SecretDeletionMode {
     if (mode == null) {
       throw new IllegalArgumentException(
           String.format(
-              "Unknown SecretDeletionMode value: %s. Valid values are: %",
+              "Unknown SecretDeletionMode value: %s. Valid values are: %s",
               name,
               SecretDeletionMode.values()));
     }

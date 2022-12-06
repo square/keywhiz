@@ -494,6 +494,13 @@ public class SecretResourceTest {
   // deleteSecretSeries
   //---------------------------------------------------------------------------------------
 
+  @Test public void deleteSecretSeries_invalidDeletionModeReturns400() {
+    String secretName = createRandomSecret();
+    String invalidDeletionMode = "foo";
+    Response response = secretResourceTestHelper.deleteSeries(secretName, invalidDeletionMode);
+    assertEquals(400, response.code());
+  }
+
   @Test public void deleteSecretSeries_noDeletionModeDefaultsToSoftDeletion() {
     String secretName = createRandomSecret();
     secretResourceTestHelper.deleteSeries(secretName);

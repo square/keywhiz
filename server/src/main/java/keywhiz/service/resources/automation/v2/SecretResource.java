@@ -69,7 +69,7 @@ import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
 import keywhiz.service.permissions.Action;
 import keywhiz.service.permissions.PermissionCheck;
-import org.apache.commons.lang3.EnumUtils;
+import keywhiz.service.validation.NullOrValidEnumIgnoreCase;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -843,7 +843,7 @@ public class SecretResource {
   public Response deleteSecretSeries(
       @Auth AutomationClient automationClient,
       @PathParam("name") String name,
-      @QueryParam("deletionMode") String deletionMode) {
+      @QueryParam("deletionMode") @NullOrValidEnumIgnoreCase(SecretDeletionMode.class) String deletionMode) {
 
     SecretDeletionMode mode = (deletionMode == null)
         ? SecretDeletionMode.SOFT
