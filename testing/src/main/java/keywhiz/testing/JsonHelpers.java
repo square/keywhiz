@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.dropwizard.jackson.AnnotationSensitivePropertyNamingStrategy;
@@ -56,8 +57,12 @@ public class JsonHelpers {
    * @return {@code object} as a JSON string
    * @throws JsonProcessingException if there is an error encoding {@code object}
    */
-  public static String asJson(Object object) throws JsonProcessingException {
-    return MAPPER.writeValueAsString(object);
+  public static String asJson(Object object) {
+    try {
+      return MAPPER.writeValueAsString(object);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -69,8 +74,12 @@ public class JsonHelpers {
    * @return {@code json} as an instance of {@code T}
    * @throws IOException if there is an error reading {@code json} as an instance of {@code T}
    */
-  public static <T> T fromJson(String json, Class<T> klass) throws IOException {
-    return MAPPER.readValue(json, klass);
+  public static <T> T fromJson(String json, Class<T> klass) {
+    try {
+      return MAPPER.readValue(json, klass);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -80,8 +89,12 @@ public class JsonHelpers {
    * @return the contents of {@code filename} as a normalized JSON string
    * @throws IOException if there is an error parsing {@code filename}
    */
-  public static String jsonFixture(String filename) throws IOException {
-    return MAPPER.writeValueAsString(MAPPER.readValue(fixture(filename), JsonNode.class));
+  public static String jsonFixture(String filename) {
+    try {
+      return MAPPER.writeValueAsString(MAPPER.readValue(fixture(filename), JsonNode.class));
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -98,6 +111,7 @@ public class JsonHelpers {
     mapper.setPropertyNamingStrategy(new AnnotationSensitivePropertyNamingStrategy());
     mapper.setSubtypeResolver(new DiscoverableSubtypeResolver());
     mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     return mapper;
   }
 }

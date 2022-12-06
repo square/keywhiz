@@ -174,6 +174,34 @@ public class SecretDAO {
       String description,
       @Nullable String type,
       @Nullable Map<String, String> generationOptions) {
+    return createOrUpdateSecret(
+        dslContext,
+        name,
+        owner,
+        encryptedSecret,
+        hmac,
+        creator,
+        metadata,
+        expiry,
+        description,
+        type,
+        generationOptions
+    );
+  }
+
+  @VisibleForTesting
+  public long createOrUpdateSecret(
+      DSLContext dslContext,
+      String name,
+      String owner,
+      String encryptedSecret,
+      String hmac,
+      String creator,
+      Map<String, String> metadata,
+      long expiry,
+      String description,
+      @Nullable String type,
+      @Nullable Map<String, String> generationOptions) {
     // SecretController should have already checked that the contents are not empty
     return dslContext.transactionResult(configuration -> {
       long now = OffsetDateTime.now().toEpochSecond();
@@ -329,11 +357,15 @@ public class SecretDAO {
     });
   }
 
+  public Optional<SecretSeriesAndContent> getSecretByName(String name) {
+    return getSecretByName(dslContext, name);
+  }
+
   /**
    * @param name of secret series to look up secrets by.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<SecretSeriesAndContent> getSecretByName(String name) {
+  public Optional<SecretSeriesAndContent> getSecretByName(DSLContext dslContext, String name) {
     checkArgument(!name.isEmpty());
 
     // In the past, the two data fetches below were wrapped in a transaction. The transaction was

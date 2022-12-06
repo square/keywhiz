@@ -250,6 +250,10 @@ public class AclDAO {
   }
 
   public Set<Group> getGroupsFor(Client client) {
+    return getGroupsFor(dslContext, client);
+  }
+
+  public Set<Group> getGroupsFor(DSLContext dslContext, Client client) {
     List<Group> r = dslContext
         .select(GROUPS.fields())
         .from(GROUPS)
