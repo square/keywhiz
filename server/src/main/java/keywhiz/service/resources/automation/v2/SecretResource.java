@@ -845,9 +845,9 @@ public class SecretResource {
       @PathParam("name") String name,
       @QueryParam("deletionMode") String deletionMode) {
 
-    SecretDeletionMode mode = deletionMode == null
+    SecretDeletionMode mode = (deletionMode == null)
         ? SecretDeletionMode.SOFT
-        : EnumUtils.getEnumIgnoreCase(SecretDeletionMode.class, deletionMode);
+        : SecretDeletionMode.valueOfIgnoreCase(deletionMode);
 
     Secret secret = secretController.getSecretByName(name).orElseThrow(() -> new NotFoundException("Secret series not found."));
     permissionCheck.checkAllowedOrThrow(automationClient, Action.DELETE, secret);
