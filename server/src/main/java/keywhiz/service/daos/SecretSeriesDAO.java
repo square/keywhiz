@@ -253,6 +253,7 @@ public class SecretSeriesDAO {
   public ImmutableList<SecretSeries> getSecretSeries(@Nullable Long expireMaxTime,
       @Nullable Group group, @Nullable Long expireMinTime, @Nullable String minName,
       @Nullable Integer limit) {
+
     Table<SecretsContentRecord> secretsContentTable = SECRETS_CONTENT;
     if (expireMaxTime != null && expireMaxTime > 0) {
       // Force this join to use the index on the secrets_content.expiry
@@ -263,7 +264,7 @@ public class SecretSeriesDAO {
     }
 
     SelectQuery<Record> select = dslContext
-          .select()
+          .select(SECRETS.fields())
           .from(SECRETS)
           .join(secretsContentTable)
           .on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID))
