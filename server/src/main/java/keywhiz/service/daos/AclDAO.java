@@ -37,7 +37,6 @@ import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
-import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.EventTag;
@@ -47,7 +46,6 @@ import keywhiz.service.daos.ClientDAO.ClientDAOFactory;
 import keywhiz.service.daos.GroupDAO.GroupDAOFactory;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
-import keywhiz.service.daos.SecretSeriesMapper.SecretSeriesMapperFactory;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Record;
@@ -77,14 +75,13 @@ public class AclDAO {
   private final SecretSeriesDAOFactory secretSeriesDAOFactory;
   private final ClientMapper clientMapper;
   private final GroupMapper groupMapper;
-  private final SecretSeriesMapperFactory secretSeriesMapperFactory;
   private final SecretContentMapper secretContentMapper;
   private final RowHmacGenerator rowHmacGenerator;
   private final KeywhizConfig config;
 
   private AclDAO(DSLContext dslContext, ClientDAOFactory clientDAOFactory, GroupDAOFactory groupDAOFactory,
                  SecretContentDAOFactory secretContentDAOFactory, SecretSeriesDAOFactory secretSeriesDAOFactory,
-                 ClientMapper clientMapper, GroupMapper groupMapper, SecretSeriesMapperFactory secretSeriesMapperFactory,
+                 ClientMapper clientMapper, GroupMapper groupMapper,
                  SecretContentMapper secretContentMapper, RowHmacGenerator rowHmacGenerator,
                  KeywhizConfig config) {
     this.dslContext = dslContext;
@@ -94,7 +91,6 @@ public class AclDAO {
     this.secretSeriesDAOFactory = secretSeriesDAOFactory;
     this.clientMapper = clientMapper;
     this.groupMapper = groupMapper;
-    this.secretSeriesMapperFactory = secretSeriesMapperFactory;
     this.secretContentMapper = secretContentMapper;
     this.rowHmacGenerator = rowHmacGenerator;
     this.config = config;
@@ -282,14 +278,14 @@ public class AclDAO {
 
     ImmutableSet.Builder<SanitizedSecret> sanitizedSet = ImmutableSet.builder();
 
-    SelectQuery<Record> query = dslContext.select(SECRETS.fields())
-        .from(SECRETS)
-        .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
-        .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
-        .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
-        .join(SECRETS_CONTENT).on(SECRETS_CONTENT.ID.eq(SECRETS.CURRENT))
-        .where(CLIENTS.NAME.eq(client.getName()).and(SECRETS.CURRENT.isNotNull()))
-        .getQuery();
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+
+    SelectQuery<Record> query = secretSeriesDAO.baseSelectQuery();
+    query.addJoin(ACCESSGRANTS, SECRETS.ID.eq(ACCESSGRANTS.SECRETID));
+    query.addJoin(MEMBERSHIPS, ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID));
+    query.addJoin(CLIENTS, CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID));
+    query.addJoin(SECRETS_CONTENT, SECRETS_CONTENT.ID.eq(SECRETS.CURRENT));
+    query.addConditions(CLIENTS.NAME.eq(client.getName()).and(SECRETS.CURRENT.isNotNull()));
     query.addSelect(SECRETS_CONTENT.CONTENT_HMAC);
     query.addSelect(SECRETS_CONTENT.CREATEDAT);
     query.addSelect(SECRETS_CONTENT.CREATEDBY);
@@ -301,7 +297,7 @@ public class AclDAO {
     query.addSelect(CLIENTS.ROW_HMAC);
     query.addSelect(SECRETS.ROW_HMAC);
     query.fetch()
-        .map(row -> processSanitizedSecretRow(row, client))
+        .map(row -> processSanitizedSecretRow(row, client, secretSeriesDAO))
         .forEach(sanitizedSet::add);
 
     return sanitizedSet.build();
@@ -324,17 +320,16 @@ public class AclDAO {
     checkNotNull(client);
     checkArgument(!secretName.isEmpty());
 
-    SelectQuery<Record> query = dslContext.select(SECRETS.fields())
-        .from(SECRETS)
-        .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
-        .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
-        .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
-        .join(SECRETS_CONTENT).on(SECRETS_CONTENT.ID.eq(SECRETS.CURRENT))
-        .where(CLIENTS.NAME.eq(client.getName())
-            .and(SECRETS.CURRENT.isNotNull())
-            .and(SECRETS.NAME.eq(secretName)))
-        .limit(1)
-        .getQuery();
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+    SelectQuery<Record> query = secretSeriesDAO.baseSelectQuery();
+    query.addJoin(ACCESSGRANTS, SECRETS.ID.eq(ACCESSGRANTS.SECRETID));
+    query.addJoin(MEMBERSHIPS, ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID));
+    query.addJoin(CLIENTS, CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID));
+    query.addJoin(SECRETS_CONTENT, SECRETS_CONTENT.ID.eq(SECRETS.CURRENT));
+    query.addConditions(CLIENTS.NAME.eq(client.getName())
+        .and(SECRETS.CURRENT.isNotNull())
+        .and(SECRETS.NAME.eq(secretName)));
+    query.addLimit(1);
     query.addSelect(SECRETS_CONTENT.CONTENT_HMAC);
     query.addSelect(SECRETS_CONTENT.CREATEDAT);
     query.addSelect(SECRETS_CONTENT.CREATEDBY);
@@ -346,23 +341,23 @@ public class AclDAO {
     query.addSelect(CLIENTS.ROW_HMAC);
     query.addSelect(SECRETS.ROW_HMAC);
     return Optional.ofNullable(query.fetchOne())
-        .map(row -> processSanitizedSecretRow(row, client));
+        .map(row -> processSanitizedSecretRow(row, client, secretSeriesDAO));
   }
 
   public List<SanitizedSecret> getBatchSanitizedSecretsFor(Client client, List<String> secretNames) {
     checkNotNull(client);
     checkArgument(!secretNames.isEmpty());
 
-    SelectQuery<Record> query = dslContext.select(SECRETS.fields())
-            .from(SECRETS)
-            .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
-            .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
-            .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
-            .join(SECRETS_CONTENT).on(SECRETS_CONTENT.ID.eq(SECRETS.CURRENT))
-            .where(CLIENTS.NAME.eq(client.getName())
-                    .and(SECRETS.CURRENT.isNotNull())
-                    .and(SECRETS.NAME.in(secretNames)))
-            .getQuery();
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+
+    SelectQuery<Record> query = secretSeriesDAO.baseSelectQuery();
+    query.addJoin(ACCESSGRANTS, SECRETS.ID.eq(ACCESSGRANTS.SECRETID));
+    query.addJoin(MEMBERSHIPS, ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID));
+    query.addJoin(CLIENTS, CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID));
+    query.addJoin(SECRETS_CONTENT, SECRETS_CONTENT.ID.eq(SECRETS.CURRENT));
+    query.addConditions(CLIENTS.NAME.eq(client.getName())
+        .and(SECRETS.CURRENT.isNotNull())
+        .and(SECRETS.NAME.in(secretNames)));
     query.addSelect(SECRETS_CONTENT.CONTENT_HMAC);
     query.addSelect(SECRETS_CONTENT.CREATEDAT);
     query.addSelect(SECRETS_CONTENT.CREATEDBY);
@@ -374,14 +369,14 @@ public class AclDAO {
     query.addSelect(CLIENTS.ROW_HMAC);
     query.addSelect(SECRETS.ROW_HMAC);
 
-    return query.fetch().map(row -> processSanitizedSecretRow(row, client));
+    return query.fetch().map(row -> processSanitizedSecretRow(row, client, secretSeriesDAO));
   }
 
-  private SanitizedSecret processSanitizedSecretRow(Record row, Client client) {
+  private SanitizedSecret processSanitizedSecretRow(Record row, Client client, SecretSeriesDAO secretSeriesDAO) {
     boolean rowHmacLog = config.getRowHmacCheck() == RowHmacCheck.DISABLED_BUT_LOG;
     boolean rowHmacFail = config.getRowHmacCheck() == RowHmacCheck.ENFORCED;
 
-    SecretSeries series = secretSeriesMapperFactory.using(dslContext).map(row.into(SECRETS));
+    SecretSeries series = secretSeriesDAO.recordToSecretSeries(row);
 
     String secretHmac = rowHmacGenerator.computeRowHmac(
         SECRETS.getName(), List.of(row.getValue(SECRETS.NAME), row.getValue(SECRETS.ID))
@@ -552,25 +547,21 @@ public class AclDAO {
   }
 
   protected ImmutableSet<SecretSeries> getSecretSeriesFor(Configuration configuration, Group group) {
-    List<SecretSeries> r = DSL.using(configuration)
-        .select(SECRETS.fields())
-        .from(SECRETS)
-        .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
-        .join(GROUPS).on(GROUPS.ID.eq(ACCESSGRANTS.GROUPID))
-        .where(GROUPS.NAME.eq(group.getName()).and(SECRETS.CURRENT.isNotNull()))
-        .fetchInto(SECRETS)
-        .map(secretSeriesMapperFactory.using(configuration.dsl()));
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+
+    SelectQuery<Record> query = secretSeriesDAO.baseSelectQuery();
+    query.addJoin(ACCESSGRANTS, SECRETS.ID.eq(ACCESSGRANTS.SECRETID));
+    query.addJoin(GROUPS, GROUPS.ID.eq(ACCESSGRANTS.GROUPID));
+    query.addConditions(GROUPS.NAME.eq(group.getName()).and(SECRETS.CURRENT.isNotNull()));
+
+    List<SecretSeries> r = secretSeriesDAO.getMultipleSecretSeriesFromQuery(query);
     return ImmutableSet.copyOf(r);
   }
 
   protected ImmutableSet<SecretSeries> getOwnedSecretSeriesFor(Configuration configuration, Group group) {
-    List<SecretSeries> r = DSL.using(configuration)
-        .select(SECRETS.fields())
-        .from(SECRETS)
-        .where(SECRETS.OWNER.eq(group.getId()))
-        .and(SECRETS.CURRENT.isNotNull())
-        .fetchInto(SECRETS)
-        .map(secretSeriesMapperFactory.using(configuration.dsl()));
+    List<SecretSeries> r = secretSeriesDAOFactory
+        .using(configuration)
+        .getMultipleSecretSeries(SECRETS.OWNER.eq(group.getId()).and(SECRETS.CURRENT.isNotNull()));
     return ImmutableSet.copyOf(r);
   }
 
@@ -584,16 +575,15 @@ public class AclDAO {
    */
   protected Optional<SecretSeries> getSecretSeriesFor(Configuration configuration, Client client, String secretName) {
     // TODO: We need to set limit(1) because we are using joins. We should probably change the join type.
-    SecretsRecord r = DSL.using(configuration)
-        .select(SECRETS.fields())
-        .from(SECRETS)
-        .join(ACCESSGRANTS).on(SECRETS.ID.eq(ACCESSGRANTS.SECRETID))
-        .join(MEMBERSHIPS).on(ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID))
-        .join(CLIENTS).on(CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID))
-        .where(SECRETS.NAME.eq(secretName).and(CLIENTS.NAME.eq(client.getName())).and(SECRETS.CURRENT.isNotNull()))
-        .limit(1)
-        .fetchOneInto(SECRETS);
-    return Optional.ofNullable(r).map(secretSeriesMapperFactory.using(configuration.dsl())::map);
+
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(configuration);
+    SelectQuery<Record> query = secretSeriesDAO.baseSelectQuery();
+    query.addJoin(ACCESSGRANTS, SECRETS.ID.eq(ACCESSGRANTS.SECRETID));
+    query.addJoin(MEMBERSHIPS, ACCESSGRANTS.GROUPID.eq(MEMBERSHIPS.GROUPID));
+    query.addJoin(CLIENTS, CLIENTS.ID.eq(MEMBERSHIPS.CLIENTID));
+    query.addConditions(SECRETS.NAME.eq(secretName).and(CLIENTS.NAME.eq(client.getName())).and(SECRETS.CURRENT.isNotNull()));
+    query.addLimit(1);
+    return secretSeriesDAO.getSecretSeriesFromQuery(query);
   }
 
   public static class AclDAOFactory implements DAOFactory<AclDAO> {
@@ -605,7 +595,6 @@ public class AclDAO {
     private final SecretSeriesDAOFactory secretSeriesDAOFactory;
     private final ClientMapper clientMapper;
     private final GroupMapper groupMapper;
-    private final SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory;
     private final SecretContentMapper secretContentMapper;
     private final RowHmacGenerator rowHmacGenerator;
     private final KeywhizConfig config;
@@ -619,7 +608,6 @@ public class AclDAO {
         SecretSeriesDAOFactory secretSeriesDAOFactory,
         ClientMapper clientMapper,
         GroupMapper groupMapper,
-        SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory,
         SecretContentMapper secretContentMapper,
         RowHmacGenerator rowHmacGenerator,
         KeywhizConfig config) {
@@ -631,7 +619,6 @@ public class AclDAO {
       this.secretSeriesDAOFactory = secretSeriesDAOFactory;
       this.clientMapper = clientMapper;
       this.groupMapper = groupMapper;
-      this.secretSeriesMapperFactory = secretSeriesMapperFactory;
       this.secretContentMapper = secretContentMapper;
       this.rowHmacGenerator = rowHmacGenerator;
       this.config = config;
@@ -646,7 +633,6 @@ public class AclDAO {
           secretSeriesDAOFactory,
           clientMapper,
           groupMapper,
-          secretSeriesMapperFactory,
           secretContentMapper,
           rowHmacGenerator,
           config);
@@ -661,7 +647,6 @@ public class AclDAO {
           secretSeriesDAOFactory,
           clientMapper,
           groupMapper,
-          secretSeriesMapperFactory,
           secretContentMapper,
           rowHmacGenerator,
           config);
@@ -677,7 +662,6 @@ public class AclDAO {
           secretSeriesDAOFactory,
           clientMapper,
           groupMapper,
-          secretSeriesMapperFactory,
           secretContentMapper,
           rowHmacGenerator,
           config);

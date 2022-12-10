@@ -1,7 +1,6 @@
 package keywhiz.service.daos;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import javax.inject.Inject;
@@ -14,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -102,13 +100,8 @@ public class DaoModuleTest {
   }
 
   @Test
-  public void doesNotInjectSecretSeriesMapper() {
-    assertThrows(ConfigurationException.class, () -> getInstance(SecretSeriesMapper.class));
-  }
-
-  @Test
-  public void injectsSecretSeriesMapperFactory() {
-    assertNotNull(getInstance(SecretSeriesMapper.SecretSeriesMapperFactory.class));
+  public void injectsSecretSeriesMapper() {
+    assertNotNull(getInstance(SecretSeriesMapper.class));
   }
 
   private <T> T getInstance(Class<? extends T> clazz) {

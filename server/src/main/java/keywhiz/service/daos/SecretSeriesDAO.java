@@ -29,16 +29,22 @@ import java.util.stream.Stream;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.DeletedSecretsRecord;
+import keywhiz.jooq.tables.Groups;
+import keywhiz.jooq.tables.records.GroupsRecord;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.RowHmacGenerator;
 import org.joda.time.DateTime;
+import org.jooq.Condition;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
+import org.jooq.Record1;
+import org.jooq.SelectOnConditionStep;
 import org.jooq.SelectQuery;
+import org.jooq.Table;
 import org.jooq.impl.DSL;
 
 import javax.annotation.Nullable;
@@ -64,6 +70,8 @@ import static org.jooq.impl.DSL.select;
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
  */
 public class SecretSeriesDAO {
+  private static final Groups SECRET_OWNERS = GROUPS.as("owners");
+
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretSeriesMapper secretSeriesMapper;
@@ -262,8 +270,7 @@ public class SecretSeriesDAO {
   }
 
   public Optional<SecretSeries> getSecretSeriesById(long id) {
-    SecretsRecord r = getSecretSeriesRecordById(id);
-    return Optional.ofNullable(r).map(secretSeriesMapper::map);
+    return getSecretSeries(SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNotNull()));
   }
 
   @VisibleForTesting
@@ -280,9 +287,7 @@ public class SecretSeriesDAO {
   }
 
   private Optional<SecretSeries> getDeletedSecretSeriesFromMainSecretsTable(long id) {
-    SecretsRecord r =
-        dslContext.fetchOne(SECRETS, SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNull()));
-    return Optional.ofNullable(r).map(secretSeriesMapper::map);
+    return getSecretSeries(SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNull()));
   }
 
   private Optional<SecretSeries> getDeletedSecretSeriesFromDeletedSecretsTable(long id) {
@@ -292,9 +297,7 @@ public class SecretSeriesDAO {
   }
 
   public Optional<SecretSeries> getSecretSeriesByName(String name) {
-    SecretsRecord r =
-        dslContext.fetchOne(SECRETS, SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()));
-    return Optional.ofNullable(r).map(secretSeriesMapper::map);
+    return getSecretSeries(SECRETS.NAME.eq(name).and(SECRETS.CURRENT.isNotNull()));
   }
 
   public List<SecretSeries> getSecretSeriesByDeletedName(String name) {
@@ -312,7 +315,7 @@ public class SecretSeriesDAO {
 
   private List<SecretSeries> getDeletedSecretSeriesFromMainSecretsTable(String name) {
     String lookup = "." + name + ".%";
-    return dslContext.fetch(SECRETS, SECRETS.NAME.like(lookup).and(SECRETS.CURRENT.isNull())).map(secretSeriesMapper::map);
+    return getMultipleSecretSeries(SECRETS.NAME.like(lookup).and(SECRETS.CURRENT.isNull()));
   }
 
   private List<SecretSeries> getDeletedSecretSeriesFromDeletedSecretsTable(String name) {
@@ -323,7 +326,73 @@ public class SecretSeriesDAO {
   }
 
   public List<SecretSeries> getMultipleSecretSeriesByName(List<String> names) {
-    return dslContext.fetch(SECRETS, SECRETS.NAME.in(names).and(SECRETS.CURRENT.isNotNull())).map(secretSeriesMapper::map);
+    return getMultipleSecretSeries(SECRETS.NAME.in(names).and(SECRETS.CURRENT.isNotNull()));
+  }
+
+  SelectQuery<Record> baseSelectQuery() {
+        return baseSelect().getQuery();
+  }
+
+  private SelectOnConditionStep<Record> baseSelect() {
+    return dslContext
+        .select(SECRETS.fields())
+        .select(SECRET_OWNERS.fields())
+        .from(SECRETS)
+        .leftJoin(SECRET_OWNERS)
+        .on(SECRETS.OWNER.eq(SECRET_OWNERS.ID));
+  }
+
+  List<SecretSeries> getMultipleSecretSeriesFromQuery(SelectQuery<Record> query) {
+    return query.fetch().map(this::recordToSecretSeries);
+  }
+
+  public Optional<SecretSeries> getSecretSeriesFromQuery(SelectQuery<Record> query) {
+    return Optional.ofNullable(query.fetchOne()).map(this::recordToSecretSeries);
+  }
+
+  List<SecretSeries> getMultipleSecretSeries(Condition condition) {
+    return baseSelect()
+        .where(condition)
+        .fetch()
+        .map(this::recordToSecretSeries);
+  }
+
+  private Optional<SecretSeries> getSecretSeries(Condition condition) {
+    Record record = baseSelect()
+        .where(condition)
+        .fetchOne();
+
+    return Optional.ofNullable(recordToSecretSeries(record));
+  }
+
+  SecretSeries recordToSecretSeries(Record record) {
+    if (record == null) {
+      return null;
+    }
+
+    SecretsRecord secretRecord = record.into(SECRETS);
+    GroupsRecord ownerRecord = record.into(SECRET_OWNERS);
+
+    throwIfDanglingOwner(secretRecord, ownerRecord);
+
+    SecretSeries secretSeries = secretSeriesMapper.map(secretRecord);
+    if (secretRecord.getOwner() != null) {
+      secretSeries = secretSeries.toBuilder()
+          .owner(ownerRecord.getName())
+          .build();
+    }
+
+    return secretSeries;
+  }
+
+  private static void throwIfDanglingOwner(SecretsRecord secretRecord, GroupsRecord ownerRecord) {
+    boolean danglingOwner = secretRecord.getOwner() != null && ownerRecord.getId() == null;
+    if (danglingOwner) {
+      throw new IllegalStateException(
+          String.format("Owner %s for secret %s is missing.",
+              secretRecord.getOwner(),
+              secretRecord.getName()));
+    }
   }
 
   public List<String> listExpiringSecretNames(Instant notAfterInclusive) {
@@ -341,9 +410,18 @@ public class SecretSeriesDAO {
       @Nullable Group group, @Nullable Long expireMinTime, @Nullable String minName,
       @Nullable Integer limit) {
 
-    SelectQuery<Record> select = dslContext
-          .select(SECRETS.fields())
-          .from(SECRETS)
+    Table<SecretsContentRecord> secretsContentTable = SECRETS_CONTENT;
+    if (expireMaxTime != null && expireMaxTime > 0) {
+      // Force this join to use the index on the secrets_content.expiry
+      // field. The optimizer may fail to use this index when the SELECT
+      // examines a large number of rows, causing significant performance
+      // degradation.
+      secretsContentTable = secretsContentTable.useIndexForJoin("secrets_content_expiry");
+    }
+
+    SelectQuery<Record> select = baseSelect()
+          .join(secretsContentTable)
+          .on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID))
           .where(SECRETS.CURRENT.isNotNull())
           .getQuery();
     select.addOrderBy(SECRETS.EXPIRY.asc(), SECRETS.NAME.asc());
@@ -375,14 +453,12 @@ public class SecretSeriesDAO {
       select.addLimit(limit);
     }
 
-    List<SecretSeries> r = select.fetchInto(SECRETS).map(secretSeriesMapper);
+    List<SecretSeries> r = select.fetch().map(this::recordToSecretSeries);
     return ImmutableList.copyOf(r);
   }
 
   public ImmutableList<SecretSeries> getSecretSeriesBatched(int idx, int num, boolean newestFirst) {
-    SelectQuery<Record> select = dslContext
-        .select()
-        .from(SECRETS)
+    SelectQuery<Record> select = baseSelect()
         .join(SECRETS_CONTENT)
         .on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID))
         .where(SECRETS.CURRENT.isNotNull())
@@ -394,7 +470,7 @@ public class SecretSeriesDAO {
     }
     select.addLimit(idx, num);
 
-    List<SecretSeries> r = select.fetchInto(SECRETS).map(secretSeriesMapper);
+    List<SecretSeries> r = select.fetch().map(this::recordToSecretSeries);
     return ImmutableList.copyOf(r);
   }
 
@@ -625,19 +701,19 @@ public class SecretSeriesDAO {
     private final DSLContext jooq;
     private final DSLContext readonlyJooq;
     private final ObjectMapper objectMapper;
-    private final SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory;
+    private final SecretSeriesMapper secretSeriesMapper;
     private final RowHmacGenerator rowHmacGenerator;
 
     @Inject public SecretSeriesDAOFactory(
         DSLContext jooq,
         @Readonly DSLContext readonlyJooq,
         ObjectMapper objectMapper,
-        SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory,
+        SecretSeriesMapper secretSeriesMapper,
         RowHmacGenerator rowHmacGenerator) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
-      this.secretSeriesMapperFactory = secretSeriesMapperFactory;
+      this.secretSeriesMapper = secretSeriesMapper;
       this.rowHmacGenerator = rowHmacGenerator;
     }
 
@@ -645,7 +721,7 @@ public class SecretSeriesDAO {
       return new SecretSeriesDAO(
           jooq,
           objectMapper,
-          secretSeriesMapperFactory.using(jooq),
+          secretSeriesMapper,
           rowHmacGenerator);
     }
 
@@ -653,7 +729,7 @@ public class SecretSeriesDAO {
       return new SecretSeriesDAO(
           readonlyJooq,
           objectMapper,
-          secretSeriesMapperFactory.using(readonlyJooq),
+          secretSeriesMapper,
           rowHmacGenerator);
     }
 
@@ -662,7 +738,7 @@ public class SecretSeriesDAO {
       return new SecretSeriesDAO(
           dslContext,
           objectMapper,
-          secretSeriesMapperFactory.using(dslContext),
+          secretSeriesMapper,
           rowHmacGenerator);
     }
   }
