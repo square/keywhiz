@@ -185,7 +185,12 @@ public class KeywhizService extends Application<KeywhizConfig> {
     }
   }
 
-  private void validateDatabase(KeywhizConfig config) {
+  @VisibleForTesting
+  void validateDatabase(KeywhizConfig config) {
+    if (!config.shouldValidateDatabase()) {
+      return ;
+    }
+
     logger.debug("Validating database state");
     DataSource dataSource = config.getDataSourceFactory()
         .build(new MetricRegistry(), "flyway-validation-datasource");
