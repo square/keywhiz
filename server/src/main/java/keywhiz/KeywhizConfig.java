@@ -103,6 +103,9 @@ public class KeywhizConfig extends Configuration {
   @JsonProperty
   private NewSecretOwnershipStrategy newSecretOwnershipStrategy;
 
+  @JsonProperty
+  private Boolean validateDatabase;
+
   public enum RowHmacCheck {
     @JsonProperty("disabled")
     DISABLED,
@@ -244,6 +247,14 @@ public class KeywhizConfig extends Configuration {
   @VisibleForTesting
   public void setMaximumSecretSizeInBytesInclusive(Long maximumSecretSizeInBytesInclusive) {
     this.maximumSecretSizeInBytesInclusive = maximumSecretSizeInBytesInclusive;
+  }
+
+  public boolean shouldValidateDatabase() {
+    return validateDatabase == null ? true : validateDatabase;
+  }
+
+  public void setValidateDatabase(boolean validateDatabase) {
+    this.validateDatabase = validateDatabase;
   }
 
   public static class TemplatedDataSourceFactory extends DataSourceFactory {
