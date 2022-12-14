@@ -21,6 +21,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -114,6 +115,18 @@ public class SecretResource {
     this.secretControllerReadOnly = secretControllerReadOnly;
     this.permissionCheck = permissionCheck;
     this.config = config;
+  }
+
+  @Timed @ExceptionMetered
+  @HEAD
+  @Path("{name}")
+  @Consumes(APPLICATION_JSON)
+  @LogArguments
+  public Response secretExists(@Auth AutomationClient automationClient, @PathParam("name") String secretName) {
+    Response.Status status = secretSeriesDAO.secretSeriesExists(secretName)
+        ? Response.Status.OK
+        : Response.Status.NOT_FOUND;
+    return Response.status(status).build();
   }
 
   /**

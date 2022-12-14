@@ -78,6 +78,10 @@ public class SecretSeriesDAO {
     this.rowHmacGenerator = rowHmacGenerator;
   }
 
+  public boolean secretSeriesExists(String name) {
+    return dslContext.fetchExists(SECRETS, SECRETS.NAME.eq(name));
+  }
+
   long createSecretSeries(
       String name,
       Long ownerId,

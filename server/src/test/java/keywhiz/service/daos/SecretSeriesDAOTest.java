@@ -42,6 +42,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(KeywhizTestRunner.class)
 public class SecretSeriesDAOTest {
@@ -49,6 +50,19 @@ public class SecretSeriesDAOTest {
   @Inject @Readwrite SecretSeriesDAO secretSeriesDAO;
   @Inject @Readwrite SecretContentDAO secretContentDAO;
   @Inject @Readwrite GroupDAO groupDAO;
+
+  @Test
+  public void secretSeriesExistsFindsSecretSeries() {
+    String secretName = randomName();
+    createSecretSeries(secretName);
+    assertTrue(secretSeriesDAO.secretSeriesExists(secretName));
+  }
+
+  @Test
+  public void secretSeriesExistsDoesNotFindMissingSecretSeries() {
+    String secretName = randomName();
+    assertFalse(secretSeriesDAO.secretSeriesExists(secretName));
+  }
 
   @Test public void setsRowHmacByName() {
     String secretName = randomName();

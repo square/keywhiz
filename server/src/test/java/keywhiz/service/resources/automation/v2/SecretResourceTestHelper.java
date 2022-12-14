@@ -39,6 +39,14 @@ public class SecretResourceTestHelper {
     this.mapper = mapper;
   }
 
+  Response secretExists(String secretName) {
+    String uri = UriBuilder.fromPath("/automation/v2/secrets")
+        .path(secretName)
+        .toString();
+    Request request = clientRequest(uri).head().build();
+    return execute(request);
+  }
+
   Response create(CreateSecretRequestV2 request) {
     RequestBody body = RequestBody.create(JSON, toJson(request));
     Request post = clientRequest("/automation/v2/secrets").post(body).build();
