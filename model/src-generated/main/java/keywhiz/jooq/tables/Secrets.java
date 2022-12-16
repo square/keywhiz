@@ -18,7 +18,7 @@ import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row13;
+import org.jooq.Row12;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -110,11 +110,6 @@ public class Secrets extends TableImpl<SecretsRecord> {
      */
     public final TableField<SecretsRecord, Long> OWNER = createField(DSL.name("owner"), SQLDataType.BIGINT, this, "");
 
-    /**
-     * The column <code>keywhizdb_test.secrets.expiry</code>.
-     */
-    public final TableField<SecretsRecord, Long> EXPIRY = createField(DSL.name("expiry"), SQLDataType.BIGINT, this, "");
-
     private Secrets(Name alias, Table<SecretsRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -155,7 +150,7 @@ public class Secrets extends TableImpl<SecretsRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.SECRETS_EXPIRY_IDX, Indexes.SECRETS_OWNER_IDX, Indexes.SECRETS_SECRETS_CURRENT_IDX);
+        return Arrays.asList(Indexes.SECRETS_OWNER_IDX, Indexes.SECRETS_SECRETS_CURRENT_IDX);
     }
 
     @Override
@@ -200,11 +195,11 @@ public class Secrets extends TableImpl<SecretsRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row13 type methods
+    // Row12 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row13<Long, String, Long, Long, String, String, String, String, String, Long, String, Long, Long> fieldsRow() {
-        return (Row13) super.fieldsRow();
+    public Row12<Long, String, Long, Long, String, String, String, String, String, Long, String, Long> fieldsRow() {
+        return (Row12) super.fieldsRow();
     }
 }
