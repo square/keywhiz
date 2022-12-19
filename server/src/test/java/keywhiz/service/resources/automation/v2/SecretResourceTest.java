@@ -73,6 +73,20 @@ public class SecretResourceTest {
     secretResourceTestHelper = new SecretResourceTestHelper(mutualSslClient, mapper);
   }
 
+  @Test
+  public void secretExistsFindsExistingSecret() {
+    String secretName = createRandomSecret();
+    Response response = secretResourceTestHelper.secretExists(secretName);
+    assertEquals(200, response.code());
+  }
+
+  @Test
+  public void secretExistsDoesNotFindNonExistingSecret() {
+    String secretName = UUID.randomUUID().toString();
+    Response response = secretResourceTestHelper.secretExists(secretName);
+    assertEquals(404, response.code());
+  }
+
   //---------------------------------------------------------------------------------------
   // renameSecret
   //---------------------------------------------------------------------------------------
