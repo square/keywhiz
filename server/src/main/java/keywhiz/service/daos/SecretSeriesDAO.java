@@ -31,10 +31,7 @@ import keywhiz.service.crypto.RowHmacGenerator;
 import org.joda.time.DateTime;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
-import org.jooq.Field;
 import org.jooq.Record;
-import org.jooq.Record1;
-import org.jooq.Record2;
 import org.jooq.SelectQuery;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
@@ -54,10 +51,6 @@ import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
-import static org.jooq.impl.DSL.decode;
-import static org.jooq.impl.DSL.least;
-import static org.jooq.impl.DSL.val;
-
 
 /**
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
