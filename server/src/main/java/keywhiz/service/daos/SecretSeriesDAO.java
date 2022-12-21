@@ -34,6 +34,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.Record1;
+import org.jooq.Record2;
 import org.jooq.SelectQuery;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
@@ -176,14 +177,36 @@ public class SecretSeriesDAO {
   }
 
   public int setExpiration(long secretContentId, Instant expiration) {
-    Field<Long> minExpiration = decode()
-        .when(SECRETS_CONTENT.EXPIRY.eq(0L), val(expiration.getEpochSecond()))
-        .otherwise(least(SECRETS_CONTENT.EXPIRY, val(expiration.getEpochSecond())));
+    return dslContext.transactionResult(configuration -> {
+      SecretsContentRecord content = dslContext.select(SECRETS_CONTENT.EXPIRY)
+          .from(SECRETS_CONTENT)
+          .where(SECRETS_CONTENT.ID.eq(secretContentId))
+          .forUpdate()
+          .fetchOneInto(SecretsContentRecord.class);
 
-    return dslContext.update(SECRETS_CONTENT)
-        .set(SECRETS_CONTENT.EXPIRY, minExpiration)
-        .where(SECRETS_CONTENT.ID.eq(secretContentId))
-        .execute();
+      if (content == null) {
+        return 0;
+      }
+
+      Long currentExpiry = content.getExpiry();
+      long epochSeconds = expiration.getEpochSecond();
+
+      Long updatedExpiry = (currentExpiry == null || currentExpiry == 0)
+          ? epochSeconds
+          : Math.min(currentExpiry, epochSeconds);
+
+      int contentsUpdated = dslContext.update(SECRETS_CONTENT)
+          .set(SECRETS_CONTENT.EXPIRY, updatedExpiry)
+          .where(SECRETS_CONTENT.ID.eq(secretContentId))
+          .execute();
+
+      int secretsUpdated = dslContext.update(SECRETS)
+          .set(SECRETS.EXPIRY, updatedExpiry)
+          .where(SECRETS.CURRENT.eq(secretContentId))
+          .execute();
+
+      return contentsUpdated + secretsUpdated;
+    });
   }
 
   public int setRowHmacByName(String secretName, String hmac) {
@@ -201,18 +224,21 @@ public class SecretSeriesDAO {
   }
 
   public int setCurrentVersion(long secretId, long secretContentId, String updater, long now) {
-    long checkId;
-    Record1<Long> r = dslContext.select(SECRETS_CONTENT.SECRETID)
+    SecretsContentRecord r = dslContext
+        .select(
+            SECRETS_CONTENT.SECRETID,
+            SECRETS_CONTENT.EXPIRY)
         .from(SECRETS_CONTENT)
         .where(SECRETS_CONTENT.ID.eq(secretContentId))
-        .fetchOne();
+        .fetchOneInto(SECRETS_CONTENT);
+
     if (r == null) {
       throw new BadRequestException(
           String.format("The requested version %d is not a known version of this secret",
               secretContentId));
     }
 
-    checkId = r.value1();
+    long checkId = r.getSecretid();
     if (checkId != secretId) {
       throw new IllegalStateException(String.format(
           "tried to reset secret with id %d to version %d, but this version is not associated with this secret",
@@ -221,6 +247,7 @@ public class SecretSeriesDAO {
 
     return dslContext.update(SECRETS)
         .set(SECRETS.CURRENT, secretContentId)
+        .set(SECRETS.EXPIRY, r.getExpiry())
         .set(SECRETS.UPDATEDBY, updater)
         .set(SECRETS.UPDATEDAT, now)
         .where(SECRETS.ID.eq(secretId))
@@ -228,9 +255,13 @@ public class SecretSeriesDAO {
   }
 
   public Optional<SecretSeries> getSecretSeriesById(long id) {
-    SecretsRecord r =
-        dslContext.fetchOne(SECRETS, SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNotNull()));
+    SecretsRecord r = getSecretSeriesRecordById(id);
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
+  }
+
+  @VisibleForTesting
+  SecretsRecord getSecretSeriesRecordById(long id) {
+    return dslContext.fetchOne(SECRETS, SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNotNull()));
   }
 
   public Optional<SecretSeries> getDeletedSecretSeriesById(long id) {

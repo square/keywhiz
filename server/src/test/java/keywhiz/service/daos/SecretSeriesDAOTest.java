@@ -18,10 +18,14 @@ package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.util.Collections;
 import java.util.Random;
 import java.util.UUID;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
+import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readwrite;
@@ -41,6 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -50,6 +55,84 @@ public class SecretSeriesDAOTest {
   @Inject @Readwrite SecretSeriesDAO secretSeriesDAO;
   @Inject @Readwrite SecretContentDAO secretContentDAO;
   @Inject @Readwrite GroupDAO groupDAO;
+
+  @Test
+  public void setCurrentVersionUpdatesSecretSeriesExpiry() {
+    long secretSeriesId = createRandomSecretSeries();
+
+    long expiration1 = randomExpiration();
+    long expiration2 = randomExpiration();
+
+    long secretContentId1 = createSecretContent(secretSeriesId);
+    secretSeriesDAO.setExpiration(secretContentId1, Instant.ofEpochSecond(expiration1));
+
+    long secretContentId2 = createSecretContent(secretSeriesId);
+    secretSeriesDAO.setExpiration(secretContentId2, Instant.ofEpochSecond(expiration2));
+
+    {
+      SecretsRecord secretSeriesRecord = secretSeriesDAO.getSecretSeriesRecordById(secretSeriesId);
+      assertEquals(Long.valueOf(expiration2), secretSeriesRecord.getExpiry());
+    }
+
+    secretSeriesDAO.setCurrentVersion(secretSeriesId, secretContentId1, "updater", Instant.now().getEpochSecond());
+
+    {
+      SecretsRecord secretSeriesRecord = secretSeriesDAO.getSecretSeriesRecordById(secretSeriesId);
+      assertEquals(Long.valueOf(expiration1), secretSeriesRecord.getExpiry());
+    }
+  }
+
+  @Test
+  public void setExpirationForNonCurrentVersionDoesNotUpdateSecretSeriesExpiry() {
+    long secretSeriesId = createRandomSecretSeries();
+
+    long expiration1 = randomExpiration();
+    long expiration2 = randomExpiration();
+
+    long secretContentId1 = createSecretContent(secretSeriesId);
+    secretSeriesDAO.setExpiration(secretContentId1, Instant.ofEpochSecond(expiration1));
+
+    long secretContentId2 = createSecretContent(secretSeriesId);
+    secretSeriesDAO.setExpiration(secretContentId2, Instant.ofEpochSecond(expiration2));
+
+    {
+      SecretsRecord secretSeriesRecord = secretSeriesDAO.getSecretSeriesRecordById(secretSeriesId);
+      assertEquals(Long.valueOf(secretContentId2), secretSeriesRecord.getCurrent());
+      assertEquals(Long.valueOf(expiration2), secretSeriesRecord.getExpiry());
+    }
+
+    long updatedExpiration = randomExpiration();
+    secretSeriesDAO.setExpiration(secretContentId1, Instant.ofEpochSecond(updatedExpiration));
+
+    {
+      SecretsRecord secretSeriesRecord = secretSeriesDAO.getSecretSeriesRecordById(secretSeriesId);
+      assertEquals(Long.valueOf(secretContentId2), secretSeriesRecord.getCurrent());
+      assertEquals(Long.valueOf(expiration2), secretSeriesRecord.getExpiry());
+    }
+  }
+
+  @Test
+  public void setExpirationForCurrentVersionUpdatesSecretSeriesExpiry() {
+    long secretSeriesId = createRandomSecretSeries();
+    long secretContentId = createSecretContent(secretSeriesId);
+
+    {
+      SecretsRecord secretSeriesRecord = secretSeriesDAO.getSecretSeriesRecordById(secretSeriesId);
+      assertEquals(Long.valueOf(0), secretSeriesRecord.getExpiry());
+      SecretContent secretContent = secretContentDAO.getSecretContentById(secretContentId).get();
+      assertEquals(0L, secretContent.expiry());
+    }
+
+    long expiration = randomExpiration();
+    secretSeriesDAO.setExpiration(secretContentId, Instant.ofEpochSecond(expiration));
+
+    {
+      SecretsRecord secretSeriesRecord = secretSeriesDAO.getSecretSeriesRecordById(secretSeriesId);
+      assertEquals(Long.valueOf(expiration), secretSeriesRecord.getExpiry());
+      SecretContent secretContent = secretContentDAO.getSecretContentById(secretContentId).get();
+      assertEquals(expiration, secretContent.expiry());
+    }
+  }
 
   @Test
   public void secretSeriesExistsFindsSecretSeries() {
@@ -554,7 +637,7 @@ public class SecretSeriesDAOTest {
         "blah",
         "checksum",
         "creator",
-        null,
+        Collections.emptyMap(),
         0,
         now);
 
@@ -565,6 +648,29 @@ public class SecretSeriesDAOTest {
 
   private static String randomName() {
     return UUID.randomUUID().toString();
+  }
+
+  private static long randomExpiration() {
+    long expiration = 0;
+    Random random = new Random();
+
+    for (;;) {
+      expiration = random.nextLong();
+
+      if (expiration <= 0) {
+        continue;
+      }
+
+      try {
+        Instant.ofEpochSecond(expiration);
+      } catch (DateTimeException e) {
+        continue;
+      }
+
+      break;
+    }
+
+    return expiration;
   }
 }
 
