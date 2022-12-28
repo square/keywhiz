@@ -34,6 +34,7 @@ import keywhiz.service.crypto.ContentEncodingException;
 import keywhiz.service.daos.SecretContentDAO.SecretContentDAOFactory;
 import keywhiz.service.daos.SecretSeriesDAO.SecretSeriesDAOFactory;
 import keywhiz.service.exceptions.ConflictException;
+import keywhiz.service.permissions.Action;
 import keywhiz.service.permissions.PermissionCheck;
 import org.joda.time.DateTime;
 import org.jooq.Configuration;
@@ -163,34 +164,6 @@ public class SecretDAO {
 
   @VisibleForTesting
   public long createOrUpdateSecret(
-      String name,
-      String owner,
-      String encryptedSecret,
-      String hmac,
-      String creator,
-      Map<String, String> metadata,
-      long expiry,
-      String description,
-      @Nullable String type,
-      @Nullable Map<String, String> generationOptions) {
-    return createOrUpdateSecret(
-        dslContext,
-        name,
-        owner,
-        encryptedSecret,
-        hmac,
-        creator,
-        metadata,
-        expiry,
-        description,
-        type,
-        generationOptions
-    );
-  }
-
-  @VisibleForTesting
-  public long createOrUpdateSecret(
-      DSLContext dslContext,
       String name,
       String owner,
       String encryptedSecret,
@@ -356,15 +329,11 @@ public class SecretDAO {
     });
   }
 
-  public Optional<SecretSeriesAndContent> getSecretByName(String name) {
-    return getSecretByName(dslContext, name);
-  }
-
   /**
    * @param name of secret series to look up secrets by.
    * @return Secret matching input parameters or Optional.absent().
    */
-  public Optional<SecretSeriesAndContent> getSecretByName(DSLContext dslContext, String name) {
+  public Optional<SecretSeriesAndContent> getSecretByName(String name) {
     checkArgument(!name.isEmpty());
 
     // In the past, the two data fetches below were wrapped in a transaction. The transaction was
@@ -590,24 +559,10 @@ public class SecretDAO {
    * @param name of secret series to delete.
    */
   public void deleteSecretsByName(String name) {
-    deleteSecretsByName(name, SecretDeletionMode.SOFT);
-  }
-
-  public void deleteSecretsByName(String name, SecretDeletionMode mode) {
     checkArgument(!name.isEmpty());
 
-    switch(mode) {
-      case HARD:
-        secretSeriesDAOFactory.using(dslContext.configuration())
-            .hardDeleteSecretSeriesByName(name);
-        break;
-      case SOFT:
-        secretSeriesDAOFactory.using(dslContext.configuration())
-            .softDeleteSecretSeriesByName(name);
-        break;
-      default:
-        throw new IllegalArgumentException(String.format("Unknown secret deletion mode: %s", mode));
-    }
+    secretSeriesDAOFactory.using(dslContext.configuration())
+        .deleteSecretSeriesByName(name);
   }
 
   /**

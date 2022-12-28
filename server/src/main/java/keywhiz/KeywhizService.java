@@ -19,7 +19,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.annotations.VisibleForTesting;
@@ -63,7 +62,6 @@ import keywhiz.service.resources.automation.AutomationSecretAccessResource;
 import keywhiz.service.resources.automation.AutomationSecretResource;
 import keywhiz.service.resources.automation.v2.BackfillRowHmacResource;
 import keywhiz.service.resources.automation.v2.BackupResource;
-import keywhiz.service.resources.automation.v2.BatchResource;
 import keywhiz.service.resources.automation.v2.ClientResource;
 import keywhiz.service.resources.automation.v2.GroupResource;
 import keywhiz.service.resources.automation.v2.SecretResource;
@@ -147,7 +145,6 @@ public class KeywhizService extends Application<KeywhizConfig> {
 
     logger.debug("Registering resources");
     jersey.register(injector.getInstance(BackfillRowHmacResource.class));
-    jersey.register(injector.getInstance(BatchResource.class));
     jersey.register(injector.getInstance(ClientResource.class));
     jersey.register(injector.getInstance(ClientsResource.class));
     jersey.register(injector.getInstance(GroupResource.class));
@@ -186,12 +183,7 @@ public class KeywhizService extends Application<KeywhizConfig> {
     }
   }
 
-  @VisibleForTesting
-  void validateDatabase(KeywhizConfig config) {
-    if (!config.shouldValidateDatabase()) {
-      return ;
-    }
-
+  private void validateDatabase(KeywhizConfig config) {
     logger.debug("Validating database state");
     DataSource dataSource = config.getDataSourceFactory()
         .build(new MetricRegistry(), "flyway-validation-datasource");
@@ -210,7 +202,6 @@ public class KeywhizService extends Application<KeywhizConfig> {
     objectMapper.registerModules(new JavaTimeModule());
     objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     return objectMapper;
   }
 

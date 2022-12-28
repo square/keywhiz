@@ -33,6 +33,7 @@ import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
+import keywhiz.api.model.Secret;
 import keywhiz.api.model.SanitizedSecret;
 import okhttp3.Call;
 import okhttp3.HttpUrl;
@@ -157,7 +158,8 @@ public class KeywhizClient {
   }
 
   public List<SanitizedSecret> allSecrets() throws IOException {
-    String response = httpGet(baseUrl.resolve("/admin/secrets?nameOnly=1"));
+    String response = httpGet(baseUrl.resolve("/admin/secrets"));
+    System.out.println(response);
     return mapper.readValue(response, new TypeReference<List<SanitizedSecret>>() {
     });
   }
@@ -330,6 +332,19 @@ public class KeywhizClient {
         .addQueryParameter("name", name)
         .build());
     return mapper.readValue(response, Group.class);
+  }
+
+  /* Author: BigDL
+   * Date: 12/6/2022
+  */
+  public String getKeyByName(String name) throws IOException {
+    checkArgument(!name.isEmpty());
+    String response =
+        httpGet(baseUrl.resolve("/admin/secrets").newBuilder().addQueryParameter("name", name)
+            .build());
+    SanitizedSecret secret = mapper.readValue(response, SanitizedSecret.class);
+    String key = secret.metadata().get("_key");
+    return key;
   }
 
   public SanitizedSecret getSanitizedSecretByName(String name) throws IOException {

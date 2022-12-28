@@ -72,7 +72,7 @@ public class Client {
   private final boolean enabled;
 
   @JsonProperty
-  private String owner;
+  private final String owner;
 
   /**
    * True if client is enabled to do automationAllowed tasks.
@@ -190,8 +190,6 @@ public class Client {
   }
 
   public String getOwner() { return owner; }
-
-  public void setOwner(String owner) { this.owner = owner; }
 
   public boolean isAutomationAllowed() {
     return automationAllowed;

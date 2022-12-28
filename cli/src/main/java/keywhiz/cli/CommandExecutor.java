@@ -34,6 +34,7 @@ import keywhiz.cli.commands.AssignAction;
 import keywhiz.cli.commands.DeleteAction;
 import keywhiz.cli.commands.DescribeAction;
 import keywhiz.cli.commands.ListAction;
+import keywhiz.cli.commands.GetAction;
 import keywhiz.cli.commands.ListVersionsAction;
 import keywhiz.cli.commands.RenameAction;
 import keywhiz.cli.commands.RollbackAction;
@@ -45,6 +46,7 @@ import keywhiz.cli.configs.CliConfiguration;
 import keywhiz.cli.configs.DeleteActionConfig;
 import keywhiz.cli.configs.DescribeActionConfig;
 import keywhiz.cli.configs.ListActionConfig;
+import keywhiz.cli.configs.GetActionConfig;
 import keywhiz.cli.configs.ListVersionsActionConfig;
 import keywhiz.cli.configs.RenameActionConfig;
 import keywhiz.cli.configs.RollbackActionConfig;
@@ -74,6 +76,7 @@ public class CommandExecutor {
     UNASSIGN,
     UPDATE,
     VERSIONS,
+    GET,
   }
 
   private final Path cookieDir = Paths.get(USER_HOME.value());
@@ -140,12 +143,17 @@ public class CommandExecutor {
       if(!client.isLoggedIn()) {
         throw new UnauthorizedException();
       }
-    } catch (IOException e) {
+    } catch (IOException ioe) {
       // Either could not find the cookie file, or the cookies were expired -- must login manually.
       httpClient = ClientUtils.sslOkHttpClient(config.getDevTrustStore(), ImmutableList.of());
       client = new KeywhizClient(mapper, httpClient, url);
+      char[] password = null;
+      try{
+        password = config.getPassword();
 
-      char[] password = ClientUtils.readPassword(user);
+      } catch (Exception e){
+        password = ClientUtils.readPassword(user);
+      }
       client.login(user, password);
       Arrays.fill(password, '\0');
     }
@@ -195,6 +203,10 @@ public class CommandExecutor {
       case RENAME:
         new RenameAction((RenameActionConfig) commands.get(command), client).run();
 
+      case GET:
+        new GetAction((GetActionConfig) commands.get(command), client, printing).run();
+        break;
+
       case LOGIN:
         // User is already logged in at this point
         break;
@@ -204,3 +216,4 @@ public class CommandExecutor {
     }
   }
 }
+

@@ -16,12 +16,10 @@
 
 package keywhiz.service.daos;
 
-import com.google.common.collect.ImmutableMap;
 import java.net.URI;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Set;
-import java.util.UUID;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
@@ -36,29 +34,21 @@ import org.junit.runner.RunWith;
 import static java.time.temporal.ChronoField.NANO_OF_SECOND;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(KeywhizTestRunner.class)
 public class ClientDAOTest {
-  private static final ImmutableMap<String, String> NO_METADATA = ImmutableMap.of();
-  private static final Long NO_OWNER = null;
-  private static final URI NO_SPIFFE_URI = null;
-
   @Inject DSLContext jooqContext;
   @Inject ClientDAOFactory clientDAOFactory;
-  @Inject GroupDAO.GroupDAOFactory groupDAOFactory;
 
-  private Client client1, client2;
-  private ClientDAO clientDAO;
-  private GroupDAO groupDAO;
+  Client client1, client2;
+  ClientDAO clientDAO;
 
   @Before public void setUp() {
-    clientDAO = clientDAOFactory.readwrite();
-    groupDAO = groupDAOFactory.readwrite();
 
+    clientDAO = clientDAOFactory.readwrite();
     long now = OffsetDateTime.now().toEpochSecond();
 
     jooqContext.insertInto(CLIENTS, CLIENTS.NAME, CLIENTS.DESCRIPTION, CLIENTS.CREATEDBY,
@@ -112,16 +102,6 @@ public class ClientDAOTest {
     assertThat(clientDAO.getClientByName("non-existent")).isEmpty();
   }
 
-  @Test public void getClientByNamePopulatesOwner() {
-    String ownerName = randomName();
-    long ownerId = createGroup(ownerName);
-
-    String clientName = randomName();
-    createClient(clientName, ownerId);
-    Client client = getClientByName(clientName);
-    assertEquals(ownerName, client.getOwner());
-  }
-
   @Test public void getClientById() {
     Client client = clientDAO.getClientById(client1.getId()).orElseThrow(RuntimeException::new);
     assertThat(client).isEqualTo(client1);
@@ -131,42 +111,9 @@ public class ClientDAOTest {
     assertThat(clientDAO.getClientById(-1)).isEmpty();
   }
 
-  @Test public void getClientByIdPopulatesOwner() {
-    String ownerName = randomName();
-    long ownerId = createGroup(ownerName);
-
-    long clientId = createClient(randomName(), ownerId);
-    Client client = getClientById(clientId);
-    assertEquals(ownerName, client.getOwner());
-  }
-
-  @Test public void getClientBySpiffeIdPopulatesOwner() throws Exception {
-    String ownerName = randomName();
-    long ownerId = createGroup(ownerName);
-
-    URI spiffeId = new URI("spiffe://test.env.com/" + randomName());
-    createClientWithSpiffeId(randomName(), spiffeId, ownerId);
-
-    Client client = getClientBySpiffeId(spiffeId);
-    assertEquals(ownerName, client.getOwner());
-  }
-
   @Test public void getsClients() {
     Set<Client> clients = clientDAO.getClients();
     assertThat(clients).containsOnly(client1, client2);
-  }
-
-  @Test public void getClientsPopulatesOwner() {
-    String ownerName = randomName();
-    long ownerId = createGroup(ownerName);
-
-    long clientId = createClient(randomName(), ownerId);
-
-    Client client = clientDAO.getClients().stream()
-        .filter(x -> x.getId() == clientId)
-        .findFirst()
-        .get();
-    assertEquals(ownerName, client.getOwner());
   }
 
   @Test public void sawClientTest() {
@@ -197,45 +144,8 @@ public class ClientDAOTest {
     assertThat(client2v2.getExpiration()).isNull();
   }
 
+
   private int tableSize() {
     return jooqContext.fetchCount(CLIENTS);
-  }
-
-  private long createClient(String name, Long ownerId) {
-    return clientDAO.createClient(
-        name,
-        "user",
-        "description",
-        NO_SPIFFE_URI,
-        ownerId);
-  }
-
-  private long createClientWithSpiffeId(String name, URI spiffeId, Long ownerId) {
-    return clientDAO.createClient(
-        name,
-        "user",
-        "description",
-        spiffeId,
-        ownerId);
-  }
-
-  private long createGroup(String name) {
-    return groupDAO.createGroup(name, "creator", "description", NO_METADATA, NO_OWNER);
-  }
-
-  private Client getClientById(long id) {
-    return clientDAO.getClientById(id).get();
-  }
-
-  private Client getClientByName(String name) {
-    return clientDAO.getClientByName(name).get();
-  }
-
-  private Client getClientBySpiffeId(URI spiffeId) {
-    return clientDAO.getClientBySpiffeId(spiffeId).get();
-  }
-
-  private static String randomName() {
-    return UUID.randomUUID().toString();
   }
 }

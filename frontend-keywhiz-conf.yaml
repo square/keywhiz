@@ -1,0 +1,114 @@
+# Copyright 2013 Square, Inc.
+
+# Passwords/secrets should not be checked into SCM. However, sprinkled below are some passwords and
+# keys that are NOT considered sensitive and only to be used in development and testing.
+---
+
+server:
+  applicationConnectors:
+    - type: https
+      port: 4444
+      # The keystore stores your server's TLS certificate.
+      keyStorePath: server/src/main/resources/dev_and_test_keystore.p12
+      keyStorePassword: ponies
+      keyStoreType: PKCS12
+      # The trust store determines which certificates the server trusts.  This should contain your
+      # cert for the CA root that issues client certificates.
+      trustStorePath: server/src/main/resources/dev_and_test_truststore.p12
+      trustStorePassword: ponies
+      trustStoreType: PKCS12
+      # We want clients to provide a client cert.
+      wantClientAuth: true
+      # In the dev_and_test key material, we use the same CA for the client and server for easy
+      # management, but in production we issue client certs off a separate root.  Because only
+      # that root is in the trustStore above, Dropwizard must be told not to validate its own cert
+      validateCerts: false
+      # Dropwizard changed validatePeers and validateCerts defaults from true to false in 1.1.x
+      validatePeers: true
+      # We don't use CRLDP or OCSP.
+      enableCRLDP: false
+      enableOCSP: false
+      crlPath: server/src/main/resources/dev_and_test.crl
+      supportedProtocols: [TLSv1.2]
+      supportedCipherSuites:
+        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_DHE_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
+        - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
+        - TLS_RSA_WITH_AES_128_CBC_SHA
+        - TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA
+        - TLS_ECDH_RSA_WITH_AES_128_CBC_SHA
+        - TLS_DHE_RSA_WITH_AES_128_CBC_SHA
+  adminConnectors:
+    - type: http
+      bindHost: localhost
+      port: 8085
+
+logging:
+  appenders:
+    - type: console
+      threshold: ALL
+
+## Use this logging configuration if you want EVERYTHING
+# logging:
+#   level: ALL
+
+environment: development
+
+database:
+  driverClass: com.mysql.cj.jdbc.Driver
+  url: jdbc:mysql://keywhiz-service/keywhizdb_development?useUnicode=true&characterEncoding=utf8
+  user: root
+  properties:
+    charSet: UTF-8
+  initialSize: 10
+  minSize: 10
+  maxSize: 10
+  # There is explicitly no password. Do not uncomment.
+  # password:
+
+readonlyDatabase:
+  driverClass: com.mysql.cj.jdbc.Driver
+  url: jdbc:mysql://keywhiz-service/keywhizdb_development?useUnicode=true&characterEncoding=utf8
+  user: root
+  properties:
+    charSet: UTF-8
+  readOnlyByDefault: true
+  initialSize: 32
+  minSize: 32
+  maxSize: 32
+  # There is explicitly no password. Do not uncomment.
+  # password:
+
+migrationsDir:
+  db/mysql/migration
+
+statusCacheExpiry: PT1S
+
+userAuth:
+  type: bcrypt
+
+# Contains base64 of "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA". A real key could be generated with
+# `head -c 32 /dev/urandom | base64 > cookiekey.base64`.
+cookieKey: external:server/src/main/resources/dev_and_test_cookiekey.base64
+
+sessionCookie:
+  name: session
+  path: /admin
+
+contentKeyStore:
+  path: derivation.jceks
+  type: JCEKS
+  password: CHANGE
+  alias: basekey
+
+rowHmacCheck: logging
+
+flywaySchemaTable: schema_version

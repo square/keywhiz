@@ -24,37 +24,27 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import keywhiz.api.model.Client;
 import keywhiz.auth.mutualssl.CertificatePrincipal;
-import keywhiz.jooq.tables.Groups;
 import keywhiz.jooq.tables.records.ClientsRecord;
-import keywhiz.jooq.tables.records.GroupsRecord;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.RowHmacGenerator;
-import org.jooq.Condition;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Param;
-import org.jooq.Record;
-import org.jooq.Result;
 import org.jooq.impl.DSL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.time.Instant.EPOCH;
 import static keywhiz.jooq.tables.Clients.CLIENTS;
-import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 import static org.jooq.impl.DSL.greatest;
 import static org.jooq.impl.DSL.when;
 
 public class ClientDAO {
-  private static final Groups CLIENT_OWNERS = GROUPS.as("owners");
-  private static final Duration LAST_SEEN_THRESHOLD = Duration.ofSeconds(24 * 60 * 60);
-  private static final Long NO_OWNER = null;
+  private final static Duration LAST_SEEN_THRESHOLD = Duration.ofSeconds(24 * 60 * 60);
 
   private final DSLContext dslContext;
   private final ClientMapper clientMapper;
@@ -67,25 +57,8 @@ public class ClientDAO {
     this.rowHmacGenerator = rowHmacGenerator;
   }
 
-  public long createClient(
-      String name,
-      String user,
-      String description,
+  public long createClient(String name, String user, String description,
       @Nullable URI spiffeId) {
-    return createClient(
-        name,
-        user,
-        description,
-        spiffeId,
-        NO_OWNER);
-  }
-
-  public long createClient(
-      String name,
-      String user,
-      String description,
-      @Nullable URI spiffeId,
-      @Nullable Long ownerId) {
     ClientsRecord r = dslContext.newRecord(CLIENTS);
 
     long now = OffsetDateTime.now().toEpochSecond();
@@ -112,7 +85,6 @@ public class ClientDAO {
     r.setAutomationallowed(false);
     r.setSpiffeId(spiffeStr);
     r.setRowHmac(rowHmac);
-    r.setOwner(ownerId);
     r.store();
 
     return r.getId();
@@ -166,66 +138,26 @@ public class ClientDAO {
   }
 
   public Optional<Client> getClientByName(String name) {
-    return getClient(CLIENTS.NAME.eq(name));
+    ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.NAME.eq(name));
+    return Optional.ofNullable(r).map(clientMapper::map);
   }
 
   public Optional<Client> getClientBySpiffeId(URI spiffeId) {
-    return getClient(CLIENTS.SPIFFE_ID.eq(spiffeId.toASCIIString()));
+    ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.SPIFFE_ID.eq(spiffeId.toASCIIString()));
+    return Optional.ofNullable(r).map(clientMapper::map);
   }
 
   public Optional<Client> getClientById(long id) {
-    return getClient(CLIENTS.ID.eq(id));
-  }
-
-  private Optional<Client> getClient(Condition condition) {
-    Record record = dslContext
-        .select(CLIENTS.fields())
-        .select(CLIENT_OWNERS.ID, CLIENT_OWNERS.NAME)
-        .from(CLIENTS)
-        .leftJoin(CLIENT_OWNERS)
-        .on(CLIENTS.OWNER.eq(CLIENT_OWNERS.ID))
-        .where(condition)
-        .fetchOne();
-
-    return Optional.ofNullable(recordToClient(record));
-  }
-
-  private Client recordToClient(Record record) {
-    if (record == null) {
-      return null;
-    }
-
-    ClientsRecord clientRecord = record.into(CLIENTS);
-    GroupsRecord ownerRecord = record.into(CLIENT_OWNERS);
-
-    boolean danglingOwner = clientRecord.getOwner() != null && ownerRecord.getId() == null;
-    if (danglingOwner) {
-      throw new IllegalStateException(
-          String.format(
-              "Owner %s for client %s is missing.",
-              clientRecord.getOwner(),
-              clientRecord.getName()));
-    }
-
-    Client client = clientMapper.map(clientRecord);
-    if (ownerRecord != null) {
-      client.setOwner(ownerRecord.getName());
-    }
-
-    return client;
+    ClientsRecord r = dslContext.fetchOne(CLIENTS, CLIENTS.ID.eq(id));
+    return Optional.ofNullable(r).map(clientMapper::map);
   }
 
   public ImmutableSet<Client> getClients() {
-    List<Client> clients = dslContext
-        .select(CLIENTS.fields())
-        .select(CLIENT_OWNERS.NAME)
-        .from(CLIENTS)
-        .leftJoin(CLIENT_OWNERS)
-        .on(CLIENTS.OWNER.eq(CLIENT_OWNERS.ID))
+    List<Client> r = dslContext
+        .selectFrom(CLIENTS)
         .fetch()
-        .map(this::recordToClient);
-
-    return ImmutableSet.copyOf(clients);
+        .map(clientMapper);
+    return ImmutableSet.copyOf(r);
   }
 
   public static class ClientDAOFactory implements DAOFactory<ClientDAO> {

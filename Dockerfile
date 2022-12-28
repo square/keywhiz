@@ -45,10 +45,13 @@
 #
 FROM maven:3.6-jdk-11
 
-RUN apt-get update && \
+RUN export http_proxy=http://child-prc.intel.com:913 && \
+    export https_proxy=http://child-prc.intel.com:913 && apt-get update && \
     apt-get install -y --no-install-recommends --no-upgrade \
-      gettext vim-common && \
-    mkdir -p /usr/src/app
+    gettext vim-common default-mysql-server && \
+    #echo [mysqld] >> /etc/mysql/conf.d/mysql.cnf && \
+    echo validate_password.policy=LOW >> /etc/mysql/conf.d/mysql.cnf && \
+    mkdir -p /usr/src/app && unset http_proxy && unset https_proxy
 WORKDIR /usr/src/app
 
 # caching trick to speed up build; see:
@@ -63,7 +66,11 @@ COPY model/pom.xml /usr/src/app/model/
 COPY server/pom.xml /usr/src/app/server/
 COPY testing/pom.xml /usr/src/app/testing/
 COPY log/pom.xml /usr/src/app/log/
-RUN mvn dependency:copy-dependencies --fail-never
+RUN rm /usr/share/maven/conf/settings.xml
+COPY s3.xml /usr/share/maven/conf/settings.xml
+RUN export http_proxy=http://child-prc.intel.com:913 && \
+export https_proxy=http://child-prc.intel.com:913 && \
+mvn dependency:copy-dependencies --fail-never
 
 # copy source required for build and install
 COPY api /usr/src/app/api/
@@ -74,16 +81,19 @@ COPY model /usr/src/app/model/
 COPY server /usr/src/app/server/
 COPY testing /usr/src/app/testing/
 COPY log /usr/src/app/log/
-RUN mvn install
+RUN service mysql start && mvn -DskipTests=true package
 
 # Drop privs inside container
 RUN useradd -ms /bin/false keywhiz && \
     mkdir /data && \
     chown keywhiz:keywhiz /data && \
     mkdir /secrets && \
-    chown keywhiz:keywhiz /secrets
+    chown keywhiz:keywhiz /secrets && \
+    echo 'alias keywhiz.cli="/usr/src/app/cli/target/keywhiz-cli-*-SNAPSHOT-shaded.jar --devTrustStore"' >> ~/.bashrc && \
+    echo 'alias key.provider="java -jar server/target/keywhiz-server-*-SNAPSHOT-shaded.jar"' >> ~/.bashrc && \
+    echo salt > /usr/src/app/salt
 
-USER keywhiz
+#USER keywhiz
 
 # Expose API port by default. Note that the admin console port
 # is NOT exposed by default, can be exposed manually if desired.
@@ -94,5 +104,7 @@ VOLUME ["/data", "/secrets"]
 COPY docker/entry.sh /usr/src/app
 COPY docker/wizard.sh /usr/src/app
 COPY docker/keywhiz-config.tpl /usr/src/app
+COPY frontend-keywhiz-conf.yaml /usr/src/app
+RUN chmod a+x /usr/src/app/entry.sh
 
 ENTRYPOINT ["/usr/src/app/entry.sh"]

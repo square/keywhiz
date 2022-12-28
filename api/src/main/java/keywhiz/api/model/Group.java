@@ -59,7 +59,7 @@ public class Group {
   private final ImmutableMap<String, String> metadata;
 
   @JsonProperty
-  private String owner;
+  private final String owner;
 
   @JsonCreator
   public Group(@JsonProperty("id") long id,
@@ -131,8 +131,6 @@ public class Group {
   public ImmutableMap<String, String> getMetadata() { return metadata; }
 
   public String getOwner() { return owner; }
-
-  public void setOwner(String owner) { this.owner = owner; }
 
   @Override
   public boolean equals(Object o) {

@@ -1,13 +1,10 @@
 package keywhiz.service.resources.automation.v2;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
-import javax.ws.rs.core.UriBuilder;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
@@ -19,7 +16,6 @@ import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SanitizedSecretWithGroups;
 import keywhiz.api.model.SanitizedSecretWithGroupsListAndCursor;
 import keywhiz.api.model.SecretRetrievalCursor;
-import keywhiz.api.model.SecretSeries;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -39,18 +35,10 @@ public class SecretResourceTestHelper {
     this.mapper = mapper;
   }
 
-  Response secretExists(String secretName) {
-    String uri = UriBuilder.fromPath("/automation/v2/secrets")
-        .path(secretName)
-        .toString();
-    Request request = clientRequest(uri).head().build();
-    return execute(request);
-  }
-
-  Response create(CreateSecretRequestV2 request) {
-    RequestBody body = RequestBody.create(JSON, toJson(request));
+  Response create(CreateSecretRequestV2 request) throws IOException {
+    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
     Request post = clientRequest("/automation/v2/secrets").post(body).build();
-    return execute(post);
+    return mutualSslClient.newCall(post).execute();
   }
 
   Response backfillExpiration(String name, List<String> passwords) throws IOException {
@@ -196,11 +184,11 @@ public class SecretResourceTestHelper {
     return mapper.readValue(httpResponse.body().byteStream(), SanitizedSecretWithGroupsListAndCursor.class);
   }
 
-  Optional<SecretDetailResponseV2> getSecret(String name) {
+  Optional<SecretDetailResponseV2> getSecret(String name) throws IOException {
     Request get = clientRequest("/automation/v2/secrets/" + name).get().build();
-    Response httpResponse = execute(get);
+    Response httpResponse = mutualSslClient.newCall(get).execute();
     if (httpResponse.code() == 200) {
-      return Optional.of(readValue(httpResponse.body().byteStream(), SecretDetailResponseV2.class));
+      return Optional.of(mapper.readValue(httpResponse.body().byteStream(), SecretDetailResponseV2.class));
     } else if (httpResponse.code() == 404) {
       return Optional.empty();
     } else {
@@ -209,23 +197,6 @@ public class SecretResourceTestHelper {
               "Unexpected response code %s while fetching secret %s",
               httpResponse.code(),
               name));
-    }
-  }
-
-  List<SecretSeries> getDeletedSecrets(String name) {
-    String uri = UriBuilder.fromPath("/automation/v2/secrets/deleted")
-        .path(name)
-        .toString();
-    Request request = clientRequest(uri).get().build();
-    Response response = execute(request);
-    if (response.code() == 200) {
-      return readValue(response.body().byteStream(), new TypeReference<>(){});
-    } else {
-      throw new RuntimeException(
-          String.format(
-              "Unable to find deleted secrets with name %s: code %s",
-              name,
-              response.code()));
     }
   }
 
@@ -268,49 +239,8 @@ public class SecretResourceTestHelper {
     });
   }
 
-  Response deleteSeries(String name, String secretDeletionMode) {
-    String uri = UriBuilder.fromPath("/automation/v2/secrets")
-        .path(name)
-        .queryParam("deletionMode", secretDeletionMode)
-        .toString();
-    Request delete = clientRequest(uri).delete().build();
-    return execute(delete);
-  }
-
-  Response deleteSeries(String name) {
+  Response deleteSeries(String name) throws IOException {
     Request delete = clientRequest("/automation/v2/secrets/" + name).delete().build();
-    return execute(delete);
-  }
-
-  private Response execute(Request request) {
-    try {
-      return mutualSslClient.newCall(request).execute();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private String toJson(Object o) {
-    try {
-      return mapper.writeValueAsString(o);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private <T> T readValue(InputStream stream, Class<? extends T> clazz) {
-    try {
-      return mapper.readValue(stream, clazz);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private <T> T readValue(InputStream stream, TypeReference<T> typeReference) {
-    try {
-      return mapper.readValue(stream, typeReference);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return mutualSslClient.newCall(delete).execute();
   }
 }

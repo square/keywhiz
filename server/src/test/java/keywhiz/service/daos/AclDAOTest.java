@@ -147,7 +147,7 @@ public class AclDAOTest {
     groupDAO.deleteGroup(group1);
     assertThat(accessGrantsTableSize()).isEqualTo(before - 1);
 
-    secretSeriesDAO.softDeleteSecretSeriesById(secret2.getId());
+    secretSeriesDAO.deleteSecretSeriesById(secret2.getId());
     assertThat(accessGrantsTableSize()).isEqualTo(before - 2);
   }
 

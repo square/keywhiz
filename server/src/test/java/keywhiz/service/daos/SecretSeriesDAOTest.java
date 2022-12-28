@@ -42,7 +42,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(KeywhizTestRunner.class)
 public class SecretSeriesDAOTest {
@@ -50,19 +49,6 @@ public class SecretSeriesDAOTest {
   @Inject @Readwrite SecretSeriesDAO secretSeriesDAO;
   @Inject @Readwrite SecretContentDAO secretContentDAO;
   @Inject @Readwrite GroupDAO groupDAO;
-
-  @Test
-  public void secretSeriesExistsFindsSecretSeries() {
-    String secretName = randomName();
-    createSecretSeries(secretName);
-    assertTrue(secretSeriesDAO.secretSeriesExists(secretName));
-  }
-
-  @Test
-  public void secretSeriesExistsDoesNotFindMissingSecretSeries() {
-    String secretName = randomName();
-    assertFalse(secretSeriesDAO.secretSeriesExists(secretName));
-  }
 
   @Test public void setsRowHmacByName() {
     String secretName = randomName();
@@ -232,7 +218,7 @@ public class SecretSeriesDAOTest {
         .currentVersion())
         .isPresent();
 
-    secretSeriesDAO.softDeleteSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName");
+    secretSeriesDAO.deleteSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName");
     assertThat(
         secretSeriesDAO.getSecretSeriesByName("toBeDeleted_deleteSecretSeriesByName")).isEmpty();
     assertThat(secretSeriesDAO.getSecretSeriesById(id)).isEmpty();
@@ -250,7 +236,7 @@ public class SecretSeriesDAOTest {
         .currentVersion())
         .isPresent();
 
-    secretSeriesDAO.softDeleteSecretSeriesByName("toBeDeletedAndReplaced");
+    secretSeriesDAO.deleteSecretSeriesByName("toBeDeletedAndReplaced");
     assertThat(
         secretSeriesDAO.getSecretSeriesByName("toBeDeletedAndReplaced")).isEmpty();
     assertThat(secretSeriesDAO.getSecretSeriesById(id)).isEmpty();
@@ -275,7 +261,7 @@ public class SecretSeriesDAOTest {
     secretSeriesDAO.setCurrentVersion(id, contentId, "creator", now);
     assertThat(secretSeriesDAO.getSecretSeriesById(id).get().currentVersion()).isPresent();
 
-    secretSeriesDAO.softDeleteSecretSeriesById(id);
+    secretSeriesDAO.deleteSecretSeriesById(id);
     assertThat(secretSeriesDAO.getSecretSeriesById(id)).isEmpty();
   }
 
@@ -319,7 +305,7 @@ public class SecretSeriesDAOTest {
     long oldContentId = secretContentDAO.createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
     secretSeriesDAO.setCurrentVersion(id, oldContentId, "creator", now);
-    secretSeriesDAO.softDeleteSecretSeriesById(id);
+    secretSeriesDAO.deleteSecretSeriesById(id);
 
     List<SecretSeries> deletedSecretSeries =
         secretSeriesDAO.getSecretSeriesByDeletedName("toBeFound_getSecretSeriesByDeletedName");
@@ -336,7 +322,7 @@ public class SecretSeriesDAOTest {
     long oldContentId = secretContentDAO.createSecretContent(id, "blah",
         "checksum", "creator", null, 0, now);
     secretSeriesDAO.setCurrentVersion(id, oldContentId, "creator", now);
-    secretSeriesDAO.softDeleteSecretSeriesById(id);
+    secretSeriesDAO.deleteSecretSeriesById(id);
     assertThat(secretSeriesDAO.getSecretSeriesById(id)).isEmpty();
 
     Optional<SecretSeries> deletedSecretSeries = secretSeriesDAO.getDeletedSecretSeriesById(id);

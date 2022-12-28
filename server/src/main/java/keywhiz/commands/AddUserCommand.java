@@ -27,21 +27,49 @@ import keywhiz.inject.InjectorFactory;
 import keywhiz.KeywhizConfig;
 import keywhiz.service.daos.UserDAO;
 import net.sourceforge.argparse4j.inf.Namespace;
+import net.sourceforge.argparse4j.inf.Subparser;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 
 public class AddUserCommand extends ConfiguredCommand<KeywhizConfig> {
   public AddUserCommand() {
     super("add-user", "Adds a new admin user");
   }
 
+  private static final class Args {
+    private static final String USER = "user";
+    private static final String PASSWORD = "password";
+  }
+
+  @Override public void configure(Subparser subparser) {
+    super.configure(subparser);
+
+    subparser.addArgument("--user")
+        .dest(Args.USER)
+        .type(String.class)
+        .help("User name");
+
+    subparser.addArgument("--password")
+        .dest(Args.PASSWORD)
+        .type(String.class)
+        .help("User password");
+  }
+
+  private static String getUser(Namespace namespace) {
+    String _user = namespace.getString(Args.USER);
+    return _user;
+  }
+
+  private static String getPassword(Namespace namespace) {
+    String _password = namespace.getString(Args.PASSWORD);
+    return _password;
+  }
+
   @Override protected void run(Bootstrap<KeywhizConfig> bootstrap, Namespace namespace,
                                KeywhizConfig config) throws Exception {
-
-    Console console = System.console();
-    System.out.format("New username:");
-    String user = console.readLine();
-    System.out.format("password for '%s': ", user);
-    char[] password = console.readPassword();
-    getUserDAO(bootstrap, config).createUser(user, new String(password));
+    String user = getUser(namespace);
+    String password = getPassword(namespace);
+    getUserDAO(bootstrap, config).createUser(user, password);
   }
 
   @VisibleForTesting
@@ -57,3 +85,4 @@ public class AddUserCommand extends ConfiguredCommand<KeywhizConfig> {
     return injector.getInstance(UserDAO.class);
   }
 }
+

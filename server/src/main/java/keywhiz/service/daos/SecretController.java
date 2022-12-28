@@ -35,7 +35,6 @@ import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.service.crypto.ContentCryptographer;
 import keywhiz.service.crypto.ContentEncodingException;
 import keywhiz.service.crypto.SecretTransformer;
-import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -348,22 +347,6 @@ public class SecretController {
           type,
           generationOptions);
       return transformer.transform(secretDAO.getSecretByName(name).get());
-    }
-
-    public Secret createOrUpdate(DSLContext dslContext) {
-      secretDAO.createOrUpdateSecret(
-          dslContext,
-          name,
-          ownerName,
-          encryptedSecret,
-          hmac,
-          creator,
-          metadata,
-          expiry,
-          description,
-          type,
-          generationOptions);
-      return transformer.transform(secretDAO.getSecretByName(dslContext, name).get());
     }
   }
 }

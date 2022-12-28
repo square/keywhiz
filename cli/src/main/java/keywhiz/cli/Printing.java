@@ -31,8 +31,10 @@ import keywhiz.api.GroupDetailResponse;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
+import keywhiz.api.model.Secret;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.client.KeywhizClient;
+import java.util.Base64;
 
 public class Printing {
   private final KeywhizClient keywhizClient;
@@ -253,6 +255,17 @@ public class Printing {
     secrets.stream()
         .sorted(Comparator.comparing(SanitizedSecret::name))
         .forEach(s -> System.out.println(SanitizedSecret.displayName(s)));
+  }
+
+  /* Author: BigDL
+   * Date: 12/5/2022
+   */
+  public void printSecret(Secret secret){
+    String base64Secret = secret.getSecret();
+    System.out.println("base64 secret: " + base64Secret + '\n');
+    byte[] plaintextSecretBytes = Base64.getDecoder().decode(base64Secret);
+    String plaintextSecretString = Base64.getEncoder().encodeToString(plaintextSecretBytes);
+    System.out.println("plaintext secret: " + plaintextSecretString + '\n');
   }
 
   public void printSecretVersions(List<SanitizedSecret> versions, Optional<Long> currentVersion) {

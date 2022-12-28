@@ -33,6 +33,7 @@ import keywhiz.cli.configs.RenameActionConfig;
 import keywhiz.cli.configs.RollbackActionConfig;
 import keywhiz.cli.configs.UnassignActionConfig;
 import keywhiz.cli.configs.UpdateActionConfig;
+import keywhiz.cli.configs.GetActionConfig;
 
 /** Keywhiz ACL Command Line Management Utility */
 public class CliMain {
@@ -99,6 +100,7 @@ public class CliMain {
           .put("unassign", new UnassignActionConfig())
           .put("update", new UpdateActionConfig())
           .put("versions", new ListVersionsActionConfig())
+	  .put("get", new GetActionConfig())
           .build();
 
       return commands;

@@ -89,34 +89,32 @@ public class ClientUtils {
 
     SSLContext sslContext;
     X509TrustManager trustManager;
+    TrustManager[] trustAllCerts;
     try {
       TrustManagerFactory trustManagerFactory = TrustManagerFactory
           .getInstance(TrustManagerFactory.getDefaultAlgorithm());
 
       trustManagerFactory.init(devTrustStore);
 
-      TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-      trustManager = (X509TrustManager) trustManagers[0];
+      trustAllCerts = trustManagerFactory.getTrustManagers();
+      trustManager = (X509TrustManager) trustAllCerts[0];
 
-      sslContext = SSLContext.getInstance("TLSv1.2");
-      sslContext.init(new KeyManager[0], trustManagers, new SecureRandom());
+      sslContext = SSLContext.getInstance("SSL");
+      sslContext.init(null, trustAllCerts, new SecureRandom());
     } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
       throw Throwables.propagate(e);
     }
 
     SSLSocketFactory socketFactory = sslContext.getSocketFactory();
+    OkHttpClient.Builder newBuilder = new OkHttpClient.Builder();
+    newBuilder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) trustAllCerts[0]);
+    newBuilder.hostnameVerifier((hostname, session) -> true);
 
-    OkHttpClient.Builder client = new OkHttpClient().newBuilder()
-        .sslSocketFactory(socketFactory, trustManager)
-        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS))
-        .followSslRedirects(false)
-        .readTimeout(Duration.ofMinutes(2));
-
-    client.retryOnConnectionFailure(false);
+    newBuilder.retryOnConnectionFailure(false);
 
     cookies.forEach(c -> getCookieManager().getCookieStore().add(null, c));
-    client.cookieJar(new JavaNetCookieJar(getCookieManager()));
-    return client.build();
+    newBuilder.cookieJar(new JavaNetCookieJar(getCookieManager()));
+    return newBuilder.build();
   }
 
   /**

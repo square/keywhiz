@@ -133,13 +133,11 @@ public class AutomationSecretResponseTest {
     assertThatThrownBy(() ->
         fromJson(jsonFixture("fixtures/automationSecretResponseWithMetadata.json"),
             AutomationSecretResponse.class))
-        .cause()
         .isInstanceOf(UnrecognizedPropertyException.class)
         .hasMessageContaining("Unrecognized field \"mode\"");
 
     assertThatThrownBy(() -> fromJson(asJson(automationSecretResponseWithMetadata),
         AutomationSecretResponse.class))
-        .cause()
         .isInstanceOf(UnrecognizedPropertyException.class)
         .hasMessageContaining("Unrecognized field \"mode\"");
   }

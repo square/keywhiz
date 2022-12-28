@@ -30,7 +30,6 @@ public class Indexes {
 
     public static final Index ACCESSGRANTS_ACCESSGRANTS_SECRETID_IDX = Internal.createIndex(DSL.name("accessgrants_secretid_idx"), Accessgrants.ACCESSGRANTS, new OrderField[] { Accessgrants.ACCESSGRANTS.SECRETID }, false);
     public static final Index SECRETS_CONTENT_CREATEDAT_IDX = Internal.createIndex(DSL.name("createdat_idx"), SecretsContent.SECRETS_CONTENT, new OrderField[] { SecretsContent.SECRETS_CONTENT.CREATEDAT }, false);
-    public static final Index SECRETS_EXPIRY_IDX = Internal.createIndex(DSL.name("expiry_idx"), Secrets.SECRETS, new OrderField[] { Secrets.SECRETS.EXPIRY }, false);
     public static final Index MEMBERSHIPS_MEMBERSHIPS_GROUPID_IDX = Internal.createIndex(DSL.name("memberships_groupid_idx"), Memberships.MEMBERSHIPS, new OrderField[] { Memberships.MEMBERSHIPS.GROUPID }, false);
     public static final Index CLIENTS_OWNER_IDX = Internal.createIndex(DSL.name("owner_idx"), Clients.CLIENTS, new OrderField[] { Clients.CLIENTS.OWNER }, false);
     public static final Index GROUPS_OWNER_IDX = Internal.createIndex(DSL.name("owner_idx"), Groups.GROUPS, new OrderField[] { Groups.GROUPS.OWNER }, false);

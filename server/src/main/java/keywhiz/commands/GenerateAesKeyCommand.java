@@ -67,14 +67,11 @@ public class GenerateAesKeyCommand extends Command {
   }
 
   @Override public void run(Bootstrap<?> bootstrap, Namespace namespace) throws Exception {
-    char[] password = namespace.getString("storepass").toCharArray();
-    Path destination = Paths.get(namespace.get("keystore"));
+    String pwString = "password";
+    char[] password = pwString.toCharArray();
     int keySize = namespace.getInt("keysize");
-    String alias = namespace.getString("alias");
-
-    generate(password, destination, keySize, alias, SecureRandom.getInstanceStrong());
-    System.out.println(format("Generated a %d-bit AES key at %s with alias %s", keySize,
-        destination.toAbsolutePath(), alias));
+    String alias = "alias";
+    generateAES(password, keySize, alias, SecureRandom.getInstanceStrong());
   }
 
   @VisibleForTesting
@@ -90,4 +87,17 @@ public class GenerateAesKeyCommand extends Command {
       keyStore.store(out, password);
     }
   }
+
+  /* Author: BigDL
+   * Date: 12/8/2022
+  */
+  static String generateAES(char[] password, int keySize, String alias, SecureRandom random) throws Exception {
+    KeyGenerator generator = KeyGenerator.getInstance("AES");
+    generator.init(keySize, random);
+    SecretKey key = generator.generateKey();
+    String base64Key = java.util.Base64.getEncoder().encodeToString(key.getEncoded());
+    System.out.println(base64Key);
+    return base64Key;
+  }
 }
+

@@ -17,19 +17,13 @@
 package keywhiz.service.daos;
 
 import com.google.common.collect.ImmutableMap;
-import java.net.URI;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import keywhiz.KeywhizTestRunner;
-import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
@@ -48,23 +42,16 @@ import static org.junit.Assert.assertNull;
 
 @RunWith(KeywhizTestRunner.class)
 public class GroupDAOTest {
-  private static final ImmutableMap<String, String> NO_METADATA = ImmutableMap.of();
-  private static final Long NO_OWNER = null;
-  private static final URI NO_SPIFFE_URI = null;
-
   @Inject DSLContext jooqContext;
-  @Inject ClientDAO.ClientDAOFactory clientDAOFactory;
-  @Inject GroupDAO.GroupDAOFactory groupDAOFactory;
+  @Inject GroupDAOFactory groupDAOFactory;
   @Inject SecretDAO.SecretDAOFactory secretDAOFactory;
 
   private Group group1, group2;
 
-  private ClientDAO clientDAO;
   private GroupDAO groupDAO;
   private SecretDAO secretDAO;
 
   @Before public void setUp() throws Exception {
-    clientDAO = clientDAOFactory.readwrite();
     groupDAO = groupDAOFactory.readwrite();
     secretDAO = secretDAOFactory.readwrite();
 
@@ -92,26 +79,6 @@ public class GroupDAOTest {
     assertThat(names).contains("newGroup");
   }
 
-  @Test public void populatesOwnerOnGetByName() {
-    String ownerName = randomName();
-    Long ownerId = createGroup(ownerName, NO_OWNER);
-
-    String groupName = randomName();
-    createGroup(groupName, ownerId);
-
-    assertEquals(ownerName, getGroupByName(groupName).getOwner());
-  }
-
-  @Test public void populatesOwnerOnGetById() {
-    String ownerName = randomName();
-    Long ownerId = createGroup(ownerName, NO_OWNER);
-
-    String groupName = randomName();
-    long groupId = createGroup(groupName, ownerId);
-
-    assertEquals(ownerName, getGroupById(groupId).getOwner());
-  }
-
   @Test public void deleteGroup() {
     int before = tableSize();
     groupDAO.deleteGroup(group1);
@@ -136,40 +103,6 @@ public class GroupDAOTest {
     assertNull(updated.series().owner());
   }
 
-  @Test public void deleteSetsGroupOwnerToNull() {
-    String ownerName = randomName();
-    long ownerId = createGroup(ownerName, NO_OWNER);
-
-    String groupName = randomName();
-    long groupId = createGroup(groupName, ownerId);
-
-    Group beforeWithOwner = getGroupById(groupId);
-    assertEquals(ownerName, beforeWithOwner.getOwner());
-
-    Group owner = getGroupById(ownerId);
-    groupDAO.deleteGroup(owner);
-
-    Group afterWithoutOwner = getGroupById(groupId);
-    assertNull(afterWithoutOwner.getOwner());
-  }
-
-  @Test public void deleteSetsClientOwnerToNull() {
-    String ownerName = randomName();
-    long ownerId = createGroup(ownerName, NO_OWNER);
-
-    String clientName = randomName();
-    long clientId = createClient(clientName, ownerId);
-
-    Client beforeWithOwner = getClientById(clientId);
-    assertEquals(ownerName, beforeWithOwner.getOwner());
-
-    Group owner = getGroupById(ownerId);
-    groupDAO.deleteGroup(owner);
-
-    Client afterWithoutOwner = getClientById(clientId);
-    assertNull(afterWithoutOwner.getOwner());
-  }
-
   @Test public void getGroup() {
     // getGroup is performed in setup()
     assertThat(group1.getName()).isEqualTo("group1");
@@ -191,24 +124,6 @@ public class GroupDAOTest {
     assertThat(groupDAO.getGroups()).containsOnly(group1, group2);
   }
 
-  @Test public void getGroupsPopulatesOwners() {
-    String owner1Name = randomName();
-    long owner1Id = createGroup(owner1Name, NO_OWNER);
-
-    String owner2Name = randomName();
-    long owner2Id = createGroup(owner2Name, owner1Id);
-
-    String groupName = randomName();
-    long groupId = createGroup(groupName, owner2Id);
-
-    Map<Long, Group> groupsById = groupDAO.getGroups().stream()
-        .collect(Collectors.toMap(Group::getId, Function.identity()));
-
-    assertNull(groupsById.get(owner1Id).getOwner());
-    assertEquals(owner1Name, groupsById.get(owner2Id).getOwner());
-    assertEquals(owner2Name, groupsById.get(groupId).getOwner());
-  }
-
   @Test(expected = DataAccessException.class)
   public void willNotCreateDuplicateGroup() throws Exception {
     groupDAO.createGroup("group1", "creator1", "", ImmutableMap.of());
@@ -216,31 +131,6 @@ public class GroupDAOTest {
 
   private int tableSize() {
     return jooqContext.fetchCount(GROUPS);
-  }
-
-  private long createClient(String name, Long ownerId) {
-    return clientDAO.createClient(
-        name,
-        "user",
-        "description",
-        NO_SPIFFE_URI,
-        ownerId);
-  }
-
-  private long createGroup(String name, Long ownerId) {
-    return groupDAO.createGroup(name, "creator", "description", NO_METADATA, ownerId);
-  }
-
-  private Client getClientById(long id) {
-    return clientDAO.getClientById(id).get();
-  }
-
-  private Group getGroupById(long id) {
-    return groupDAO.getGroupById(id).get();
-  }
-
-  private Group getGroupByName(String name) {
-    return groupDAO.getGroup(name).get();
   }
 
   private static String randomName() {

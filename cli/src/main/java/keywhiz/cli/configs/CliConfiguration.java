@@ -32,6 +32,13 @@ public class CliConfiguration {
 
   @Parameter(names = "--user", description = "User to login as")
   private String user;
+  
+  @Parameter(names = "--password", description = "User password")
+  private String password;
+
+  public char[] getPassword() {
+    return password.toCharArray();
+  }
 
   public Optional<String> getUser() {
     return Optional.ofNullable(user);
