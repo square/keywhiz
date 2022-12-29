@@ -120,7 +120,7 @@ public class SecretResource {
   @Timed @ExceptionMetered
   @HEAD
   @Path("{name}")
-  @Consumes(APPLICATION_JSON)
+  @Produces(APPLICATION_JSON)
   @LogArguments
   public Response secretExists(@Auth AutomationClient automationClient, @PathParam("name") String secretName) {
     Response.Status status = secretSeriesDAO.secretSeriesExists(secretName)
