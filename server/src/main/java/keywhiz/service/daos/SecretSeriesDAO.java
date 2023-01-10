@@ -33,7 +33,6 @@ import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.SelectQuery;
-import org.jooq.Table;
 import org.jooq.impl.DSL;
 
 import javax.annotation.Nullable;
@@ -282,38 +281,27 @@ public class SecretSeriesDAO {
       @Nullable Group group, @Nullable Long expireMinTime, @Nullable String minName,
       @Nullable Integer limit) {
 
-    Table<SecretsContentRecord> secretsContentTable = SECRETS_CONTENT;
-    if (expireMaxTime != null && expireMaxTime > 0) {
-      // Force this join to use the index on the secrets_content.expiry
-      // field. The optimizer may fail to use this index when the SELECT
-      // examines a large number of rows, causing significant performance
-      // degradation.
-      secretsContentTable = secretsContentTable.useIndexForJoin("secrets_content_expiry");
-    }
-
     SelectQuery<Record> select = dslContext
           .select(SECRETS.fields())
           .from(SECRETS)
-          .join(secretsContentTable)
-          .on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID))
           .where(SECRETS.CURRENT.isNotNull())
           .getQuery();
-    select.addOrderBy(SECRETS_CONTENT.EXPIRY.asc(), SECRETS.NAME.asc());
+    select.addOrderBy(SECRETS.EXPIRY.asc(), SECRETS.NAME.asc());
 
     // Set an upper bound on expiration dates
     if (expireMaxTime != null && expireMaxTime > 0) {
       // Set a lower bound of "now" on the expiration only if it isn't configured separately
       if (expireMinTime == null || expireMinTime == 0) {
         long now = System.currentTimeMillis() / 1000L;
-        select.addConditions(SECRETS_CONTENT.EXPIRY.greaterOrEqual(now));
+        select.addConditions(SECRETS.EXPIRY.greaterOrEqual(now));
       }
-      select.addConditions(SECRETS_CONTENT.EXPIRY.lessThan(expireMaxTime));
+      select.addConditions(SECRETS.EXPIRY.lessThan(expireMaxTime));
     }
 
     if (expireMinTime != null && expireMinTime > 0) {
       // set a lower bound on expiration dates, using the secret name as a tiebreaker
-      select.addConditions(SECRETS_CONTENT.EXPIRY.greaterThan(expireMinTime)
-          .or(SECRETS_CONTENT.EXPIRY.eq(expireMinTime)
+      select.addConditions(SECRETS.EXPIRY.greaterThan(expireMinTime)
+          .or(SECRETS.EXPIRY.eq(expireMinTime)
               .and(SECRETS.NAME.greaterOrEqual(minName))));
     }
 
