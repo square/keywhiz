@@ -57,6 +57,56 @@ public class SecretSeriesDAOTest {
   @Inject @Readwrite GroupDAO groupDAO;
 
   @Test
+  public void listExpiringSecretNamesIncludesAllExpiringSecrets() {
+    long expiration1 = randomExpiration();
+    long expiration2 = randomExpiration();
+
+    String secretSeriesName1 = createSecretSeriesAndContentWithExpiration(expiration1);
+    String secretSeriesName2 = createSecretSeriesAndContentWithExpiration(expiration2);
+
+    long notAfter = Math.max(expiration1, expiration2) + 1;
+
+    List<String> expiringSecretNames = secretSeriesDAO.listExpiringSecretNames(Instant.ofEpochSecond(notAfter));
+    assertThat(expiringSecretNames).containsExactlyInAnyOrder(secretSeriesName1, secretSeriesName2);
+  }
+
+  @Test
+  public void listExpiringSecretNamesDoesNotIncludeSecretsExpiringOnNotAfter() {
+    long expiration1 = randomExpiration();
+    long expiration2 = expiration1 + 1;
+
+    String secretSeriesName1 = createSecretSeriesAndContentWithExpiration(expiration1);
+    String secretSeriesName2 = createSecretSeriesAndContentWithExpiration(expiration2);
+
+    long notAfter = expiration2;
+
+    List<String> expiringSecretNames = secretSeriesDAO.listExpiringSecretNames(Instant.ofEpochSecond(notAfter));
+    assertThat(expiringSecretNames).containsExactlyInAnyOrder(secretSeriesName1);
+  }
+
+  @Test
+  public void listExpiringSecretNamesDoesNotIncludeSecretsExpiringAfterNotAfter() {
+    long expiration1 = randomExpiration();
+    long expiration2 = expiration1 + 2;
+
+    String secretSeriesName1 = createSecretSeriesAndContentWithExpiration(expiration1);
+    String secretSeriesName2 = createSecretSeriesAndContentWithExpiration(expiration2);
+
+    long notAfter = expiration1 + 1;
+
+    List<String> expiringSecretNames = secretSeriesDAO.listExpiringSecretNames(Instant.ofEpochSecond(notAfter));
+    assertThat(expiringSecretNames).containsExactlyInAnyOrder(secretSeriesName1);
+  }
+
+  private String createSecretSeriesAndContentWithExpiration(long expiration) {
+    String secretSeriesName = randomName();
+    long secretSeriesId = createSecretSeries(secretSeriesName);
+    long secretContentId = createSecretContent(secretSeriesId);
+    secretSeriesDAO.setExpiration(secretContentId, Instant.ofEpochSecond(expiration));
+    return secretSeriesName;
+  }
+
+  @Test
   public void setCurrentVersionUpdatesSecretSeriesExpiry() {
     long secretSeriesId = createRandomSecretSeries();
 
