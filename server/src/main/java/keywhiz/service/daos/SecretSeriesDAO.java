@@ -277,6 +277,17 @@ public class SecretSeriesDAO {
     return dslContext.fetch(SECRETS, SECRETS.NAME.in(names).and(SECRETS.CURRENT.isNotNull())).map(secretSeriesMapper::map);
   }
 
+  public List<String> listExpiringSecretNames(Instant notAfterInclusive) {
+    List<String> expiringSecretNames = dslContext
+        .select()
+        .from(SECRETS)
+        .where(SECRETS.CURRENT.isNotNull())
+        .and(SECRETS.EXPIRY.greaterOrEqual(Instant.now().getEpochSecond()))
+        .and(SECRETS.EXPIRY.lessThan(notAfterInclusive.getEpochSecond()))
+        .fetch(SECRETS.NAME);
+    return ImmutableList.copyOf(expiringSecretNames);
+  }
+
   public ImmutableList<SecretSeries> getSecretSeries(@Nullable Long expireMaxTime,
       @Nullable Group group, @Nullable Long expireMinTime, @Nullable String minName,
       @Nullable Integer limit) {

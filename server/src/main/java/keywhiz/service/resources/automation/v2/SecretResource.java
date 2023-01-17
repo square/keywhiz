@@ -363,22 +363,20 @@ public class SecretResource {
   /**
    * Retrieve listing of secrets expiring soon
    *
-   * @param time timestamp for farthest expiry to include
+   * @param notAfterInclusiveUnixEpochSeconds timestamp for farthest expiry to include
    *
-   * responseMessage 200 List of secrets expiring soon
+   * responseMessage 200 List of secret names expiring soon
    */
   @Timed @ExceptionMetered
   @Path("expiring/{time}")
   @GET
   @Produces(APPLICATION_JSON)
   @LogArguments
-  public Iterable<String> secretListingExpiring(@Auth AutomationClient automationClient, @PathParam("time") Long time) {
+  public Iterable<String> listExpiringSecretNames(@Auth AutomationClient automationClient, @PathParam("time") Long notAfterInclusiveUnixEpochSeconds) {
     permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.READ, Secret.class);
 
-    List<SanitizedSecret> secrets = secretControllerReadOnly.getSanitizedSecrets(time, null);
-    return secrets.stream()
-        .map(SanitizedSecret::name)
-        .collect(toList());
+    Instant notAfterInclusive = Instant.ofEpochSecond(notAfterInclusiveUnixEpochSeconds);
+    return secretSeriesDAO.listExpiringSecretNames(notAfterInclusive);
   }
 
   /**
