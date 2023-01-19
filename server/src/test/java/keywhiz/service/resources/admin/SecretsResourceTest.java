@@ -55,6 +55,7 @@ import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
@@ -77,6 +78,7 @@ public class SecretsResourceTest {
   private static final ApiDate NOWPLUS = new ApiDate(NOW.toEpochSecond() + 10000);
 
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Mock AclDAO aclDAO;
   @Mock SecretDAO secretDAO;
@@ -126,8 +128,8 @@ public class SecretsResourceTest {
 
   @Test
   public void deleteSecretRejectsUnknownMode() {
+    thrown.expect(IllegalArgumentException.class);
     resource.deleteSecret(user, new LongParam(Long.toString(secret.getId())), "foo");
-
   }
 
   @Test
@@ -318,7 +320,7 @@ public class SecretsResourceTest {
     when(aclDAO.getGroupsFor(secret)).thenReturn(groups);
 
     Response response = resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)), null);
-    verify(secretDAO).deleteSecretsByName("name");
+    verify(secretDAO).deleteSecretsByName("name", SecretDeletionMode.SOFT);
     assertThat(response.getStatus()).isEqualTo(204);
   }
 
