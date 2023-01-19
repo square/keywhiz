@@ -272,6 +272,16 @@ public class KeywhizClient {
     httpDelete(baseUrl.resolve(format("/admin/secrets/%d", secretId)));
   }
 
+  public void deleteSecretWithId(long secretId, String mode) {
+    HttpUrl url = baseUrl.newBuilder()
+        .addPathSegment("admin")
+        .addPathSegment("secrets")
+        .addPathSegment(Long.toString(secretId))
+        .addQueryParameter("mode", mode)
+        .build();
+    httpDeleteQuietly(url);
+  }
+
   public List<Client> allClients() throws IOException {
     String httpResponse = httpGet(baseUrl.resolve("/admin/clients/"));
     return mapper.readValue(httpResponse, new TypeReference<List<Client>>() {
@@ -418,5 +428,13 @@ public class KeywhizClient {
         .build();
 
     return makeCall(request);
+  }
+
+  private String httpDeleteQuietly(HttpUrl url) {
+    try {
+      return httpDelete(url);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

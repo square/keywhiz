@@ -19,23 +19,29 @@ package keywhiz.cli.commands;
 import com.google.common.collect.ImmutableMap;
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
+import java.util.Random;
+import java.util.UUID;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretDeletionMode;
 import keywhiz.cli.configs.DeleteActionConfig;
 import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.NotFoundException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,6 +50,8 @@ public class DeleteActionTest {
   private static final ApiDate NOW = ApiDate.now();
 
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
+
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Mock KeywhizClient keywhizClient;
 
@@ -64,6 +72,34 @@ public class DeleteActionTest {
 
     yes = new ByteArrayInputStream("Y".getBytes(UTF_8));
     no = new ByteArrayInputStream("\nOther\nN".getBytes(UTF_8)); // empty line, not yes or no, then no
+  }
+
+  @Test
+  public void rejectsUnknownDeletionMode() {
+    deleteActionConfig.deleteType = Arrays.asList("secret");
+    deleteActionConfig.mode = "foo";
+    deleteActionConfig.name = UUID.randomUUID().toString();
+
+    thrown.expect(IllegalArgumentException.class);
+    deleteAction.run();
+  }
+
+  @Test
+  public void hardDeletionFlagEnablesHardDeletion() throws Exception {
+    long secretId = new Random().nextLong();
+    String secretName = UUID.randomUUID().toString();
+    SanitizedSecret secret = SanitizedSecret.of(secretId, secretName);
+
+    deleteActionConfig.deleteType = Arrays.asList("secret");
+    deleteActionConfig.mode = SecretDeletionMode.HARD;
+    deleteActionConfig.name = secretName;
+
+    when(keywhizClient.getSanitizedSecretByName(secretName)).thenReturn(secret);
+
+    deleteAction.inputStream = yes;
+    deleteAction.run();
+
+    verify(keywhizClient).deleteSecretWithId(secretId, SecretDeletionMode.HARD);
   }
 
   @Test

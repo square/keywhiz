@@ -63,6 +63,7 @@ import keywhiz.service.daos.AclDAO.AclDAOFactory;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
 import keywhiz.service.daos.SecretDAO.SecretDAOFactory;
+import keywhiz.service.daos.SecretDeletionMode;
 import keywhiz.service.exceptions.ConflictException;
 import org.apache.http.HttpStatus;
 import org.jooq.exception.DataAccessException;
@@ -482,7 +483,10 @@ public class SecretsResource {
   @Path("{secretId}")
   @Timed @ExceptionMetered
   @DELETE
-  public Response deleteSecret(@Auth User user, @PathParam("secretId") LongParam secretId) {
+  public Response deleteSecret(
+      @Auth User user,
+      @PathParam("secretId") LongParam secretId,
+      @QueryParam("mode") String mode) {
     Optional<Secret> secret = secretController.getSecretById(secretId.get());
     if (!secret.isPresent()) {
       logger.info("User '{}' tried deleting a secret which was not found (id={})", user,
@@ -490,14 +494,18 @@ public class SecretsResource {
       throw new NotFoundException("Secret not found.");
     }
 
-    logger.info("User '{}' deleting secret id={}, name='{}'", user, secretId,
-        secret.get().getName());
+    SecretDeletionMode deletionMode = mode == null
+      ? SecretDeletionMode.SOFT
+      : SecretDeletionMode.valueOfIgnoreCase(mode);
+
+    logger.info("User '{}' deleting secret id={}, name='{}', mode={}", user, secretId,
+        secret.get().getName(), deletionMode);
 
     // Get the groups for this secret, so they can be restored manually if necessary
     Set<String> groups =
         aclDAOReadOnly.getGroupsFor(secret.get()).stream().map(Group::getName).collect(toSet());
 
-    secretDAOReadWrite.deleteSecretsByName(secret.get().getName());
+    secretDAOReadWrite.deleteSecretsByName(secret.get().getName(), deletionMode);
 
     // Record the deletion
     Map<String, String> extraInfo = new HashMap<>();

@@ -48,6 +48,7 @@ import keywhiz.log.SimpleLogger;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
+import keywhiz.service.daos.SecretDeletionMode;
 import keywhiz.service.exceptions.ConflictException;
 import org.apache.http.HttpStatus;
 import org.jooq.exception.DataAccessException;
@@ -121,6 +122,24 @@ public class SecretsResourceTest {
     when(secretBuilder.createOrUpdate()).thenReturn(secret);
 
     when(secretController.getSecretById(secret.getId())).thenReturn(Optional.of(secret));
+  }
+
+  @Test
+  public void deleteSecretRejectsUnknownMode() {
+    resource.deleteSecret(user, new LongParam(Long.toString(secret.getId())), "foo");
+
+  }
+
+  @Test
+  public void deleteSecretWithNullModeSoftDeletesSecret() {
+    resource.deleteSecret(user, new LongParam(Long.toString(secret.getId())), null);
+    verify(secretDAO).deleteSecretsByName(secret.getName(), SecretDeletionMode.SOFT);
+  }
+
+  @Test
+  public void deleteSecretWithModeHardHardDeletesSecret() {
+    resource.deleteSecret(user, new LongParam(Long.toString(secret.getId())), "hard");
+    verify(secretDAO).deleteSecretsByName(secret.getName(), SecretDeletionMode.HARD);
   }
 
   @Test
@@ -298,7 +317,7 @@ public class SecretsResourceTest {
     groups.add(new Group(0, "group2", "", NOW, null, NOW, null, null));
     when(aclDAO.getGroupsFor(secret)).thenReturn(groups);
 
-    Response response = resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)));
+    Response response = resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)), null);
     verify(secretDAO).deleteSecretsByName("name");
     assertThat(response.getStatus()).isEqualTo(204);
   }
@@ -306,7 +325,7 @@ public class SecretsResourceTest {
   @Test (expected = NotFoundException.class)
   public void deleteErrorsOnNotFound() {
     when(secretController.getSecretById(0xdeadbeef)).thenReturn(Optional.empty());
-    resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)));
+    resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)), null);
   }
 
   @Test(expected = ConflictException.class)

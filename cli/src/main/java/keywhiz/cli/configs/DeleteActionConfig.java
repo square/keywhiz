@@ -28,4 +28,7 @@ public class DeleteActionConfig {
 
   @Parameter(names = "--name", description = "Name of the item to delete", required = true)
   public String name;
+
+  @Parameter(names = "--mode", description = "Deletion mode")
+  public String mode;
 }
