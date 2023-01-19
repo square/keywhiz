@@ -57,23 +57,25 @@ public abstract class SanitizedSecret {
         (metadata == null) ? ImmutableMap.of() : ImmutableMap.copyOf(metadata);
     ImmutableMap<String, String> genOptions =
         (generationOptions == null) ? ImmutableMap.of() : ImmutableMap.copyOf(generationOptions);
-    return new AutoValue_SanitizedSecret(
-        id,
-        name,
-        owner,
-        nullToEmpty(description),
-        checksum,
-        createdAt,
-        nullToEmpty(createdBy),
-        updatedAt,
-        nullToEmpty(updatedBy),
-        meta,
-        Optional.ofNullable(type),
-        genOptions,
-        expiry,
-        Optional.ofNullable(version),
-        Optional.ofNullable(contentCreatedAt),
-        nullToEmpty(contentCreatedBy));
+
+    return builder()
+        .id(id)
+        .name(name)
+        .owner(owner)
+        .description(nullToEmpty(description))
+        .checksum(checksum)
+        .createdAt(createdAt)
+        .createdBy(nullToEmpty(createdBy))
+        .updatedAt(updatedAt)
+        .updatedBy(nullToEmpty(updatedBy))
+        .metadata(meta)
+        .type(Optional.ofNullable(type))
+        .generationOptions(genOptions)
+        .expiry(expiry)
+        .version(Optional.ofNullable(version))
+        .contentCreatedAt(Optional.ofNullable(contentCreatedAt))
+        .contentCreatedBy(nullToEmpty((contentCreatedBy)))
+        .build();
   }
 
   public static SanitizedSecret of(long id, String name) {
@@ -196,5 +198,31 @@ public abstract class SanitizedSecret {
    */
   public static String displayName(SanitizedSecret sanitizedSecret) {
     return sanitizedSecret.name();
+  }
+
+  public static Builder builder() { return new AutoValue_SanitizedSecret.Builder();}
+
+  public abstract Builder toBuilder();
+
+  @AutoValue.Builder
+  public static abstract class Builder {
+    public abstract Builder id(long id);
+    public abstract Builder name(String name);
+    @Nullable public abstract Builder owner(String owner);
+    public abstract Builder description(String description);
+    public abstract Builder checksum(String checksum);
+    public abstract Builder createdAt(ApiDate createdAt);
+    public abstract Builder createdBy(String createdBy);
+    public abstract Builder updatedAt(ApiDate updatedAt);
+    public abstract Builder updatedBy(String updatedBy);
+    public abstract Builder metadata(ImmutableMap<String, String> metadata);
+    public abstract Builder type(Optional<String> type);
+    public abstract Builder generationOptions(ImmutableMap<String, String> generationOptions);
+    public abstract Builder expiry(long expiry);
+    public abstract Builder version(Optional<Long> version);
+    public abstract Builder contentCreatedAt(Optional<ApiDate> contentCreatedAt);
+    public abstract Builder contentCreatedBy(String contentCreatedBy);
+
+    public abstract SanitizedSecret build();
   }
 }

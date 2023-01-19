@@ -48,12 +48,14 @@ import keywhiz.log.SimpleLogger;
 import keywhiz.service.daos.AclDAO;
 import keywhiz.service.daos.SecretController;
 import keywhiz.service.daos.SecretDAO;
+import keywhiz.service.daos.SecretDeletionMode;
 import keywhiz.service.exceptions.ConflictException;
 import org.apache.http.HttpStatus;
 import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
@@ -76,6 +78,7 @@ public class SecretsResourceTest {
   private static final ApiDate NOWPLUS = new ApiDate(NOW.toEpochSecond() + 10000);
 
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Mock AclDAO aclDAO;
   @Mock SecretDAO secretDAO;
@@ -121,6 +124,24 @@ public class SecretsResourceTest {
     when(secretBuilder.createOrUpdate()).thenReturn(secret);
 
     when(secretController.getSecretById(secret.getId())).thenReturn(Optional.of(secret));
+  }
+
+  @Test
+  public void deleteSecretRejectsUnknownMode() {
+    thrown.expect(IllegalArgumentException.class);
+    resource.deleteSecret(user, new LongParam(Long.toString(secret.getId())), "foo");
+  }
+
+  @Test
+  public void deleteSecretWithNullModeSoftDeletesSecret() {
+    resource.deleteSecret(user, new LongParam(Long.toString(secret.getId())), null);
+    verify(secretDAO).deleteSecretsByName(secret.getName(), SecretDeletionMode.SOFT);
+  }
+
+  @Test
+  public void deleteSecretWithModeHardHardDeletesSecret() {
+    resource.deleteSecret(user, new LongParam(Long.toString(secret.getId())), "hard");
+    verify(secretDAO).deleteSecretsByName(secret.getName(), SecretDeletionMode.HARD);
   }
 
   @Test
@@ -298,15 +319,15 @@ public class SecretsResourceTest {
     groups.add(new Group(0, "group2", "", NOW, null, NOW, null, null));
     when(aclDAO.getGroupsFor(secret)).thenReturn(groups);
 
-    Response response = resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)));
-    verify(secretDAO).deleteSecretsByName("name");
+    Response response = resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)), null);
+    verify(secretDAO).deleteSecretsByName("name", SecretDeletionMode.SOFT);
     assertThat(response.getStatus()).isEqualTo(204);
   }
 
   @Test (expected = NotFoundException.class)
   public void deleteErrorsOnNotFound() {
     when(secretController.getSecretById(0xdeadbeef)).thenReturn(Optional.empty());
-    resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)));
+    resource.deleteSecret(user, new LongParam(Long.toString(0xdeadbeef)), null);
   }
 
   @Test(expected = ConflictException.class)

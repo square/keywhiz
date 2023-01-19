@@ -26,6 +26,7 @@ import java.util.List;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
+import keywhiz.api.model.SecretDeletionMode;
 import keywhiz.cli.configs.DeleteActionConfig;
 import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.NotFoundException;
@@ -61,6 +62,8 @@ public class DeleteAction implements Runnable {
     if (deleteActionConfig.name == null || !validName(deleteActionConfig.name)) {
       throw new IllegalArgumentException(format("Invalid name, must match %s", VALID_NAME_PATTERN));
     }
+
+    validateMode(deleteActionConfig.mode);
 
     String firstType = type.get(0).toLowerCase().trim();
     switch (firstType) {
@@ -102,7 +105,11 @@ public class DeleteAction implements Runnable {
               return;
             } else if (line.toUpperCase().startsWith("Y")) {
               logger.info("Deleting secret '{}'.", sanitizedSecret.name());
-              keywhizClient.deleteSecretWithId(sanitizedSecret.id());
+              if (deleteActionConfig.mode == null) {
+                keywhizClient.deleteSecretWithId(sanitizedSecret.id());
+              } else {
+                keywhizClient.deleteSecretWithId(sanitizedSecret.id(), deleteActionConfig.mode);
+              }
               return;
             } // else loop again
           }
@@ -114,6 +121,16 @@ public class DeleteAction implements Runnable {
 
       default:
         throw new IllegalArgumentException("Invalid delete type specified: " + type);
+    }
+  }
+
+  private static void validateMode(String mode) {
+    if (mode != null && !SecretDeletionMode.values().contains(mode)) {
+      throw new IllegalArgumentException(
+          format(
+              "Invalid mode [%s], must be one of %s.",
+              mode,
+              SecretDeletionMode.values()));
     }
   }
 }
