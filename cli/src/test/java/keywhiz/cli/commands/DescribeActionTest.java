@@ -18,6 +18,8 @@ package keywhiz.cli.commands;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
@@ -30,11 +32,15 @@ import keywhiz.client.KeywhizClient.NotFoundException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -51,6 +57,25 @@ public class DescribeActionTest {
   Secret secret = new Secret(0, "secret", null, null, () ->  "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null, null, null,
       ImmutableMap.of(), 0, 1L, NOW, null);
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
+
+  Secret secretABC = new Secret(1, "ABC", null, null, () ->  "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null, null, null,
+      ImmutableMap.of(), 0, 1L, NOW, null);
+  SanitizedSecret sanitizedSecretABC = SanitizedSecret.fromSecret(secretABC);
+
+  Secret deletedSecretABC1 =
+      new Secret(2, ".ABC.deleted.1674155945.237e9877-e79b-12d4-a765-321741963000", null, null,
+          () -> "c2VjcmV0NQ==", "checksum", NOW, null, NOW, null, null, null, ImmutableMap.of(), 0,
+          1L, NOW, null);
+  SanitizedSecret sanitizedDeletedSecretABC1 = SanitizedSecret.fromSecret(deletedSecretABC1);
+
+  Secret deletedSecretABC2 =
+      new Secret(3, ".ABC.deleted.2674155946.348e9877-e79b-12d4-a765-432741963111", null, null,
+          () -> "c2VjcmV0NQ==", "checksum", NOW, null, NOW, null, null, null, ImmutableMap.of(), 0,
+          1L, NOW, null);
+  SanitizedSecret sanitizedDeletedSecretABC2 = SanitizedSecret.fromSecret(deletedSecretABC2);
+
+  List<SanitizedSecret> deletedSecrets = List.of(sanitizedDeletedSecretABC1, sanitizedDeletedSecretABC2);
+  List<SanitizedSecret> emptyDeletedSecrets = List.of();
 
   @Before
   public void setUp() {
@@ -84,14 +109,76 @@ public class DescribeActionTest {
   }
 
   @Test
-  public void describeCallsPrintForSecret() throws Exception {
+  public void describeCallsPrintForNonDeletedSecret() throws Exception {
     describeActionConfig.describeType = Arrays.asList("secret");
     describeActionConfig.name = "General_Password";
 
     when(keywhizClient.getSanitizedSecretByName(anyString())).thenReturn(sanitizedSecret);
 
     describeAction.run();
+
     verify(printing).printSanitizedSecretWithDetails(sanitizedSecret);
+    verify(printing, never()).printDeletedSecretsWithDetails(deletedSecrets);
+  }
+
+  @Test
+  public void describeCallsPrintForNonDeletedSecretAndDeletedSecrets() throws Exception {
+    describeActionConfig.describeType = Arrays.asList("secret");
+    describeActionConfig.name = "ABC";
+    describeActionConfig.includeDeleted = true;
+
+    when(keywhizClient.getSanitizedSecretByName("ABC")).thenReturn(sanitizedSecretABC);
+    when(keywhizClient.getDeletedSecretsByName("ABC")).thenReturn(deletedSecrets);
+
+    describeAction.run();
+
+    verify(printing).printSanitizedSecretWithDetails(sanitizedSecretABC);
+    verify(printing).printDeletedSecretsWithDetails(deletedSecrets);
+  }
+
+  @Test
+  public void describeCallsPrintForNonDeletedSecretAndEmptyDeletedSecrets() throws Exception {
+    describeActionConfig.describeType = Arrays.asList("secret");
+    describeActionConfig.name = "ABC";
+    describeActionConfig.includeDeleted = true;
+
+    when(keywhizClient.getSanitizedSecretByName("ABC")).thenReturn(sanitizedSecretABC);
+    when(keywhizClient.getDeletedSecretsByName("ABC")).thenReturn(emptyDeletedSecrets);
+
+    describeAction.run();
+
+    verify(printing).printSanitizedSecretWithDetails(sanitizedSecretABC);
+    verify(printing).printDeletedSecretsWithDetails(emptyDeletedSecrets);
+  }
+
+  @Test
+  public void describeCallsPrintForDeletedSecrets() throws Exception {
+    describeActionConfig.describeType = Arrays.asList("secret");
+    describeActionConfig.name = "ABC";
+    describeActionConfig.includeDeleted = true;
+
+    when(keywhizClient.getSanitizedSecretByName("ABC")).thenThrow(new NotFoundException());
+    when(keywhizClient.getDeletedSecretsByName("ABC")).thenReturn(deletedSecrets);
+
+    describeAction.run();
+
+    verify(printing, never()).printSanitizedSecretWithDetails(sanitizedSecretABC);
+    verify(printing).printDeletedSecretsWithDetails(deletedSecrets);
+  }
+
+  @Test
+  public void describeCallsPrintForEmptyDeletedSecrets() throws Exception {
+    describeActionConfig.describeType = Arrays.asList("secret");
+    describeActionConfig.name = "ABC";
+    describeActionConfig.includeDeleted = true;
+
+    when(keywhizClient.getSanitizedSecretByName("ABC")).thenThrow(new NotFoundException());
+    when(keywhizClient.getDeletedSecretsByName("ABC")).thenReturn(emptyDeletedSecrets);
+
+    describeAction.run();
+
+    verify(printing, never()).printSanitizedSecretWithDetails(sanitizedSecretABC);
+    verify(printing).printDeletedSecretsWithDetails(emptyDeletedSecrets);
   }
 
   @Test(expected = AssertionError.class)
@@ -120,6 +207,17 @@ public class DescribeActionTest {
   public void describeThrowsIfSecretDoesNotExist() throws Exception {
     describeActionConfig.describeType = Arrays.asList("secret");
     describeActionConfig.name = "nonexistent-secret-name";
+
+    when(keywhizClient.getSanitizedSecretByName(anyString())).thenThrow(new NotFoundException());
+
+    describeAction.run();
+  }
+
+  @Test
+  public void describeDoesNotThrowIfSecretDoesNotExistButIncludeDeletedIsSet() throws Exception {
+    describeActionConfig.describeType = Arrays.asList("secret");
+    describeActionConfig.name = "nonexistent-secret-name";
+    describeActionConfig.includeDeleted = true;
 
     when(keywhizClient.getSanitizedSecretByName(anyString())).thenThrow(new NotFoundException());
 

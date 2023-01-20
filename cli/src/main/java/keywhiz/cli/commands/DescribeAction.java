@@ -19,6 +19,7 @@ package keywhiz.cli.commands;
 import com.google.common.base.Throwables;
 import java.io.IOException;
 import java.util.List;
+import javax.annotation.Nullable;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -83,20 +84,49 @@ public class DescribeAction implements Runnable {
         break;
 
       case "secret":
-        SanitizedSecret sanitizedSecret;
-        try {
-          sanitizedSecret = keywhizClient.getSanitizedSecretByName(name);
-
-          printing.printSanitizedSecretWithDetails(sanitizedSecret);
-        } catch (NotFoundException e) {
-          throw new AssertionError("Secret not found.");
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
+        describeSecret();
         break;
 
       default:
         throw new IllegalArgumentException("Invalid describe type specified: " + firstType);
+    }
+  }
+
+  private void describeSecret() {
+    SanitizedSecret sanitizedSecret = getSanitizedSecret();
+    List<SanitizedSecret> deletedSecrets = describeActionConfig.includeDeleted
+        ? getDeletedSecrets()
+        : null;
+
+    if (sanitizedSecret != null) {
+      printing.printSanitizedSecretWithDetails(sanitizedSecret);
+    }
+
+    if (deletedSecrets != null) {
+      printing.printDeletedSecretsWithDetails(deletedSecrets);
+    }
+  }
+
+  @Nullable
+  private SanitizedSecret getSanitizedSecret() {
+    try {
+      return keywhizClient.getSanitizedSecretByName(describeActionConfig.name);
+    } catch (NotFoundException e) {
+      if (!describeActionConfig.includeDeleted) {
+        throw new AssertionError("Secret not found.");
+      }
+      // If we're including deleted secrets, it's ok if no non-deleted secret was found
+      return null;
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private List<SanitizedSecret> getDeletedSecrets() {
+    try {
+      return keywhizClient.getDeletedSecretsByName(describeActionConfig.name);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
     }
   }
 }

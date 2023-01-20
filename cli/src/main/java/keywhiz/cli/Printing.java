@@ -154,6 +154,15 @@ public class Printing {
     System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
   }
 
+  public void printDeletedSecretsWithDetails(List<SanitizedSecret> deletedSecrets) {
+    System.out.println("Deleted Secrets:");
+    if (deletedSecrets.isEmpty()) {
+      System.out.println("None found");
+    } else {
+      deletedSecrets.forEach(this::printSanitizedSecretWithDetails);
+    }
+  }
+
   public void printSanitizedSecretWithDetails(SanitizedSecret secret) {
     System.out.println(SanitizedSecret.displayName(secret));
     SecretDetailResponse secretDetails;
@@ -162,6 +171,9 @@ public class Printing {
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
+
+    System.out.println(INDENT + "Internal Identifier:");
+    System.out.println(DOUBLE_INDENT + secret.id());
 
     System.out.println(INDENT + "Owner:");
     if (secret.owner() != null) {

@@ -28,4 +28,7 @@ public class DescribeActionConfig {
 
   @Parameter(names = "--name", description = "Name of the item to describe", required = true)
   public String name;
+
+  @Parameter(names = { "-d", "--include-deleted" }, description = "Whether to include any deleted secret(s) that match the provided name")
+  public Boolean includeDeleted = false;
 }

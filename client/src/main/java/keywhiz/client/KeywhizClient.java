@@ -350,6 +350,14 @@ public class KeywhizClient {
     return mapper.readValue(response, SanitizedSecret.class);
   }
 
+  public List<SanitizedSecret> getDeletedSecretsByName(String name) throws IOException {
+    checkArgument(!name.isEmpty());
+    String response =
+        httpGet(baseUrl.resolve(format("/admin/secrets/deleted/%s", name)).newBuilder().build());
+    return mapper.readValue(response, new TypeReference<>() {
+    });
+  }
+
   public boolean isLoggedIn() throws IOException {
     HttpUrl url = baseUrl.resolve("/admin/me");
     Call call = client.newCall(new Request.Builder().get().url(url).build());
