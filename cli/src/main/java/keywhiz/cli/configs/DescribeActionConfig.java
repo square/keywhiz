@@ -30,5 +30,5 @@ public class DescribeActionConfig {
   public String name;
 
   @Parameter(names = { "-d", "--include-deleted" }, description = "Whether to include any deleted secret(s) that match the provided name")
-  public Boolean includeDeleted = false;
+  public boolean includeDeleted = false;
 }

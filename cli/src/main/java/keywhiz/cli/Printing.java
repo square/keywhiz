@@ -25,6 +25,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.GroupDetailResponse;
@@ -154,12 +155,19 @@ public class Printing {
     System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
   }
 
-  public void printDeletedSecretsWithDetails(List<SanitizedSecret> deletedSecrets) {
-    System.out.println("Deleted Secrets:");
-    if (deletedSecrets.isEmpty()) {
-      System.out.println("None found");
-    } else {
+  public void printDeletedSecretsWithDetails(@Nullable List<SanitizedSecret> deletedSecrets) {
+    int deletedCount = deletedSecrets == null ? 0 : deletedSecrets.size();
+    System.out.println(String.format("Deleted Secrets: found %d", deletedCount));
+    if (deletedSecrets != null) {
       deletedSecrets.forEach(this::printSanitizedSecretWithDetails);
+    }
+  }
+
+  public void printNonDeletedSecretWithDetails(@Nullable SanitizedSecret secret) {
+    if (secret == null) {
+      System.out.println("No non-deleted secret found.");
+    } else {
+      printSanitizedSecretWithDetails(secret);
     }
   }
 
@@ -172,7 +180,7 @@ public class Printing {
       throw Throwables.propagate(e);
     }
 
-    System.out.println(INDENT + "Internal Identifier:");
+    System.out.println(INDENT + "Internal ID:");
     System.out.println(DOUBLE_INDENT + secret.id());
 
     System.out.println(INDENT + "Owner:");

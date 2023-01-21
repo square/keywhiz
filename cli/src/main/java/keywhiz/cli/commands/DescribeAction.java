@@ -93,35 +93,38 @@ public class DescribeAction implements Runnable {
   }
 
   private void describeSecret() {
-    SanitizedSecret sanitizedSecret = getSanitizedSecret();
-    List<SanitizedSecret> deletedSecrets = describeActionConfig.includeDeleted
-        ? getDeletedSecrets()
-        : null;
-
-    if (sanitizedSecret != null) {
-      printing.printSanitizedSecretWithDetails(sanitizedSecret);
-    }
-
-    if (deletedSecrets != null) {
-      printing.printDeletedSecretsWithDetails(deletedSecrets);
+    describeNonDeletedSecret();
+    if (describeActionConfig.includeDeleted) {
+      describeDeletedSecrets();
     }
   }
 
+  private void describeNonDeletedSecret() {
+    SanitizedSecret sanitizedSecret = getNonDeletedSecret();
+    printing.printNonDeletedSecretWithDetails(sanitizedSecret);
+  }
+
+  private void describeDeletedSecrets() {
+    List<SanitizedSecret> deletedSecrets = getDeletedSecrets();
+    printing.printDeletedSecretsWithDetails(deletedSecrets);
+  }
+
   @Nullable
-  private SanitizedSecret getSanitizedSecret() {
+  private SanitizedSecret getNonDeletedSecret() {
     try {
       return keywhizClient.getSanitizedSecretByName(describeActionConfig.name);
     } catch (NotFoundException e) {
-      if (!describeActionConfig.includeDeleted) {
-        throw new AssertionError("Secret not found.");
+      if (describeActionConfig.includeDeleted) {
+        // If we're including deleted secrets, it's ok if no non-deleted secret was found
+        return null;
       }
-      // If we're including deleted secrets, it's ok if no non-deleted secret was found
-      return null;
+      throw Throwables.propagate(e);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
   }
 
+  @Nullable
   private List<SanitizedSecret> getDeletedSecrets() {
     try {
       return keywhizClient.getDeletedSecretsByName(describeActionConfig.name);

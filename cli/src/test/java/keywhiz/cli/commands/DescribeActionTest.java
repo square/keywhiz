@@ -113,7 +113,7 @@ public class DescribeActionTest {
 
     describeAction.run();
 
-    verify(printing).printSanitizedSecretWithDetails(sanitizedSecret);
+    verify(printing).printNonDeletedSecretWithDetails(sanitizedSecret);
     verify(printing, never()).printDeletedSecretsWithDetails(deletedSecrets);
   }
 
@@ -128,7 +128,7 @@ public class DescribeActionTest {
 
     describeAction.run();
 
-    verify(printing).printSanitizedSecretWithDetails(sanitizedSecretABC);
+    verify(printing).printNonDeletedSecretWithDetails(sanitizedSecretABC);
     verify(printing).printDeletedSecretsWithDetails(deletedSecrets);
   }
 
@@ -143,7 +143,7 @@ public class DescribeActionTest {
 
     describeAction.run();
 
-    verify(printing).printSanitizedSecretWithDetails(sanitizedSecretABC);
+    verify(printing).printNonDeletedSecretWithDetails(sanitizedSecretABC);
     verify(printing).printDeletedSecretsWithDetails(emptyDeletedSecrets);
   }
 
@@ -158,7 +158,7 @@ public class DescribeActionTest {
 
     describeAction.run();
 
-    verify(printing, never()).printSanitizedSecretWithDetails(sanitizedSecretABC);
+    verify(printing, never()).printNonDeletedSecretWithDetails(sanitizedSecretABC);
     verify(printing).printDeletedSecretsWithDetails(deletedSecrets);
   }
 
@@ -173,7 +173,7 @@ public class DescribeActionTest {
 
     describeAction.run();
 
-    verify(printing, never()).printSanitizedSecretWithDetails(sanitizedSecretABC);
+    verify(printing, never()).printNonDeletedSecretWithDetails(sanitizedSecretABC);
     verify(printing).printDeletedSecretsWithDetails(emptyDeletedSecrets);
   }
 
@@ -199,7 +199,7 @@ public class DescribeActionTest {
     describeAction.run();
   }
 
-  @Test(expected = AssertionError.class)
+  @Test(expected = RuntimeException.class)
   public void describeThrowsIfSecretDoesNotExist() throws Exception {
     describeActionConfig.describeType = Arrays.asList("secret");
     describeActionConfig.name = "nonexistent-secret-name";
