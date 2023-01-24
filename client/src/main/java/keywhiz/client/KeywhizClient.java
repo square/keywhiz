@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.ws.rs.core.HttpHeaders;
 import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.GroupDetailResponse;
@@ -348,6 +349,20 @@ public class KeywhizClient {
         httpGet(baseUrl.resolve("/admin/secrets").newBuilder().addQueryParameter("name", name)
             .build());
     return mapper.readValue(response, SanitizedSecret.class);
+  }
+
+  @Nullable
+  public List<SanitizedSecret> getDeletedSecretsByName(String name) throws IOException {
+    checkArgument(!name.isEmpty());
+    String response =
+        httpGet(baseUrl.newBuilder()
+            .addPathSegment("admin")
+            .addPathSegment("secrets")
+            .addPathSegment("deleted")
+            .addPathSegment(name)
+            .build());
+    return mapper.readValue(response, new TypeReference<>() {
+    });
   }
 
   public boolean isLoggedIn() throws IOException {

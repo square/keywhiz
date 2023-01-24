@@ -19,6 +19,7 @@ package keywhiz.cli.commands;
 import com.google.common.base.Throwables;
 import java.io.IOException;
 import java.util.List;
+import javax.annotation.Nullable;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -83,20 +84,52 @@ public class DescribeAction implements Runnable {
         break;
 
       case "secret":
-        SanitizedSecret sanitizedSecret;
-        try {
-          sanitizedSecret = keywhizClient.getSanitizedSecretByName(name);
-
-          printing.printSanitizedSecretWithDetails(sanitizedSecret);
-        } catch (NotFoundException e) {
-          throw new AssertionError("Secret not found.");
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
+        describeSecret();
         break;
 
       default:
         throw new IllegalArgumentException("Invalid describe type specified: " + firstType);
+    }
+  }
+
+  private void describeSecret() {
+    describeNonDeletedSecret();
+    if (describeActionConfig.includeDeleted) {
+      describeDeletedSecrets();
+    }
+  }
+
+  private void describeNonDeletedSecret() {
+    SanitizedSecret sanitizedSecret = getNonDeletedSecret();
+    printing.printNonDeletedSecretWithDetails(sanitizedSecret);
+  }
+
+  private void describeDeletedSecrets() {
+    List<SanitizedSecret> deletedSecrets = getDeletedSecrets();
+    printing.printDeletedSecretsWithDetails(deletedSecrets);
+  }
+
+  @Nullable
+  private SanitizedSecret getNonDeletedSecret() {
+    try {
+      return keywhizClient.getSanitizedSecretByName(describeActionConfig.name);
+    } catch (NotFoundException e) {
+      if (describeActionConfig.includeDeleted) {
+        // If we're including deleted secrets, it's ok if no non-deleted secret was found
+        return null;
+      }
+      throw Throwables.propagate(e);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Nullable
+  private List<SanitizedSecret> getDeletedSecrets() {
+    try {
+      return keywhizClient.getDeletedSecretsByName(describeActionConfig.name);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
     }
   }
 }
