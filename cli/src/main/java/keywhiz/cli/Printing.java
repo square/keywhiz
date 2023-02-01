@@ -27,12 +27,14 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import keywhiz.api.ApiDate;
 import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.GroupDetailResponse;
 import keywhiz.api.SecretDetailResponse;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
+import keywhiz.api.model.SecretSeries;
 import keywhiz.client.KeywhizClient;
 
 public class Printing {
@@ -155,11 +157,11 @@ public class Printing {
     System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
   }
 
-  public void printDeletedSecretsWithDetails(@Nullable List<SanitizedSecret> deletedSecrets) {
+  public void printDeletedSecretsWithDetails(@Nullable List<SecretSeries> deletedSecrets) {
     int deletedCount = deletedSecrets == null ? 0 : deletedSecrets.size();
     System.out.println(String.format("Deleted Secrets: found %d", deletedCount));
     if (deletedSecrets != null) {
-      deletedSecrets.forEach(this::printSanitizedSecretWithDetails);
+      deletedSecrets.forEach(series -> this.printSanitizedSecretWithDetails(series.id()));
     }
   }
 
@@ -167,25 +169,26 @@ public class Printing {
     if (secret == null) {
       System.out.println("No non-deleted secret found.");
     } else {
-      printSanitizedSecretWithDetails(secret);
+      printSanitizedSecretWithDetails(secret.id());
     }
   }
 
-  public void printSanitizedSecretWithDetails(SanitizedSecret secret) {
-    System.out.println(SanitizedSecret.displayName(secret));
+  public void printSanitizedSecretWithDetails(long secretID) {
     SecretDetailResponse secretDetails;
     try {
-      secretDetails = keywhizClient.secretDetailsForId(secret.id());
+      secretDetails = keywhizClient.secretDetailsForId(secretID);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
 
+    System.out.println(secretDetails.name);
+
     System.out.println(INDENT + "Internal ID:");
-    System.out.println(DOUBLE_INDENT + secret.id());
+    System.out.println(DOUBLE_INDENT + secretID);
 
     System.out.println(INDENT + "Owner:");
-    if (secret.owner() != null) {
-      System.out.println(DOUBLE_INDENT + secret.owner());
+    if (secretDetails.owner != null) {
+      System.out.println(DOUBLE_INDENT + secretDetails.owner);
     }
 
     System.out.println(INDENT + "Groups:");
@@ -199,62 +202,67 @@ public class Printing {
         .forEach(c -> System.out.println(DOUBLE_INDENT + c.getName()));
 
     System.out.println(INDENT + "Content HMAC:");
-    if (secret.checksum().isEmpty()) {
+    if (secretDetails.checksum.isEmpty()) {
       System.out.println(DOUBLE_INDENT + "WARNING: Content HMAC not calculated!");
     } else {
-      System.out.println(DOUBLE_INDENT + secret.checksum());
+      System.out.println(DOUBLE_INDENT + secretDetails.checksum);
     }
 
     System.out.println(INDENT + "Metadata:");
-    if (!secret.metadata().isEmpty()) {
+    if (!secretDetails.metadata.isEmpty()) {
       String metadata;
       try {
-        metadata = new ObjectMapper().writeValueAsString(secret.metadata());
+        metadata = new ObjectMapper().writeValueAsString(secretDetails.metadata);
       } catch (JsonProcessingException e) {
         throw Throwables.propagate(e);
       }
       System.out.println(DOUBLE_INDENT + metadata);
     }
 
-    if (secret.expiry() > 0) {
+    if (secretDetails.expiry > 0) {
       System.out.println(INDENT + "Expiry:");
-      Date d = new Date(secret.expiry() * 1000);
-      System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
+      System.out.println(DOUBLE_INDENT + epochSecondToString(secretDetails.expiry));
     }
 
-    if (!secret.description().isEmpty()) {
+    if (!secretDetails.description.isEmpty()) {
       System.out.println(INDENT + "Description:");
-      System.out.println(DOUBLE_INDENT + secret.description());
+      System.out.println(DOUBLE_INDENT + secretDetails.description);
     }
 
-    if (!secret.createdBy().isEmpty()) {
+    if (!secretDetails.createdBy.isEmpty()) {
       System.out.println(INDENT + "Created by:");
-      System.out.println(DOUBLE_INDENT + secret.createdBy());
+      System.out.println(DOUBLE_INDENT + secretDetails.createdBy);
     }
 
     System.out.println(INDENT + "Created at:");
-    Date d = new Date(secret.createdAt().toEpochSecond() * 1000);
-    System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
+    System.out.println(DOUBLE_INDENT + apiDateToString(secretDetails.createdAt));
 
-    if (!secret.updatedBy().isEmpty()) {
+    if (!secretDetails.updatedBy.isEmpty()) {
       System.out.println(INDENT + "Updated by:");
-      System.out.println(DOUBLE_INDENT + secret.updatedBy());
+      System.out.println(DOUBLE_INDENT + secretDetails.updatedBy);
     }
 
     System.out.println(INDENT + "Updated at:");
-    d = new Date(secret.updatedAt().toEpochSecond() * 1000);
-    System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
+    System.out.println(DOUBLE_INDENT + apiDateToString(secretDetails.updatedAt));
 
-    if (!secret.contentCreatedBy().isEmpty()) {
+    if (!secretDetails.contentCreatedBy().orElse("").isEmpty()) {
       System.out.println(INDENT + "Content created by:");
-      System.out.println(DOUBLE_INDENT + secret.contentCreatedBy());
+      System.out.println(DOUBLE_INDENT + secretDetails.contentCreatedBy().get());
     }
 
-    if (secret.contentCreatedAt().isPresent()) {
+    if (secretDetails.contentCreatedAt().isPresent()) {
       System.out.println(INDENT + "Content created at:");
-      d = new Date(secret.contentCreatedAt().get().toEpochSecond() * 1000);
-      System.out.println(DOUBLE_INDENT + DateFormat.getDateTimeInstance().format(d));
+      System.out.println(DOUBLE_INDENT + apiDateToString(secretDetails.contentCreatedAt().get()));
     }
+  }
+
+  private String apiDateToString(ApiDate apiDate) {
+    return epochSecondToString(apiDate.toEpochSecond() * 1000);
+  }
+
+  private String epochSecondToString(long epochSecond) {
+    Date d = new Date(epochSecond);
+    return DateFormat.getDateTimeInstance().format(d);
   }
 
   public void printAllClients(List<Client> clients) {

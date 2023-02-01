@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
+import keywhiz.api.model.SecretSeries;
 import keywhiz.cli.Printing;
 import keywhiz.cli.configs.DescribeActionConfig;
 import keywhiz.client.KeywhizClient;
@@ -105,7 +106,7 @@ public class DescribeAction implements Runnable {
   }
 
   private void describeDeletedSecrets() {
-    List<SanitizedSecret> deletedSecrets = getDeletedSecrets();
+    List<SecretSeries> deletedSecrets = getDeletedSecrets();
     printing.printDeletedSecretsWithDetails(deletedSecrets);
   }
 
@@ -125,7 +126,7 @@ public class DescribeAction implements Runnable {
   }
 
   @Nullable
-  private List<SanitizedSecret> getDeletedSecrets() {
+  private List<SecretSeries> getDeletedSecrets() {
     try {
       return keywhizClient.getDeletedSecretsByName(describeActionConfig.name);
     } catch (IOException e) {

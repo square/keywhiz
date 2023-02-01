@@ -21,6 +21,8 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Optional;
+import javax.annotation.Nullable;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.Secret;
@@ -37,6 +39,9 @@ public class SecretDetailResponse {
 
   @JsonProperty
   public final String description;
+
+  @JsonProperty
+  public final String checksum;
 
   @JsonProperty
   public final ApiDate createdAt;
@@ -58,6 +63,15 @@ public class SecretDetailResponse {
   public final ImmutableMap<String, String> metadata;
 
   @JsonProperty
+  public final long expiry;
+
+  @JsonProperty @Nullable
+  public final ApiDate contentCreatedAt;
+
+  @JsonProperty @Nullable
+  public final String contentCreatedBy;
+
+  @JsonProperty
   public final ImmutableList<Group> groups;
 
   @JsonProperty
@@ -67,22 +81,30 @@ public class SecretDetailResponse {
       @JsonProperty("name") String name,
       @JsonProperty("owner") String owner,
       @JsonProperty("description") String description,
+      @JsonProperty("checksum") String checksum,
       @JsonProperty("createdAt") ApiDate createdAt,
       @JsonProperty("createdBy") String createdBy,
       @JsonProperty("updatedAt") ApiDate updatedAt,
       @JsonProperty("updatedBy") String updatedBy,
       @JsonProperty("metadata") ImmutableMap<String, String> metadata,
+      @JsonProperty("expiry") long expiry,
+      @JsonProperty("contentCreatedAt") @Nullable ApiDate contentCreatedAt,
+      @JsonProperty("contentCreatedBy") @Nullable String contentCreatedBy,
       @JsonProperty("groups") ImmutableList<Group> groups,
       @JsonProperty("clients") ImmutableList<Client> clients) {
     this.id = id;
     this.name = name;
     this.owner = owner;
     this.description = description;
+    this.checksum = checksum;
     this.createdAt = createdAt;
     this.createdBy = createdBy;
     this.updatedAt = updatedAt;
     this.updatedBy = updatedBy;
     this.metadata = metadata;
+    this.expiry = expiry;
+    this.contentCreatedAt = contentCreatedAt;
+    this.contentCreatedBy = contentCreatedBy;
     this.groups = groups;
     this.clients = clients;
   }
@@ -93,11 +115,15 @@ public class SecretDetailResponse {
         secret.getName(),
         secret.getOwner(),
         secret.getDescription(),
+        secret.getChecksum(),
         secret.getCreatedAt(),
         secret.getCreatedBy(),
         secret.getUpdatedAt(),
         secret.getUpdatedBy(),
         secret.getMetadata(),
+        secret.getExpiry(),
+        secret.getContentCreatedAt().orElse(null),
+        secret.getContentCreatedBy(),
         groups,
         clients);
   }
@@ -109,11 +135,15 @@ public class SecretDetailResponse {
         name,
         owner,
         description,
+        checksum,
         createdAt,
         createdBy,
         updatedAt,
         updatedBy,
         metadata,
+        expiry,
+        contentCreatedAt,
+        contentCreatedBy,
         groups,
         clients);
   }
@@ -126,11 +156,15 @@ public class SecretDetailResponse {
           Objects.equal(this.name, that.name) &&
           Objects.equal(this.owner, that.owner) &&
           Objects.equal(this.description, that.description) &&
+          Objects.equal(this.checksum, that.checksum) &&
           Objects.equal(this.createdAt, that.createdAt) &&
           Objects.equal(this.createdBy, that.createdBy) &&
           Objects.equal(this.updatedAt, that.updatedAt) &&
           Objects.equal(this.updatedBy, that.updatedBy) &&
           Objects.equal(this.metadata, that.metadata) &&
+          Objects.equal(this.expiry, that.expiry) &&
+          Objects.equal(this.contentCreatedAt, that.contentCreatedAt) &&
+          Objects.equal(this.contentCreatedBy, that.contentCreatedBy) &&
           Objects.equal(this.groups, that.groups) &&
           Objects.equal(this.clients, that.clients)) {
         return true;
@@ -146,13 +180,25 @@ public class SecretDetailResponse {
         .add("name", name)
         .add("owner", owner)
         .add("description", description)
+        .add("checksum", checksum)
         .add("createdAt", createdAt)
         .add("createdBy", createdBy)
         .add("updatedAt", updatedAt)
         .add("updatedBy", updatedBy)
         .add("metadata", metadata)
+        .add("expiry", expiry)
+        .add("contentCreatedAt", contentCreatedAt)
+        .add("contentCreatedBy", contentCreatedBy)
         .add("groups", "[OMIT]")
         .add("clients", "[OMIT]")
         .toString();
+  }
+
+  @JsonProperty public Optional<String> contentCreatedBy() {
+    return Optional.ofNullable(this.contentCreatedBy);
+  }
+
+  @JsonProperty public Optional<ApiDate> contentCreatedAt() {
+    return Optional.ofNullable(this.contentCreatedAt);
   }
 }

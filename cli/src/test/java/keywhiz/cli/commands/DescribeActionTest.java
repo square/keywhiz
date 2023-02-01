@@ -24,6 +24,7 @@ import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.Secret;
+import keywhiz.api.model.SecretSeries;
 import keywhiz.cli.Printing;
 import keywhiz.cli.configs.DescribeActionConfig;
 import keywhiz.client.KeywhizClient;
@@ -58,20 +59,36 @@ public class DescribeActionTest {
       ImmutableMap.of(), 0, 1L, NOW, null);
   SanitizedSecret sanitizedSecretABC = SanitizedSecret.fromSecret(secretABC);
 
-  Secret deletedSecretABC1 =
-      new Secret(2, ".ABC.deleted.1674155945.237e9877-e79b-12d4-a765-321741963000", null, null,
-          () -> "c2VjcmV0NQ==", "checksum", NOW, null, NOW, null, null, null, ImmutableMap.of(), 0,
-          1L, NOW, null);
-  SanitizedSecret sanitizedDeletedSecretABC1 = SanitizedSecret.fromSecret(deletedSecretABC1);
+  SecretSeries deletedSecretSeriesABC1 = SecretSeries.of(
+      2,
+      ".ABC.deleted.1674155945.237e9877-e79b-12d4-a765-321741963000",
+      null,
+      null,
+      ApiDate.parse("2013-03-28T21:42:42.573Z"),
+      null,
+      ApiDate.parse("2013-03-28T21:42:42.573Z"),
+      null,
+      null,
+      ImmutableMap.of(),
+      1L
+  );
 
-  Secret deletedSecretABC2 =
-      new Secret(3, ".ABC.deleted.2674155946.348e9877-e79b-12d4-a765-432741963111", null, null,
-          () -> "c2VjcmV0NQ==", "checksum", NOW, null, NOW, null, null, null, ImmutableMap.of(), 0,
-          1L, NOW, null);
-  SanitizedSecret sanitizedDeletedSecretABC2 = SanitizedSecret.fromSecret(deletedSecretABC2);
+  SecretSeries deletedSecretSeriesABC2 = SecretSeries.of(
+      3,
+      ".ABC.deleted.2674155946.348e9877-e79b-12d4-a765-432741963111",
+      null,
+      null,
+      ApiDate.parse("2013-03-28T21:42:42.573Z"),
+      null,
+      ApiDate.parse("2013-03-28T21:42:42.573Z"),
+      null,
+      null,
+      ImmutableMap.of(),
+      1L
+  );
 
-  List<SanitizedSecret> deletedSecrets = List.of(sanitizedDeletedSecretABC1, sanitizedDeletedSecretABC2);
-  List<SanitizedSecret> emptyDeletedSecrets = List.of();
+  List<SecretSeries> deletedSecrets = List.of(deletedSecretSeriesABC1, deletedSecretSeriesABC2);
+  List<SecretSeries> emptyDeletedSecrets = List.of();
 
   @Before
   public void setUp() {

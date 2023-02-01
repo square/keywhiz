@@ -35,6 +35,7 @@ import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Client;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
+import keywhiz.api.model.SecretSeries;
 import okhttp3.Call;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -352,7 +353,7 @@ public class KeywhizClient {
   }
 
   @Nullable
-  public List<SanitizedSecret> getDeletedSecretsByName(String name) throws IOException {
+  public List<SecretSeries> getDeletedSecretsByName(String name) throws IOException {
     checkArgument(!name.isEmpty());
     String response =
         httpGet(baseUrl.newBuilder()
