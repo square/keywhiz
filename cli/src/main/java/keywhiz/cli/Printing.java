@@ -161,7 +161,7 @@ public class Printing {
     int deletedCount = deletedSecrets == null ? 0 : deletedSecrets.size();
     System.out.println(String.format("Deleted Secrets: found %d", deletedCount));
     if (deletedSecrets != null) {
-      deletedSecrets.forEach(series -> this.printSanitizedSecretWithDetails(series.id()));
+      deletedSecrets.forEach(series -> this.printSecretWithDetails(series.id()));
     }
   }
 
@@ -169,11 +169,11 @@ public class Printing {
     if (secret == null) {
       System.out.println("No non-deleted secret found.");
     } else {
-      printSanitizedSecretWithDetails(secret.id());
+      printSecretWithDetails(secret.id());
     }
   }
 
-  public void printSanitizedSecretWithDetails(long secretID) {
+  public void printSecretWithDetails(long secretID) {
     SecretDetailResponse secretDetails;
     try {
       secretDetails = keywhizClient.secretDetailsForId(secretID);
