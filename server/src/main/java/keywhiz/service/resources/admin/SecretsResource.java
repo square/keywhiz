@@ -641,27 +641,24 @@ public class SecretsResource {
   }
 
   private SecretDetailResponse secretDetailResponseFromId(long secretId) {
-    Optional<Secret> secrets = secretController.getSecretById(secretId);
-    if (secrets.isEmpty()) {
-      throw new NotFoundException("Secret not found.");
-    }
-
-    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAOReadOnly.getGroupsFor(secrets.get()));
-    ImmutableList<Client> clients =
-        ImmutableList.copyOf(aclDAOReadOnly.getClientsFor(secrets.get()));
-    return SecretDetailResponse.fromSecret(secrets.get(), groups, clients);
+    Optional<Secret> secret = secretController.getSecretById(secretId);
+    return secretDetailResponseFromSecret(secret);
   }
 
   private SecretDetailResponse secretDetailResponseFromName(String secretName) {
-    Optional<Secret> secrets = secretController.getSecretByName(secretName);
-    if (secrets.isEmpty()) {
+    Optional<Secret> secret = secretController.getSecretByName(secretName);
+    return secretDetailResponseFromSecret(secret);
+  }
+
+  private SecretDetailResponse secretDetailResponseFromSecret(Optional<Secret> secret) {
+    if (secret.isEmpty()) {
       throw new NotFoundException("Secret not found.");
     }
 
-    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAOReadOnly.getGroupsFor(secrets.get()));
+    ImmutableList<Group> groups = ImmutableList.copyOf(aclDAOReadOnly.getGroupsFor(secret.get()));
     ImmutableList<Client> clients =
-        ImmutableList.copyOf(aclDAOReadOnly.getClientsFor(secrets.get()));
-    return SecretDetailResponse.fromSecret(secrets.get(), groups, clients);
+        ImmutableList.copyOf(aclDAOReadOnly.getClientsFor(secret.get()));
+    return SecretDetailResponse.fromSecret(secret.get(), groups, clients);
   }
 
   private SanitizedSecret sanitizedSecretFromName(String name) {
