@@ -6,6 +6,8 @@ package keywhiz.jooq;
 
 import keywhiz.jooq.tables.Accessgrants;
 import keywhiz.jooq.tables.Clients;
+import keywhiz.jooq.tables.DeletedAccessgrants;
+import keywhiz.jooq.tables.DeletedSecrets;
 import keywhiz.jooq.tables.Groups;
 import keywhiz.jooq.tables.Memberships;
 import keywhiz.jooq.tables.SchemaVersion;
@@ -30,6 +32,13 @@ public class Indexes {
 
     public static final Index ACCESSGRANTS_ACCESSGRANTS_SECRETID_IDX = Internal.createIndex(DSL.name("accessgrants_secretid_idx"), Accessgrants.ACCESSGRANTS, new OrderField[] { Accessgrants.ACCESSGRANTS.SECRETID }, false);
     public static final Index SECRETS_CONTENT_CREATEDAT_IDX = Internal.createIndex(DSL.name("createdat_idx"), SecretsContent.SECRETS_CONTENT, new OrderField[] { SecretsContent.SECRETS_CONTENT.CREATEDAT }, false);
+    public static final Index DELETED_ACCESSGRANTS_DAG_GROUPID_SECRETID_IDX = Internal.createIndex(DSL.name("dag_groupid_secretid_idx"), DeletedAccessgrants.DELETED_ACCESSGRANTS, new OrderField[] { DeletedAccessgrants.DELETED_ACCESSGRANTS.GROUPID, DeletedAccessgrants.DELETED_ACCESSGRANTS.SECRETID }, false);
+    public static final Index DELETED_ACCESSGRANTS_DAG_SECRETID_IDX = Internal.createIndex(DSL.name("dag_secretid_idx"), DeletedAccessgrants.DELETED_ACCESSGRANTS, new OrderField[] { DeletedAccessgrants.DELETED_ACCESSGRANTS.SECRETID }, false);
+    public static final Index DELETED_SECRETS_DS_CURRENT_IDX = Internal.createIndex(DSL.name("ds_current_idx"), DeletedSecrets.DELETED_SECRETS, new OrderField[] { DeletedSecrets.DELETED_SECRETS.CURRENT }, false);
+    public static final Index DELETED_SECRETS_DS_EXPIRY_CURRENT = Internal.createIndex(DSL.name("ds_expiry_current"), DeletedSecrets.DELETED_SECRETS, new OrderField[] { DeletedSecrets.DELETED_SECRETS.EXPIRY, DeletedSecrets.DELETED_SECRETS.CURRENT }, false);
+    public static final Index DELETED_SECRETS_DS_EXPIRY_IDX = Internal.createIndex(DSL.name("ds_expiry_idx"), DeletedSecrets.DELETED_SECRETS, new OrderField[] { DeletedSecrets.DELETED_SECRETS.EXPIRY }, false);
+    public static final Index DELETED_SECRETS_DS_NAME_IDX = Internal.createIndex(DSL.name("ds_name_idx"), DeletedSecrets.DELETED_SECRETS, new OrderField[] { DeletedSecrets.DELETED_SECRETS.NAME }, false);
+    public static final Index DELETED_SECRETS_DS_OWNER_IDX = Internal.createIndex(DSL.name("ds_owner_idx"), DeletedSecrets.DELETED_SECRETS, new OrderField[] { DeletedSecrets.DELETED_SECRETS.OWNER }, false);
     public static final Index SECRETS_EXPIRY_IDX = Internal.createIndex(DSL.name("expiry_idx"), Secrets.SECRETS, new OrderField[] { Secrets.SECRETS.EXPIRY }, false);
     public static final Index MEMBERSHIPS_MEMBERSHIPS_GROUPID_IDX = Internal.createIndex(DSL.name("memberships_groupid_idx"), Memberships.MEMBERSHIPS, new OrderField[] { Memberships.MEMBERSHIPS.GROUPID }, false);
     public static final Index CLIENTS_OWNER_IDX = Internal.createIndex(DSL.name("owner_idx"), Clients.CLIENTS, new OrderField[] { Clients.CLIENTS.OWNER }, false);

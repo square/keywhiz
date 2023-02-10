@@ -6,6 +6,8 @@ package keywhiz.jooq;
 
 import keywhiz.jooq.tables.Accessgrants;
 import keywhiz.jooq.tables.Clients;
+import keywhiz.jooq.tables.DeletedAccessgrants;
+import keywhiz.jooq.tables.DeletedSecrets;
 import keywhiz.jooq.tables.Groups;
 import keywhiz.jooq.tables.Memberships;
 import keywhiz.jooq.tables.SchemaVersion;
@@ -14,6 +16,8 @@ import keywhiz.jooq.tables.SecretsContent;
 import keywhiz.jooq.tables.Users;
 import keywhiz.jooq.tables.records.AccessgrantsRecord;
 import keywhiz.jooq.tables.records.ClientsRecord;
+import keywhiz.jooq.tables.records.DeletedAccessgrantsRecord;
+import keywhiz.jooq.tables.records.DeletedSecretsRecord;
 import keywhiz.jooq.tables.records.GroupsRecord;
 import keywhiz.jooq.tables.records.MembershipsRecord;
 import keywhiz.jooq.tables.records.SchemaVersionRecord;
@@ -43,6 +47,8 @@ public class Keys {
     public static final UniqueKey<ClientsRecord> KEY_CLIENTS_NAME = Internal.createUniqueKey(Clients.CLIENTS, DSL.name("KEY_clients_name"), new TableField[] { Clients.CLIENTS.NAME }, true);
     public static final UniqueKey<ClientsRecord> KEY_CLIENTS_PRIMARY = Internal.createUniqueKey(Clients.CLIENTS, DSL.name("KEY_clients_PRIMARY"), new TableField[] { Clients.CLIENTS.ID }, true);
     public static final UniqueKey<ClientsRecord> KEY_CLIENTS_SPIFFE_ID_UNIQUE = Internal.createUniqueKey(Clients.CLIENTS, DSL.name("KEY_clients_spiffe_id_unique"), new TableField[] { Clients.CLIENTS.SPIFFE_ID }, true);
+    public static final UniqueKey<DeletedAccessgrantsRecord> KEY_DELETED_ACCESSGRANTS_PRIMARY = Internal.createUniqueKey(DeletedAccessgrants.DELETED_ACCESSGRANTS, DSL.name("KEY_deleted_accessgrants_PRIMARY"), new TableField[] { DeletedAccessgrants.DELETED_ACCESSGRANTS.ID }, true);
+    public static final UniqueKey<DeletedSecretsRecord> KEY_DELETED_SECRETS_PRIMARY = Internal.createUniqueKey(DeletedSecrets.DELETED_SECRETS, DSL.name("KEY_deleted_secrets_PRIMARY"), new TableField[] { DeletedSecrets.DELETED_SECRETS.ID }, true);
     public static final UniqueKey<GroupsRecord> KEY_GROUPS_NAME = Internal.createUniqueKey(Groups.GROUPS, DSL.name("KEY_groups_name"), new TableField[] { Groups.GROUPS.NAME }, true);
     public static final UniqueKey<GroupsRecord> KEY_GROUPS_PRIMARY = Internal.createUniqueKey(Groups.GROUPS, DSL.name("KEY_groups_PRIMARY"), new TableField[] { Groups.GROUPS.ID }, true);
     public static final UniqueKey<MembershipsRecord> KEY_MEMBERSHIPS_MEMBERSHIPS_CLIENTID_GROUPID_IDX = Internal.createUniqueKey(Memberships.MEMBERSHIPS, DSL.name("KEY_memberships_memberships_clientid_groupid_idx"), new TableField[] { Memberships.MEMBERSHIPS.CLIENTID, Memberships.MEMBERSHIPS.GROUPID }, true);
