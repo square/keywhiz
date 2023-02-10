@@ -6,6 +6,8 @@ package keywhiz.jooq;
 
 import keywhiz.jooq.tables.Accessgrants;
 import keywhiz.jooq.tables.Clients;
+import keywhiz.jooq.tables.DeletedAccessgrants;
+import keywhiz.jooq.tables.DeletedSecrets;
 import keywhiz.jooq.tables.Groups;
 import keywhiz.jooq.tables.Memberships;
 import keywhiz.jooq.tables.SchemaVersion;
@@ -29,6 +31,16 @@ public class Tables {
      * The table <code>keywhizdb_test.clients</code>.
      */
     public static final Clients CLIENTS = Clients.CLIENTS;
+
+    /**
+     * The table <code>keywhizdb_test.deleted_accessgrants</code>.
+     */
+    public static final DeletedAccessgrants DELETED_ACCESSGRANTS = DeletedAccessgrants.DELETED_ACCESSGRANTS;
+
+    /**
+     * The table <code>keywhizdb_test.deleted_secrets</code>.
+     */
+    public static final DeletedSecrets DELETED_SECRETS = DeletedSecrets.DELETED_SECRETS;
 
     /**
      * The table <code>keywhizdb_test.groups</code>.

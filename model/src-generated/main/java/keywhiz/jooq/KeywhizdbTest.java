@@ -9,6 +9,8 @@ import java.util.List;
 
 import keywhiz.jooq.tables.Accessgrants;
 import keywhiz.jooq.tables.Clients;
+import keywhiz.jooq.tables.DeletedAccessgrants;
+import keywhiz.jooq.tables.DeletedSecrets;
 import keywhiz.jooq.tables.Groups;
 import keywhiz.jooq.tables.Memberships;
 import keywhiz.jooq.tables.SchemaVersion;
@@ -43,6 +45,16 @@ public class KeywhizdbTest extends SchemaImpl {
      * The table <code>keywhizdb_test.clients</code>.
      */
     public final Clients CLIENTS = Clients.CLIENTS;
+
+    /**
+     * The table <code>keywhizdb_test.deleted_accessgrants</code>.
+     */
+    public final DeletedAccessgrants DELETED_ACCESSGRANTS = DeletedAccessgrants.DELETED_ACCESSGRANTS;
+
+    /**
+     * The table <code>keywhizdb_test.deleted_secrets</code>.
+     */
+    public final DeletedSecrets DELETED_SECRETS = DeletedSecrets.DELETED_SECRETS;
 
     /**
      * The table <code>keywhizdb_test.groups</code>.
@@ -92,6 +104,8 @@ public class KeywhizdbTest extends SchemaImpl {
         return Arrays.asList(
             Accessgrants.ACCESSGRANTS,
             Clients.CLIENTS,
+            DeletedAccessgrants.DELETED_ACCESSGRANTS,
+            DeletedSecrets.DELETED_SECRETS,
             Groups.GROUPS,
             Memberships.MEMBERSHIPS,
             SchemaVersion.SCHEMA_VERSION,
