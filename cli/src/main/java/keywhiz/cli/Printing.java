@@ -161,8 +161,41 @@ public class Printing {
     int deletedCount = deletedSecrets == null ? 0 : deletedSecrets.size();
     System.out.println(String.format("Deleted Secrets: found %d", deletedCount));
     if (deletedSecrets != null) {
-      deletedSecrets.forEach(series -> this.printSecretWithDetails(series.id()));
+      deletedSecrets.forEach(series -> this.printDeletedSecretWithDetails(series));
     }
+  }
+
+  private void printDeletedSecretWithDetails(SecretSeries secret) {
+    System.out.println(secret.name());
+
+    System.out.println(INDENT + "Internal ID:");
+    System.out.println(DOUBLE_INDENT + secret.id());
+
+    System.out.println(INDENT + "Owner:");
+    if (secret.owner() != null && !secret.owner().isEmpty()) {
+      System.out.println(DOUBLE_INDENT + secret.owner());
+    }
+
+    if (!secret.description().isEmpty()) {
+      System.out.println(INDENT + "Description:");
+      System.out.println(DOUBLE_INDENT + secret.description());
+    }
+
+    if (!secret.createdBy().isEmpty()) {
+      System.out.println(INDENT + "Created by:");
+      System.out.println(DOUBLE_INDENT + secret.createdBy());
+    }
+
+    System.out.println(INDENT + "Created at:");
+    System.out.println(DOUBLE_INDENT + apiDateToString(secret.createdAt()));
+
+    if (!secret.updatedBy().isEmpty()) {
+      System.out.println(INDENT + "Updated by:");
+      System.out.println(DOUBLE_INDENT + secret.updatedBy());
+    }
+
+    System.out.println(INDENT + "Updated at:");
+    System.out.println(DOUBLE_INDENT + apiDateToString(secret.updatedAt()));
   }
 
   public void printNonDeletedSecretWithDetails(@Nullable SanitizedSecret secret) {
