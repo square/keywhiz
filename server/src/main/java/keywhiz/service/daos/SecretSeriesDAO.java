@@ -22,6 +22,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
@@ -49,6 +51,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
+import static keywhiz.jooq.tables.DeletedSecrets.DELETED_SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
 /**
@@ -58,16 +61,19 @@ public class SecretSeriesDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretSeriesMapper secretSeriesMapper;
+  private final DeletedSecretSeriesMapper deletedSecretSeriesMapper;
   private final RowHmacGenerator rowHmacGenerator;
 
   private SecretSeriesDAO(
       DSLContext dslContext,
       ObjectMapper mapper,
       SecretSeriesMapper secretSeriesMapper,
+      DeletedSecretSeriesMapper deletedSecretSeriesMapper,
       RowHmacGenerator rowHmacGenerator) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretSeriesMapper = secretSeriesMapper;
+    this.deletedSecretSeriesMapper = deletedSecretSeriesMapper;
     this.rowHmacGenerator = rowHmacGenerator;
   }
 
@@ -269,8 +275,22 @@ public class SecretSeriesDAO {
   }
 
   public List<SecretSeries> getSecretSeriesByDeletedName(String name) {
+    return Stream.concat(
+        getDeletedSecretSeriesFromMainSecretsTable(name).stream(),
+        getDeletedSecretSeriesFromDeletedSecretsTable(name).stream()
+    ).collect(Collectors.toList());
+  }
+
+  private List<SecretSeries> getDeletedSecretSeriesFromMainSecretsTable(String name) {
     String lookup = "." + name + ".%";
     return dslContext.fetch(SECRETS, SECRETS.NAME.like(lookup).and(SECRETS.CURRENT.isNull())).map(secretSeriesMapper::map);
+  }
+
+  private List<SecretSeries> getDeletedSecretSeriesFromDeletedSecretsTable(String name) {
+    return dslContext.fetch(
+        DELETED_SECRETS,
+        DELETED_SECRETS.NAME.eq(name)
+    ).map(deletedSecretSeriesMapper::map);
   }
 
   public List<SecretSeries> getMultipleSecretSeriesByName(List<String> names) {
@@ -497,6 +517,7 @@ public class SecretSeriesDAO {
     private final DSLContext readonlyJooq;
     private final ObjectMapper objectMapper;
     private final SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory;
+    private final DeletedSecretSeriesMapper.DeletedSecretSeriesMapperFactory deletedSecretSeriesMapperFactory;
     private final RowHmacGenerator rowHmacGenerator;
 
     @Inject public SecretSeriesDAOFactory(
@@ -504,11 +525,13 @@ public class SecretSeriesDAO {
         @Readonly DSLContext readonlyJooq,
         ObjectMapper objectMapper,
         SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory,
+        DeletedSecretSeriesMapper.DeletedSecretSeriesMapperFactory deletedSecretSeriesMapperFactory,
         RowHmacGenerator rowHmacGenerator) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
       this.secretSeriesMapperFactory = secretSeriesMapperFactory;
+      this.deletedSecretSeriesMapperFactory = deletedSecretSeriesMapperFactory;
       this.rowHmacGenerator = rowHmacGenerator;
     }
 
@@ -517,6 +540,7 @@ public class SecretSeriesDAO {
           jooq,
           objectMapper,
           secretSeriesMapperFactory.using(jooq),
+          deletedSecretSeriesMapperFactory.using(jooq),
           rowHmacGenerator);
     }
 
@@ -525,6 +549,7 @@ public class SecretSeriesDAO {
           readonlyJooq,
           objectMapper,
           secretSeriesMapperFactory.using(readonlyJooq),
+          deletedSecretSeriesMapperFactory.using(readonlyJooq),
           rowHmacGenerator);
     }
 
@@ -534,6 +559,7 @@ public class SecretSeriesDAO {
           dslContext,
           objectMapper,
           secretSeriesMapperFactory.using(dslContext),
+          deletedSecretSeriesMapperFactory.using(dslContext),
           rowHmacGenerator);
     }
   }
