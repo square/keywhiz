@@ -26,10 +26,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.jooq.tables.records.DeletedSecretsRecord;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.RowHmacGenerator;
+import org.jetbrains.annotations.NotNull;
 import org.joda.time.DateTime;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
@@ -125,19 +127,76 @@ public class SecretSeriesDAO {
     r.setUpdatedat(now);
     r.setType(type);
     r.setRowHmac(rowHmac);
-    if (generationOptions != null) {
-      try {
-        r.setOptions(mapper.writeValueAsString(generationOptions));
-      } catch (JsonProcessingException e) {
-        // Serialization of a Map<String, String> can never fail.
-        throw Throwables.propagate(e);
-      }
-    } else {
-      r.setOptions("{}");
-    }
+    r.setOptions(getOptionsField(generationOptions));
+
     r.store();
 
     return r.getId();
+  }
+
+  long createDeletedSecretSeries(
+      String name,
+      Long ownerId,
+      String creator,
+      String description,
+      @Nullable String type,
+      @Nullable Map<String, String> generationOptions,
+      long now) {
+    long generatedId = rowHmacGenerator.getNextLongSecure();
+    return createDeletedSecretSeries(
+        generatedId,
+        name,
+        ownerId,
+        creator,
+        description,
+        type,
+        generationOptions,
+        now);
+  }
+
+  @VisibleForTesting private long createDeletedSecretSeries(
+      long id,
+      String name,
+      Long ownerId,
+      String creator,
+      String description,
+      @Nullable String type,
+      @Nullable Map<String, String> generationOptions,
+      long now
+  ) {
+    DeletedSecretsRecord record = dslContext.newRecord(DELETED_SECRETS);
+
+    String rowHmac = computeRowHmac(id, name);
+
+    record.setId(id);
+    record.setName(name);
+    record.setOwner(ownerId);
+    record.setDescription(description);
+    record.setCreatedby(creator);
+    record.setCreatedat(now);
+    record.setUpdatedby(creator);
+    record.setUpdatedat(now);
+    record.setType(type);
+    record.setRowHmac(rowHmac);
+    record.setOptions(getOptionsField(generationOptions));
+
+    record.store();
+
+    return record.getId();
+  }
+
+  private String getOptionsField(
+      @Nullable Map<String, String> generationOptions
+  ) {
+    if (generationOptions == null) {
+      return "{}";
+    }
+    try {
+      return mapper.writeValueAsString(generationOptions);
+    } catch (JsonProcessingException e) {
+      // Serialization of a Map<String, String> should never fail.
+      throw Throwables.propagate(e);
+    }
   }
 
   void updateSecretSeries(
@@ -574,6 +633,17 @@ public class SecretSeriesDAO {
   private String computeRowHmac(long secretSeriesId, String secretSeriesName) {
     return rowHmacGenerator.computeRowHmac(
         SECRETS.getName(),
+        List.of(
+            secretSeriesName,
+            secretSeriesId));
+  }
+
+  private String computeRowHmacForDeletedSecret(
+      long secretSeriesId,
+      String secretSeriesName
+  ) {
+    return rowHmacGenerator.computeRowHmac(
+        DELETED_SECRETS.getName(),
         List.of(
             secretSeriesName,
             secretSeriesId));

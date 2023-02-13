@@ -27,8 +27,10 @@ import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.jooq.tables.records.DeletedSecretsRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readwrite;
+import keywhiz.service.crypto.RowHmacGenerator;
 import org.jooq.DSLContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +42,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static keywhiz.jooq.tables.DeletedSecrets.DELETED_SECRETS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -477,6 +480,44 @@ public class SecretSeriesDAOTest {
     assertThat(deletedSecretSeries.get().name()).contains("toBeFound_getSecretSeriesByDeletedId");
     assertThat(deletedSecretSeries.get().name()).isNotEqualTo("toBeFound_getSecretSeriesByDeletedId");
     assertThat(deletedSecretSeries.get().id()).isEqualTo(id);
+  }
+
+  @Test public void getDeletedSecretSeriesByName() {
+    long now = OffsetDateTime.now().toEpochSecond();
+    long newTableID = secretSeriesDAO.createDeletedSecretSeries("getDeletedSecretSeriesByName",
+        null, "creator", "", null, null, now);
+
+    long oldTableID = secretSeriesDAO.createSecretSeries("getDeletedSecretSeriesByName",
+        null, "creator", "", null, null, now);
+    long oldContentId = secretContentDAO.createSecretContent(oldTableID, "blah",
+        "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(oldTableID, oldContentId, "creator", now);
+    secretSeriesDAO.softDeleteSecretSeriesById(oldTableID);
+
+    long notDeletedID = secretSeriesDAO.createSecretSeries("getDeletedSecretSeriesByName",
+        null, "creator", "", null, null, now);
+
+    List<SecretSeries> deletedSecrets = secretSeriesDAO.getSecretSeriesByDeletedName("getDeletedSecretSeriesByName");
+
+    Optional<SecretSeries> matchingNewTable = deletedSecrets.stream().filter(
+        s -> s.id() == newTableID
+    ).findFirst();
+    assertThat(matchingNewTable).isPresent();
+
+    Optional<SecretSeries> matchingOldTable = deletedSecrets.stream().filter(
+        s -> s.id() == oldTableID
+    ).findFirst();
+    assertThat(matchingOldTable).isPresent();
+
+    Optional<SecretSeries> matchingNotDeleted = deletedSecrets.stream().filter(
+        s -> s.id() == notDeletedID
+    ).findFirst();
+    assertThat(matchingNotDeleted).isEmpty();
+
+  }
+
+  private void createDeletedSecretRecord() {
+
   }
 
   @Test public void getNonExistentSecretSeries() {
