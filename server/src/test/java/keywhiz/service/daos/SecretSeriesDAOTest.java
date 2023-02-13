@@ -482,6 +482,17 @@ public class SecretSeriesDAOTest {
     assertThat(deletedSecretSeries.get().id()).isEqualTo(id);
   }
 
+  @Test public void getDeletedSecretSeriesByIdFromDeletedSecretsTable() {
+    long now = OffsetDateTime.now().toEpochSecond();
+    long id = secretSeriesDAO.createDeletedSecretSeries("getDeletedSecretSeriesByIdFromDeletedSecretsTable",
+        null, "creator", "", null, null, now);
+
+    Optional<SecretSeries> deletedSecretSeries = secretSeriesDAO.getDeletedSecretSeriesById(id);
+    assertThat(deletedSecretSeries).isPresent();
+    assertThat(deletedSecretSeries.get().name()).isEqualTo("getDeletedSecretSeriesByIdFromDeletedSecretsTable");
+    assertThat(deletedSecretSeries.get().id()).isEqualTo(id);
+  }
+
   @Test public void getDeletedSecretSeriesByName() {
     long now = OffsetDateTime.now().toEpochSecond();
     long newTableID = secretSeriesDAO.createDeletedSecretSeries("getDeletedSecretSeriesByName",
@@ -497,7 +508,8 @@ public class SecretSeriesDAOTest {
     long notDeletedID = secretSeriesDAO.createSecretSeries("getDeletedSecretSeriesByName",
         null, "creator", "", null, null, now);
 
-    List<SecretSeries> deletedSecrets = secretSeriesDAO.getSecretSeriesByDeletedName("getDeletedSecretSeriesByName");
+    List<SecretSeries> deletedSecrets =
+        secretSeriesDAO.getSecretSeriesByDeletedName("getDeletedSecretSeriesByName");
 
     Optional<SecretSeries> matchingNewTable = deletedSecrets.stream().filter(
         s -> s.id() == newTableID
@@ -513,11 +525,6 @@ public class SecretSeriesDAOTest {
         s -> s.id() == notDeletedID
     ).findFirst();
     assertThat(matchingNotDeleted).isEmpty();
-
-  }
-
-  private void createDeletedSecretRecord() {
-
   }
 
   @Test public void getNonExistentSecretSeries() {

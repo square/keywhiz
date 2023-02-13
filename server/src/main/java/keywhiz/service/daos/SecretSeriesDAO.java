@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import keywhiz.api.model.Group;
+import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.DeletedSecretsRecord;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
@@ -322,9 +323,23 @@ public class SecretSeriesDAO {
   }
 
   public Optional<SecretSeries> getDeletedSecretSeriesById(long id) {
+    Optional<SecretSeries> fromDeletedTable = getDeletedSecretSeriesFromDeletedSecretsTable(id);
+    if (fromDeletedTable.isPresent()) {
+      return fromDeletedTable;
+    }
+    return getDeletedSecretSeriesFromMainSecretsTable(id);
+  }
+
+  private Optional<SecretSeries> getDeletedSecretSeriesFromMainSecretsTable(long id) {
     SecretsRecord r =
         dslContext.fetchOne(SECRETS, SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNull()));
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
+  }
+
+  private Optional<SecretSeries> getDeletedSecretSeriesFromDeletedSecretsTable(long id) {
+    DeletedSecretsRecord r =
+        dslContext.fetchOne(DELETED_SECRETS, DELETED_SECRETS.ID.eq(id));
+    return Optional.ofNullable(r).map(deletedSecretSeriesMapper::map);
   }
 
   public Optional<SecretSeries> getSecretSeriesByName(String name) {
@@ -551,11 +566,25 @@ public class SecretSeriesDAO {
    */
   public List<Long> getIdsForSecretSeriesDeletedBeforeDate(DateTime deleteBefore) {
     long deleteBeforeSeconds = deleteBefore.getMillis() / 1000;
+    return Stream.concat(
+        getIdsForSecretSeriesDeletedBeforeDateFromMainSecretsTable(deleteBeforeSeconds).stream(),
+        getIdsForSecretSeriesDeletedBeforeDateFromDeletedSecretsTable(deleteBeforeSeconds).stream()
+    ).collect(Collectors.toList());
+  }
+
+  private List<Long> getIdsForSecretSeriesDeletedBeforeDateFromMainSecretsTable(long deleteBeforeSeconds) {
     return dslContext.select(SECRETS.ID)
         .from(SECRETS)
         .where(SECRETS.CURRENT.isNull())
         .and(SECRETS.UPDATEDAT.le(deleteBeforeSeconds))
         .fetch(SECRETS.ID);
+  }
+
+  private List<Long> getIdsForSecretSeriesDeletedBeforeDateFromDeletedSecretsTable(long deleteBeforeSeconds) {
+    return dslContext.select(DELETED_SECRETS.ID)
+        .from(DELETED_SECRETS)
+        .where(DELETED_SECRETS.UPDATEDAT.le(deleteBeforeSeconds))
+        .fetch(DELETED_SECRETS.ID);
   }
 
   /**
@@ -566,9 +595,13 @@ public class SecretSeriesDAO {
    * @return the number of records which were removed
    */
   public long dangerPermanentlyRemoveRecordsForGivenIDs(List<Long> ids) {
-    return dslContext.deleteFrom(SECRETS)
+    long deletedCountFromMainSecretsTable = dslContext.deleteFrom(SECRETS)
         .where(SECRETS.ID.in(ids))
         .execute();
+    long deletedCountFromDeletedSecretsTable = dslContext.deleteFrom(DELETED_SECRETS)
+        .where(DELETED_SECRETS.ID.in(ids))
+        .execute();
+    return deletedCountFromMainSecretsTable + deletedCountFromDeletedSecretsTable;
   }
 
   public static class SecretSeriesDAOFactory implements DAOFactory<SecretSeriesDAO> {
