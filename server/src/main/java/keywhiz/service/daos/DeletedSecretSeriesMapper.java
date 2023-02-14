@@ -16,9 +16,7 @@
 
 package keywhiz.service.daos;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Map;
 import javax.inject.Inject;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.DeletedSecretsRecord;
@@ -26,21 +24,14 @@ import org.jooq.DSLContext;
 import org.jooq.RecordMapper;
 
 public class DeletedSecretSeriesMapper implements RecordMapper<DeletedSecretsRecord, SecretSeries> {
-  private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE =
-      new TypeReference<>() {};
+  private final SharedSecretSeriesMapper mapper;
 
-  private final ObjectMapper mapper;
-  private final GroupDAO groupDAO;
-
-  public DeletedSecretSeriesMapper(
-      ObjectMapper mapper,
-      GroupDAO groupDAO) {
+  public DeletedSecretSeriesMapper(SharedSecretSeriesMapper mapper) {
     this.mapper = mapper;
-    this.groupDAO = groupDAO;
   }
 
   public SecretSeries map(DeletedSecretsRecord r) {
-    return SharedSecretSeriesMapper.map(
+    return mapper.map(
         r.getOwner(),
         r.getName(),
         r.getId(),
@@ -51,28 +42,23 @@ public class DeletedSecretSeriesMapper implements RecordMapper<DeletedSecretsRec
         r.getUpdatedby(),
         r.getType(),
         r.getOptions(),
-        r.getCurrent(),
-        groupDAO,
-        mapper
+        r.getCurrent()
     );
   }
 
   public static class DeletedSecretSeriesMapperFactory {
-    private final ObjectMapper mapper;
-    private final GroupDAO.GroupDAOFactory groupDAOFactory;
+    private final SharedSecretSeriesMapper.SharedSecretSeriesMapperFactory
+        sharedSecretSeriesMapperFactory;
 
     @Inject
     public DeletedSecretSeriesMapperFactory(
-        ObjectMapper mapper,
-        GroupDAO.GroupDAOFactory groupDAOFactory) {
-      this.mapper = mapper;
-      this.groupDAOFactory = groupDAOFactory;
+        SharedSecretSeriesMapper.SharedSecretSeriesMapperFactory sharedSecretSeriesMapperFactory) {
+      this.sharedSecretSeriesMapperFactory = sharedSecretSeriesMapperFactory;
     }
 
     public DeletedSecretSeriesMapper using(DSLContext context) {
       return new DeletedSecretSeriesMapper(
-          mapper,
-          groupDAOFactory.using(context));
+          sharedSecretSeriesMapperFactory.using(context));
     }
   }
 }

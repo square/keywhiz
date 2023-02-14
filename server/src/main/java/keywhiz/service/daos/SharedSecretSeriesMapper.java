@@ -6,17 +6,29 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.DeletedSecretsRecord;
+import org.jooq.DSLContext;
 
-public abstract class SharedSecretSeriesMapper {
-  private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE =
+public class SharedSecretSeriesMapper {
+  private final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE =
       new TypeReference<>() {
       };
 
-  public static SecretSeries map(
+  private final ObjectMapper mapper;
+  private final GroupDAO groupDAO;
+
+  public SharedSecretSeriesMapper(
+      ObjectMapper mapper,
+      GroupDAO groupDAO) {
+    this.mapper = mapper;
+    this.groupDAO = groupDAO;
+  }
+
+  public SecretSeries map(
       Long ownerId,
       String secretName,
       Long secretId,
@@ -27,13 +39,10 @@ public abstract class SharedSecretSeriesMapper {
       @Nullable String updatedBy,
       @Nullable String type,
       @Nullable String options,
-      Long currentContentsId,
-      GroupDAO groupDAO,
-      ObjectMapper mapper
-      ) {
-    String ownerName = SharedSecretSeriesMapper.getOwnerName(
+      Long currentContentsId
+  ) {
+    String ownerName = getOwnerName(
         ownerId,
-        groupDAO,
         secretName,
         secretId
     );
@@ -48,13 +57,12 @@ public abstract class SharedSecretSeriesMapper {
         new ApiDate(updatedAtTimestamp),
         updatedBy,
         type,
-        tryToReadMapValue(options, mapper),
+        tryToReadMapValue(options),
         currentContentsId
     );
   }
 
-  private static String getOwnerName(Long ownerId, GroupDAO groupDAO, String secretName,
-      Long secretId) {
+  private String getOwnerName(Long ownerId, String secretName, Long secretId) {
     if (ownerId == null) {
       return null;
     }
@@ -72,7 +80,7 @@ public abstract class SharedSecretSeriesMapper {
     return maybeGroup.get().getName();
   }
 
-  private static Map<String, String> tryToReadMapValue(@Nullable String options, ObjectMapper mapper) {
+  private Map<String, String> tryToReadMapValue(@Nullable String options) {
     if (!options.isEmpty()) {
       try {
         return mapper.readValue(options, MAP_STRING_STRING_TYPE);
@@ -82,5 +90,24 @@ public abstract class SharedSecretSeriesMapper {
       }
     }
     return null;
+  }
+
+  public static class SharedSecretSeriesMapperFactory {
+    private final ObjectMapper mapper;
+    private final GroupDAO.GroupDAOFactory groupDAOFactory;
+
+    @Inject
+    public SharedSecretSeriesMapperFactory(
+        ObjectMapper mapper,
+        GroupDAO.GroupDAOFactory groupDAOFactory) {
+      this.mapper = mapper;
+      this.groupDAOFactory = groupDAOFactory;
+    }
+
+    public SharedSecretSeriesMapper using(DSLContext context) {
+      return new SharedSecretSeriesMapper(
+          mapper,
+          groupDAOFactory.using(context));
+    }
   }
 }
