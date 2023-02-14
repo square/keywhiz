@@ -18,15 +18,10 @@ package keywhiz.service.daos;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
 import java.util.Map;
-import java.util.Optional;
 import javax.inject.Inject;
-import keywhiz.api.ApiDate;
-import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.DeletedSecretsRecord;
-import keywhiz.jooq.tables.records.SecretsRecord;
 import org.jooq.DSLContext;
 import org.jooq.RecordMapper;
 
@@ -45,52 +40,21 @@ public class DeletedSecretSeriesMapper implements RecordMapper<DeletedSecretsRec
   }
 
   public SecretSeries map(DeletedSecretsRecord r) {
-    String ownerName = getOwnerName(r);
-
-    return SecretSeries.of(
-        r.getId(),
+    return SharedSecretSeriesMapper.map(
+        r.getOwner(),
         r.getName(),
-        ownerName,
+        r.getId(),
         r.getDescription(),
-        new ApiDate(r.getCreatedat()),
+        r.getCreatedat(),
         r.getCreatedby(),
-        new ApiDate(r.getUpdatedat()),
+        r.getUpdatedat(),
         r.getUpdatedby(),
         r.getType(),
-        tryToReadMapValue(r),
-        r.getCurrent());
-  }
-
-  private String getOwnerName(DeletedSecretsRecord r) {
-    Long ownerId = r.getOwner();
-    if (ownerId == null) {
-      return null;
-    }
-
-    Optional<Group> maybeGroup = groupDAO.getGroupById(ownerId);
-    if (maybeGroup.isEmpty()) {
-      throw new IllegalStateException(
-          String.format(
-              "Unable to find owner for secret [%s] (ID %s): group ID %s not found",
-              r.getName(),
-              r.getId(),
-              ownerId));
-    }
-
-    return maybeGroup.get().getName();
-  }
-
-  private Map<String, String> tryToReadMapValue(DeletedSecretsRecord r) {
-    String value = r.getOptions();
-    if (!value.isEmpty()) {
-      try {
-        return mapper.readValue(value, MAP_STRING_STRING_TYPE);
-      } catch (IOException e) {
-        throw new RuntimeException(
-            "Failed to create a Map from data. Bad json in options column?", e);
-      }
-    }
-    return null;
+        r.getOptions(),
+        r.getCurrent(),
+        groupDAO,
+        mapper
+    );
   }
 
   public static class DeletedSecretSeriesMapperFactory {

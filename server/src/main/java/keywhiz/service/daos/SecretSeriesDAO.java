@@ -167,7 +167,7 @@ public class SecretSeriesDAO {
   ) {
     DeletedSecretsRecord record = dslContext.newRecord(DELETED_SECRETS);
 
-    String rowHmac = computeRowHmac(id, name);
+    String rowHmac = computeRowHmacForDeletedSecret(id, name);
 
     record.setId(id);
     record.setName(name);
@@ -551,11 +551,16 @@ public class SecretSeriesDAO {
    * @return the number of deleted secret series
    */
   public int countDeletedSecretSeries() {
-    return dslContext.selectCount()
+    int countInMainSecretsTable = dslContext.selectCount()
         .from(SECRETS)
         .where(SECRETS.CURRENT.isNull())
         .fetchOne()
         .value1();
+    int countInDeletedSecretsTable = dslContext.selectCount()
+        .from(DELETED_SECRETS)
+        .fetchOne()
+        .value1();
+    return countInMainSecretsTable + countInDeletedSecretsTable;
   }
 
   /**

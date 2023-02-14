@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
@@ -511,20 +512,28 @@ public class SecretSeriesDAOTest {
     List<SecretSeries> deletedSecrets =
         secretSeriesDAO.getSecretSeriesByDeletedName("getDeletedSecretSeriesByName");
 
-    Optional<SecretSeries> matchingNewTable = deletedSecrets.stream().filter(
-        s -> s.id() == newTableID
-    ).findFirst();
-    assertThat(matchingNewTable).isPresent();
+    List<Long> deletedIDs = deletedSecrets.stream().map(s -> s.id()).collect(Collectors.toList());
+    assertThat(deletedIDs).containsExactlyInAnyOrder(newTableID, oldTableID);
+    assertThat(deletedIDs).doesNotContain(notDeletedID);
+  }
 
-    Optional<SecretSeries> matchingOldTable = deletedSecrets.stream().filter(
-        s -> s.id() == oldTableID
-    ).findFirst();
-    assertThat(matchingOldTable).isPresent();
+  @Test public void countDeletedSecretSeries() {
+    assertThat(secretSeriesDAO.countDeletedSecretSeries()).isEqualTo(0);
 
-    Optional<SecretSeries> matchingNotDeleted = deletedSecrets.stream().filter(
-        s -> s.id() == notDeletedID
-    ).findFirst();
-    assertThat(matchingNotDeleted).isEmpty();
+    long now = OffsetDateTime.now().toEpochSecond();
+    long newTableID = secretSeriesDAO.createDeletedSecretSeries("getDeletedSecretSeriesByName",
+        null, "creator", "", null, null, now);
+
+    assertThat(secretSeriesDAO.countDeletedSecretSeries()).isEqualTo(1);
+
+    long oldTableID = secretSeriesDAO.createSecretSeries("getDeletedSecretSeriesByName",
+        null, "creator", "", null, null, now);
+    long oldContentId = secretContentDAO.createSecretContent(oldTableID, "blah",
+        "checksum", "creator", null, 0, now);
+    secretSeriesDAO.setCurrentVersion(oldTableID, oldContentId, "creator", now);
+    secretSeriesDAO.softDeleteSecretSeriesById(oldTableID);
+
+    assertThat(secretSeriesDAO.countDeletedSecretSeries()).isEqualTo(2);
   }
 
   @Test public void getNonExistentSecretSeries() {
