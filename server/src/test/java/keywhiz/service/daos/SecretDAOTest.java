@@ -767,12 +767,12 @@ public class SecretDAOTest {
   //---------------------------------------------------------------------------------------
   @Test
   public void countDeletedSecrets() {
-    // one secret was deleted in the initial test setup
-    assertThat(secretDAO.countDeletedSecrets()).isEqualTo(1);
+    // two secrets were deleted in the initial test setup
+    assertThat(secretDAO.countDeletedSecrets()).isEqualTo(2);
 
     // delete a secret and recount
     secretDAO.deleteSecretsByName(series2.name());
-    assertThat(secretDAO.countDeletedSecrets()).isEqualTo(2);
+    assertThat(secretDAO.countDeletedSecrets()).isEqualTo(3);
   }
 
   @Test
