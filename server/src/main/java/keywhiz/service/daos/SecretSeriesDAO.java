@@ -64,19 +64,16 @@ public class SecretSeriesDAO {
   private final DSLContext dslContext;
   private final ObjectMapper mapper;
   private final SecretSeriesMapper secretSeriesMapper;
-  private final DeletedSecretSeriesMapper deletedSecretSeriesMapper;
   private final RowHmacGenerator rowHmacGenerator;
 
   private SecretSeriesDAO(
       DSLContext dslContext,
       ObjectMapper mapper,
       SecretSeriesMapper secretSeriesMapper,
-      DeletedSecretSeriesMapper deletedSecretSeriesMapper,
       RowHmacGenerator rowHmacGenerator) {
     this.dslContext = dslContext;
     this.mapper = mapper;
     this.secretSeriesMapper = secretSeriesMapper;
-    this.deletedSecretSeriesMapper = deletedSecretSeriesMapper;
     this.rowHmacGenerator = rowHmacGenerator;
   }
 
@@ -339,7 +336,7 @@ public class SecretSeriesDAO {
   private Optional<SecretSeries> getDeletedSecretSeriesFromDeletedSecretsTable(long id) {
     DeletedSecretsRecord r =
         dslContext.fetchOne(DELETED_SECRETS, DELETED_SECRETS.ID.eq(id));
-    return Optional.ofNullable(r).map(deletedSecretSeriesMapper::map);
+    return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
   public Optional<SecretSeries> getSecretSeriesByName(String name) {
@@ -364,7 +361,7 @@ public class SecretSeriesDAO {
     return dslContext.fetch(
         DELETED_SECRETS,
         DELETED_SECRETS.NAME.eq(name)
-    ).map(deletedSecretSeriesMapper::map);
+    ).map(secretSeriesMapper::map);
   }
 
   public List<SecretSeries> getMultipleSecretSeriesByName(List<String> names) {
@@ -614,7 +611,6 @@ public class SecretSeriesDAO {
     private final DSLContext readonlyJooq;
     private final ObjectMapper objectMapper;
     private final SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory;
-    private final DeletedSecretSeriesMapper.DeletedSecretSeriesMapperFactory deletedSecretSeriesMapperFactory;
     private final RowHmacGenerator rowHmacGenerator;
 
     @Inject public SecretSeriesDAOFactory(
@@ -622,13 +618,11 @@ public class SecretSeriesDAO {
         @Readonly DSLContext readonlyJooq,
         ObjectMapper objectMapper,
         SecretSeriesMapper.SecretSeriesMapperFactory secretSeriesMapperFactory,
-        DeletedSecretSeriesMapper.DeletedSecretSeriesMapperFactory deletedSecretSeriesMapperFactory,
         RowHmacGenerator rowHmacGenerator) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.objectMapper = objectMapper;
       this.secretSeriesMapperFactory = secretSeriesMapperFactory;
-      this.deletedSecretSeriesMapperFactory = deletedSecretSeriesMapperFactory;
       this.rowHmacGenerator = rowHmacGenerator;
     }
 
@@ -637,7 +631,6 @@ public class SecretSeriesDAO {
           jooq,
           objectMapper,
           secretSeriesMapperFactory.using(jooq),
-          deletedSecretSeriesMapperFactory.using(jooq),
           rowHmacGenerator);
     }
 
@@ -646,7 +639,6 @@ public class SecretSeriesDAO {
           readonlyJooq,
           objectMapper,
           secretSeriesMapperFactory.using(readonlyJooq),
-          deletedSecretSeriesMapperFactory.using(readonlyJooq),
           rowHmacGenerator);
     }
 
@@ -656,7 +648,6 @@ public class SecretSeriesDAO {
           dslContext,
           objectMapper,
           secretSeriesMapperFactory.using(dslContext),
-          deletedSecretSeriesMapperFactory.using(dslContext),
           rowHmacGenerator);
     }
   }

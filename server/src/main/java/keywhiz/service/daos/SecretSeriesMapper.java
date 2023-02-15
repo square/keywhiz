@@ -16,47 +16,98 @@
 
 package keywhiz.service.daos;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
+import keywhiz.api.ApiDate;
+import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
-import keywhiz.jooq.tables.records.SecretsRecord;
+import keywhiz.model.SecretsOrDeletedSecretsRecord;
 import org.jooq.DSLContext;
 import org.jooq.RecordMapper;
 
-public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSeries> {
-  private final SharedSecretSeriesMapper mapper;
+public class SecretSeriesMapper implements RecordMapper<SecretsOrDeletedSecretsRecord, SecretSeries> {
+  private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE =
+      new TypeReference<>() {};
 
-  public SecretSeriesMapper(SharedSecretSeriesMapper mapper) {
+  private final ObjectMapper mapper;
+  private final GroupDAO groupDAO;
+
+  public SecretSeriesMapper(
+      ObjectMapper mapper,
+      GroupDAO groupDAO) {
     this.mapper = mapper;
+    this.groupDAO = groupDAO;
   }
 
-  public SecretSeries map(SecretsRecord r) {
-    return mapper.map(
-        r.getOwner(),
-        r.getName(),
+  public SecretSeries map(SecretsOrDeletedSecretsRecord r) {
+    String ownerName = getOwnerName(r);
+
+    return SecretSeries.of(
         r.getId(),
+        r.getName(),
+        ownerName,
         r.getDescription(),
-        r.getCreatedat(),
+        new ApiDate(r.getCreatedat()),
         r.getCreatedby(),
-        r.getUpdatedat(),
+        new ApiDate(r.getUpdatedat()),
         r.getUpdatedby(),
         r.getType(),
-        r.getOptions(),
-        r.getCurrent()
-    );
+        tryToReadMapValue(r),
+        r.getCurrent());
+  }
+
+  private String getOwnerName(SecretsOrDeletedSecretsRecord r) {
+    Long ownerId = r.getOwner();
+    if (ownerId == null) {
+      return null;
+    }
+
+    Optional<Group> maybeGroup = groupDAO.getGroupById(ownerId);
+    if (maybeGroup.isEmpty()) {
+      throw new IllegalStateException(
+          String.format(
+              "Unable to find owner for secret [%s] (ID %s): group ID %s not found",
+              r.getName(),
+              r.getId(),
+              ownerId));
+    }
+
+    return maybeGroup.get().getName();
+  }
+
+  private Map<String, String> tryToReadMapValue(SecretsOrDeletedSecretsRecord r) {
+    String value = r.getOptions();
+    if (!value.isEmpty()) {
+      try {
+        return mapper.readValue(value, MAP_STRING_STRING_TYPE);
+      } catch (IOException e) {
+        throw new RuntimeException(
+            "Failed to create a Map from data. Bad json in options column?", e);
+      }
+    }
+    return null;
   }
 
   public static class SecretSeriesMapperFactory {
-    private final SharedSecretSeriesMapper.SharedSecretSeriesMapperFactory
-        sharedSecretSeriesMapperFactory;
+    private final ObjectMapper mapper;
+    private final GroupDAO.GroupDAOFactory groupDAOFactory;
 
     @Inject
     public SecretSeriesMapperFactory(
-        SharedSecretSeriesMapper.SharedSecretSeriesMapperFactory sharedSecretSeriesMapperFactory) {
-      this.sharedSecretSeriesMapperFactory = sharedSecretSeriesMapperFactory;
+        ObjectMapper mapper,
+        GroupDAO.GroupDAOFactory groupDAOFactory) {
+      this.mapper = mapper;
+      this.groupDAOFactory = groupDAOFactory;
     }
 
     public SecretSeriesMapper using(DSLContext context) {
-      return new SecretSeriesMapper(sharedSecretSeriesMapperFactory.using(context));
+      return new SecretSeriesMapper(
+          mapper,
+          groupDAOFactory.using(context));
     }
   }
 }
