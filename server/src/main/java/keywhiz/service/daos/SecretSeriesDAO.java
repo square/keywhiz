@@ -25,14 +25,12 @@ import com.google.common.collect.ImmutableMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import keywhiz.api.model.Group;
-import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.DeletedSecretsRecord;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.RowHmacGenerator;
-import org.jetbrains.annotations.NotNull;
 import org.joda.time.DateTime;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
@@ -152,6 +150,7 @@ public class SecretSeriesDAO {
         now);
   }
 
+  @VisibleForTesting
   private long createDeletedSecretSeries(
       long id,
       String name,
