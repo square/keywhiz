@@ -130,6 +130,7 @@ public class SecretSeriesDAO {
     return r.getId();
   }
 
+  @VisibleForTesting
   public long createDeletedSecretSeries(
       String name,
       Long ownerId,
@@ -150,7 +151,6 @@ public class SecretSeriesDAO {
         now);
   }
 
-  @VisibleForTesting
   private long createDeletedSecretSeries(
       long id,
       String name,
