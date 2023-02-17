@@ -22,9 +22,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import keywhiz.api.model.Group;
+import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.DeletedSecretsRecord;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
@@ -136,6 +138,7 @@ public class SecretSeriesDAO {
       Long ownerId,
       String creator,
       String description,
+      @Nullable Long currentVersionID,
       @Nullable String type,
       @Nullable Map<String, String> generationOptions,
       long now) {
@@ -146,17 +149,20 @@ public class SecretSeriesDAO {
         ownerId,
         creator,
         description,
+        currentVersionID,
         type,
         generationOptions,
         now);
   }
 
-  private long createDeletedSecretSeries(
+  @VisibleForTesting
+  public long createDeletedSecretSeries(
       long id,
       String name,
       Long ownerId,
       String creator,
       String description,
+      @Nullable Long currentVersionID,
       @Nullable String type,
       @Nullable Map<String, String> generationOptions,
       long now
@@ -169,6 +175,7 @@ public class SecretSeriesDAO {
     record.setName(name);
     record.setOwner(ownerId);
     record.setDescription(description);
+    record.setCurrent(currentVersionID);
     record.setCreatedby(creator);
     record.setCreatedat(now);
     record.setUpdatedby(creator);
@@ -345,9 +352,20 @@ public class SecretSeriesDAO {
   }
 
   public List<SecretSeries> getSecretSeriesByDeletedName(String name) {
+    List<SecretSeries> fromDeletedSecretsTable =
+        getDeletedSecretSeriesFromDeletedSecretsTable(name);
+    Set<Long> idsFromDeletedSecretsTable =
+        fromDeletedSecretsTable.stream()
+            .map(secretSeries -> Long.valueOf(secretSeries.id()))
+            .collect(
+                Collectors.toSet());
     return Stream.concat(
-        getDeletedSecretSeriesFromMainSecretsTable(name).stream(),
-        getDeletedSecretSeriesFromDeletedSecretsTable(name).stream()
+        fromDeletedSecretsTable.stream(),
+        // If a secret series exists in both tables, only include the copy from `deleted_secrets`
+        // rather than the copy from `secrets` since it contains more information.
+        getDeletedSecretSeriesFromMainSecretsTable(name).stream().filter(
+            secretSeries -> !idsFromDeletedSecretsTable.contains(Long.valueOf(secretSeries.id()))
+        )
     ).collect(Collectors.toList());
   }
 
@@ -547,16 +565,11 @@ public class SecretSeriesDAO {
    * @return the number of deleted secret series
    */
   public int countDeletedSecretSeries() {
-    int countInMainSecretsTable = dslContext.selectCount()
+    return dslContext.selectCount()
         .from(SECRETS)
         .where(SECRETS.CURRENT.isNull())
         .fetchOne()
         .value1();
-    int countInDeletedSecretsTable = dslContext.selectCount()
-        .from(DELETED_SECRETS)
-        .fetchOne()
-        .value1();
-    return countInMainSecretsTable + countInDeletedSecretsTable;
   }
 
   /**
@@ -567,25 +580,11 @@ public class SecretSeriesDAO {
    */
   public List<Long> getIdsForSecretSeriesDeletedBeforeDate(DateTime deleteBefore) {
     long deleteBeforeSeconds = deleteBefore.getMillis() / 1000;
-    return Stream.concat(
-        getIdsForSecretSeriesDeletedBeforeDateFromMainSecretsTable(deleteBeforeSeconds).stream(),
-        getIdsForSecretSeriesDeletedBeforeDateFromDeletedSecretsTable(deleteBeforeSeconds).stream()
-    ).collect(Collectors.toList());
-  }
-
-  private List<Long> getIdsForSecretSeriesDeletedBeforeDateFromMainSecretsTable(long deleteBeforeSeconds) {
     return dslContext.select(SECRETS.ID)
         .from(SECRETS)
         .where(SECRETS.CURRENT.isNull())
         .and(SECRETS.UPDATEDAT.le(deleteBeforeSeconds))
         .fetch(SECRETS.ID);
-  }
-
-  private List<Long> getIdsForSecretSeriesDeletedBeforeDateFromDeletedSecretsTable(long deleteBeforeSeconds) {
-    return dslContext.select(DELETED_SECRETS.ID)
-        .from(DELETED_SECRETS)
-        .where(DELETED_SECRETS.UPDATEDAT.le(deleteBeforeSeconds))
-        .fetch(DELETED_SECRETS.ID);
   }
 
   /**

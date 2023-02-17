@@ -137,7 +137,7 @@ public class GroupDAOTest {
     long now = OffsetDateTime.now().toEpochSecond();
     long idOfSecretInDeletedSecretsTable =
         secretSeriesDAO.createDeletedSecretSeries("deletedSecretName",
-            groupId, "creator", "", null, null, now);
+            groupId, "creator", "", null, null, null, now);
     long contentForSecretInDeletedSecretsTable =
         secretContentDAO.createSecretContent(idOfSecretInDeletedSecretsTable, "blah",
             "checksum", "creator", null, 0, now);

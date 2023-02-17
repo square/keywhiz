@@ -100,13 +100,6 @@ public class SecretDAOTest {
           emptyMetadata, 0);
   private SecretSeriesAndContent secret3 = SecretSeriesAndContent.of(series3, content3);
 
-  private SecretSeries series4 =
-      SecretSeries.of(4, "secret4", null, "desc4", date, "creator", date, "updater", null, null, 105L);
-  private SecretContent content4 =
-      SecretContent.of(105, 4, encryptedContent, "checksum", date, "creator", date, "updater",
-          emptyMetadata, 0);
-  private SecretSeriesAndContent secret4 = SecretSeriesAndContent.of(series4, content4);
-
   @Before
   public void setUp() throws Exception {
     jooqContext.insertInto(SECRETS)
@@ -215,32 +208,14 @@ public class SecretDAOTest {
         .execute();
 
     jooqContext.insertInto(DELETED_SECRETS)
-        .set(SECRETS.ID, series4.id())
-        .set(SECRETS.NAME, series4.name())
-        .set(SECRETS.DESCRIPTION, series4.description())
-        .set(SECRETS.CREATEDBY, series4.createdBy())
-        .set(SECRETS.CREATEDAT, series4.createdAt().toEpochSecond())
-        .set(SECRETS.UPDATEDBY, series4.updatedBy())
-        .set(SECRETS.UPDATEDAT, series4.updatedAt().toEpochSecond())
-        .set(SECRETS.CURRENT, series4.currentVersion().orElse(null))
-        .execute();
-
-    jooqContext.insertInto(SECRETS_CONTENT)
-        .set(SECRETS_CONTENT.ID, secret4.content().id())
-        .set(SECRETS_CONTENT.SECRETID, secret4.series().id())
-        .set(SECRETS_CONTENT.ENCRYPTED_CONTENT, secret4.content().encryptedContent())
-        .set(SECRETS_CONTENT.CONTENT_HMAC, "checksum")
-        .set(SECRETS_CONTENT.CREATEDBY, secret4.content().createdBy())
-        .set(SECRETS_CONTENT.CREATEDAT, secret4.content().createdAt().toEpochSecond())
-        .set(SECRETS_CONTENT.UPDATEDBY, secret4.content().updatedBy())
-        .set(SECRETS_CONTENT.UPDATEDAT, secret4.content().updatedAt().toEpochSecond())
-        .set(SECRETS_CONTENT.METADATA,
-            objectMapper.writeValueAsString(secret4.content().metadata()))
-        .set(SECRETS_CONTENT.ROW_HMAC, rowHmacGenerator.computeRowHmac(SECRETS_CONTENT.getName(),
-            List.of(secret4.content().encryptedContent(),
-                objectMapper.writeValueAsString(secret4.content().metadata()),
-                secret4.content().id())
-        ))
+        .set(SECRETS.ID, series3.id())
+        .set(SECRETS.NAME, series3.name())
+        .set(SECRETS.DESCRIPTION, series3.description())
+        .set(SECRETS.CREATEDBY, series3.createdBy())
+        .set(SECRETS.CREATEDAT, series3.createdAt().toEpochSecond())
+        .set(SECRETS.UPDATEDBY, series3.updatedBy())
+        .set(SECRETS.UPDATEDAT, series3.updatedAt().toEpochSecond())
+        .set(SECRETS.CURRENT, content3.id())
         .execute();
   }
 
@@ -767,12 +742,12 @@ public class SecretDAOTest {
   //---------------------------------------------------------------------------------------
   @Test
   public void countDeletedSecrets() {
-    // two secrets were deleted in the initial test setup
-    assertThat(secretDAO.countDeletedSecrets()).isEqualTo(2);
+    // one secret was deleted in the initial test setup
+    assertThat(secretDAO.countDeletedSecrets()).isEqualTo(1);
 
     // delete a secret and recount
     secretDAO.deleteSecretsByName(series2.name());
-    assertThat(secretDAO.countDeletedSecrets()).isEqualTo(3);
+    assertThat(secretDAO.countDeletedSecrets()).isEqualTo(2);
   }
 
   @Test
@@ -792,9 +767,9 @@ public class SecretDAOTest {
     checkExpectedSecretSeriesInSecretsTable(ImmutableList.of(series1, series2, series3),
         ImmutableList.of());
     checkExpectedSecretContentsInDatabase(
-        ImmutableList.of(content1, content2a, content2b, content3, content4), ImmutableList.of());
+        ImmutableList.of(content1, content2a, content2b, content3), ImmutableList.of());
     checkExpectedSecretSeriesInDeletedSecretsTable(
-        ImmutableList.of(series4),
+        ImmutableList.of(series3),
         ImmutableList.of()
     );
 
@@ -815,10 +790,10 @@ public class SecretDAOTest {
     checkExpectedSecretSeriesInSecretsTable(ImmutableList.of(series1),
         ImmutableList.of(series2, series3));
     checkExpectedSecretContentsInDatabase(ImmutableList.of(content1),
-        ImmutableList.of(content2a, content2b, content3, content4));
+        ImmutableList.of(content2a, content2b, content3));
     checkExpectedSecretSeriesInDeletedSecretsTable(
         ImmutableList.of(),
-        ImmutableList.of(series4)
+        ImmutableList.of(series3)
     );
   }
 
