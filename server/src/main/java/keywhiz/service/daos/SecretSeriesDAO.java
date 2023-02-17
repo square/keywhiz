@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import keywhiz.api.model.Group;
-import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.DeletedSecretsRecord;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
@@ -595,13 +594,16 @@ public class SecretSeriesDAO {
    * @return the number of records which were removed
    */
   public long dangerPermanentlyRemoveRecordsForGivenIDs(List<Long> ids) {
-    long deletedCountFromMainSecretsTable = dslContext.deleteFrom(SECRETS)
-        .where(SECRETS.ID.in(ids))
-        .execute();
-    long deletedCountFromDeletedSecretsTable = dslContext.deleteFrom(DELETED_SECRETS)
-        .where(DELETED_SECRETS.ID.in(ids))
-        .execute();
-    return deletedCountFromMainSecretsTable + deletedCountFromDeletedSecretsTable;
+    var deletedCount = new Object(){ long val = 0; };
+    dslContext.transaction(configuration -> {
+      dslContext.deleteFrom(DELETED_SECRETS)
+          .where(DELETED_SECRETS.ID.in(ids))
+          .execute();
+      deletedCount.val = dslContext.deleteFrom(SECRETS)
+          .where(SECRETS.ID.in(ids))
+          .execute();
+    });
+    return deletedCount.val;
   }
 
   public static class SecretSeriesDAOFactory implements DAOFactory<SecretSeriesDAO> {
