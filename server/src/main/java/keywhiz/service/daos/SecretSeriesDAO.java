@@ -354,18 +354,13 @@ public class SecretSeriesDAO {
     List<SecretSeries> fromDeletedSecretsTable =
         getDeletedSecretSeriesFromDeletedSecretsTable(name);
     Set<Long> idsFromDeletedSecretsTable =
-        fromDeletedSecretsTable.stream()
-            .map(secretSeries -> Long.valueOf(secretSeries.id()))
-            .collect(
-                Collectors.toSet());
-    return Stream.concat(
-        fromDeletedSecretsTable.stream(),
-        // If a secret series exists in both tables, only include the copy from `deleted_secrets`
-        // rather than the copy from `secrets` since it contains more information.
-        getDeletedSecretSeriesFromMainSecretsTable(name).stream().filter(
-            secretSeries -> !idsFromDeletedSecretsTable.contains(Long.valueOf(secretSeries.id()))
-        )
-    ).collect(Collectors.toList());
+        fromDeletedSecretsTable.stream().map(SecretSeries::id).collect(Collectors.toSet());
+    return Stream.concat(fromDeletedSecretsTable.stream(),
+            getDeletedSecretSeriesFromMainSecretsTable(name).stream()
+                // If a secret series exists in both tables, only include the copy from `deleted_secrets`
+                // rather than the copy from `secrets` since it contains more information.
+                .filter(secretSeries -> !idsFromDeletedSecretsTable.contains(secretSeries.id())))
+        .collect(Collectors.toList());
   }
 
   private List<SecretSeries> getDeletedSecretSeriesFromMainSecretsTable(String name) {
