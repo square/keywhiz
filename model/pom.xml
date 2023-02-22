@@ -158,6 +158,16 @@
           <!-- Generator parameters -->
           <generator>
             <name>org.jooq.codegen.JavaGenerator</name>
+            <strategy>
+              <matchers>
+                <tables>
+                  <table>
+                    <expression>(deleted_)?secrets</expression>
+                    <recordImplements>keywhiz.model.SecretsOrDeletedSecretsRecord</recordImplements>
+                  </table>
+                </tables>
+              </matchers>
+            </strategy>
             <generate>
               <javaTimeTypes>false</javaTimeTypes>
             </generate>

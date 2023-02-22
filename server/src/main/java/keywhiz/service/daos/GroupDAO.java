@@ -40,6 +40,7 @@ import org.jooq.impl.DSL;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.Tables.CLIENTS;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
+import static keywhiz.jooq.tables.DeletedSecrets.DELETED_SECRETS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Memberships.MEMBERSHIPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
@@ -121,6 +122,11 @@ public class GroupDAO {
           .update(SECRETS)
           .set(SECRETS.OWNER, (Long) null)
           .where(SECRETS.OWNER.eq(group.getId()))
+          .execute();
+      DSL.using(configuration)
+          .update(DELETED_SECRETS)
+          .set(DELETED_SECRETS.OWNER, (Long) null)
+          .where(DELETED_SECRETS.OWNER.eq(group.getId()))
           .execute();
       DSL.using(configuration)
           .update(GROUPS)

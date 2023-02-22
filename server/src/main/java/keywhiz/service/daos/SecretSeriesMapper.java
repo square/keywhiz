@@ -25,11 +25,11 @@ import javax.inject.Inject;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
-import keywhiz.jooq.tables.records.SecretsRecord;
+import keywhiz.model.SecretsOrDeletedSecretsRecord;
 import org.jooq.DSLContext;
 import org.jooq.RecordMapper;
 
-public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSeries> {
+public class SecretSeriesMapper implements RecordMapper<SecretsOrDeletedSecretsRecord, SecretSeries> {
   private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE =
       new TypeReference<>() {};
 
@@ -43,7 +43,7 @@ public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSer
     this.groupDAO = groupDAO;
   }
 
-  public SecretSeries map(SecretsRecord r) {
+  public SecretSeries map(SecretsOrDeletedSecretsRecord r) {
     String ownerName = getOwnerName(r);
 
     return SecretSeries.of(
@@ -60,7 +60,7 @@ public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSer
         r.getCurrent());
   }
 
-  private String getOwnerName(SecretsRecord r) {
+  private String getOwnerName(SecretsOrDeletedSecretsRecord r) {
     Long ownerId = r.getOwner();
     if (ownerId == null) {
       return null;
@@ -79,7 +79,7 @@ public class SecretSeriesMapper implements RecordMapper<SecretsRecord, SecretSer
     return maybeGroup.get().getName();
   }
 
-  private Map<String, String> tryToReadMapValue(SecretsRecord r) {
+  private Map<String, String> tryToReadMapValue(SecretsOrDeletedSecretsRecord r) {
     String value = r.getOptions();
     if (!value.isEmpty()) {
       try {

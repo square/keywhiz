@@ -49,6 +49,7 @@ import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
+import static keywhiz.jooq.tables.DeletedSecrets.DELETED_SECRETS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -204,6 +205,17 @@ public class SecretDAOTest {
                     objectMapper.writeValueAsString(secret3.content().metadata()),
                     secret3.content().id())
         ))
+        .execute();
+
+    jooqContext.insertInto(DELETED_SECRETS)
+        .set(SECRETS.ID, series3.id())
+        .set(SECRETS.NAME, series3.name())
+        .set(SECRETS.DESCRIPTION, series3.description())
+        .set(SECRETS.CREATEDBY, series3.createdBy())
+        .set(SECRETS.CREATEDAT, series3.createdAt().toEpochSecond())
+        .set(SECRETS.UPDATEDBY, series3.updatedBy())
+        .set(SECRETS.UPDATEDAT, series3.updatedAt().toEpochSecond())
+        .set(SECRETS.CURRENT, content3.id())
         .execute();
   }
 
@@ -752,15 +764,19 @@ public class SecretDAOTest {
   @Test
   public void permanentlyRemoveSecret() throws Exception {
     // Initially, all secrets should be present in the database
-    checkExpectedSecretSeriesInDatabase(ImmutableList.of(series1, series2, series3),
+    checkExpectedSecretSeriesInSecretsTable(ImmutableList.of(series1, series2, series3),
         ImmutableList.of());
     checkExpectedSecretContentsInDatabase(
         ImmutableList.of(content1, content2a, content2b, content3), ImmutableList.of());
+    checkExpectedSecretSeriesInDeletedSecretsTable(
+        ImmutableList.of(series3),
+        ImmutableList.of()
+    );
 
     // After deleting the secret, the secrets should still be present in the database
     // (though the series will have current = null)
     secretDAO.deleteSecretsByName(series2.name());
-    checkExpectedSecretSeriesInDatabase(ImmutableList.of(series1, series2, series3),
+    checkExpectedSecretSeriesInSecretsTable(ImmutableList.of(series1, series2, series3),
         ImmutableList.of());
     checkExpectedSecretContentsInDatabase(
         ImmutableList.of(content1, content2a, content2b, content3), ImmutableList.of());
@@ -769,18 +785,39 @@ public class SecretDAOTest {
     secretDAO.dangerPermanentlyRemoveSecretsDeletedBeforeDate(DateTime.now().plusDays(30), 0);
 
     // series2 and series3's associated information should be missing from the database.
-    checkExpectedSecretSeriesInDatabase(ImmutableList.of(series1),
+    // series2 should be missing because it was just deleted. series3 should be missing because
+    // its `currentVersion` field was initialized to null when it was constructed.
+    checkExpectedSecretSeriesInSecretsTable(ImmutableList.of(series1),
         ImmutableList.of(series2, series3));
     checkExpectedSecretContentsInDatabase(ImmutableList.of(content1),
         ImmutableList.of(content2a, content2b, content3));
+    checkExpectedSecretSeriesInDeletedSecretsTable(
+        ImmutableList.of(),
+        ImmutableList.of(series3)
+    );
   }
 
   /**
    * Verify that the given sets of secrets are present/not present in the database.
    */
-  private void checkExpectedSecretSeriesInDatabase(List<SecretSeries> expectedPresentSeries,
+  private void checkExpectedSecretSeriesInSecretsTable(List<SecretSeries> expectedPresentSeries,
       List<SecretSeries> expectedMissingSeries) {
     List<Long> secretSeriesIds = jooqContext.select(SECRETS.ID).from(SECRETS).fetch(SECRETS.ID);
+    assertThat(secretSeriesIds).containsAll(
+        expectedPresentSeries.stream().map(SecretSeries::id).collect(toList()));
+
+    if (!expectedMissingSeries.isEmpty()) {
+      assertThat(secretSeriesIds).doesNotContainAnyElementsOf(
+          expectedMissingSeries.stream().map(SecretSeries::id).collect(toList()));
+    }
+  }
+
+  private void checkExpectedSecretSeriesInDeletedSecretsTable(
+      List<SecretSeries> expectedPresentSeries,
+      List<SecretSeries> expectedMissingSeries
+  ) {
+    List<Long> secretSeriesIds =
+        jooqContext.select(DELETED_SECRETS.ID).from(DELETED_SECRETS).fetch(DELETED_SECRETS.ID);
     assertThat(secretSeriesIds).containsAll(
         expectedPresentSeries.stream().map(SecretSeries::id).collect(toList()));
 

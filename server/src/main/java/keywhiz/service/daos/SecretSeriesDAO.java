@@ -22,8 +22,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.jooq.tables.records.DeletedSecretsRecord;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
@@ -49,6 +53,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
+import static keywhiz.jooq.tables.DeletedSecrets.DELETED_SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
 
 /**
@@ -119,19 +124,82 @@ public class SecretSeriesDAO {
     r.setUpdatedat(now);
     r.setType(type);
     r.setRowHmac(rowHmac);
-    if (generationOptions != null) {
-      try {
-        r.setOptions(mapper.writeValueAsString(generationOptions));
-      } catch (JsonProcessingException e) {
-        // Serialization of a Map<String, String> can never fail.
-        throw Throwables.propagate(e);
-      }
-    } else {
-      r.setOptions("{}");
-    }
+    r.setOptions(getOptionsField(generationOptions));
+
     r.store();
 
     return r.getId();
+  }
+
+  @VisibleForTesting
+  public long createDeletedSecretSeries(
+      String name,
+      Long ownerId,
+      String creator,
+      String description,
+      @Nullable Long currentVersionID,
+      @Nullable String type,
+      @Nullable Map<String, String> generationOptions,
+      long now) {
+    long generatedId = rowHmacGenerator.getNextLongSecure();
+    return createDeletedSecretSeries(
+        generatedId,
+        name,
+        ownerId,
+        creator,
+        description,
+        currentVersionID,
+        type,
+        generationOptions,
+        now);
+  }
+
+  @VisibleForTesting
+  public long createDeletedSecretSeries(
+      long id,
+      String name,
+      Long ownerId,
+      String creator,
+      String description,
+      @Nullable Long currentVersionID,
+      @Nullable String type,
+      @Nullable Map<String, String> generationOptions,
+      long now
+  ) {
+    DeletedSecretsRecord record = dslContext.newRecord(DELETED_SECRETS);
+
+    String rowHmac = computeRowHmacForDeletedSecret(id, name);
+
+    record.setId(id);
+    record.setName(name);
+    record.setOwner(ownerId);
+    record.setDescription(description);
+    record.setCurrent(currentVersionID);
+    record.setCreatedby(creator);
+    record.setCreatedat(now);
+    record.setUpdatedby(creator);
+    record.setUpdatedat(now);
+    record.setType(type);
+    record.setRowHmac(rowHmac);
+    record.setOptions(getOptionsField(generationOptions));
+
+    record.store();
+
+    return record.getId();
+  }
+
+  private String getOptionsField(
+      @Nullable Map<String, String> generationOptions
+  ) {
+    if (generationOptions == null) {
+      return "{}";
+    }
+    try {
+      return mapper.writeValueAsString(generationOptions);
+    } catch (JsonProcessingException e) {
+      // Serialization of a Map<String, String> should never fail.
+      throw Throwables.propagate(e);
+    }
   }
 
   void updateSecretSeries(
@@ -257,8 +325,22 @@ public class SecretSeriesDAO {
   }
 
   public Optional<SecretSeries> getDeletedSecretSeriesById(long id) {
+    Optional<SecretSeries> fromDeletedTable = getDeletedSecretSeriesFromDeletedSecretsTable(id);
+    if (fromDeletedTable.isPresent()) {
+      return fromDeletedTable;
+    }
+    return getDeletedSecretSeriesFromMainSecretsTable(id);
+  }
+
+  private Optional<SecretSeries> getDeletedSecretSeriesFromMainSecretsTable(long id) {
     SecretsRecord r =
         dslContext.fetchOne(SECRETS, SECRETS.ID.eq(id).and(SECRETS.CURRENT.isNull()));
+    return Optional.ofNullable(r).map(secretSeriesMapper::map);
+  }
+
+  private Optional<SecretSeries> getDeletedSecretSeriesFromDeletedSecretsTable(long id) {
+    DeletedSecretsRecord r =
+        dslContext.fetchOne(DELETED_SECRETS, DELETED_SECRETS.ID.eq(id));
     return Optional.ofNullable(r).map(secretSeriesMapper::map);
   }
 
@@ -269,8 +351,28 @@ public class SecretSeriesDAO {
   }
 
   public List<SecretSeries> getSecretSeriesByDeletedName(String name) {
+    List<SecretSeries> fromDeletedSecretsTable =
+        getDeletedSecretSeriesFromDeletedSecretsTable(name);
+    Set<Long> idsFromDeletedSecretsTable =
+        fromDeletedSecretsTable.stream().map(SecretSeries::id).collect(Collectors.toSet());
+    return Stream.concat(fromDeletedSecretsTable.stream(),
+            getDeletedSecretSeriesFromMainSecretsTable(name).stream()
+                // If a secret series exists in both tables, only include the copy from `deleted_secrets`
+                // rather than the copy from `secrets` since it contains more information.
+                .filter(secretSeries -> !idsFromDeletedSecretsTable.contains(secretSeries.id())))
+        .collect(Collectors.toList());
+  }
+
+  private List<SecretSeries> getDeletedSecretSeriesFromMainSecretsTable(String name) {
     String lookup = "." + name + ".%";
     return dslContext.fetch(SECRETS, SECRETS.NAME.like(lookup).and(SECRETS.CURRENT.isNull())).map(secretSeriesMapper::map);
+  }
+
+  private List<SecretSeries> getDeletedSecretSeriesFromDeletedSecretsTable(String name) {
+    return dslContext.fetch(
+        DELETED_SECRETS,
+        DELETED_SECRETS.NAME.eq(name)
+    ).map(secretSeriesMapper::map);
   }
 
   public List<SecretSeries> getMultipleSecretSeriesByName(List<String> names) {
@@ -487,9 +589,16 @@ public class SecretSeriesDAO {
    * @return the number of records which were removed
    */
   public long dangerPermanentlyRemoveRecordsForGivenIDs(List<Long> ids) {
-    return dslContext.deleteFrom(SECRETS)
-        .where(SECRETS.ID.in(ids))
-        .execute();
+    var deletedCount = new Object(){ long val = 0; };
+    dslContext.transaction(configuration -> {
+      dslContext.deleteFrom(DELETED_SECRETS)
+          .where(DELETED_SECRETS.ID.in(ids))
+          .execute();
+      deletedCount.val = dslContext.deleteFrom(SECRETS)
+          .where(SECRETS.ID.in(ids))
+          .execute();
+    });
+    return deletedCount.val;
   }
 
   public static class SecretSeriesDAOFactory implements DAOFactory<SecretSeriesDAO> {
@@ -548,6 +657,17 @@ public class SecretSeriesDAO {
   private String computeRowHmac(long secretSeriesId, String secretSeriesName) {
     return rowHmacGenerator.computeRowHmac(
         SECRETS.getName(),
+        List.of(
+            secretSeriesName,
+            secretSeriesId));
+  }
+
+  private String computeRowHmacForDeletedSecret(
+      long secretSeriesId,
+      String secretSeriesName
+  ) {
+    return rowHmacGenerator.computeRowHmac(
+        DELETED_SECRETS.getName(),
         List.of(
             secretSeriesName,
             secretSeriesId));
