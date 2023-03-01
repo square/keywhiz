@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,10 +52,13 @@ import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
+import static keywhiz.jooq.tables.DeletedAccessgrants.DELETED_ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.DeletedSecrets.DELETED_SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
+import static org.jooq.impl.DSL.currentTimestamp;
+import static org.jooq.impl.DSL.select;
 
 /**
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
@@ -530,6 +534,12 @@ public class SecretSeriesDAO {
 
     long now = OffsetDateTime.now().toEpochSecond();
 
+    //dslContext
+    //    .insertInto(DELETED_SECRETS)
+    //    .columns(DELETED_SECRETS.fields())
+    //    .select(
+    //        select(DELETED_SECRETS.fields()).from(SECRETS).where(SECRETS.ID.eq(record.getId())));
+
     dslContext
         .update(SECRETS)
         .set(SECRETS.NAME, transformNameForDeletion(record.getName()))
@@ -537,6 +547,13 @@ public class SecretSeriesDAO {
         .set(SECRETS.UPDATEDAT, now)
         .where(SECRETS.ID.eq(record.getId()))
         .execute();
+
+    //dslContext
+    //    .insertInto(DELETED_ACCESSGRANTS)
+    //    .columns(DELETED_ACCESSGRANTS.fields())
+    //    .select(select(DELETED_ACCESSGRANTS.fields()).from(ACCESSGRANTS)
+    //        .where(ACCESSGRANTS.SECRETID.eq(record.getId())))
+    //    .execute();
 
     dslContext
         .delete(ACCESSGRANTS)
