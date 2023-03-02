@@ -450,37 +450,30 @@ public class SecretSeriesDAOTest {
   }
 
   @Test public void getSecretSeriesByDeletedName() {
-    long now = OffsetDateTime.now().toEpochSecond();
-    long id = secretSeriesDAO.createSecretSeries("toBeFound_getSecretSeriesByDeletedName",
-        null, "creator", "", null, null, now);
-    long contentID = secretContentDAO.createSecretContent(id, "blah",
-        "checksum", "creator", null, 0, now);
-    secretSeriesDAO.setCurrentVersion(id, contentID, "creator", now);
-    secretSeriesDAO.softDeleteSecretSeriesById(id);
+    long secretSeriesID = createSoftDeletedSecretSeries("toBeFound_getSecretSeriesByDeletedName");
 
     List<SecretSeries> deletedSecretSeries =
         secretSeriesDAO.getSecretSeriesByDeletedName("toBeFound_getSecretSeriesByDeletedName");
     assertThat(deletedSecretSeries.size()).isEqualTo(1);
-    assertThat(deletedSecretSeries.get(0).name()).contains("toBeFound_getSecretSeriesByDeletedName");
-    assertThat(deletedSecretSeries.get(0).name()).isNotEqualTo("toBeFound_getSecretSeriesByDeletedName");
-    assertThat(deletedSecretSeries.get(0).id()).isEqualTo(id);
+    assertThat(deletedSecretSeries.get(0).name()).contains(
+        "toBeFound_getSecretSeriesByDeletedName");
+    assertThat(deletedSecretSeries.get(0).name()).isEqualTo(
+        "toBeFound_getSecretSeriesByDeletedName");
+    assertThat(deletedSecretSeries.get(0).id()).isEqualTo(secretSeriesID);
   }
 
   @Test public void getDeletedSecretSeriesById() {
-    long now = OffsetDateTime.now().toEpochSecond();
-    long id = secretSeriesDAO.createSecretSeries("toBeFound_getSecretSeriesByDeletedId",
-        null, "creator", "", null, null, now);
-    long contentID = secretContentDAO.createSecretContent(id, "blah",
-        "checksum", "creator", null, 0, now);
-    secretSeriesDAO.setCurrentVersion(id, contentID, "creator", now);
-    secretSeriesDAO.softDeleteSecretSeriesById(id);
-    assertThat(secretSeriesDAO.getSecretSeriesById(id)).isEmpty();
+    long secretSeriesID = createSoftDeletedSecretSeries("toBeFound_getSecretSeriesByDeletedId");
 
-    Optional<SecretSeries> deletedSecretSeries = secretSeriesDAO.getDeletedSecretSeriesById(id);
+    assertThat(secretSeriesDAO.getSecretSeriesById(secretSeriesID)).isEmpty();
+
+    Optional<SecretSeries> deletedSecretSeries =
+        secretSeriesDAO.getDeletedSecretSeriesById(secretSeriesID);
     assertThat(deletedSecretSeries).isPresent();
     assertThat(deletedSecretSeries.get().name()).contains("toBeFound_getSecretSeriesByDeletedId");
-    assertThat(deletedSecretSeries.get().name()).isNotEqualTo("toBeFound_getSecretSeriesByDeletedId");
-    assertThat(deletedSecretSeries.get().id()).isEqualTo(id);
+    assertThat(deletedSecretSeries.get().name()).isEqualTo(
+        "toBeFound_getSecretSeriesByDeletedId");
+    assertThat(deletedSecretSeries.get().id()).isEqualTo(secretSeriesID);
   }
 
   @Test public void getDeletedSecretSeriesByName() {
@@ -506,8 +499,8 @@ public class SecretSeriesDAOTest {
 
     // But the one that doesn't have a row in `deleted_secrets` will have a NULL currentVersion.
     SecretSeries foundSecretSeriesFromSecretsTableOnly =
-        deletedSecrets.stream().filter(s -> s.id() == bothTablesID).findFirst().get();
-    assertThat(foundSecretSeriesFromSecretsTableOnly.currentVersion().get()).isNull();
+        deletedSecrets.stream().filter(s -> s.id() == secretsTableOnlyID).findFirst().get();
+    assertThat(foundSecretSeriesFromSecretsTableOnly.currentVersion().isPresent()).isFalse();
   }
 
   private long createLegacySoftDeletedSecretSeries(String name) {
