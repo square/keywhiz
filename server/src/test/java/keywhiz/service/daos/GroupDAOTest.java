@@ -23,6 +23,7 @@ import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.function.Function;
@@ -130,9 +131,7 @@ public class GroupDAOTest {
   @Test public void deleteSetsSecretOwnerToNull() {
     String groupName = randomName();
     long groupId = groupDAO.createGroup(groupName, "creator", "description", ImmutableMap.of());
-
     long secretId = createSecretForGroup(groupName);
-    long deletedSecretId = createDeletedSecretForGroup(groupName);
 
     SecretSeriesAndContent original = secretDAO.getSecretById(secretId).get();
     assertEquals(groupName, original.series().owner());
@@ -141,12 +140,23 @@ public class GroupDAOTest {
 
     SecretSeriesAndContent updated = secretDAO.getSecretById(secretId).get();
     assertNull(updated.series().owner());
+  }
 
-    assertNull(
-        jooqContext.select(DELETED_SECRETS.OWNER).from(DELETED_SECRETS).where(
-            DELETED_SECRETS.ID.eq(deletedSecretId)
-        ).fetchOne().get(DELETED_SECRETS.OWNER)
-    );
+  @Test public void deleteSetsSecretOwnerToNullForDeletedSecret() {
+    String groupName = randomName();
+    long groupId = groupDAO.createGroup(groupName, "creator", "description", ImmutableMap.of());
+    long deletedSecretId = createDeletedSecretForGroup(groupName);
+
+    Optional<SecretSeries> deletedSecretSeriesOriginal =
+        secretSeriesDAO.getDeletedSecretSeriesById(deletedSecretId);
+    assertEquals(groupName, deletedSecretSeriesOriginal.get().owner());
+
+
+    groupDAO.deleteGroup(groupDAO.getGroupById(groupId).get());
+
+    Optional<SecretSeries> deletedSecretSeriesUpdated =
+        secretSeriesDAO.getDeletedSecretSeriesById(deletedSecretId);
+    assertNull(deletedSecretSeriesUpdated.get().owner());
   }
 
   private long createDeletedSecretForGroup(String groupName) {

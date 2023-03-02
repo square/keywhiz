@@ -463,16 +463,16 @@ public class SecretSeriesDAOTest {
   }
 
   @Test public void getDeletedSecretSeriesById() {
-    long secretSeriesID = createSoftDeletedSecretSeries("toBeFound_getSecretSeriesByDeletedId");
+    long secretSeriesID = createSoftDeletedSecretSeries("toBeFound_getDeletedSecretSeriesById");
 
     assertThat(secretSeriesDAO.getSecretSeriesById(secretSeriesID)).isEmpty();
 
     Optional<SecretSeries> deletedSecretSeries =
         secretSeriesDAO.getDeletedSecretSeriesById(secretSeriesID);
     assertThat(deletedSecretSeries).isPresent();
-    assertThat(deletedSecretSeries.get().name()).contains("toBeFound_getSecretSeriesByDeletedId");
+    assertThat(deletedSecretSeries.get().name()).contains("toBeFound_getDeletedSecretSeriesById");
     assertThat(deletedSecretSeries.get().name()).isEqualTo(
-        "toBeFound_getSecretSeriesByDeletedId");
+        "toBeFound_getDeletedSecretSeriesById");
     assertThat(deletedSecretSeries.get().id()).isEqualTo(secretSeriesID);
   }
 

@@ -627,15 +627,4 @@ public class SecretSeriesDAO {
             secretSeriesName,
             secretSeriesId));
   }
-
-  private String computeRowHmacForDeletedSecret(
-      long secretSeriesId,
-      String secretSeriesName
-  ) {
-    return rowHmacGenerator.computeRowHmac(
-        DELETED_SECRETS.getName(),
-        List.of(
-            secretSeriesName,
-            secretSeriesId));
-  }
 }
