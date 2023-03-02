@@ -135,63 +135,6 @@ public class SecretSeriesDAO {
     return r.getId();
   }
 
-  @VisibleForTesting
-  public long createDeletedSecretSeries(
-      String name,
-      Long ownerId,
-      String creator,
-      String description,
-      @Nullable Long currentVersionID,
-      @Nullable String type,
-      @Nullable Map<String, String> generationOptions,
-      long now) {
-    long generatedId = rowHmacGenerator.getNextLongSecure();
-    return createDeletedSecretSeries(
-        generatedId,
-        name,
-        ownerId,
-        creator,
-        description,
-        currentVersionID,
-        type,
-        generationOptions,
-        now);
-  }
-
-  @VisibleForTesting
-  public long createDeletedSecretSeries(
-      long id,
-      String name,
-      Long ownerId,
-      String creator,
-      String description,
-      @Nullable Long currentVersionID,
-      @Nullable String type,
-      @Nullable Map<String, String> generationOptions,
-      long now
-  ) {
-    DeletedSecretsRecord record = dslContext.newRecord(DELETED_SECRETS);
-
-    String rowHmac = computeRowHmacForDeletedSecret(id, name);
-
-    record.setId(id);
-    record.setName(name);
-    record.setOwner(ownerId);
-    record.setDescription(description);
-    record.setCurrent(currentVersionID);
-    record.setCreatedby(creator);
-    record.setCreatedat(now);
-    record.setUpdatedby(creator);
-    record.setUpdatedat(now);
-    record.setType(type);
-    record.setRowHmac(rowHmac);
-    record.setOptions(getOptionsField(generationOptions));
-
-    record.store();
-
-    return record.getId();
-  }
-
   private String getOptionsField(
       @Nullable Map<String, String> generationOptions
   ) {
@@ -534,11 +477,13 @@ public class SecretSeriesDAO {
 
     long now = OffsetDateTime.now().toEpochSecond();
 
-    //dslContext
-    //    .insertInto(DELETED_SECRETS)
-    //    .columns(DELETED_SECRETS.fields())
-    //    .select(
-    //        select(DELETED_SECRETS.fields()).from(SECRETS).where(SECRETS.ID.eq(record.getId())));
+    dslContext
+        .insertInto(DELETED_SECRETS)
+        .columns(DELETED_SECRETS.fields())
+        .select(select(Arrays.stream(DELETED_SECRETS.fields())
+            .map(SECRETS::field)
+            .collect(Collectors.toList())).from(SECRETS).where(SECRETS.ID.eq(record.getId())))
+            .execute();
 
     dslContext
         .update(SECRETS)
@@ -548,12 +493,16 @@ public class SecretSeriesDAO {
         .where(SECRETS.ID.eq(record.getId()))
         .execute();
 
-    //dslContext
-    //    .insertInto(DELETED_ACCESSGRANTS)
-    //    .columns(DELETED_ACCESSGRANTS.fields())
-    //    .select(select(DELETED_ACCESSGRANTS.fields()).from(ACCESSGRANTS)
-    //        .where(ACCESSGRANTS.SECRETID.eq(record.getId())))
-    //    .execute();
+    dslContext
+        .insertInto(DELETED_ACCESSGRANTS)
+        .columns(DELETED_ACCESSGRANTS.fields())
+        .select(select(
+            Arrays.stream(DELETED_ACCESSGRANTS.fields())
+                .map(ACCESSGRANTS::field)
+                .collect(Collectors.toList()))
+            .from(ACCESSGRANTS)
+            .where(ACCESSGRANTS.SECRETID.eq(record.getId())))
+        .execute();
 
     dslContext
         .delete(ACCESSGRANTS)
