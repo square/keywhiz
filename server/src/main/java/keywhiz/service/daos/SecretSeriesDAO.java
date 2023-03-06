@@ -495,9 +495,13 @@ public class SecretSeriesDAO {
 
     dslContext
         .insertInto(DELETED_ACCESSGRANTS)
-        .columns(DELETED_ACCESSGRANTS.fields())
+        .columns(Arrays.stream(DELETED_ACCESSGRANTS.fields())
+            .filter(field -> field != DELETED_SECRETS.ID)
+            .collect(Collectors.toList())
+        )
         .select(select(
             Arrays.stream(DELETED_ACCESSGRANTS.fields())
+                .filter(field -> field != DELETED_SECRETS.ID)
                 .map(ACCESSGRANTS::field)
                 .collect(Collectors.toList()))
             .from(ACCESSGRANTS)

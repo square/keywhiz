@@ -33,6 +33,7 @@ import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readwrite;
 import keywhiz.service.crypto.RowHmacGenerator;
 import org.jooq.DSLContext;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -43,6 +44,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
+import static keywhiz.jooq.tables.DeletedAccessgrants.DELETED_ACCESSGRANTS;
 import static keywhiz.jooq.tables.DeletedSecrets.DELETED_SECRETS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,6 +62,12 @@ public class SecretSeriesDAOTest {
   @Inject @Readwrite SecretSeriesDAO secretSeriesDAO;
   @Inject @Readwrite SecretContentDAO secretContentDAO;
   @Inject @Readwrite GroupDAO groupDAO;
+  @Inject AclDAO.AclDAOFactory aclDAOFactory;
+  AclDAO aclDAO;
+
+  @Before public void setUp() {
+    aclDAO = aclDAOFactory.readwrite();
+  }
 
   @Test
   public void listExpiringSecretNamesIncludesAllExpiringSecrets() {
@@ -477,8 +486,6 @@ public class SecretSeriesDAOTest {
   }
 
   @Test public void getDeletedSecretSeriesByName() {
-    long now = OffsetDateTime.now().toEpochSecond();
-
     long bothTablesID = createSoftDeletedSecretSeries("getDeletedSecretSeriesByName");
     long secretsTableOnlyID = createLegacySoftDeletedSecretSeries("getDeletedSecretSeriesByName");
     long notDeletedID = createSecretSeries("getDeletedSecretSeriesByName");
@@ -503,6 +510,54 @@ public class SecretSeriesDAOTest {
     assertThat(foundSecretSeriesFromSecretsTableOnly.currentVersion().isPresent()).isFalse();
   }
 
+  @Test public void deleteSecretAccessGrants() {
+    long secretSeriesID = createSecretSeries("deleteSecretAccessGrants");
+    long groupID = groupDAO.createGroup("group1", "creator", "", ImmutableMap.of());
+    aclDAO.allowAccess(jooqContext.configuration(), secretSeriesID, groupID);
+
+    assertThat(jooqContext.select(ACCESSGRANTS.ID)
+        .from(ACCESSGRANTS)
+        .where(ACCESSGRANTS.SECRETID.eq(secretSeriesID))).isNotEmpty();
+    assertThat(jooqContext.select(DELETED_ACCESSGRANTS.ID)
+        .from(DELETED_ACCESSGRANTS)
+        .where(DELETED_ACCESSGRANTS.SECRETID.eq(secretSeriesID))).isEmpty();
+
+    secretSeriesDAO.softDeleteSecretSeriesById(secretSeriesID);
+
+    assertThat(jooqContext.select(ACCESSGRANTS.ID)
+        .from(ACCESSGRANTS)
+        .where(ACCESSGRANTS.SECRETID.eq(secretSeriesID))).isEmpty();
+    assertThat(jooqContext.select(DELETED_ACCESSGRANTS.ID)
+        .from(DELETED_ACCESSGRANTS)
+        .where(DELETED_ACCESSGRANTS.SECRETID.eq(secretSeriesID))).isNotEmpty();
+  }
+
+  @Test public void deleteSecretAccessGrantsDoesNotUseSameID() {
+    long secretSeriesID = createSecretSeries("deleteSecretAccessGrants");
+    long groupID = groupDAO.createGroup("group1", "creator", "", ImmutableMap.of());
+    aclDAO.allowAccess(jooqContext.configuration(), secretSeriesID, groupID);
+
+    long idFromAccessGrantsTable = jooqContext.select(ACCESSGRANTS.ID)
+        .from(ACCESSGRANTS)
+        .where(ACCESSGRANTS.SECRETID.eq(secretSeriesID))
+        .fetch()
+        .get(0)
+        .value1();
+
+    // Ensure this ID is already used in DELETED_ACCESSGRANTS
+    jooqContext.insertInto(ACCESSGRANTS)
+        .set(ACCESSGRANTS.ID, idFromAccessGrantsTable)
+        .set(ACCESSGRANTS.GROUPID, 123L)
+        .set(ACCESSGRANTS.SECRETID, 456L)
+        .set(ACCESSGRANTS.ROW_HMAC, "HMAC")
+        .set(ACCESSGRANTS.UPDATEDAT, 7L)
+        .set(ACCESSGRANTS.CREATEDAT, 6L)
+        .execute();
+
+    // This should not throw
+    secretSeriesDAO.softDeleteSecretSeriesById(secretSeriesID);
+  }
+
   private long createLegacySoftDeletedSecretSeries(String name) {
     long secretSeriesID = createSoftDeletedSecretSeries(name);
     jooqContext.delete(DELETED_SECRETS).where(DELETED_SECRETS.ID.eq(secretSeriesID)).execute();
@@ -511,7 +566,7 @@ public class SecretSeriesDAOTest {
 
   private long createSoftDeletedSecretSeries(String name) {
     long secretSeriesID = createSecretSeries(name);
-    secretSeriesDAO.softDeleteSecretSeriesById(secretSeriesID);;
+    secretSeriesDAO.softDeleteSecretSeriesById(secretSeriesID);
     return secretSeriesID;
   }
 
