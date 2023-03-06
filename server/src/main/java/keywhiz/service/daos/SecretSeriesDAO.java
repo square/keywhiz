@@ -28,14 +28,17 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
+import keywhiz.jooq.tables.DeletedAccessgrants;
 import keywhiz.jooq.tables.records.DeletedSecretsRecord;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.RowHmacGenerator;
+import org.eclipse.jetty.util.ajax.JSON;
 import org.joda.time.DateTime;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.SelectQuery;
 import org.jooq.impl.DSL;
@@ -493,15 +496,15 @@ public class SecretSeriesDAO {
         .where(SECRETS.ID.eq(record.getId()))
         .execute();
 
+    List<Field<?>> fieldsToCopy = Arrays.stream(DELETED_ACCESSGRANTS.fields())
+        .filter(field -> field.getName() != DELETED_ACCESSGRANTS.ID.getName())
+        .collect(Collectors.toList());
+
     dslContext
         .insertInto(DELETED_ACCESSGRANTS)
-        .columns(Arrays.stream(DELETED_ACCESSGRANTS.fields())
-            .filter(field -> field != DELETED_SECRETS.ID)
-            .collect(Collectors.toList())
-        )
+        .columns(fieldsToCopy)
         .select(select(
-            Arrays.stream(DELETED_ACCESSGRANTS.fields())
-                .filter(field -> field != DELETED_SECRETS.ID)
+            fieldsToCopy.stream()
                 .map(ACCESSGRANTS::field)
                 .collect(Collectors.toList()))
             .from(ACCESSGRANTS)

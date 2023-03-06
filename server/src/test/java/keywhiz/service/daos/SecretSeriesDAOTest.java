@@ -545,7 +545,7 @@ public class SecretSeriesDAOTest {
         .value1();
 
     // Ensure this ID is already used in DELETED_ACCESSGRANTS
-    jooqContext.insertInto(ACCESSGRANTS)
+    jooqContext.insertInto(DELETED_ACCESSGRANTS)
         .set(ACCESSGRANTS.ID, idFromAccessGrantsTable)
         .set(ACCESSGRANTS.GROUPID, 123L)
         .set(ACCESSGRANTS.SECRETID, 456L)
