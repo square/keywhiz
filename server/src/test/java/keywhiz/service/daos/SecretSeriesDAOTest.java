@@ -591,10 +591,10 @@ public class SecretSeriesDAOTest {
   @Test public void countDeletedSecretSeries() {
     assertThat(secretSeriesDAO.countDeletedSecretSeries()).isEqualTo(0);
 
-    long secretsTableOnlyID = createLegacySoftDeletedSecretSeries("countDeletedSecretSeries");
+    createLegacySoftDeletedSecretSeries("countDeletedSecretSeries");
     assertThat(secretSeriesDAO.countDeletedSecretSeries()).isEqualTo(1);
 
-    long bothTablesID = createSoftDeletedSecretSeries("countDeletedSecretSeries");
+    createSoftDeletedSecretSeries("countDeletedSecretSeries");
     assertThat(secretSeriesDAO.countDeletedSecretSeries()).isEqualTo(2);
   }
 
