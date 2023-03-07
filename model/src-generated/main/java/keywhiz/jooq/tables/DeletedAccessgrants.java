@@ -14,6 +14,7 @@ import keywhiz.jooq.tables.records.DeletedAccessgrantsRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
@@ -53,7 +54,7 @@ public class DeletedAccessgrants extends TableImpl<DeletedAccessgrantsRecord> {
     /**
      * The column <code>keywhizdb_test.deleted_accessgrants.id</code>.
      */
-    public final TableField<DeletedAccessgrantsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<DeletedAccessgrantsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>keywhizdb_test.deleted_accessgrants.groupid</code>.
@@ -123,6 +124,11 @@ public class DeletedAccessgrants extends TableImpl<DeletedAccessgrantsRecord> {
     @Override
     public List<Index> getIndexes() {
         return Arrays.asList(Indexes.DELETED_ACCESSGRANTS_DAG_GROUPID_SECRETID_IDX, Indexes.DELETED_ACCESSGRANTS_DAG_SECRETID_IDX);
+    }
+
+    @Override
+    public Identity<DeletedAccessgrantsRecord, Long> getIdentity() {
+        return (Identity<DeletedAccessgrantsRecord, Long>) super.getIdentity();
     }
 
     @Override

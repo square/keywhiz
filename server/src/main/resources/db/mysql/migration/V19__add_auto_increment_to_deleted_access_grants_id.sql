@@ -1,0 +1,1 @@
+ALTER TABLE `deleted_accessgrants` MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
