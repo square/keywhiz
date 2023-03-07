@@ -33,6 +33,7 @@ import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readwrite;
 import keywhiz.service.crypto.RowHmacGenerator;
 import org.jooq.DSLContext;
+import org.jooq.Record1;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -532,7 +533,7 @@ public class SecretSeriesDAOTest {
         .where(DELETED_ACCESSGRANTS.SECRETID.eq(secretSeriesID))).isNotEmpty();
   }
 
-  @Test public void deleteSecretAccessGrantsDoesNotUseSameID() {
+  @Test public void deletedAccessGrantDoesNotRequireSameIDAsAccessGrant() {
     long secretSeriesID = createSecretSeries("deleteSecretAccessGrants");
     long groupID = groupDAO.createGroup("group1", "creator", "", ImmutableMap.of());
     aclDAO.allowAccess(jooqContext.configuration(), secretSeriesID, groupID);
@@ -554,8 +555,17 @@ public class SecretSeriesDAOTest {
         .set(ACCESSGRANTS.CREATEDAT, 6L)
         .execute();
 
-    // This should not throw
+    // This should not throw, since a new ID that is *not* already in use in DELETED_ACCESSGRANTS
+    // should be picked for the new row
     secretSeriesDAO.softDeleteSecretSeriesById(secretSeriesID);
+
+    List<Record1<Long>> idsInDeletedAccessGrants = jooqContext.select(DELETED_ACCESSGRANTS.ID)
+        .from(DELETED_ACCESSGRANTS)
+        .where(DELETED_ACCESSGRANTS.SECRETID.eq(secretSeriesID))
+        .fetch();
+
+    assertThat(idsInDeletedAccessGrants.size()).isEqualTo(1);
+    assertThat(idsInDeletedAccessGrants.get(0).value1()).isNotEqualTo(idFromAccessGrantsTable);
   }
 
   private long createLegacySoftDeletedSecretSeries(String name) {
