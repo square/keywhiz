@@ -17,10 +17,12 @@ package keywhiz.cli;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import java.io.IOException;
 import java.text.DateFormat;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -289,13 +291,14 @@ public class Printing {
     }
   }
 
-  private String apiDateToString(ApiDate apiDate) {
-    return epochSecondToString(apiDate.toEpochSecond() * 1000);
+  @VisibleForTesting
+  static String apiDateToString(ApiDate apiDate) {
+    return epochSecondToString(apiDate.toEpochSecond());
   }
 
-  private String epochSecondToString(long epochSecond) {
-    Date d = new Date(epochSecond);
-    return DateFormat.getDateTimeInstance().format(d);
+  @VisibleForTesting
+  static String epochSecondToString(long epochSecond) {
+    return Instant.ofEpochSecond(epochSecond).toString();
   }
 
   public void printAllClients(List<Client> clients) {
