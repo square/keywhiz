@@ -20,6 +20,7 @@ import io.dropwizard.logging.BootstrapLogging;
 import keywhiz.inject.InjectorFactory;
 import keywhiz.jooq.tables.Accessgrants;
 import keywhiz.jooq.tables.Clients;
+import keywhiz.jooq.tables.DeletedAccessgrants;
 import keywhiz.jooq.tables.DeletedSecrets;
 import keywhiz.jooq.tables.Groups;
 import keywhiz.jooq.tables.Memberships;
@@ -69,6 +70,9 @@ public class KeywhizTestRunner extends BlockJUnit4ClassRunner {
     } catch(DataAccessException e) {}
     try {
       jooqContext.truncate(DeletedSecrets.DELETED_SECRETS).execute();
+    } catch(DataAccessException e) {}
+    try {
+      jooqContext.truncate(DeletedAccessgrants.DELETED_ACCESSGRANTS).execute();
     } catch(DataAccessException e) {}
 
     Object test = getTestClass().getJavaClass().getDeclaredConstructor().newInstance();

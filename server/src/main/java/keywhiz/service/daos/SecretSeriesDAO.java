@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,6 +36,7 @@ import keywhiz.service.crypto.RowHmacGenerator;
 import org.joda.time.DateTime;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.SelectQuery;
 import org.jooq.impl.DSL;
@@ -51,10 +53,12 @@ import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static keywhiz.jooq.tables.Accessgrants.ACCESSGRANTS;
+import static keywhiz.jooq.tables.DeletedAccessgrants.DELETED_ACCESSGRANTS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static keywhiz.jooq.tables.Secrets.SECRETS;
 import static keywhiz.jooq.tables.DeletedSecrets.DELETED_SECRETS;
 import static keywhiz.jooq.tables.SecretsContent.SECRETS_CONTENT;
+import static org.jooq.impl.DSL.select;
 
 /**
  * Interacts with 'secrets' table and actions on {@link SecretSeries} entities.
@@ -129,63 +133,6 @@ public class SecretSeriesDAO {
     r.store();
 
     return r.getId();
-  }
-
-  @VisibleForTesting
-  public long createDeletedSecretSeries(
-      String name,
-      Long ownerId,
-      String creator,
-      String description,
-      @Nullable Long currentVersionID,
-      @Nullable String type,
-      @Nullable Map<String, String> generationOptions,
-      long now) {
-    long generatedId = rowHmacGenerator.getNextLongSecure();
-    return createDeletedSecretSeries(
-        generatedId,
-        name,
-        ownerId,
-        creator,
-        description,
-        currentVersionID,
-        type,
-        generationOptions,
-        now);
-  }
-
-  @VisibleForTesting
-  public long createDeletedSecretSeries(
-      long id,
-      String name,
-      Long ownerId,
-      String creator,
-      String description,
-      @Nullable Long currentVersionID,
-      @Nullable String type,
-      @Nullable Map<String, String> generationOptions,
-      long now
-  ) {
-    DeletedSecretsRecord record = dslContext.newRecord(DELETED_SECRETS);
-
-    String rowHmac = computeRowHmacForDeletedSecret(id, name);
-
-    record.setId(id);
-    record.setName(name);
-    record.setOwner(ownerId);
-    record.setDescription(description);
-    record.setCurrent(currentVersionID);
-    record.setCreatedby(creator);
-    record.setCreatedat(now);
-    record.setUpdatedby(creator);
-    record.setUpdatedat(now);
-    record.setType(type);
-    record.setRowHmac(rowHmac);
-    record.setOptions(getOptionsField(generationOptions));
-
-    record.store();
-
-    return record.getId();
   }
 
   private String getOptionsField(
@@ -531,11 +478,34 @@ public class SecretSeriesDAO {
     long now = OffsetDateTime.now().toEpochSecond();
 
     dslContext
+        .insertInto(DELETED_SECRETS)
+        .columns(DELETED_SECRETS.fields())
+        .select(select(Arrays.stream(DELETED_SECRETS.fields())
+            .map(SECRETS::field)
+            .collect(Collectors.toList())).from(SECRETS).where(SECRETS.ID.eq(record.getId())))
+            .execute();
+
+    dslContext
         .update(SECRETS)
         .set(SECRETS.NAME, transformNameForDeletion(record.getName()))
         .set(SECRETS.CURRENT, (Long) null)
         .set(SECRETS.UPDATEDAT, now)
         .where(SECRETS.ID.eq(record.getId()))
+        .execute();
+
+    List<Field<?>> fieldsToCopy = Arrays.stream(DELETED_ACCESSGRANTS.fields())
+        .filter(field -> !field.getName().equals(DELETED_ACCESSGRANTS.ID.getName()))
+        .collect(Collectors.toList());
+
+    dslContext
+        .insertInto(DELETED_ACCESSGRANTS)
+        .columns(fieldsToCopy)
+        .select(select(
+            fieldsToCopy.stream()
+                .map(ACCESSGRANTS::field)
+                .collect(Collectors.toList()))
+            .from(ACCESSGRANTS)
+            .where(ACCESSGRANTS.SECRETID.eq(record.getId())))
         .execute();
 
     dslContext
@@ -657,17 +627,6 @@ public class SecretSeriesDAO {
   private String computeRowHmac(long secretSeriesId, String secretSeriesName) {
     return rowHmacGenerator.computeRowHmac(
         SECRETS.getName(),
-        List.of(
-            secretSeriesName,
-            secretSeriesId));
-  }
-
-  private String computeRowHmacForDeletedSecret(
-      long secretSeriesId,
-      String secretSeriesName
-  ) {
-    return rowHmacGenerator.computeRowHmac(
-        DELETED_SECRETS.getName(),
         List.of(
             secretSeriesName,
             secretSeriesId));

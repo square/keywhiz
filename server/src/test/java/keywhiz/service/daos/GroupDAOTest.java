@@ -23,6 +23,7 @@ import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.function.Function;
@@ -41,6 +42,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static java.util.stream.Collectors.toList;
+import static keywhiz.jooq.tables.DeletedSecrets.DELETED_SECRETS;
 import static keywhiz.jooq.tables.Groups.GROUPS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -129,36 +131,43 @@ public class GroupDAOTest {
   @Test public void deleteSetsSecretOwnerToNull() {
     String groupName = randomName();
     long groupId = groupDAO.createGroup(groupName, "creator", "description", ImmutableMap.of());
-
-    long secretId =
-        secretDAO.createSecret(randomName(), groupName, "encryptedSecret", "hmac", "creator",
-            Collections.emptyMap(), 0, "description", null, null);
-
-    long now = OffsetDateTime.now().toEpochSecond();
-    long idOfSecretInDeletedSecretsTable =
-        secretSeriesDAO.createDeletedSecretSeries("deletedSecretName",
-            groupId, "creator", "", null, null, null, now);
-    long contentForSecretInDeletedSecretsTable =
-        secretContentDAO.createSecretContent(idOfSecretInDeletedSecretsTable, "blah",
-            "checksum", "creator", null, 0, now);
-    secretSeriesDAO.setCurrentVersion(idOfSecretInDeletedSecretsTable,
-        contentForSecretInDeletedSecretsTable, "creator", now);
+    long secretId = createSecretForGroup(groupName);
 
     SecretSeriesAndContent original = secretDAO.getSecretById(secretId).get();
     assertEquals(groupName, original.series().owner());
-
-    SecretSeries originalInDeletedSecretsTable =
-        secretSeriesDAO.getDeletedSecretSeriesById(idOfSecretInDeletedSecretsTable).get();
-    assertEquals(groupName, originalInDeletedSecretsTable.owner());
 
     groupDAO.deleteGroup(groupDAO.getGroupById(groupId).get());
 
     SecretSeriesAndContent updated = secretDAO.getSecretById(secretId).get();
     assertNull(updated.series().owner());
+  }
 
-    SecretSeries updatedInDeletedSecretsTable =
-        secretSeriesDAO.getDeletedSecretSeriesById(idOfSecretInDeletedSecretsTable).get();
-    assertNull(updatedInDeletedSecretsTable.owner());
+  @Test public void deleteSetsSecretOwnerToNullForDeletedSecret() {
+    String groupName = randomName();
+    long groupId = groupDAO.createGroup(groupName, "creator", "description", ImmutableMap.of());
+    long deletedSecretId = createDeletedSecretForGroup(groupName);
+
+    Optional<SecretSeries> deletedSecretSeriesOriginal =
+        secretSeriesDAO.getDeletedSecretSeriesById(deletedSecretId);
+    assertEquals(groupName, deletedSecretSeriesOriginal.get().owner());
+
+
+    groupDAO.deleteGroup(groupDAO.getGroupById(groupId).get());
+
+    Optional<SecretSeries> deletedSecretSeriesUpdated =
+        secretSeriesDAO.getDeletedSecretSeriesById(deletedSecretId);
+    assertNull(deletedSecretSeriesUpdated.get().owner());
+  }
+
+  private long createDeletedSecretForGroup(String groupName) {
+    long secretId = createSecretForGroup(groupName);
+    secretSeriesDAO.softDeleteSecretSeriesById(secretId);;
+    return secretId;
+  }
+
+  private long createSecretForGroup(String groupName) {
+    return secretDAO.createSecret(randomName(), groupName, "encryptedSecret", "hmac", "creator",
+        Collections.emptyMap(), 0, "description", null, null);
   }
 
   @Test public void deleteSetsGroupOwnerToNull() {
