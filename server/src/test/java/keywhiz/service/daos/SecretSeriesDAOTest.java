@@ -460,39 +460,37 @@ public class SecretSeriesDAOTest {
   }
 
   @Test public void getSecretSeriesByDeletedName() {
-    long secretSeriesID = createSoftDeletedSecretSeries("toBeFound_getSecretSeriesByDeletedName");
+    String secretName = "toBeFound_getSecretSeriesByDeletedName";
+    long secretSeriesID = createSoftDeletedSecretSeries(secretName);
 
     List<SecretSeries> deletedSecretSeries =
-        secretSeriesDAO.getSecretSeriesByDeletedName("toBeFound_getSecretSeriesByDeletedName");
+        secretSeriesDAO.getSecretSeriesByDeletedName(secretName);
     assertThat(deletedSecretSeries.size()).isEqualTo(1);
-    assertThat(deletedSecretSeries.get(0).name()).contains(
-        "toBeFound_getSecretSeriesByDeletedName");
-    assertThat(deletedSecretSeries.get(0).name()).isEqualTo(
-        "toBeFound_getSecretSeriesByDeletedName");
+    assertThat(deletedSecretSeries.get(0).name()).isEqualTo(secretName);
     assertThat(deletedSecretSeries.get(0).id()).isEqualTo(secretSeriesID);
   }
 
   @Test public void getDeletedSecretSeriesById() {
-    long secretSeriesID = createSoftDeletedSecretSeries("toBeFound_getDeletedSecretSeriesById");
+    String secretName = "toBeFound_getDeletedSecretSeriesById";
+    long secretSeriesID = createSoftDeletedSecretSeries(secretName);
 
     assertThat(secretSeriesDAO.getSecretSeriesById(secretSeriesID)).isEmpty();
 
     Optional<SecretSeries> deletedSecretSeries =
         secretSeriesDAO.getDeletedSecretSeriesById(secretSeriesID);
     assertThat(deletedSecretSeries).isPresent();
-    assertThat(deletedSecretSeries.get().name()).contains("toBeFound_getDeletedSecretSeriesById");
-    assertThat(deletedSecretSeries.get().name()).isEqualTo(
-        "toBeFound_getDeletedSecretSeriesById");
+    assertThat(deletedSecretSeries.get().name()).isEqualTo(secretName);
     assertThat(deletedSecretSeries.get().id()).isEqualTo(secretSeriesID);
   }
 
   @Test public void getDeletedSecretSeriesByName() {
-    long bothTablesID = createSoftDeletedSecretSeries("getDeletedSecretSeriesByName");
-    long secretsTableOnlyID = createLegacySoftDeletedSecretSeries("getDeletedSecretSeriesByName");
-    long notDeletedID = createSecretSeries("getDeletedSecretSeriesByName");
+    String secretName = "getDeletedSecretSeriesByName";
+    long bothTablesID = createSoftDeletedSecretSeries(secretName);
+    long secretsTableOnlyID = createLegacySoftDeletedSecretSeries(secretName);
+    long notDeletedID = createSecretSeries(secretName);
 
     List<SecretSeries> deletedSecrets =
-        secretSeriesDAO.getSecretSeriesByDeletedName("getDeletedSecretSeriesByName");
+        secretSeriesDAO.getSecretSeriesByDeletedName(secretName);
 
     List<Long> deletedIDs = deletedSecrets.stream().map(s -> s.id()).collect(Collectors.toList());
     assertThat(deletedIDs).containsExactlyInAnyOrder(bothTablesID, secretsTableOnlyID);
