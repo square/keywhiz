@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -81,19 +83,26 @@ public class BatchResource {
 
     switch (request.batchMode()) {
       case BatchMode.ALL_OR_NONE:
+        Map<CreateOrUpdateSecretInfoV2, SecretController.SecretBuilder> secretsToBuilders = request.secrets()
+            .stream()
+            .collect(
+                Collectors.toMap(
+                    Function.identity(),
+                    secret -> toBuilder(automationClient, secret)));
         jooq.transaction(configuration -> {
           DSLContext dslContext = DSL.using(configuration);
-          for (CreateOrUpdateSecretInfoV2 secret : request.secrets()) {
-            createOrUpdateSecret(dslContext, automationClient, secret);
+          for (Map.Entry<CreateOrUpdateSecretInfoV2, SecretController.SecretBuilder> entry : secretsToBuilders.entrySet()) {
+            createOrUpdateSecret(dslContext, automationClient, entry.getKey(), entry.getValue());
           }
         });
         break;
       case BatchMode.BEST_EFFORT:
         for (CreateOrUpdateSecretInfoV2 secret : request.secrets()) {
           try {
+            SecretController.SecretBuilder builder = toBuilder(automationClient, secret);
             jooq.transaction(configuration -> {
                 DSLContext dslContext = DSL.using(configuration);
-                createOrUpdateSecret(dslContext, automationClient, secret);
+                createOrUpdateSecret(dslContext, automationClient, secret, builder);
             });
           } catch (Exception e) {
             logger.error(String.format("Failed to create or update secret: %s", secret), e);
@@ -102,9 +111,10 @@ public class BatchResource {
         break;
       case BatchMode.FAIL_FAST:
         for (CreateOrUpdateSecretInfoV2 secret : request.secrets()) {
+          SecretController.SecretBuilder builder = toBuilder(automationClient, secret);
           jooq.transaction(configuration -> {
             DSLContext dslContext = DSL.using(configuration);
-            createOrUpdateSecret(dslContext, automationClient, secret);
+            createOrUpdateSecret(dslContext, automationClient, secret, builder);
           });
         }
         break;
@@ -120,27 +130,38 @@ public class BatchResource {
   private void createOrUpdateSecret(
       DSLContext dslContext,
       AutomationClient automationClient,
-      CreateOrUpdateSecretInfoV2 secret) {
+      CreateOrUpdateSecretInfoV2 secret,
+      SecretController.SecretBuilder builder) {
 
-    Optional<SecretSeriesAndContent> maybeSecretSeriesAndContent = secretDAO.getSecretByName(dslContext, secret.name());
     String secretOwner = secret.owner();
-    if (maybeSecretSeriesAndContent.isPresent()) {
-      permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE, maybeSecretSeriesAndContent.get());
-    } else {
-      permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.CREATE, Secret.class);
-      secretOwner = getSecretOwnerForSecretCreation(dslContext, secretOwner, automationClient);
+    {
+      Optional<SecretSeriesAndContent> maybeSecretSeriesAndContent =
+          secretDAO.getSecretByName(dslContext, secret.name());
+      if (maybeSecretSeriesAndContent.isPresent()) {
+        permissionCheck.checkAllowedOrThrow(automationClient, Action.UPDATE,
+            maybeSecretSeriesAndContent.get());
+      } else {
+        permissionCheck.checkAllowedForTargetTypeOrThrow(automationClient, Action.CREATE,
+            Secret.class);
+        secretOwner = getSecretOwnerForSecretCreation(dslContext, secretOwner, automationClient);
+      }
     }
 
-    SecretController.SecretBuilder builder = secretController
+    builder
+        .withOwnerName(secretOwner)
+        .createOrUpdate(dslContext);
+
+    emitAuditLogEntry(automationClient, secret);
+  }
+
+  private SecretController.SecretBuilder toBuilder(
+      AutomationClient automationClient,
+      CreateOrUpdateSecretInfoV2 secret) {
+    return secretController
         .builder(secret.name(), secret.content(), automationClient.getName(), secret.expiry())
         .withDescription(secret.description())
         .withMetadata(secret.metadata())
-        .withType(secret.type())
-        .withOwnerName(secretOwner);
-
-    builder.createOrUpdate(dslContext);
-
-    emitAuditLogEntry(automationClient, secret);
+        .withType(secret.type());
   }
 
   private void emitAuditLogEntry(AutomationClient automationClient, CreateOrUpdateSecretInfoV2 secret) {
