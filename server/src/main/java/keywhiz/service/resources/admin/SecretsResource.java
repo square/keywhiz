@@ -36,6 +36,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -514,6 +515,55 @@ public class SecretsResource {
     auditLog.recordEvent(
         new Event(Instant.now(), EventTag.SECRET_DELETE, user.getName(), secret.get().getName(),
             extraInfo));
+    return Response.noContent().build();
+  }
+
+  /**
+   * Undelete Secret by ID
+   *
+   * @param user     the admin user performing this operation
+   * @param secretId the ID of the Secret to be undeleted
+   * @return 200 if secret undeleted, 400 if a secret with the same name already
+   * exists (and host not been deleted), 404 if not found
+   * <p>
+   * description Undeletes a single Secret if found. Used by Keywhiz CLI.
+   * <p>
+   * responseMessage 200 Found and deleted Secret with given ID
+   * <p>
+   * responseMessage 404 Secret with given ID not Found
+   * <p>
+   * responseMessage 400 Secret with the same name already exists
+   */
+  @Path("undelete/{secretId}")
+  @Timed @ExceptionMetered
+  @POST
+  public Response undeleteSecret(
+      @Auth User user,
+      @PathParam("secretId") LongParam secretId) {
+    long id = secretId.get();
+    Optional<SecretSeries> optionalDeletedSecret = secretDAOReadOnly.getDeletedSecretsWithID(id);
+    if (!optionalDeletedSecret.isPresent()) {
+      logger.info("User '{}' tried undeleting a secret but it was not found (id={})", user, id);
+      throw new NotFoundException("Secret not found.");
+    }
+    SecretSeries deletedSecret = optionalDeletedSecret.get();
+
+    Optional<Secret> nonDeletedSecret = secretController.getSecretByName(deletedSecret.name());
+    if (nonDeletedSecret.isPresent()) {
+      logger.info(
+          "User '{}' tried undeleting a secret (id={}) but there is already a non-deleted secret with the same name (id={})",
+          user, id, nonDeletedSecret.get().getId());
+      throw new BadRequestException(
+          "Cannot undelete secret since there is already a non-deleted secret with the same name");
+    }
+
+    logger.info("User '{}' undeleting secret id={}, name='{}'", user, secretId,
+        deletedSecret.name());
+
+    secretDAOReadWrite.undeleteSecret(id);
+
+    auditLog.recordEvent(
+        new Event(Instant.now(), EventTag.SECRET_UNDELETE, user.getName(), deletedSecret.name()));
     return Response.noContent().build();
   }
 

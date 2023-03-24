@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -124,6 +125,8 @@ public class SecretsResourceTest {
     when(secretBuilder.createOrUpdate()).thenReturn(secret);
 
     when(secretController.getSecretById(secret.getId())).thenReturn(Optional.of(secret));
+    when(secretDAO.getDeletedSecretsWithID(secret.getId())).thenReturn(
+        Optional.of(secretSeriesAndContent1.series()));
   }
 
   @Test
@@ -142,6 +145,31 @@ public class SecretsResourceTest {
   public void deleteSecretWithModeHardHardDeletesSecret() {
     resource.deleteSecret(user, new LongParam(Long.toString(secret.getId())), "hard");
     verify(secretDAO).deleteSecretsByName(secret.getName(), SecretDeletionMode.HARD);
+  }
+
+  @Test
+  public void undeleteUndeletesSecret() {
+    when(secretController.getSecretByName(secretSeriesAndContent1.series().name())).thenReturn(
+        Optional.empty());
+    resource.undeleteSecret(user, new LongParam(Long.toString(secret.getId())));
+    verify(secretDAO).undeleteSecret(secret.getId());
+  }
+
+  @Test
+  public void undeleteThrowsWhenDeletedSecretNotFound() {
+    when(secretDAO.getDeletedSecretsWithID(secret.getId())).thenReturn(Optional.empty());
+    thrown.expect(NotFoundException.class);
+    resource.undeleteSecret(user, new LongParam(Long.toString(secret.getId())));
+  }
+
+  @Test
+  public void undeleteThrowsWhenNonDeletedSecretExists() {
+    when(secretDAO.getDeletedSecretsWithID(secret.getId())).thenReturn(
+        Optional.of(secretSeriesAndContent1.series()));
+    when(secretController.getSecretByName(secretSeriesAndContent1.series().name())).thenReturn(
+        Optional.of(secret));
+    thrown.expect(BadRequestException.class);
+    resource.undeleteSecret(user, new LongParam(Long.toString(secret.getId())));
   }
 
   @Test
