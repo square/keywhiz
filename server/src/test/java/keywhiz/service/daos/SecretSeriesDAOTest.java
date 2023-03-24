@@ -26,7 +26,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
-import keywhiz.api.model.Secret;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.jooq.tables.records.SecretsRecord;

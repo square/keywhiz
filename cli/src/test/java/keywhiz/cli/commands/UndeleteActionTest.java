@@ -18,17 +18,8 @@ package keywhiz.cli.commands;
 
 import com.google.common.base.Throwables;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.UUID;
-import keywhiz.api.model.Client;
-import keywhiz.api.model.Group;
-import keywhiz.api.model.SanitizedSecret;
-import keywhiz.api.model.SecretDeletionMode;
 import keywhiz.cli.configs.UndeleteActionConfig;
 import keywhiz.client.KeywhizClient;
-import keywhiz.client.KeywhizClient.NotFoundException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,10 +28,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class UndeleteActionTest {
   @Rule public MockitoRule mockito = MockitoJUnit.rule();
@@ -51,9 +39,6 @@ public class UndeleteActionTest {
 
   UndeleteActionConfig undeleteActionConfig;
   UndeleteAction undeleteAction;
-
-  ByteArrayInputStream yes;
-  ByteArrayInputStream no;
 
   @Before
   public void setUp() {
