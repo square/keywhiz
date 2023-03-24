@@ -38,6 +38,7 @@ import keywhiz.cli.commands.ListVersionsAction;
 import keywhiz.cli.commands.RenameAction;
 import keywhiz.cli.commands.RollbackAction;
 import keywhiz.cli.commands.UnassignAction;
+import keywhiz.cli.commands.UndeleteAction;
 import keywhiz.cli.commands.UpdateAction;
 import keywhiz.cli.configs.AddActionConfig;
 import keywhiz.cli.configs.AssignActionConfig;
@@ -49,6 +50,7 @@ import keywhiz.cli.configs.ListVersionsActionConfig;
 import keywhiz.cli.configs.RenameActionConfig;
 import keywhiz.cli.configs.RollbackActionConfig;
 import keywhiz.cli.configs.UnassignActionConfig;
+import keywhiz.cli.configs.UndeleteActionConfig;
 import keywhiz.cli.configs.UpdateActionConfig;
 import keywhiz.client.KeywhizClient;
 import keywhiz.client.KeywhizClient.UnauthorizedException;
@@ -66,6 +68,7 @@ public class CommandExecutor {
     ADD,
     ASSIGN,
     DELETE,
+    UNDELETE,
     DESCRIBE,
     LIST,
     LOGIN,
@@ -176,6 +179,10 @@ public class CommandExecutor {
         new DeleteAction((DeleteActionConfig) commands.get(command), client).run();
         break;
 
+      case UNDELETE:
+        new UndeleteAction((UndeleteActionConfig) commands.get(command), client).run();
+        break;
+
       case ASSIGN:
         new AssignAction((AssignActionConfig) commands.get(command), client).run();
         break;
@@ -194,6 +201,7 @@ public class CommandExecutor {
 
       case RENAME:
         new RenameAction((RenameActionConfig) commands.get(command), client).run();
+        break;
 
       case LOGIN:
         // User is already logged in at this point
