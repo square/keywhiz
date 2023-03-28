@@ -32,6 +32,7 @@ import keywhiz.cli.configs.LoginActionConfig;
 import keywhiz.cli.configs.RenameActionConfig;
 import keywhiz.cli.configs.RollbackActionConfig;
 import keywhiz.cli.configs.UnassignActionConfig;
+import keywhiz.cli.configs.UndeleteActionConfig;
 import keywhiz.cli.configs.UpdateActionConfig;
 
 /** Keywhiz ACL Command Line Management Utility */
@@ -97,6 +98,7 @@ public class CliMain {
           .put("rename", new RenameActionConfig())
           .put("rollback", new RollbackActionConfig())
           .put("unassign", new UnassignActionConfig())
+          .put("undelete", new UndeleteActionConfig())
           .put("update", new UpdateActionConfig())
           .put("versions", new ListVersionsActionConfig())
           .build();
