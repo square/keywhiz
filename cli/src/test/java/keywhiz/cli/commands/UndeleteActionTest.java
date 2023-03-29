@@ -16,11 +16,16 @@
 
 package keywhiz.cli.commands;
 
-import com.google.common.base.Throwables;
 import java.io.IOException;
 import keywhiz.cli.configs.UndeleteActionConfig;
 import keywhiz.client.KeywhizClient;
 import static org.assertj.core.api.Assertions.assertThat;
+
+import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,6 +35,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.slf4j.Logger;
 import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
@@ -51,15 +57,12 @@ public class UndeleteActionTest {
   }
 
   @Test
-  public void undeletesSecret() {
+  public void undeletesSecret() throws IOException {
     undeleteActionConfig.objectType = "secret";
     undeleteActionConfig.id = 123L;
+    mockUndeleteSecret(HttpStatus.SC_OK, "");
     undeleteAction.run();
-    try {
-      verify(keywhizClient).undeleteSecret(123L);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    verify(keywhizClient).undeleteSecret(123L);
   }
 
   @Test
@@ -72,9 +75,9 @@ public class UndeleteActionTest {
 
   @Test
   public void throwsAssertionErrorIfCannotUndelete() throws IOException {
-    doThrow(new KeywhizClient.MalformedRequestException()).when(keywhizClient).undeleteSecret(123L);
     undeleteActionConfig.objectType = "secret";
     undeleteActionConfig.id = 123L;
+    mockUndeleteSecret(HttpStatus.SC_CONFLICT, "Cannot undelete secret since there is already a non-deleted secret with the same name");
     Throwable exception = assertThrows(AssertionError.class, () -> {
       undeleteAction.run();
     });
@@ -84,9 +87,9 @@ public class UndeleteActionTest {
 
   @Test
   public void throwsAssertionErrorIfSecretNotFound() throws IOException {
-    doThrow(new KeywhizClient.NotFoundException()).when(keywhizClient).undeleteSecret(123L);
     undeleteActionConfig.objectType = "secret";
     undeleteActionConfig.id = 123L;
+    mockUndeleteSecret(HttpStatus.SC_NOT_FOUND, "No soft-deleted secret with the provided ID was found.");
     Throwable exception = assertThrows(AssertionError.class, () -> {
       undeleteAction.run();
     });
@@ -103,5 +106,18 @@ public class UndeleteActionTest {
       undeleteAction.run();
     });
     assertThat(exception.getMessage()).isEqualTo("Server error 123");
+  }
+
+  private void mockUndeleteSecret(
+      int responseCode,
+      String responseBody
+  ) throws IOException {
+    doReturn(new Response.Builder()
+        .code(responseCode)
+        .request(new Request.Builder().url("https://foo").build())
+        .protocol(Protocol.HTTP_2)
+        .body(ResponseBody.create(null, responseBody))
+        .message(responseBody)
+        .build()).when(keywhizClient).undeleteSecret(123L);
   }
 }

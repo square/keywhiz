@@ -17,10 +17,10 @@
 package keywhiz.cli.commands;
 
 import java.io.IOException;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 import keywhiz.cli.configs.UndeleteActionConfig;
 import keywhiz.client.KeywhizClient;
+import okhttp3.Response;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,11 +56,16 @@ public class UndeleteAction implements Runnable {
   private void undeleteSecret(Long id) {
     logger.info("Undeleting secret '{}'.", id);
     try {
-      keywhizClient.undeleteSecret(id);
-    } catch (KeywhizClient.MalformedRequestException e) {
-      throw new AssertionError("Cannot undelete secret since there is already a non-deleted secret with the same name");
-    } catch (KeywhizClient.NotFoundException e) {
-      throw new AssertionError("No soft-deleted secret with the provided ID was found.");
+      Response response = keywhizClient.undeleteSecret(id);
+      switch (response.code()) {
+        case HttpStatus.SC_OK:
+          logger.info("Successfully undeleted secret.", id);
+          break;
+        default:
+          logger.error(response.message());
+          logger.error(response.body().string());
+          throw new AssertionError(response.message());
+      }
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

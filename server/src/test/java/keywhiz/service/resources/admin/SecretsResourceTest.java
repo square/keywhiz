@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import javax.ws.rs.BadRequestException;
+import javax.validation.ValidationException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -43,7 +43,6 @@ import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
 import keywhiz.api.model.SecretSeriesAndContent;
 import keywhiz.auth.User;
-import keywhiz.log.AuditLog;
 import keywhiz.log.Event;
 import keywhiz.log.SimpleLogger;
 import keywhiz.service.daos.AclDAO;
@@ -70,7 +69,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -149,8 +147,10 @@ public class SecretsResourceTest {
 
   @Test
   public void undeleteUndeletesSecret() {
-    when(secretController.getSecretByName(secretSeriesAndContent1.series().name())).thenReturn(
-        Optional.empty());
+    when(secretDAO.getDeletedSecretsWithID(secret.getId())).thenReturn(Optional.of(
+        SecretSeries.of(1, "foo", null, "desc", NOW, "user", NOW, "user", null, emptyMap,
+            secretSeriesAndContent1.content().id())));
+    when(secretController.getSecretByName("foo")).thenReturn(Optional.empty());
     resource.undeleteSecret(user, new LongParam(Long.toString(secret.getId())));
     verify(secretDAO).undeleteSecret(secret.getId());
   }
@@ -164,11 +164,19 @@ public class SecretsResourceTest {
 
   @Test
   public void undeleteThrowsWhenNonDeletedSecretExists() {
-    when(secretDAO.getDeletedSecretsWithID(secret.getId())).thenReturn(
-        Optional.of(secretSeriesAndContent1.series()));
-    when(secretController.getSecretByName(secretSeriesAndContent1.series().name())).thenReturn(
-        Optional.of(secret));
-    thrown.expect(BadRequestException.class);
+    when(secretDAO.getDeletedSecretsWithID(secret.getId())).thenReturn(Optional.of(
+        SecretSeries.of(1, "foo", null, "desc", NOW, "user", NOW, "user", null, emptyMap,
+            secretSeriesAndContent1.content().id())));
+    when(secretController.getSecretByName("foo")).thenReturn(Optional.of(secret));
+    thrown.expect(ConflictException.class);
+    resource.undeleteSecret(user, new LongParam(Long.toString(secret.getId())));
+  }
+
+  @Test
+  public void undeleteThrowsWhenDeletedSecretDoesNotHaveCurrentVersion() {
+    when(secretDAO.getDeletedSecretsWithID(secret.getId())).thenReturn(Optional.of(
+        SecretSeries.of(1, "foo", null, "desc", NOW, "user", NOW, "user", null, emptyMap, null)));
+    thrown.expect(ValidationException.class);
     resource.undeleteSecret(user, new LongParam(Long.toString(secret.getId())));
   }
 

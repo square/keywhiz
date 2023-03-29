@@ -32,6 +32,7 @@ import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readwrite;
 import org.jooq.DSLContext;
 import org.jooq.Record1;
+import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -587,6 +588,14 @@ public class SecretSeriesDAOTest {
     assertThat(jooqContext.select(DELETED_ACCESSGRANTS.ID)
         .from(DELETED_ACCESSGRANTS)
         .where(DELETED_ACCESSGRANTS.SECRETID.eq(secretSeriesID))).isEmpty();
+  }
+
+  @Test public void undeleteFailsOnLegacySecret() {
+    long secretSeriesID = createLegacySoftDeletedSecretSeries("undeleteSecret");
+
+    assertThrows(DataAccessException.class, () -> {
+      secretSeriesDAO.undeleteSoftDeletedSecretSeriesByID(secretSeriesID);
+    });
   }
 
   private long createLegacySoftDeletedSecretSeries(String name) {

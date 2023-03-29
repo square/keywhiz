@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.validation.ValidationException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -543,16 +544,22 @@ public class SecretsResource {
     Optional<SecretSeries> optionalDeletedSecret = secretDAOReadOnly.getDeletedSecretsWithID(id);
     if (!optionalDeletedSecret.isPresent()) {
       logger.info("User '{}' tried undeleting a secret but it was not found (id={})", user, id);
-      throw new NotFoundException("Secret not found.");
+      throw new NotFoundException("No soft-deleted secret with the provided ID was found.");
     }
     SecretSeries deletedSecret = optionalDeletedSecret.get();
+
+    if (!deletedSecret.currentVersion().isPresent()) {
+      logger.info("User '{}' tried undeleting a secret but it did not have a current version (id={})", user, id);
+      throw new ValidationException(
+          "Soft-deleted secret was found but does not have all of the data needed for undeletion. It may have been deleted before undeletion was supported.");
+    }
 
     Optional<Secret> nonDeletedSecret = secretController.getSecretByName(deletedSecret.name());
     if (nonDeletedSecret.isPresent()) {
       logger.info(
           "User '{}' tried undeleting a secret (id={}) but there is already a non-deleted secret with the same name (id={})",
           user, id, nonDeletedSecret.get().getId());
-      throw new BadRequestException(
+      throw new ConflictException(
           "Cannot undelete secret since there is already a non-deleted secret with the same name");
     }
 
@@ -563,7 +570,7 @@ public class SecretsResource {
 
     auditLog.recordEvent(
         new Event(Instant.now(), EventTag.SECRET_UNDELETE, user.getName(), deletedSecret.name()));
-    return Response.noContent().build();
+    return Response.ok().build();
   }
 
   /**
