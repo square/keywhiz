@@ -16,14 +16,13 @@
 
 package keywhiz.cli.commands;
 
-import com.google.common.base.Throwables;
 import java.io.IOException;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import keywhiz.cli.configs.UndeleteActionConfig;
 import keywhiz.client.KeywhizClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static java.lang.String.format;
 
 public class UndeleteAction implements Runnable {
   private static final Logger logger = LoggerFactory.getLogger(UndeleteAction.class);
@@ -47,15 +46,23 @@ public class UndeleteAction implements Runnable {
     String trimmedType = type.toLowerCase().trim();
     switch (trimmedType) {
       case "secret":
-        logger.info("Undeleting secret '{}'.", id);
-        try {
-          keywhizClient.undeleteSecret(id);
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
+        undeleteSecret(id);
         break;
       default:
         throw new IllegalArgumentException("Invalid undelete type specified: " + trimmedType);
+    }
+  }
+
+  private void undeleteSecret(Long id) {
+    logger.info("Undeleting secret '{}'.", id);
+    try {
+      keywhizClient.undeleteSecret(id);
+    } catch (BadRequestException e) {
+      throw new AssertionError("Bad Request: " + e.getMessage());
+    } catch (NotFoundException e) {
+      throw new AssertionError("No soft-deleted secret with the provided ID was found.");
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 }
