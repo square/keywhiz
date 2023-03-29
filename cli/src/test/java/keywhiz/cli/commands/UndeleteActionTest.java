@@ -18,8 +18,6 @@ package keywhiz.cli.commands;
 
 import com.google.common.base.Throwables;
 import java.io.IOException;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 import keywhiz.cli.configs.UndeleteActionConfig;
 import keywhiz.client.KeywhizClient;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,21 +72,19 @@ public class UndeleteActionTest {
 
   @Test
   public void throwsAssertionErrorIfCannotUndelete() throws IOException {
-    doThrow(new BadRequestException(
-        "Cannot undelete secret since there is already a non-deleted secret with the same name")).when(
-        keywhizClient).undeleteSecret(123L);
+    doThrow(new KeywhizClient.MalformedRequestException()).when(keywhizClient).undeleteSecret(123L);
     undeleteActionConfig.objectType = "secret";
     undeleteActionConfig.id = 123L;
     Throwable exception = assertThrows(AssertionError.class, () -> {
       undeleteAction.run();
     });
     assertThat(exception.getMessage()).isEqualTo(
-        "Bad Request: Cannot undelete secret since there is already a non-deleted secret with the same name");
+        "Cannot undelete secret since there is already a non-deleted secret with the same name");
   }
 
   @Test
   public void throwsAssertionErrorIfSecretNotFound() throws IOException {
-    doThrow(new NotFoundException("Secret not found.")).when(keywhizClient).undeleteSecret(123L);
+    doThrow(new KeywhizClient.NotFoundException()).when(keywhizClient).undeleteSecret(123L);
     undeleteActionConfig.objectType = "secret";
     undeleteActionConfig.id = 123L;
     Throwable exception = assertThrows(AssertionError.class, () -> {

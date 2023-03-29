@@ -57,9 +57,9 @@ public class UndeleteAction implements Runnable {
     logger.info("Undeleting secret '{}'.", id);
     try {
       keywhizClient.undeleteSecret(id);
-    } catch (BadRequestException e) {
-      throw new AssertionError("Bad Request: " + e.getMessage());
-    } catch (NotFoundException e) {
+    } catch (KeywhizClient.MalformedRequestException e) {
+      throw new AssertionError("Cannot undelete secret since there is already a non-deleted secret with the same name");
+    } catch (KeywhizClient.NotFoundException e) {
       throw new AssertionError("No soft-deleted secret with the provided ID was found.");
     } catch (IOException e) {
       throw new RuntimeException(e);
