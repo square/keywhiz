@@ -274,6 +274,24 @@ public class KeywhizClient {
     httpDelete(baseUrl.resolve(format("/admin/secrets/%d", secretId)));
   }
 
+  public Response undeleteSecret(Long secretId) throws IOException {
+    HttpUrl url = baseUrl.newBuilder()
+        .addPathSegment("admin")
+        .addPathSegment("secrets")
+        .addPathSegment("undelete")
+        .addPathSegment(secretId.toString())
+        .build();
+
+    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(null));
+    Request request = new Request.Builder()
+        .url(url)
+        .post(body)
+        .addHeader(HttpHeaders.CONTENT_TYPE, JSON.toString())
+        .build();
+
+    return client.newCall(request).execute();
+  }
+
   public void deleteSecretWithId(long secretId, String mode) {
     HttpUrl url = baseUrl.newBuilder()
         .addPathSegment("admin")

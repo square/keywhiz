@@ -28,12 +28,11 @@ import keywhiz.KeywhizTestRunner;
 import keywhiz.api.ApiDate;
 import keywhiz.api.model.SecretContent;
 import keywhiz.api.model.SecretSeries;
-import keywhiz.jooq.tables.records.DeletedSecretsRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
 import keywhiz.service.config.Readwrite;
-import keywhiz.service.crypto.RowHmacGenerator;
 import org.jooq.DSLContext;
 import org.jooq.Record1;
+import org.jooq.exception.DataAccessException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,7 +52,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -564,6 +562,39 @@ public class SecretSeriesDAOTest {
 
     assertThat(idsInDeletedAccessGrants.size()).isEqualTo(1);
     assertThat(idsInDeletedAccessGrants.get(0).value1()).isNotEqualTo(idFromAccessGrantsTable);
+  }
+
+  @Test public void undeleteSecret() {
+    long secretSeriesID = createSecretSeries("undeleteSecret");
+    long groupID = groupDAO.createGroup("group1", "creator", "", ImmutableMap.of());
+    aclDAO.allowAccess(jooqContext.configuration(), secretSeriesID, groupID);
+
+    secretSeriesDAO.softDeleteSecretSeriesById(secretSeriesID);
+    secretSeriesDAO.undeleteSoftDeletedSecretSeriesById(secretSeriesID);
+
+    Optional<SecretSeries> loadedSecretSeries = secretSeriesDAO.getSecretSeriesById(secretSeriesID);
+    assertThat(loadedSecretSeries).isPresent();
+    assertThat(loadedSecretSeries.get().currentVersion()).isNotNull();
+    assertThat(loadedSecretSeries.get().name()).isEqualTo("undeleteSecret");
+
+    Optional<SecretSeries> deletedSecretSeries =
+        secretSeriesDAO.getDeletedSecretSeriesById(secretSeriesID);
+    assertThat(deletedSecretSeries).isEmpty();
+
+    assertThat(jooqContext.select(ACCESSGRANTS.ID)
+        .from(ACCESSGRANTS)
+        .where(ACCESSGRANTS.SECRETID.eq(secretSeriesID))).isNotEmpty();
+    assertThat(jooqContext.select(DELETED_ACCESSGRANTS.ID)
+        .from(DELETED_ACCESSGRANTS)
+        .where(DELETED_ACCESSGRANTS.SECRETID.eq(secretSeriesID))).isEmpty();
+  }
+
+  @Test public void undeleteFailsOnLegacySecret() {
+    long secretSeriesID = createLegacySoftDeletedSecretSeries("undeleteSecret");
+
+    assertThrows(DataAccessException.class, () -> {
+      secretSeriesDAO.undeleteSoftDeletedSecretSeriesById(secretSeriesID);
+    });
   }
 
   private long createLegacySoftDeletedSecretSeries(String name) {

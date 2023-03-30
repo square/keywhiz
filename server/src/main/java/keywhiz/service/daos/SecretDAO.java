@@ -568,6 +568,11 @@ public class SecretDAO {
     return secretSeriesDAO.getSecretSeriesByDeletedName(name);
   }
 
+  public Optional<SecretSeries> getDeletedSecretsWithId(long id) {
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+    return secretSeriesDAO.getDeletedSecretSeriesById(id);
+  }
+
   /**
    * @param name of secret series for which to reset secret version
    * @param versionId The identifier for the desired current version
@@ -608,6 +613,11 @@ public class SecretDAO {
       default:
         throw new IllegalArgumentException(String.format("Unknown secret deletion mode: %s", mode));
     }
+  }
+
+  public void undeleteSecret(long secretId) {
+    secretSeriesDAOFactory.using(dslContext.configuration())
+        .undeleteSoftDeletedSecretSeriesById(secretId);
   }
 
   /**

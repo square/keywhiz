@@ -7,6 +7,7 @@ import com.beust.jcommander.ParameterException;
 import java.util.UUID;
 import keywhiz.cli.configs.AddActionConfig;
 import keywhiz.cli.configs.RenameActionConfig;
+import keywhiz.cli.configs.UndeleteActionConfig;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -95,5 +96,19 @@ public class CliMainTest {
 
     AddActionConfig config = (AddActionConfig) context.getCommands().get(parsedCommand);
     assertEquals(owner, config.getOwner());
+  }
+
+  @Test
+  public void parsesUndeleteCommand() {
+    CliMain.CommandLineParsingContext context = new CliMain.CommandLineParsingContext();
+    JCommander commander = context.getCommander();
+    commander.parse("undelete", "secret", "--id", "123");
+
+    String parsedCommand = commander.getParsedCommand();
+    assertEquals("undelete", parsedCommand);
+
+    UndeleteActionConfig config = (UndeleteActionConfig) context.getCommands().get(parsedCommand);
+    assertEquals("secret", config.objectType);
+    assertEquals(123L, (long)config.id);
   }
 }

@@ -514,6 +514,56 @@ public class SecretSeriesDAO {
         .execute();
   }
 
+  public void undeleteSoftDeletedSecretSeriesById(long id) {
+    dslContext.transaction(configuration -> {
+      undeleteSoftDeletedSecretSeriesById(DSL.using(configuration), id);
+    });
+  }
+
+  private static void undeleteSoftDeletedSecretSeriesById(
+      DSLContext dslContext,
+      long id
+  ) {
+    long now = OffsetDateTime.now().toEpochSecond();
+
+    dslContext
+        .update(SECRETS)
+        .set(SECRETS.NAME, select(
+            DELETED_SECRETS.NAME
+        ).from(DELETED_SECRETS).where(DELETED_SECRETS.ID.eq(id)))
+        .set(SECRETS.CURRENT, select(
+            DELETED_SECRETS.CURRENT
+        ).from(DELETED_SECRETS).where(DELETED_SECRETS.ID.eq(id)))
+        .set(SECRETS.UPDATEDAT, now)
+        .where(SECRETS.ID.eq(id))
+        .execute();
+
+    dslContext
+        .delete(DELETED_SECRETS)
+        .where(DELETED_SECRETS.ID.eq(id))
+        .execute();
+
+    List<Field<?>> fieldsToCopy = Arrays.stream(ACCESSGRANTS.fields())
+        .filter(field -> !field.getName().equals(ACCESSGRANTS.ID.getName()))
+        .collect(Collectors.toList());
+
+    dslContext
+        .insertInto(ACCESSGRANTS)
+        .columns(fieldsToCopy)
+        .select(select(
+            fieldsToCopy.stream()
+                .map(DELETED_ACCESSGRANTS::field)
+                .collect(Collectors.toList()))
+            .from(DELETED_ACCESSGRANTS)
+            .where(DELETED_ACCESSGRANTS.SECRETID.eq(id)))
+        .execute();
+
+    dslContext
+        .delete(DELETED_ACCESSGRANTS)
+        .where(DELETED_ACCESSGRANTS.SECRETID.eq(id))
+        .execute();
+  }
+
   public void renameSecretSeriesById(long secretId, String name, String creator, long now) {
     String rowHmac = computeRowHmac(secretId, name);
     dslContext.update(SECRETS)

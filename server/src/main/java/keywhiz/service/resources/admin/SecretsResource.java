@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.validation.ValidationException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -515,6 +516,61 @@ public class SecretsResource {
         new Event(Instant.now(), EventTag.SECRET_DELETE, user.getName(), secret.get().getName(),
             extraInfo));
     return Response.noContent().build();
+  }
+
+  /**
+   * Undelete Secret by ID
+   *
+   * @param user     the admin user performing this operation
+   * @param secretId the ID of the Secret to be undeleted
+   * @return 200 if secret undeleted, 400 if a secret with the same name already
+   * exists (and host not been deleted), 404 if not found
+   * <p>
+   * description Undeletes a single Secret if found. Used by Keywhiz CLI.
+   * <p>
+   * responseMessage 200 Found and deleted Secret with given ID
+   * <p>
+   * responseMessage 404 Secret with given ID not Found
+   * <p>
+   * responseMessage 400 Secret with the same name already exists
+   */
+  @Path("undelete/{secretId}")
+  @Timed @ExceptionMetered
+  @POST
+  public Response undeleteSecret(
+      @Auth User user,
+      @PathParam("secretId") LongParam secretId) {
+    long id = secretId.get();
+    Optional<SecretSeries> optionalDeletedSecret = secretDAOReadOnly.getDeletedSecretsWithId(id);
+    if (!optionalDeletedSecret.isPresent()) {
+      logger.info("User '{}' tried undeleting a secret but it was not found (id={})", user, id);
+      throw new NotFoundException("No soft-deleted secret with the provided ID was found.");
+    }
+    SecretSeries deletedSecret = optionalDeletedSecret.get();
+
+    if (!deletedSecret.currentVersion().isPresent()) {
+      logger.info("User '{}' tried undeleting a secret but it did not have a current version (id={})", user, id);
+      throw new ValidationException(
+          "Soft-deleted secret was found but does not have all of the data needed for undeletion. It may have been deleted before undeletion was supported.");
+    }
+
+    Optional<Secret> nonDeletedSecret = secretController.getSecretByName(deletedSecret.name());
+    if (nonDeletedSecret.isPresent()) {
+      logger.info(
+          "User '{}' tried undeleting a secret (id={}) but there is already a non-deleted secret with the same name (id={})",
+          user, id, nonDeletedSecret.get().getId());
+      throw new ConflictException(
+          "Cannot undelete secret since there is already a non-deleted secret with the same name");
+    }
+
+    logger.info("User '{}' undeleting secret id={}, name='{}'", user, secretId,
+        deletedSecret.name());
+
+    secretDAOReadWrite.undeleteSecret(id);
+
+    auditLog.recordEvent(
+        new Event(Instant.now(), EventTag.SECRET_UNDELETE, user.getName(), deletedSecret.name()));
+    return Response.ok().build();
   }
 
   /**
