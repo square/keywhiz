@@ -123,7 +123,7 @@ public class SecretsResourceTest {
     when(secretBuilder.createOrUpdate()).thenReturn(secret);
 
     when(secretController.getSecretById(secret.getId())).thenReturn(Optional.of(secret));
-    when(secretDAO.getDeletedSecretsWithID(secret.getId())).thenReturn(
+    when(secretDAO.getDeletedSecretsWithId(secret.getId())).thenReturn(
         Optional.of(secretSeriesAndContent1.series()));
   }
 
@@ -147,7 +147,7 @@ public class SecretsResourceTest {
 
   @Test
   public void undeleteUndeletesSecret() {
-    when(secretDAO.getDeletedSecretsWithID(secret.getId())).thenReturn(Optional.of(
+    when(secretDAO.getDeletedSecretsWithId(secret.getId())).thenReturn(Optional.of(
         SecretSeries.of(1, "foo", null, "desc", NOW, "user", NOW, "user", null, emptyMap,
             secretSeriesAndContent1.content().id())));
     when(secretController.getSecretByName("foo")).thenReturn(Optional.empty());
@@ -157,14 +157,14 @@ public class SecretsResourceTest {
 
   @Test
   public void undeleteThrowsWhenDeletedSecretNotFound() {
-    when(secretDAO.getDeletedSecretsWithID(secret.getId())).thenReturn(Optional.empty());
+    when(secretDAO.getDeletedSecretsWithId(secret.getId())).thenReturn(Optional.empty());
     thrown.expect(NotFoundException.class);
     resource.undeleteSecret(user, new LongParam(Long.toString(secret.getId())));
   }
 
   @Test
   public void undeleteThrowsWhenNonDeletedSecretExists() {
-    when(secretDAO.getDeletedSecretsWithID(secret.getId())).thenReturn(Optional.of(
+    when(secretDAO.getDeletedSecretsWithId(secret.getId())).thenReturn(Optional.of(
         SecretSeries.of(1, "foo", null, "desc", NOW, "user", NOW, "user", null, emptyMap,
             secretSeriesAndContent1.content().id())));
     when(secretController.getSecretByName("foo")).thenReturn(Optional.of(secret));
@@ -174,7 +174,7 @@ public class SecretsResourceTest {
 
   @Test
   public void undeleteThrowsWhenDeletedSecretDoesNotHaveCurrentVersion() {
-    when(secretDAO.getDeletedSecretsWithID(secret.getId())).thenReturn(Optional.of(
+    when(secretDAO.getDeletedSecretsWithId(secret.getId())).thenReturn(Optional.of(
         SecretSeries.of(1, "foo", null, "desc", NOW, "user", NOW, "user", null, emptyMap, null)));
     thrown.expect(ValidationException.class);
     resource.undeleteSecret(user, new LongParam(Long.toString(secret.getId())));

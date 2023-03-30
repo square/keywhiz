@@ -69,6 +69,14 @@ public class UndeleteActionTest {
   public void rejectsUnsupportedObjectType() {
     undeleteActionConfig.objectType = "group";
     undeleteActionConfig.id = 123L;
+    thrown.expect(UnsupportedOperationException.class);
+    undeleteAction.run();
+  }
+
+  @Test
+  public void rejectsInvalidObjectType() {
+    undeleteActionConfig.objectType = "banana";
+    undeleteActionConfig.id = 123L;
     thrown.expect(IllegalArgumentException.class);
     undeleteAction.run();
   }

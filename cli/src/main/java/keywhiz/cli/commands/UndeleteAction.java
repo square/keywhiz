@@ -17,6 +17,7 @@
 package keywhiz.cli.commands;
 
 import java.io.IOException;
+import javax.ws.rs.NotSupportedException;
 import keywhiz.cli.configs.UndeleteActionConfig;
 import keywhiz.client.KeywhizClient;
 import okhttp3.Response;
@@ -48,6 +49,10 @@ public class UndeleteAction implements Runnable {
       case "secret":
         undeleteSecret(id);
         break;
+      case "group":
+      case "client":
+        throw new UnsupportedOperationException(
+            "Undeletion is not supported for object type: " + trimmedType);
       default:
         throw new IllegalArgumentException("Invalid undelete type specified: " + trimmedType);
     }
@@ -57,14 +62,12 @@ public class UndeleteAction implements Runnable {
     logger.info("Undeleting secret '{}'.", id);
     try {
       Response response = keywhizClient.undeleteSecret(id);
-      switch (response.code()) {
-        case HttpStatus.SC_OK:
-          logger.info("Successfully undeleted secret.", id);
-          break;
-        default:
-          logger.error(response.message());
-          logger.error(response.body().string());
-          throw new AssertionError(response.message());
+      if (response.code() == HttpStatus.SC_OK) {
+        logger.info("Successfully undeleted secret '{}'.", id);
+      } else {
+        logger.error("Failed to delete secret '{}'. Message: \"{}\". Body: {}.", id,
+            response.message(), response.body().string());
+        throw new AssertionError(response.message());
       }
     } catch (IOException e) {
       throw new RuntimeException(e);

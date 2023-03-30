@@ -541,7 +541,7 @@ public class SecretsResource {
       @Auth User user,
       @PathParam("secretId") LongParam secretId) {
     long id = secretId.get();
-    Optional<SecretSeries> optionalDeletedSecret = secretDAOReadOnly.getDeletedSecretsWithID(id);
+    Optional<SecretSeries> optionalDeletedSecret = secretDAOReadOnly.getDeletedSecretsWithId(id);
     if (!optionalDeletedSecret.isPresent()) {
       logger.info("User '{}' tried undeleting a secret but it was not found (id={})", user, id);
       throw new NotFoundException("No soft-deleted secret with the provided ID was found.");

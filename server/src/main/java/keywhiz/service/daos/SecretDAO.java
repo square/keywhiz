@@ -568,7 +568,7 @@ public class SecretDAO {
     return secretSeriesDAO.getSecretSeriesByDeletedName(name);
   }
 
-  public Optional<SecretSeries> getDeletedSecretsWithID(long id) {
+  public Optional<SecretSeries> getDeletedSecretsWithId(long id) {
     SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
     return secretSeriesDAO.getDeletedSecretSeriesById(id);
   }
@@ -617,7 +617,7 @@ public class SecretDAO {
 
   public void undeleteSecret(long secretId) {
     secretSeriesDAOFactory.using(dslContext.configuration())
-        .undeleteSoftDeletedSecretSeriesByID(secretId);
+        .undeleteSoftDeletedSecretSeriesById(secretId);
   }
 
   /**

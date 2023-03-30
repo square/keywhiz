@@ -514,13 +514,13 @@ public class SecretSeriesDAO {
         .execute();
   }
 
-  public void undeleteSoftDeletedSecretSeriesByID(long id) {
+  public void undeleteSoftDeletedSecretSeriesById(long id) {
     dslContext.transaction(configuration -> {
-      undeleteSoftDeletedSecretSeriesByID(DSL.using(configuration), id);
+      undeleteSoftDeletedSecretSeriesById(DSL.using(configuration), id);
     });
   }
 
-  private static void undeleteSoftDeletedSecretSeriesByID(
+  private static void undeleteSoftDeletedSecretSeriesById(
       DSLContext dslContext,
       long id
   ) {

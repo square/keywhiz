@@ -19,7 +19,7 @@ package keywhiz.cli.configs;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
-@Parameters(commandDescription = "Undelete a secret that has previously been soft-deleted")
+@Parameters(commandDescription = "Undelete an item that has previously been soft-deleted")
 public class UndeleteActionConfig {
 
   @Parameter(description = "<secret>")

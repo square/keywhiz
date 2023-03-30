@@ -52,7 +52,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -571,7 +570,7 @@ public class SecretSeriesDAOTest {
     aclDAO.allowAccess(jooqContext.configuration(), secretSeriesID, groupID);
 
     secretSeriesDAO.softDeleteSecretSeriesById(secretSeriesID);
-    secretSeriesDAO.undeleteSoftDeletedSecretSeriesByID(secretSeriesID);
+    secretSeriesDAO.undeleteSoftDeletedSecretSeriesById(secretSeriesID);
 
     Optional<SecretSeries> loadedSecretSeries = secretSeriesDAO.getSecretSeriesById(secretSeriesID);
     assertThat(loadedSecretSeries).isPresent();
@@ -594,7 +593,7 @@ public class SecretSeriesDAOTest {
     long secretSeriesID = createLegacySoftDeletedSecretSeries("undeleteSecret");
 
     assertThrows(DataAccessException.class, () -> {
-      secretSeriesDAO.undeleteSoftDeletedSecretSeriesByID(secretSeriesID);
+      secretSeriesDAO.undeleteSoftDeletedSecretSeriesById(secretSeriesID);
     });
   }
 
