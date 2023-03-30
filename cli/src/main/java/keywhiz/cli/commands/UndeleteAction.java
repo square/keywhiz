@@ -65,7 +65,7 @@ public class UndeleteAction implements Runnable {
       if (response.code() == HttpStatus.SC_OK) {
         logger.info("Successfully undeleted secret '{}'.", id);
       } else {
-        logger.error("Failed to delete secret '{}'. Message: \"{}\". Body: {}.", id,
+        logger.error("Failed to undelete secret '{}'. Message: \"{}\". Body: {}", id,
             response.message(), response.body().string());
         throw new AssertionError(response.message());
       }
