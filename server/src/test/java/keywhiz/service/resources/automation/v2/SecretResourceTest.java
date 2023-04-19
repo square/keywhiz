@@ -457,41 +457,41 @@ public class SecretResourceTest {
   @Test public void secretContentsAtVersion_success() throws Exception {
       // Sample secrets
       secretResourceTestHelper.create(CreateSecretRequestV2.builder()
-              .name("secret24")
-              .content(encoder.encodeToString("top secret24".getBytes(UTF_8)))
+              .name("secret29")
+              .content(encoder.encodeToString("top secret29".getBytes(UTF_8)))
               .description("desc")
               .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
               .type("password")
               .build());
 
-      Long oldVersion = secretResourceTestHelper.getSecret("secret24").orElseThrow().version();
+      Long oldVersion = secretResourceTestHelper.getSecret("secret29").orElseThrow().version();
 
       secretResourceTestHelper.createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
-              .content(encoder.encodeToString("rotated secret24".getBytes(UTF_8)))
+              .content(encoder.encodeToString("rotated secret29".getBytes(UTF_8)))
               .description("updated description")
-              .build(), "secret24");
+              .build(), "secret29");
 
       SecretContentsAtVersionRequestV2 request = SecretContentsAtVersionRequestV2.fromParts(
-              "secret24", oldVersion
+              "secret29", oldVersion
       );
       SecretContentsAtVersionResponseV2 response = secretResourceTestHelper.contentsAtVersion(request);
-      assertThat(response.secret()).isEqualTo(encoder.encodeToString("top secret24".getBytes(UTF_8)));
+      assertThat(response.secret()).isEqualTo(encoder.encodeToString("top secret29".getBytes(UTF_8)));
   }
 
     @Test public void secretContentsAtVersion_notFound() throws Exception {
         // Sample secrets
         secretResourceTestHelper.create(CreateSecretRequestV2.builder()
-                .name("secret25")
-                .content(encoder.encodeToString("top secret25".getBytes(UTF_8)))
+                .name("secret30")
+                .content(encoder.encodeToString("top secret30".getBytes(UTF_8)))
                 .description("desc")
                 .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
                 .type("password")
                 .build());
 
         // Request a version that we know does not exist for this secret name.
-        Long version = secretResourceTestHelper.getSecret("secret25").orElseThrow().version();
+        Long version = secretResourceTestHelper.getSecret("secret30").orElseThrow().version();
         SecretContentsAtVersionRequestV2 request = SecretContentsAtVersionRequestV2.fromParts(
-                "secret25", version + 1
+                "secret30", version + 1
         );
 
         RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
