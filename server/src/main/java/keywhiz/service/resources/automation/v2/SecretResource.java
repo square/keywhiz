@@ -38,6 +38,8 @@ import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.SecretContentsRequestV2;
 import keywhiz.api.automation.v2.SecretContentsResponseV2;
+import keywhiz.api.automation.v2.SecretContentsAtVersionRequestV2;
+import keywhiz.api.automation.v2.SecretContentsAtVersionResponseV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.AutomationClient;
@@ -683,6 +685,27 @@ public class SecretResource {
         .successSecrets(successSecrets)
         .missingSecrets(missingSecrets)
         .build();
+  }
+
+  /**
+   * Retrieve a particular version of just one secret.
+   */
+  @Timed @ExceptionMetered
+  @POST
+  @Path("request/contents-at-version")
+  @Produces(APPLICATION_JSON)
+  @LogArguments
+  public SecretContentsAtVersionResponseV2 secretContentsAtVersion(@Auth AutomationClient automationClient, @Valid SecretContentsAtVersionRequestV2 request) {
+    Secret secret = secretController.getSecretByNameAndVersion(request.secret(), request.version())
+            .orElseThrow(NotFoundException::new);
+    permissionCheck.checkAllowedOrThrow(automationClient, Action.READ, secret);
+
+    // Record the read in the audit log, tracking which secrets were found and not found
+    auditLog.recordEvent(new Event(Instant.now(), EventTag.SECRET_READCONTENT, automationClient.getName(), request.secret(), Map.of()));
+
+    return SecretContentsAtVersionResponseV2.builder()
+            .secret(secret.getSecret())
+            .build();
   }
 
   /**

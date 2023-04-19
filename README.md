@@ -69,6 +69,11 @@ If you made changes to the database model and want to regenerate sources:
 
 We recommend [IntelliJ IDEA](https://www.jetbrains.com/idea/) for development.
 
+## IntelliJ IDEA
+
+To enable auto-completion, code navigation, etc., open the `keywhiz` repository in IDEA, 
+right click `pom.xml` in the repository root, and select "Add as Maven Project".
+
 ## Clients & API
 
 Square also maintains a Keywhiz client implementation called [Keysync](https://github.com/square/keysync).

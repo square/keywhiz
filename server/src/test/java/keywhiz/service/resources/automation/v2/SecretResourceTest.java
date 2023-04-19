@@ -25,6 +25,8 @@ import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.SecretContentsRequestV2;
 import keywhiz.api.automation.v2.SecretContentsResponseV2;
+import keywhiz.api.automation.v2.SecretContentsAtVersionRequestV2;
+import keywhiz.api.automation.v2.SecretContentsAtVersionResponseV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.SanitizedSecret;
@@ -447,6 +449,34 @@ public class SecretResourceTest {
     assertThat(response.missingSecrets()).isEqualTo(ImmutableList.of("non-existent"));
   }
 
+
+  //---------------------------------------------------------------------------------------
+  // secretContentsAtVersion
+  //---------------------------------------------------------------------------------------
+
+  @Test public void secretContentsAtVersion_success() throws Exception {
+      // Sample secrets
+      secretResourceTestHelper.create(CreateSecretRequestV2.builder()
+              .name("secret24")
+              .content(encoder.encodeToString("top secret24".getBytes(UTF_8)))
+              .description("desc")
+              .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
+              .type("password")
+              .build());
+
+      Long oldVersion = secretResourceTestHelper.getSecret("secret24").orElseThrow().version();
+
+      secretResourceTestHelper.createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
+              .content(encoder.encodeToString("rotated secret24".getBytes(UTF_8)))
+              .description("updated description")
+              .build(), "secret24");
+
+      SecretContentsAtVersionRequestV2 request = SecretContentsAtVersionRequestV2.fromParts(
+              "secret24", oldVersion
+      );
+      SecretContentsAtVersionResponseV2 response = secretResourceTestHelper.contentsAtVersion(request);
+      assertThat(response.secret()).isEqualTo(encoder.encodeToString("top secret24".getBytes(UTF_8)));
+  }
 
   //---------------------------------------------------------------------------------------
   // secretGroupsListing
