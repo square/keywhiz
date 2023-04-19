@@ -478,6 +478,37 @@ public class SecretResourceTest {
       assertThat(response.secret()).isEqualTo(encoder.encodeToString("top secret24".getBytes(UTF_8)));
   }
 
+    @Test public void secretContentsAtVersion_notFound() throws Exception {
+        // Sample secrets
+        secretResourceTestHelper.create(CreateSecretRequestV2.builder()
+                .name("secret25")
+                .content(encoder.encodeToString("top secret25".getBytes(UTF_8)))
+                .description("desc")
+                .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
+                .type("password")
+                .build());
+
+        // Request a version that we know does not exist for this secret name.
+        Long version = secretResourceTestHelper.getSecret("secret25").orElseThrow().version();
+        SecretContentsAtVersionRequestV2 request = SecretContentsAtVersionRequestV2.fromParts(
+                "secret25", version + 1
+        );
+
+        RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
+        Request get = clientRequest("/automation/v2/secrets/request/contents-at-version").post(body).build();
+        Response httpResponse = mutualSslClient.newCall(get).execute();
+        assertThat(httpResponse.code()).isEqualTo(404);
+
+        // Request the right version, but the wrong secret name.
+        SecretContentsAtVersionRequestV2 request2 = SecretContentsAtVersionRequestV2.fromParts(
+                "DEFINITELYnotTHEsecret", version
+        );
+        body = RequestBody.create(JSON, mapper.writeValueAsString(request2));
+        get = clientRequest("/automation/v2/secrets/request/contents-at-version").post(body).build();
+        httpResponse = mutualSslClient.newCall(get).execute();
+        assertThat(httpResponse.code()).isEqualTo(404);
+    }
+
   //---------------------------------------------------------------------------------------
   // secretGroupsListing
   //---------------------------------------------------------------------------------------
