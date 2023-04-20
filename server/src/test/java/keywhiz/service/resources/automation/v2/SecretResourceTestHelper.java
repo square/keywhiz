@@ -14,6 +14,8 @@ import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.SecretContentsRequestV2;
 import keywhiz.api.automation.v2.SecretContentsResponseV2;
+import keywhiz.api.automation.v2.SecretContentsAtVersionRequestV2;
+import keywhiz.api.automation.v2.SecretContentsAtVersionResponseV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.model.SanitizedSecret;
 import keywhiz.api.model.SanitizedSecretWithGroups;
@@ -249,6 +251,14 @@ public class SecretResourceTestHelper {
     Response httpResponse = mutualSslClient.newCall(get).execute();
     assertThat(httpResponse.code()).isEqualTo(200);
     return mapper.readValue(httpResponse.body().byteStream(), SecretContentsResponseV2.class);
+  }
+
+  SecretContentsAtVersionResponseV2 contentsAtVersion(SecretContentsAtVersionRequestV2 request) throws IOException {
+    RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
+    Request get = clientRequest("/automation/v2/secrets/request/contents-at-version").post(body).build();
+    Response httpResponse = mutualSslClient.newCall(get).execute();
+    assertThat(httpResponse.code()).isEqualTo(200);
+    return mapper.readValue(httpResponse.body().byteStream(), SecretContentsAtVersionResponseV2.class);
   }
 
   List<String> groupsListing(String name) throws IOException {

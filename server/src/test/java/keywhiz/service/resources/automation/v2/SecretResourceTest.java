@@ -25,6 +25,8 @@ import keywhiz.api.automation.v2.ModifyGroupsRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.SecretContentsRequestV2;
 import keywhiz.api.automation.v2.SecretContentsResponseV2;
+import keywhiz.api.automation.v2.SecretContentsAtVersionRequestV2;
+import keywhiz.api.automation.v2.SecretContentsAtVersionResponseV2;
 import keywhiz.api.automation.v2.SecretDetailResponseV2;
 import keywhiz.api.automation.v2.SetSecretVersionRequestV2;
 import keywhiz.api.model.SanitizedSecret;
@@ -447,6 +449,65 @@ public class SecretResourceTest {
     assertThat(response.missingSecrets()).isEqualTo(ImmutableList.of("non-existent"));
   }
 
+
+  //---------------------------------------------------------------------------------------
+  // secretContentsAtVersion
+  //---------------------------------------------------------------------------------------
+
+  @Test public void secretContentsAtVersion_success() throws Exception {
+      // Sample secrets
+      secretResourceTestHelper.create(CreateSecretRequestV2.builder()
+              .name("secret29")
+              .content(encoder.encodeToString("top secret29".getBytes(UTF_8)))
+              .description("desc")
+              .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
+              .type("password")
+              .build());
+
+      Long oldVersion = secretResourceTestHelper.getSecret("secret29").orElseThrow().version();
+
+      secretResourceTestHelper.createOrUpdate(CreateOrUpdateSecretRequestV2.builder()
+              .content(encoder.encodeToString("rotated secret29".getBytes(UTF_8)))
+              .description("updated description")
+              .build(), "secret29");
+
+      SecretContentsAtVersionRequestV2 request = SecretContentsAtVersionRequestV2.fromParts(
+              "secret29", oldVersion
+      );
+      SecretContentsAtVersionResponseV2 response = secretResourceTestHelper.contentsAtVersion(request);
+      assertThat(response.secret()).isEqualTo(encoder.encodeToString("top secret29".getBytes(UTF_8)));
+  }
+
+    @Test public void secretContentsAtVersion_notFound() throws Exception {
+        // Sample secrets
+        secretResourceTestHelper.create(CreateSecretRequestV2.builder()
+                .name("secret30")
+                .content(encoder.encodeToString("top secret30".getBytes(UTF_8)))
+                .description("desc")
+                .metadata(ImmutableMap.of("owner", "root", "mode", "0440"))
+                .type("password")
+                .build());
+
+        // Request a version that we know does not exist for this secret name.
+        Long version = secretResourceTestHelper.getSecret("secret30").orElseThrow().version();
+        SecretContentsAtVersionRequestV2 request = SecretContentsAtVersionRequestV2.fromParts(
+                "secret30", version + 1
+        );
+
+        RequestBody body = RequestBody.create(JSON, mapper.writeValueAsString(request));
+        Request get = clientRequest("/automation/v2/secrets/request/contents-at-version").post(body).build();
+        Response httpResponse = mutualSslClient.newCall(get).execute();
+        assertThat(httpResponse.code()).isEqualTo(404);
+
+        // Request the right version, but the wrong secret name.
+        SecretContentsAtVersionRequestV2 request2 = SecretContentsAtVersionRequestV2.fromParts(
+                "DEFINITELYnotTHEsecret", version
+        );
+        body = RequestBody.create(JSON, mapper.writeValueAsString(request2));
+        get = clientRequest("/automation/v2/secrets/request/contents-at-version").post(body).build();
+        httpResponse = mutualSslClient.newCall(get).execute();
+        assertThat(httpResponse.code()).isEqualTo(404);
+    }
 
   //---------------------------------------------------------------------------------------
   // secretGroupsListing

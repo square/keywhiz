@@ -80,6 +80,10 @@ public class SecretController {
     return secretDAO.getSecretByName(name).map(transformer::transform);
   }
 
+  public Optional<Secret> getSecretByNameAndVersion(String name, Long version) {
+    return secretDAO.getSecretByNameAndVersion(name, version).map(transformer::transform);
+  }
+
   /**
    * @param names of secrets series to look up secrets by.
    * @return all existing secrets matching criteria.

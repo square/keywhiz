@@ -396,6 +396,29 @@ public class SecretDAO {
   }
 
   /**
+   * @param name of secret series to look up secrets by.
+   * @param version of secret contents to return.
+   * @return Secret matching input parameters or Optional.empty().
+   */
+  public Optional<SecretSeriesAndContent> getSecretByNameAndVersion(String name, Long version) {
+    return getSecretByNameAndVersion(dslContext, name, version);
+  }
+
+  public Optional<SecretSeriesAndContent> getSecretByNameAndVersion(DSLContext dslContext, String name, Long version) {
+    checkArgument(!name.isEmpty());
+    SecretContentDAO secretContentDAO = secretContentDAOFactory.using(dslContext.configuration());
+    SecretSeriesDAO secretSeriesDAO = secretSeriesDAOFactory.using(dslContext.configuration());
+
+    Optional<SecretSeries> series = secretSeriesDAO.getSecretSeriesByName(name);
+    if (series.isPresent()) {
+      Optional<SecretContent> secretContent =
+              secretContentDAO.getSecretContentById(version);
+      return secretContent.map(content -> SecretSeriesAndContent.of(series.get(), content));
+    }
+    return Optional.empty();
+  }
+
+  /**
    * @param names of secrets series to look up secrets by.
    * @return Secrets matching input parameters.
    */
