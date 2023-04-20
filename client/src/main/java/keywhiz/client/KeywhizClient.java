@@ -28,6 +28,7 @@ import keywhiz.api.ClientDetailResponse;
 import keywhiz.api.GroupDetailResponse;
 import keywhiz.api.LoginRequest;
 import keywhiz.api.SecretDetailResponse;
+import keywhiz.api.automation.v2.CloneSecretRequestV2;
 import keywhiz.api.automation.v2.CreateClientRequestV2;
 import keywhiz.api.automation.v2.CreateGroupRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
@@ -382,6 +383,11 @@ public class KeywhizClient {
             .build());
     return mapper.readValue(response, new TypeReference<>() {
     });
+  }
+
+  public SecretDetailResponse cloneSecret(String sourceName, String newName) throws IOException {
+    String response = httpPost(baseUrl.resolve("clone"), CloneSecretRequestV2.fromParts(sourceName, newName));
+    return mapper.readValue(response, SecretDetailResponse.class);
   }
 
   public boolean isLoggedIn() throws IOException {
