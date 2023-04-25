@@ -28,11 +28,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SecretSeries;
-import keywhiz.jooq.tables.records.DeletedSecretsRecord;
 import keywhiz.jooq.tables.Groups;
 import keywhiz.jooq.tables.records.GroupsRecord;
 import keywhiz.jooq.tables.records.SecretsContentRecord;
 import keywhiz.jooq.tables.records.SecretsRecord;
+import keywhiz.model.SecretsOrDeletedSecretsRecord;
 import keywhiz.service.config.Readonly;
 import keywhiz.service.crypto.RowHmacGenerator;
 import org.joda.time.DateTime;
@@ -41,7 +41,6 @@ import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
-import org.jooq.Record1;
 import org.jooq.SelectOnConditionStep;
 import org.jooq.SelectQuery;
 import org.jooq.Table;
@@ -291,9 +290,7 @@ public class SecretSeriesDAO {
   }
 
   private Optional<SecretSeries> getDeletedSecretSeriesFromDeletedSecretsTable(long id) {
-    DeletedSecretsRecord r =
-        dslContext.fetchOne(DELETED_SECRETS, DELETED_SECRETS.ID.eq(id));
-    return Optional.ofNullable(r).map(secretSeriesMapper::map);
+    return getSecretSeries(DELETED_SECRETS, DELETED_SECRETS.ID.eq(id));
   }
 
   public Optional<SecretSeries> getSecretSeriesByName(String name) {
@@ -319,10 +316,7 @@ public class SecretSeriesDAO {
   }
 
   private List<SecretSeries> getDeletedSecretSeriesFromDeletedSecretsTable(String name) {
-    return dslContext.fetch(
-        DELETED_SECRETS,
-        DELETED_SECRETS.NAME.eq(name)
-    ).map(secretSeriesMapper::map);
+    return getMultipleSecretSeries(DELETED_SECRETS, DELETED_SECRETS.NAME.eq(name));
   }
 
   public List<SecretSeries> getMultipleSecretSeriesByName(List<String> names) {
@@ -334,12 +328,16 @@ public class SecretSeriesDAO {
   }
 
   private SelectOnConditionStep<Record> baseSelect() {
+    return baseSelect(SECRETS);
+  }
+
+  private SelectOnConditionStep<Record> baseSelect(Table<? extends SecretsOrDeletedSecretsRecord> table) {
     return dslContext
-        .select(SECRETS.fields())
+        .select(table.fields())
         .select(SECRET_OWNERS.fields())
-        .from(SECRETS)
+        .from(table)
         .leftJoin(SECRET_OWNERS)
-        .on(SECRETS.OWNER.eq(SECRET_OWNERS.ID));
+        .on(table.field("owner", Long.class).eq(SECRET_OWNERS.ID));
   }
 
   List<SecretSeries> getMultipleSecretSeriesFromQuery(SelectQuery<Record> query) {
@@ -351,14 +349,22 @@ public class SecretSeriesDAO {
   }
 
   List<SecretSeries> getMultipleSecretSeries(Condition condition) {
-    return baseSelect()
+    return getMultipleSecretSeries(SECRETS, condition);
+  }
+
+  List<SecretSeries> getMultipleSecretSeries(Table<? extends SecretsOrDeletedSecretsRecord> table, Condition condition) {
+    return baseSelect(table)
         .where(condition)
         .fetch()
         .map(this::recordToSecretSeries);
   }
 
   private Optional<SecretSeries> getSecretSeries(Condition condition) {
-    Record record = baseSelect()
+    return getSecretSeries(SECRETS, condition);
+  }
+
+  private Optional<SecretSeries> getSecretSeries(Table<? extends SecretsOrDeletedSecretsRecord> table, Condition condition) {
+    Record record = baseSelect(table)
         .where(condition)
         .fetchOne();
 
