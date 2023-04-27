@@ -416,18 +416,7 @@ public class SecretSeriesDAO {
       @Nullable Group group, @Nullable Long expireMinTime, @Nullable String minName,
       @Nullable Integer limit) {
 
-    Table<SecretsContentRecord> secretsContentTable = SECRETS_CONTENT;
-    if (expireMaxTime != null && expireMaxTime > 0) {
-      // Force this join to use the index on the secrets_content.expiry
-      // field. The optimizer may fail to use this index when the SELECT
-      // examines a large number of rows, causing significant performance
-      // degradation.
-      secretsContentTable = secretsContentTable.useIndexForJoin("secrets_content_expiry");
-    }
-
     SelectQuery<Record> select = baseSelect()
-          .join(secretsContentTable)
-          .on(SECRETS.CURRENT.equal(SECRETS_CONTENT.ID))
           .where(SECRETS.CURRENT.isNotNull())
           .getQuery();
     select.addOrderBy(SECRETS.EXPIRY.asc(), SECRETS.NAME.asc());
