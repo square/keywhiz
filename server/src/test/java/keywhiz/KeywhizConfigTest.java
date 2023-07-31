@@ -73,7 +73,7 @@ public class KeywhizConfigTest {
   }
 
   @Test
-  public void parseReservedPrefixes() {
+  public void handleReservedPrefixes() {
     KeywhizConfig config = loadConfig("with-reserved-prefixes.yaml");
     assertThat(config.canCreateSecretWithName("any-secret-name", "any-owner-name")).isTrue();
 

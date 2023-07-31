@@ -281,7 +281,7 @@ public class SecretDAOTest {
 
   @Test public void createSecretWithReservedPrefix() {
     groupDAO.createGroup("specialOwner", "creator", "description", NO_METADATA);
-    String name = "sp:namespace/owner/secretName";
+    String name = "sp:namespace:owner:key_name";
     String content = "c2VjcmV0MQ==";
     String hmac = cryptographer.computeHmac(content.getBytes(UTF_8), "hmackey");
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
@@ -295,7 +295,7 @@ public class SecretDAOTest {
   public void createSecretFailsIfPrefixReservedByDifferentOwner() {
     groupDAO.createGroup("specialOwner", "creator", "description", NO_METADATA);
     groupDAO.createGroup("regularOwner", "creator", "description", NO_METADATA);
-    String name = "sp:namespace/owner/secretName";
+    String name = "sp:namespace:owner:key_name";
     String content = "c2VjcmV0MQ==";
     String hmac = cryptographer.computeHmac(content.getBytes(UTF_8), "hmackey");
     String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);

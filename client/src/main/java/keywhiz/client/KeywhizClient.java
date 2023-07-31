@@ -210,11 +210,7 @@ public class KeywhizClient {
             .metadata(metadata)
             .expiry(expiry)
             .build();
-    HttpUrl url = baseUrl.newBuilder()
-        .addPathSegment("admin")
-        .addPathSegment("secrets")
-        .build();
-    String response = httpPost(url, request);
+    String response = httpPost(baseUrl.resolve("/admin/secrets"), request);
     return mapper.readValue(response, SecretDetailResponse.class);
   }
 
