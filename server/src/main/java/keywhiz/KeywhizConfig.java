@@ -76,7 +76,7 @@ public class KeywhizConfig extends Configuration {
 
   @Nullable
   @JsonProperty
-  private Map<String, String> ownerReservedPrefixes;
+  private Map<String, String> reservedPrefixes;
 
   @NotNull
   @JsonProperty
@@ -222,23 +222,20 @@ public class KeywhizConfig extends Configuration {
     return backupExportKeys.get(name);
   }
 
-  @Nullable public String getOwnerRestriction(String secretName) {
-    if (ownerReservedPrefixes == null) {
-      return null;
+  public boolean canCreateSecretWithName(String secretName, String ownerName) {
+    if (reservedPrefixes == null) {
+      return true;
     }
-    String expectedOwner = null;
-    for (Map.Entry<String, String> entry : ownerReservedPrefixes.entrySet()) {
+    for (Map.Entry<String, String> entry : reservedPrefixes.entrySet()) {
       String owner = entry.getKey();
       String prefix = entry.getValue();
       if (secretName.startsWith(prefix)) {
-        if (expectedOwner != null) {
-          throw new RuntimeException("Multiple reserved owners for prefix");
-        } else {
-          expectedOwner = owner;
+        if (ownerName == null || !ownerName.equals(owner)) {
+          return false;
         }
       }
     }
-    return expectedOwner;
+    return true;
   }
 
   public RowHmacCheck getRowHmacCheck() {

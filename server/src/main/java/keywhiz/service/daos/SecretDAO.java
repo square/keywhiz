@@ -128,13 +128,9 @@ public class SecretDAO {
             + "names must be %d characters or less", name, SECRET_NAME_MAX_LENGTH));
       }
 
-      String ownerRestriction = config.getOwnerRestriction(name);
-      if (ownerRestriction != null) {
-        if (!ownerName.equals(ownerRestriction)) {
-          throw new BadRequestException(format("secret cannot be created with name `%s` for owner "
-                  + "`%s` - this name format is reserved by owner `%s`", name, ownerName,
-              ownerRestriction));
-        }
+      if (!config.canCreateSecretWithName(name, ownerName)) {
+        throw new BadRequestException(format("secret cannot be created with name `%s` for owner "
+            + "`%s` - this name format is reserved", name, ownerName));
       }
 
       long now = OffsetDateTime.now().toEpochSecond();

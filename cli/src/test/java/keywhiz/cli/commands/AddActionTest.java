@@ -66,6 +66,10 @@ public class AddActionTest {
   Secret secret =
       new Secret(15, "newSecret", null, null, () -> "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null,
           null, null, ImmutableMap.of(), 0, 1L, NOW, null);
+
+  Secret secretWithSpecialName =
+      new Secret(16, "sp:ns/owner/secret-name", null, null, () -> "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null,
+          null, null, ImmutableMap.of(), 0, 1L, NOW, null);
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
   SecretDetailResponse secretDetailResponse = SecretDetailResponse.fromSecret(secret, null, null);
 
@@ -284,5 +288,34 @@ public class AddActionTest {
     addActionConfig.name = "Invalid Name";
 
     addAction.run();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void addValidatesSecretNameNoDollarSign() throws Exception {
+    addActionConfig.addType = Arrays.asList("secret");
+    addActionConfig.name = "Invalid$Name";
+
+    addAction.run();
+  }
+
+  @Test
+  public void addValidatesSecretNameSpecialName() throws Exception {
+    addActionConfig.addType = Arrays.asList("secret");
+    addActionConfig.name = secretWithSpecialName.getDisplayName();
+    addActionConfig.expiry = "2006-01-02T15:04:05Z";
+
+    byte[] content = base64Decoder.decode(secretWithSpecialName.getSecret());
+    addAction.stream = new ByteArrayInputStream(content);
+    when(keywhizClient.getSanitizedSecretByName(secretWithSpecialName.getName()))
+        .thenThrow(new NotFoundException()); // Call checks for existence.
+
+    when(
+        keywhizClient.createSecret(secretWithSpecialName.getName(), null, "", content,
+            secretWithSpecialName.getMetadata(), 1136214245))
+        .thenReturn(secretDetailResponse);
+
+    addAction.run();
+    verify(keywhizClient, times(1)).createSecret(secretWithSpecialName.getName(), null, "", content,
+        secretWithSpecialName.getMetadata(), 1136214245);
   }
 }

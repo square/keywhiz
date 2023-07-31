@@ -1,9 +1,3 @@
-# Copyright 2013 Square, Inc.
-
-# Passwords/secrets should not be checked into SCM. However, sprinkled below are some passwords and
-# keys that are NOT considered sensitive and only to be used in development and testing.
----
-
 server:
   applicationConnectors:
     - type: resources-https
@@ -163,4 +157,6 @@ clientAuthConfig:
   createMissingClients: true
 
 reservedPrefixes:
-  specialOwner: "sp:"
+  reservedOwner: "reserved-prefix:"
+  anotherOwner: "reserved-prefix:extra:"
+  noColonInPrefix: "abc"
