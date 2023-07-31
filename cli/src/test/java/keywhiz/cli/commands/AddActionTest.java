@@ -66,7 +66,6 @@ public class AddActionTest {
   Secret secret =
       new Secret(15, "newSecret", null, null, () -> "c2VjcmV0MQ==", "checksum", NOW, null, NOW, null,
           null, null, ImmutableMap.of(), 0, 1L, NOW, null);
-
   SanitizedSecret sanitizedSecret = SanitizedSecret.fromSecret(secret);
   SecretDetailResponse secretDetailResponse = SecretDetailResponse.fromSecret(secret, null, null);
 
