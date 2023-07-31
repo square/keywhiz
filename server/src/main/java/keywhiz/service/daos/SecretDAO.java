@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import keywhiz.KeywhizConfig;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
 import keywhiz.api.model.Group;
 import keywhiz.api.model.SanitizedSecret;
@@ -73,6 +74,7 @@ public class SecretDAO {
   private final GroupDAO.GroupDAOFactory groupDAOFactory;
   private final ContentCryptographer cryptographer;
   private final PermissionCheck permissionCheck;
+  private final KeywhizConfig config;
 
   // this is the maximum length of a secret name, so that it will still fit in the 255 char limit
   // of the database field if it is deleted and auto-renamed
@@ -88,13 +90,15 @@ public class SecretDAO {
       SecretSeriesDAOFactory secretSeriesDAOFactory,
       GroupDAO.GroupDAOFactory groupDAOFactory,
       ContentCryptographer cryptographer,
-      PermissionCheck permissionCheck) {
+      PermissionCheck permissionCheck,
+      KeywhizConfig config) {
     this.dslContext = dslContext;
     this.secretContentDAOFactory = secretContentDAOFactory;
     this.secretSeriesDAOFactory = secretSeriesDAOFactory;
     this.groupDAOFactory = groupDAOFactory;
     this.cryptographer = cryptographer;
     this.permissionCheck = permissionCheck;
+    this.config = config;
   }
 
   @VisibleForTesting
@@ -122,6 +126,11 @@ public class SecretDAO {
       if (name.length() > SECRET_NAME_MAX_LENGTH) {
         throw new BadRequestException(format("secret cannot be created with name `%s` - secret "
             + "names must be %d characters or less", name, SECRET_NAME_MAX_LENGTH));
+      }
+
+      if (!config.canCreateSecretWithName(name, ownerName)) {
+        throw new BadRequestException(format("secret cannot be created with name `%s` for owner "
+            + "`%s` - this name format is reserved", name, ownerName));
       }
 
       long now = OffsetDateTime.now().toEpochSecond();
@@ -752,6 +761,7 @@ public class SecretDAO {
     private final GroupDAO.GroupDAOFactory groupDAOFactory;
     private final ContentCryptographer cryptographer;
     private final PermissionCheck permissionCheck;
+    private final KeywhizConfig config;
 
     @Inject public SecretDAOFactory(
         DSLContext jooq,
@@ -760,7 +770,8 @@ public class SecretDAO {
         SecretSeriesDAOFactory secretSeriesDAOFactory,
         GroupDAO.GroupDAOFactory groupDAOFactory,
         ContentCryptographer cryptographer,
-        PermissionCheck permissionCheck) {
+        PermissionCheck permissionCheck,
+        KeywhizConfig config) {
       this.jooq = jooq;
       this.readonlyJooq = readonlyJooq;
       this.secretContentDAOFactory = secretContentDAOFactory;
@@ -768,6 +779,7 @@ public class SecretDAO {
       this.groupDAOFactory = groupDAOFactory;
       this.cryptographer = cryptographer;
       this.permissionCheck = permissionCheck;
+      this.config = config;
     }
 
     @Override public SecretDAO readwrite() {
@@ -777,7 +789,8 @@ public class SecretDAO {
           secretSeriesDAOFactory,
           groupDAOFactory,
           cryptographer,
-          permissionCheck);
+          permissionCheck,
+          config);
     }
 
     @Override public SecretDAO readonly() {
@@ -787,7 +800,8 @@ public class SecretDAO {
           secretSeriesDAOFactory,
           groupDAOFactory,
           cryptographer,
-          permissionCheck);
+          permissionCheck,
+          config);
     }
 
     @Override public SecretDAO using(Configuration configuration) {
@@ -798,7 +812,8 @@ public class SecretDAO {
           secretSeriesDAOFactory,
           groupDAOFactory,
           cryptographer,
-          permissionCheck);
+          permissionCheck,
+          config);
     }
   }
 }

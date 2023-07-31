@@ -66,10 +66,40 @@ public class KeywhizConfigTest {
   }
 
   @Test
-  public void parsNewSecretOwnershipStrategyInfer() {
+  public void parseNewSecretOwnershipStrategyInfer() {
     KeywhizConfig config = loadConfig("new-secret-ownership-strategy-infer.yaml");
     assertThat(config.getNewSecretOwnershipStrategy()).isEqualTo(
         KeywhizConfig.NewSecretOwnershipStrategy.INFER_FROM_CLIENT);
+  }
+
+  @Test
+  public void handleReservedPrefixes() {
+    KeywhizConfig config = loadConfig("with-reserved-prefixes.yaml");
+    assertThat(config.canCreateSecretWithName("any-secret-name", "any-owner-name")).isTrue();
+
+    assertThat(config.canCreateSecretWithName("reserved-prefix", "any-owner-name")).isTrue();
+    assertThat(config.canCreateSecretWithName("reserved-prefix", "reservedOwner")).isTrue();
+
+    assertThat(config.canCreateSecretWithName("reserved-prefix:", "any-owner-name")).isFalse();
+    assertThat(config.canCreateSecretWithName("reserved-prefix:", "reservedOwner")).isTrue();
+
+    assertThat(config.canCreateSecretWithName("reserved-prefix:secretName", "any-owner-name")).isFalse();
+    assertThat(config.canCreateSecretWithName("reserved-prefix:secretName", "reservedOwner")).isTrue();
+
+    assertThat(config.canCreateSecretWithName("extra-prefix-reserved-prefix:secretName", "any-owner-name")).isTrue();
+    assertThat(config.canCreateSecretWithName("extra-prefix-reserved-prefix:secretName", "reservedOwner")).isTrue();
+
+    assertThat(config.canCreateSecretWithName("reserved-prefix:extra:secretName", "reservedOwner")).isFalse();
+    assertThat(config.canCreateSecretWithName("reserved-prefix:extra:secretName", "anotherOwner")).isFalse();
+
+    assertThat(config.canCreateSecretWithName("ab", "reservedOwner")).isTrue();
+    assertThat(config.canCreateSecretWithName("ab", "noColonInPrefix")).isTrue();
+
+    assertThat(config.canCreateSecretWithName("abc", "reservedOwner")).isFalse();
+    assertThat(config.canCreateSecretWithName("abc", "noColonInPrefix")).isTrue();
+
+    assertThat(config.canCreateSecretWithName("abcdef", "reservedOwner")).isFalse();
+    assertThat(config.canCreateSecretWithName("abcdef", "noColonInPrefix")).isTrue();
   }
 
   private static KeywhizConfig loadConfig(String resource) {

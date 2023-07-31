@@ -74,6 +74,10 @@ public class KeywhizConfig extends Configuration {
   @JsonProperty
   private Map<String, String> backupExportKeys;
 
+  @Nullable
+  @JsonProperty
+  private Map<String, String> reservedPrefixes;
+
   @NotNull
   @JsonProperty
   private KeyStoreConfig contentKeyStore;
@@ -216,6 +220,22 @@ public class KeywhizConfig extends Configuration {
       return null;
     }
     return backupExportKeys.get(name);
+  }
+
+  public boolean canCreateSecretWithName(String secretName, String ownerName) {
+    if (reservedPrefixes == null) {
+      return true;
+    }
+    for (Map.Entry<String, String> entry : reservedPrefixes.entrySet()) {
+      String owner = entry.getKey();
+      String prefix = entry.getValue();
+      if (secretName.startsWith(prefix)) {
+        if (ownerName == null || !ownerName.equals(owner)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   public RowHmacCheck getRowHmacCheck() {

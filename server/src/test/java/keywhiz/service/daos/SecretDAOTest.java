@@ -279,6 +279,30 @@ public class SecretDAOTest {
     assertThat(secretDAO.getSecrets(null, null, null,null, null)).containsOnly(secret1, secret2b, newSecret);
   }
 
+  @Test public void createSecretWithReservedPrefix() {
+    groupDAO.createGroup("specialOwner", "creator", "description", NO_METADATA);
+    String name = "sp:namespace:owner:key_name";
+    String content = "c2VjcmV0MQ==";
+    String hmac = cryptographer.computeHmac(content.getBytes(UTF_8), "hmackey");
+    String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
+    long newId = secretDAO.createSecret(name, "specialOwner", encryptedContent, hmac, "creator",
+        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+    SecretSeriesAndContent newSecret = secretDAO.getSecretById(newId).get();
+    assertThat(newSecret).isNotNull();
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void createSecretFailsIfPrefixReservedByDifferentOwner() {
+    groupDAO.createGroup("specialOwner", "creator", "description", NO_METADATA);
+    groupDAO.createGroup("regularOwner", "creator", "description", NO_METADATA);
+    String name = "sp:namespace:owner:key_name";
+    String content = "c2VjcmV0MQ==";
+    String hmac = cryptographer.computeHmac(content.getBytes(UTF_8), "hmackey");
+    String encryptedContent = cryptographer.encryptionKeyDerivedFrom(name).encrypt(content);
+    secretDAO.createSecret(name, "regularOwner", encryptedContent, hmac, "creator",
+        ImmutableMap.of(), 0, "", null, ImmutableMap.of());
+  }
+
   @Test(expected = DataAccessException.class)
   public void createSecretFailsIfSecretExists() {
     String name = "newSecret";
