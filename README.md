@@ -1,3 +1,6 @@
+# Deprecated
+**As of 9/18/23 this project is now deprecated and no longer maintained; we recommend using HashiCorp Vault as a more robust and actively supported alternative.**
+
 # Keywhiz
 
 [![license](https://img.shields.io/badge/license-apache_2.0-red.svg?style=flat)](https://raw.githubusercontent.com/square/keywhiz/master/LICENSE)
