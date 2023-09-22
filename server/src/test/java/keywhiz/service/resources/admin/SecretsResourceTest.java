@@ -30,8 +30,11 @@ import javax.validation.ValidationException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+
 import keywhiz.api.ApiDate;
 import keywhiz.api.SecretDetailResponse;
+import keywhiz.api.automation.v2.CloneSecretRequestV2;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
@@ -64,10 +67,7 @@ import org.mockito.junit.MockitoRule;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -501,5 +501,32 @@ public class SecretsResourceTest {
 
     assertThat(resource.findDeletedSecretsByName(user, "name1"))
         .containsExactlyInAnyOrder(secretSeries1, secretSeries2);
+  }
+
+  @Test
+  public void cloneSecret() {
+    when(secretDAO.getSecretByName("name1")).thenReturn(Optional.of(secretSeriesAndContent1));
+    when(secretDAO.createSecret(
+            "name1Clone",
+            secretSeriesAndContent1.series().owner(),
+            secretSeriesAndContent1.content().encryptedContent(),
+            secretSeriesAndContent1.content().hmac(),
+            secretSeriesAndContent1.series().createdBy(),
+            secretSeriesAndContent1.content().metadata(),
+            secretSeriesAndContent1.content().expiry(),
+            secretSeriesAndContent1.series().description(),
+            secretSeriesAndContent1.series().type().orElse(null),
+            secretSeriesAndContent1.series().generationOptions()
+    )).thenReturn(42L);
+    // this fetch operation is used by SecretsResource to build the secret detail response
+    when(secretController.getSecretById(42L)).thenReturn(Optional.of(secret));
+
+    Response cloneResponse = resource.cloneSecret(user, CloneSecretRequestV2.fromParts("name1", "name1Clone"));
+    SecretDetailResponse cloneDetails = (SecretDetailResponse) cloneResponse.getEntity();
+    assertThat(cloneDetails.id).isEqualTo(secret.getId());
+    assertThat(cloneDetails.name).isEqualTo(secret.getName());
+    assertThat(cloneDetails.checksum).isEqualTo(secret.getChecksum());
+    assertThat(cloneResponse.getLocation()).isEqualTo(
+            UriBuilder.fromResource(SecretsResource.class).path("{secretId}").build(42L));
   }
 }

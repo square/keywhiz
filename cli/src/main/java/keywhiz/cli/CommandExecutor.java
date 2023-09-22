@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import keywhiz.cli.commands.AddAction;
 import keywhiz.cli.commands.AssignAction;
+import keywhiz.cli.commands.CloneAction;
 import keywhiz.cli.commands.DeleteAction;
 import keywhiz.cli.commands.DescribeAction;
 import keywhiz.cli.commands.ListAction;
@@ -43,6 +44,7 @@ import keywhiz.cli.commands.UpdateAction;
 import keywhiz.cli.configs.AddActionConfig;
 import keywhiz.cli.configs.AssignActionConfig;
 import keywhiz.cli.configs.CliConfiguration;
+import keywhiz.cli.configs.CloneActionConfig;
 import keywhiz.cli.configs.DeleteActionConfig;
 import keywhiz.cli.configs.DescribeActionConfig;
 import keywhiz.cli.configs.ListActionConfig;
@@ -67,6 +69,7 @@ public class CommandExecutor {
   public enum Command {
     ADD,
     ASSIGN,
+    CLONE,
     DELETE,
     DESCRIBE,
     LIST,
@@ -202,6 +205,9 @@ public class CommandExecutor {
       case RENAME:
         new RenameAction((RenameActionConfig) commands.get(command), client).run();
         break;
+
+      case CLONE:
+        new CloneAction((CloneActionConfig) commands.get(command), client, printing).run();
 
       case LOGIN:
         // User is already logged in at this point

@@ -46,6 +46,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import keywhiz.api.SecretDetailResponse;
+import keywhiz.api.automation.v2.CloneSecretRequestV2;
 import keywhiz.api.automation.v2.CreateOrUpdateSecretRequestV2;
 import keywhiz.api.automation.v2.CreateSecretRequestV2;
 import keywhiz.api.automation.v2.PartialUpdateSecretRequestV2;
@@ -694,6 +695,74 @@ public class SecretsResource {
         new Event(Instant.now(), EventTag.SECRET_UPDATECURRENT, user.getName(), secretId.toString(),
             extraInfo));
     return Response.noContent().build();
+  }
+
+  /**
+   * Clones a secret, creating a duplicate of all its data under a new name. Group assignments are not copied; callers
+   * should handle that separately.
+   *
+   * @param user     the admin user performing this operation
+   * @param request  a request object containing the current secret name and the new name to use for the clone
+   * @return 200 with new secret details if secret was cloned, 404 if not found
+   * <p>
+   * description Clones a secret to a new name. Used by Keywhiz CLI.
+   * <p>
+   * responseMessage 200 Cloned the secret to a new name
+   * <p>
+   * responseMessage 400 Secret cannot be created with the new name
+   * <p>
+   * responseMessage 404 Secret with original name not found
+   * <p>
+   * responseMessage 409 A secret with the new name already exists
+   */
+  @Path("clone")
+  @Timed @ExceptionMetered
+  @POST
+  public Response cloneSecret(@Auth User user, @Valid CloneSecretRequestV2 request) {
+    logger.info("User '{}' cloned secret original name={}, clone name={}", user, request.name(), request.newName());
+    Secret existingSecret = secretController.getSecretByName(request.name()).orElseThrow(NotFoundException::new);
+    long newId;
+    try {
+      Secret newSecret = secretController.builder(existingSecret.getName(),
+              existingSecret.getSecret(),
+              existingSecret.getCreatedBy(),
+              existingSecret.getExpiry())
+              .withDescription(existingSecret.getDescription())
+              .withMetadata(existingSecret.getMetadata())
+              .withOwnerName(existingSecret.getOwner())
+              .withType(existingSecret.getType().orElse(""))
+              .create();
+      newId = newSecret.getId();
+    } catch (DataAccessException e) {
+      logger.info(format("Cannot create secret %s", request.name()), e);
+      throw new ConflictException(format("Cannot create secret %s.", request.name()));
+    }
+
+    URI uri =
+            UriBuilder.fromResource(SecretsResource.class).path("{secretId}").build(newId);
+    Response response = Response
+            .created(uri)
+            .entity(secretDetailResponseFromId(newId))
+            .build();
+
+    if (response.getStatus() == HttpStatus.SC_CREATED) {
+      Map<String, String> extraInfo = new HashMap<>();
+      if (existingSecret.getDescription() != null) {
+        extraInfo.put("description", existingSecret.getDescription());
+      }
+      if (existingSecret.getMetadata() != null) {
+        extraInfo.put("metadata", existingSecret.getMetadata().toString());
+      }
+      if (existingSecret.getOwner() != null) {
+        extraInfo.put("owner", existingSecret.getOwner());
+      }
+      extraInfo.put("expiry", Long.toString(existingSecret.getExpiry()));
+      auditLog.recordEvent(
+              new Event(Instant.now(), EventTag.SECRET_CREATE, user.getName(), request.name(),
+                      extraInfo));
+    }
+
+    return response;
   }
 
   private SecretDetailResponse secretDetailResponseFromId(long secretId) {
